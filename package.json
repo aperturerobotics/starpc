@@ -1,0 +1,51 @@
+{
+  "name": "starpc",
+  "version": "0.0.2",
+  "description": "Streaming protobuf RPC service protocol over any two-way channel.",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Aperture Robotics LLC.",
+    "email": "support@aperture.us",
+    "url": "http://aperture.us"
+  },
+  "contributors": [
+    {
+      "name": "Christian Stewart",
+      "email": "christian@aperture.us",
+      "url": "http://github.com/paralin"
+    }
+  ],
+  "repository": {
+    "url": "git@github.com:aperturerobotics/starpc.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "codegen": "npm run gen",
+    "format": "prettier --write './srpc/**/(*.ts|*.tsx|*.js|*.html|*.css)'",
+    "gen": "make genproto",
+    "lint": "npm run lint:go && npm run lint:js",
+    "lint:go": "make lint",
+    "lint:js": "eslint -c .eslintrc.js --ext .ts ./",
+    "precommit": "npm run format"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint": "^8.16.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard-with-typescript": "^21.0.1",
+    "eslint-plugin-react-hooks": "^4.5.0",
+    "husky": "^8.0.1",
+    "prettier": "^2.6.2",
+    "rimraf": "^3.0.2",
+    "ts-proto": "^1.112.2",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "rxjs": "^7.5.5"
+  }
+}

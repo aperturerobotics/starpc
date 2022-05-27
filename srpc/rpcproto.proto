@@ -1,0 +1,46 @@
+syntax = "proto3";
+package srpc;
+
+// Packet is a message sent over a srpc packet connection.
+message Packet {
+  // Body is the packet body.
+  oneof body {
+    // CallStart initiates a new call.
+    CallStart call_start = 1;
+    // CallStartResp is the response to CallStart.
+    CallStartResp call_start_resp = 2;
+    // CallData is a message in a streaming RPC sequence.
+    CallData call_data = 3;
+  }
+}
+
+// CallStart requests starting a new RPC call.
+message CallStart {
+  // RpcService is the service to contact.
+  // Must be set.
+  string rpc_service = 1;
+  // RpcMethod is the RPC method to call.
+  // Must be set.
+  string rpc_method = 2;
+  // Data contains the request or the first message in the stream.
+  // Optional if streaming.
+  bytes data = 3;
+}
+
+// CallStartResp is the response to CallStart.
+message CallStartResp {
+  // Error contains any error starting the RPC call.
+  // Empty if successful.
+  string error = 1;
+}
+
+// CallData contains a message in a streaming RPC sequence.
+message CallData {
+  // Data contains the packet in the sequence.
+  bytes data = 1;
+  // Complete indicates the RPC call is completed.
+  bool complete = 2;
+  // Error contains any error that caused the RPC to fail.
+  // If set, implies complete=true.
+  string error = 3;
+}

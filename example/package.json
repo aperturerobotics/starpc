@@ -1,0 +1,11 @@
+{
+  "name": "ts-rpc-example",
+  "license": "Apache-2.0",
+  "description": "Example of ts-rpc.",
+  "author": {
+    "name": "Christian Stewart",
+    "email": "christian@aperture.us",
+    "url": "http://github.com/paralin"
+  },
+  "scripts": {}
+}
