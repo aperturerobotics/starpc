@@ -16,6 +16,7 @@ type SRPCEchoerClient interface {
 	Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(ctx context.Context, in *EchoMsg) (SRPCEchoer_EchoServerStreamClient, error)
 	EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error)
+	EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error)
 }
 
 type srpcEchoerClient struct {
@@ -112,10 +113,47 @@ func (x *srpcEchoer_EchoClientStreamClient) CloseAndMsgRecv(m *EchoMsg) error {
 	return x.MsgRecv(m)
 }
 
+func (c *srpcEchoerClient) EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "EchoBidiStream", nil)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcEchoer_EchoBidiStreamClient{stream}
+	return strm, nil
+}
+
+type SRPCEchoer_EchoBidiStreamClient interface {
+	srpc.Stream
+	Send(*EchoMsg) error
+	Recv() (*EchoMsg, error)
+	RecvTo(*EchoMsg) error
+}
+
+type srpcEchoer_EchoBidiStreamClient struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_EchoBidiStreamClient) Send(m *EchoMsg) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcEchoer_EchoBidiStreamClient) Recv() (*EchoMsg, error) {
+	m := new(EchoMsg)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_EchoBidiStreamClient) RecvTo(m *EchoMsg) error {
+	return x.MsgRecv(m)
+}
+
 type SRPCEchoerServer interface {
 	Echo(context.Context, *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error
 	EchoClientStream(SRPCEchoer_EchoClientStreamStream) error
+	EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error
 }
 
 type SRPCEchoerUnimplementedServer struct{}
@@ -132,6 +170,10 @@ func (s *SRPCEchoerUnimplementedServer) EchoClientStream(SRPCEchoer_EchoClientSt
 	return srpc.ErrUnimplemented
 }
 
+func (s *SRPCEchoerUnimplementedServer) EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error {
+	return srpc.ErrUnimplemented
+}
+
 const SRPCEchoerServiceID = "echo.Echoer"
 
 type SRPCEchoerHandler struct {
@@ -145,6 +187,7 @@ func (SRPCEchoerHandler) GetMethodIDs() []string {
 		"Echo",
 		"EchoServerStream",
 		"EchoClientStream",
+		"EchoBidiStream",
 	}
 }
 
@@ -163,6 +206,8 @@ func (d *SRPCEchoerHandler) InvokeMethod(
 		return true, d.InvokeMethod_EchoServerStream(d.impl, strm)
 	case "EchoClientStream":
 		return true, d.InvokeMethod_EchoClientStream(d.impl, strm)
+	case "EchoBidiStream":
+		return true, d.InvokeMethod_EchoBidiStream(d.impl, strm)
 	default:
 		return false, nil
 	}
@@ -192,6 +237,11 @@ func (SRPCEchoerHandler) InvokeMethod_EchoServerStream(impl SRPCEchoerServer, st
 func (SRPCEchoerHandler) InvokeMethod_EchoClientStream(impl SRPCEchoerServer, strm srpc.Stream) error {
 	clientStrm := &srpcEchoer_EchoClientStreamStream{strm}
 	return impl.EchoClientStream(clientStrm)
+}
+
+func (SRPCEchoerHandler) InvokeMethod_EchoBidiStream(impl SRPCEchoerServer, strm srpc.Stream) error {
+	clientStrm := &srpcEchoer_EchoBidiStreamStream{strm}
+	return impl.EchoBidiStream(clientStrm)
 }
 
 func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
@@ -253,5 +303,31 @@ func (x *srpcEchoer_EchoClientStreamStream) Recv() (*EchoMsg, error) {
 }
 
 func (x *srpcEchoer_EchoClientStreamStream) RecvTo(m *EchoMsg) error {
+	return x.MsgRecv(m)
+}
+
+type SRPCEchoer_EchoBidiStreamStream interface {
+	srpc.Stream
+	Send(*EchoMsg) error
+	Recv() (*EchoMsg, error)
+}
+
+type srpcEchoer_EchoBidiStreamStream struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_EchoBidiStreamStream) Send(m *EchoMsg) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcEchoer_EchoBidiStreamStream) Recv() (*EchoMsg, error) {
+	m := new(EchoMsg)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_EchoBidiStreamStream) RecvTo(m *EchoMsg) error {
 	return x.MsgRecv(m)
 }

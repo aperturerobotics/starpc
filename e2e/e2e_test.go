@@ -125,3 +125,34 @@ func TestE2E_ClientStream(t *testing.T) {
 		return CheckClientStream(t, out, req)
 	})
 }
+
+func TestE2E_BidiStream(t *testing.T) {
+	ctx := context.Background()
+	RunE2E(t, func(client echo.SRPCEchoerClient) error {
+		strm, err := client.EchoBidiStream(ctx)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		clientExpected := "hello from client"
+		if err := strm.MsgSend(&echo.EchoMsg{Body: clientExpected}); err != nil {
+			t.Fatal(err.Error())
+		}
+		msg, err := strm.Recv()
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		expected := "hello from server"
+		if msg.GetBody() != expected {
+			t.Fatalf("expected %q got %q", expected, msg.GetBody())
+		}
+		msg, err = strm.Recv()
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		if msg.GetBody() != clientExpected {
+			t.Fatalf("expected %q got %q", clientExpected, msg.GetBody())
+		}
+		// expect no error closing
+		return strm.Close()
+	})
+}

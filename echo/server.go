@@ -2,6 +2,8 @@ package echo
 
 import (
 	context "context"
+	"errors"
+	"io"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -42,6 +44,29 @@ func (*EchoServer) EchoClientStream(strm SRPCEchoer_EchoClientStreamStream) erro
 		return err
 	}
 	return strm.SendAndClose(msg)
+}
+
+// EchoBidiStream implements SRPCEchoerServer
+func (s *EchoServer) EchoBidiStream(strm SRPCEchoer_EchoBidiStreamStream) error {
+	// server sends initial message
+	if err := strm.MsgSend(&EchoMsg{Body: "hello from server"}); err != nil {
+		return err
+	}
+	for {
+		msg, err := strm.Recv()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		if len(msg.GetBody()) == 0 {
+			return errors.New("got message with empty body")
+		}
+		if err := strm.Send(msg); err != nil {
+			return err
+		}
+	}
 }
 
 // _ is a type assertion
