@@ -15,6 +15,7 @@ type SRPCEchoerClient interface {
 
 	Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(ctx context.Context, in *EchoMsg) (SRPCEchoer_EchoServerStreamClient, error)
+	EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error)
 }
 
 type srpcEchoerClient struct {
@@ -70,9 +71,51 @@ func (x *srpcEchoer_EchoServerStreamClient) RecvTo(m *EchoMsg) error {
 	return x.MsgRecv(m)
 }
 
+func (c *srpcEchoerClient) EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "EchoClientStream", nil)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcEchoer_EchoClientStreamClient{stream}
+	return strm, nil
+}
+
+type SRPCEchoer_EchoClientStreamClient interface {
+	srpc.Stream
+	Send(*EchoMsg) error
+	CloseAndRecv() (*EchoMsg, error)
+}
+
+type srpcEchoer_EchoClientStreamClient struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_EchoClientStreamClient) Send(m *EchoMsg) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcEchoer_EchoClientStreamClient) CloseAndRecv() (*EchoMsg, error) {
+	if err := x.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(EchoMsg)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_EchoClientStreamClient) CloseAndMsgRecv(m *EchoMsg) error {
+	if err := x.CloseSend(); err != nil {
+		return err
+	}
+	return x.MsgRecv(m)
+}
+
 type SRPCEchoerServer interface {
 	Echo(context.Context, *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error
+	EchoClientStream(SRPCEchoer_EchoClientStreamStream) error
 }
 
 type SRPCEchoerUnimplementedServer struct{}
@@ -82,6 +125,10 @@ func (s *SRPCEchoerUnimplementedServer) Echo(context.Context, *EchoMsg) (*EchoMs
 }
 
 func (s *SRPCEchoerUnimplementedServer) EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error {
+	return srpc.ErrUnimplemented
+}
+
+func (s *SRPCEchoerUnimplementedServer) EchoClientStream(SRPCEchoer_EchoClientStreamStream) error {
 	return srpc.ErrUnimplemented
 }
 
@@ -97,6 +144,7 @@ func (SRPCEchoerHandler) GetMethodIDs() []string {
 	return []string{
 		"Echo",
 		"EchoServerStream",
+		"EchoClientStream",
 	}
 }
 
@@ -113,6 +161,8 @@ func (d *SRPCEchoerHandler) InvokeMethod(
 		return true, d.InvokeMethod_Echo(d.impl, strm)
 	case "EchoServerStream":
 		return true, d.InvokeMethod_EchoServerStream(d.impl, strm)
+	case "EchoClientStream":
+		return true, d.InvokeMethod_EchoClientStream(d.impl, strm)
 	default:
 		return false, nil
 	}
@@ -137,6 +187,11 @@ func (SRPCEchoerHandler) InvokeMethod_EchoServerStream(impl SRPCEchoerServer, st
 	}
 	serverStrm := &srpcEchoer_EchoServerStreamStream{strm}
 	return impl.EchoServerStream(req, serverStrm)
+}
+
+func (SRPCEchoerHandler) InvokeMethod_EchoClientStream(impl SRPCEchoerServer, strm srpc.Stream) error {
+	clientStrm := &srpcEchoer_EchoClientStreamStream{strm}
+	return impl.EchoClientStream(clientStrm)
 }
 
 func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
@@ -170,4 +225,33 @@ type srpcEchoer_EchoServerStreamStream struct {
 
 func (x *srpcEchoer_EchoServerStreamStream) Send(m *EchoMsg) error {
 	return x.MsgSend(m)
+}
+
+type SRPCEchoer_EchoClientStreamStream interface {
+	srpc.Stream
+	SendAndClose(*EchoMsg) error
+	Recv() (*EchoMsg, error)
+}
+
+type srpcEchoer_EchoClientStreamStream struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_EchoClientStreamStream) SendAndClose(m *EchoMsg) error {
+	if err := x.MsgSend(m); err != nil {
+		return err
+	}
+	return x.CloseSend()
+}
+
+func (x *srpcEchoer_EchoClientStreamStream) Recv() (*EchoMsg, error) {
+	m := new(EchoMsg)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_EchoClientStreamStream) RecvTo(m *EchoMsg) error {
+	return x.MsgRecv(m)
 }

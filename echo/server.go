@@ -35,5 +35,14 @@ func (*EchoServer) EchoServerStream(msg *EchoMsg, strm SRPCEchoer_EchoServerStre
 	return nil
 }
 
+// EchoClientStream implements SRPCEchoerServer
+func (*EchoServer) EchoClientStream(strm SRPCEchoer_EchoClientStreamStream) error {
+	msg, err := strm.Recv()
+	if err != nil {
+		return err
+	}
+	return strm.SendAndClose(msg)
+}
+
 // _ is a type assertion
 var _ SRPCEchoerServer = ((*EchoServer)(nil))

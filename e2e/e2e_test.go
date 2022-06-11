@@ -91,3 +91,37 @@ func TestE2E_ServerStream(t *testing.T) {
 		return CheckServerStream(t, out, req)
 	})
 }
+
+// CheckClientStream checks the server stream portion of the Echo test.
+func CheckClientStream(t *testing.T, out echo.SRPCEchoer_EchoClientStreamClient, req *echo.EchoMsg) error {
+	// send request
+	if err := out.MsgSend(req); err != nil {
+		return err
+	}
+	// expect 1 response
+	ret := &echo.EchoMsg{}
+	if err := out.MsgRecv(ret); err != nil {
+		return err
+	}
+	// check response
+	if ret.GetBody() != req.GetBody() {
+		return errors.Errorf("expected %q got %q", req.GetBody(), ret.GetBody())
+	}
+	_ = out.Close()
+	return nil
+}
+
+func TestE2E_ClientStream(t *testing.T) {
+	ctx := context.Background()
+	RunE2E(t, func(client echo.SRPCEchoerClient) error {
+		bodyTxt := "hello world"
+		req := &echo.EchoMsg{
+			Body: bodyTxt,
+		}
+		out, err := client.EchoClientStream(ctx)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		return CheckClientStream(t, out, req)
+	})
+}

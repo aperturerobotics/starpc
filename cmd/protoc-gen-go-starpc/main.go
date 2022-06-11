@@ -240,7 +240,8 @@ func (s *srpc) generateService(service *protogen.Service) {
 
 		if method.Desc.IsStreamingClient() {
 			// streaming client
-			s.P("TODO")
+			s.P("clientStrm := &", s.ServerStreamImpl(method), "{strm}")
+			s.P("return impl.", method.GoName, "(clientStrm)")
 		} else {
 			s.P("req := new(", inType, ")")
 			s.P("if err := strm.MsgRecv(req); err != nil { return err }")
@@ -504,7 +505,7 @@ func (s *srpc) generateServerMethod(method *protogen.Method) {
 		s.P("}")
 		s.P()
 
-		s.P("func (x *", s.ServerStreamImpl(method), ") MsgRecv(m *", s.InputType(method), ") error {")
+		s.P("func (x *", s.ServerStreamImpl(method), ") RecvTo(m *", s.InputType(method), ") error {")
 		s.P("return x.MsgRecv(m)")
 		s.P("}")
 		s.P()
