@@ -66,18 +66,18 @@ See the ts-proto README to generate the TypeScript for your protobufs.
 This repository uses protowrap, see the [Makefile](./Makefile).
 
 ```typescript
-import { RpcClient, WebSocketConn } from 'starpc'
-import { DemoServiceClientImpl } from './demo'
+import { WebSocketConn } from '../srpc'
+import { EchoerClientImpl } from '../echo/echo'
 
 const ws = new WebSocket('ws://localhost:5000/demo')
 const channel = new WebSocketConn(ws)
-const rpc = new RpcClient(channel)
-const demoServiceClient = new DemoServiceClientImpl(rpc)
+const client = channel.buildClient()
+const demoServiceClient = new EchoerClientImpl(client)
 
-const result = await demoServiceClient.DemoEcho({
-  msg: "Hello world!"
+const result = await demoServiceClient.Echo({
+  body: "Hello world!"
 })
-console.log('output', result.msg)
+console.log('output', result.body)
 ```
 
 `WebSocketConn` uses [js-libp2p-mplex] to multiplex streams over the WebSocket.

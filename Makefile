@@ -129,5 +129,11 @@ lint: $(GOLANGCI_LINT)
 fix: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run --fix
 
+.PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: integration
+integration: node_modules vendor
+	cd ./integration
+	go run -v ./

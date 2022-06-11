@@ -1,6 +1,8 @@
 /* eslint-disable */
 import * as Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
+import type { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 
 export const protobufPackage = 'echo'
 
@@ -65,6 +67,12 @@ export const EchoMsg = {
 export interface Echoer {
   /** Echo returns the given message. */
   Echo(request: EchoMsg): Promise<EchoMsg>
+  /** EchoServerStream is an example of a server -> client one-way stream. */
+  EchoServerStream(request: EchoMsg): Observable<EchoMsg>
+  /** EchoClientStream is an example of client->server one-way stream. */
+  EchoClientStream(request: Observable<EchoMsg>): Promise<EchoMsg>
+  /** EchoBidiStream is an example of a two-way stream. */
+  EchoBidiStream(request: Observable<EchoMsg>): Observable<EchoMsg>
 }
 
 export class EchoerClientImpl implements Echoer {
@@ -72,11 +80,48 @@ export class EchoerClientImpl implements Echoer {
   constructor(rpc: Rpc) {
     this.rpc = rpc
     this.Echo = this.Echo.bind(this)
+    this.EchoServerStream = this.EchoServerStream.bind(this)
+    this.EchoClientStream = this.EchoClientStream.bind(this)
+    this.EchoBidiStream = this.EchoBidiStream.bind(this)
   }
   Echo(request: EchoMsg): Promise<EchoMsg> {
     const data = EchoMsg.encode(request).finish()
     const promise = this.rpc.request('echo.Echoer', 'Echo', data)
     return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)))
+  }
+
+  EchoServerStream(request: EchoMsg): Observable<EchoMsg> {
+    const data = EchoMsg.encode(request).finish()
+    const result = this.rpc.serverStreamingRequest(
+      'echo.Echoer',
+      'EchoServerStream',
+      data
+    )
+    return result.pipe(map((data) => EchoMsg.decode(new _m0.Reader(data))))
+  }
+
+  EchoClientStream(request: Observable<EchoMsg>): Promise<EchoMsg> {
+    const data = request.pipe(
+      map((request) => EchoMsg.encode(request).finish())
+    )
+    const promise = this.rpc.clientStreamingRequest(
+      'echo.Echoer',
+      'EchoClientStream',
+      data
+    )
+    return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)))
+  }
+
+  EchoBidiStream(request: Observable<EchoMsg>): Observable<EchoMsg> {
+    const data = request.pipe(
+      map((request) => EchoMsg.encode(request).finish())
+    )
+    const result = this.rpc.bidirectionalStreamingRequest(
+      'echo.Echoer',
+      'EchoBidiStream',
+      data
+    )
+    return result.pipe(map((data) => EchoMsg.decode(new _m0.Reader(data))))
   }
 }
 
@@ -86,6 +131,21 @@ interface Rpc {
     method: string,
     data: Uint8Array
   ): Promise<Uint8Array>
+  clientStreamingRequest(
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
+  ): Promise<Uint8Array>
+  serverStreamingRequest(
+    service: string,
+    method: string,
+    data: Uint8Array
+  ): Observable<Uint8Array>
+  bidirectionalStreamingRequest(
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
+  ): Observable<Uint8Array>
 }
 
 type Builtin =
