@@ -238,15 +238,23 @@ func (s *srpc) generateService(service *protogen.Service) {
 			"(impl ", s.ServerIface(service), ", strm srpc.Stream) error {",
 		)
 
-		if !method.Desc.IsStreamingClient() && !method.Desc.IsStreamingServer() {
+		if method.Desc.IsStreamingClient() {
+			// streaming client
+			s.P("TODO")
+		} else {
 			s.P("req := new(", inType, ")")
 			s.P("if err := strm.MsgRecv(req); err != nil { return err }")
-			s.P("out, err := impl.", method.GoName, "(strm.Context(), req)")
-			s.P("if err != nil { return err }")
-			s.P("return strm.MsgSend(out)")
-		} else {
-			// streaming signature
-			s.P("TODO")
+
+			if method.Desc.IsStreamingServer() {
+				// non-streaming client, streaming server
+				s.P("serverStrm := &", s.ServerStreamImpl(method), "{strm}")
+				s.P("return impl.", method.GoName, "(req, serverStrm)")
+			} else {
+				// non-streaming client, non-streaming server
+				s.P("out, err := impl.", method.GoName, "(strm.Context(), req)")
+				s.P("if err != nil { return err }")
+				s.P("return strm.MsgSend(out)")
+			}
 		}
 
 		s.P("}")
@@ -274,7 +282,7 @@ func (s *srpc) generateService(service *protogen.Service) {
 
 	// Registration helper
 	s.P("func SRPCRegister", service.GoName, "(mux ", s.Ident(SRPCPackage, "Mux"), ", impl ", s.ServerIface(service), ") error {")
-	s.P("return mux.Register(&", s.ServerHandler(service), "{})")
+	s.P("return mux.Register(&", s.ServerHandler(service), "{impl: impl})")
 	s.P("}")
 
 	// Server methods
@@ -318,15 +326,18 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 		return
 	}
 
-	s.P("stream, err := c.cc.NewStream(ctx, ", serviceQuote, ", ", methodQuote, ")")
-	s.P("if err != nil { return nil, err }")
-	// s.ClientStreamImpl(p)
-	s.P("x := &", "TODO", "{stream}")
+	firstMsgRef := "nil"
 	if !p.Desc.IsStreamingClient() {
-		s.P("if err := x.MsgSend(in); err != nil { return nil, err }")
-		s.P("if err := x.CloseSend(); err != nil { return nil, err }")
+		firstMsgRef = "in"
 	}
-	s.P("return x, nil")
+
+	s.P("stream, err := c.cc.NewStream(ctx, ", serviceQuote, ", ", methodQuote, ", ", firstMsgRef, ")")
+	s.P("if err != nil { return nil, err }")
+	s.P("strm := &", s.ClientStreamImpl(p), "{stream}")
+	if !p.Desc.IsStreamingClient() {
+		s.P("if err := strm.CloseSend(); err != nil { return nil, err }")
+	}
+	s.P("return strm, nil")
 	s.P("}")
 	s.P()
 
@@ -342,6 +353,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 	}
 	if genRecv {
 		s.P("Recv() (*", outType, ", error)")
+		s.P("RecvTo(*", outType, ") error")
 	}
 	if genCloseAndRecv {
 		s.P("CloseAndRecv() (*", outType, ", error)")
@@ -368,7 +380,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 		s.P("}")
 		s.P()
 
-		s.P("func (x *", s.ClientStreamImpl(p), ") MsgRecv(m *", outType, ") error {")
+		s.P("func (x *", s.ClientStreamImpl(p), ") RecvTo(m *", outType, ") error {")
 		s.P("return x.MsgRecv(m)")
 		s.P("}")
 		s.P()

@@ -6,7 +6,7 @@ service Echoer {
   // Echo returns the given message.
   rpc Echo(EchoMsg) returns (EchoMsg);
   // EchoServerStream is an example of a server -> client one-way stream.
-  // rpc EchoServerStream(EchoMsg) returns (stream EchoMsg);
+  rpc EchoServerStream(EchoMsg) returns (stream EchoMsg);
   // EchoClientStream is an example of client->server one-way stream.
   // rpc EchoClientStream(stream EchoMsg) returns (EchoMsg);
   // EchoBidiStream is an example of a two-way stream.

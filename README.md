@@ -1,6 +1,6 @@
 # Stream RPC
 
-**starpc** is a streaming Protobuf RPC service implementation.
+**starpc** is a simple streaming Protobuf RPC service implementation.
 
 Decouples the RPC layer with the Stream and Message framing layers, which
 significantly simplifies the protocol. Supports any two-way stream with message
@@ -21,11 +21,11 @@ Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
 
 # Usage
 
-## Go
-
 Use the [protobuf-project] template on the "starpc" branch.
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project
+
+## Go
 
 A basic example can be found in the [e2e test]:
 
@@ -62,6 +62,8 @@ A basic example can be found in the [e2e test]:
 ## TypeScript
 
 See the ts-proto README to generate the TypeScript for your protobufs.
+
+This repository uses protowrap, see the [Makefile](./Makefile).
 
 ```typescript
 import { RpcClient, WebSocketConn } from 'starpc'

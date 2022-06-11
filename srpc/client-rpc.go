@@ -55,6 +55,7 @@ func (r *ClientRPC) Start(writer Writer, firstMsg []byte) error {
 		return context.Canceled
 	default:
 	}
+	r.writer = writer
 	if err := writer.MsgSend(NewCallStartPacket(r.service, r.method, firstMsg)); err != nil {
 		r.Close()
 		return err

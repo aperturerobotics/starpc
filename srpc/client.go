@@ -13,7 +13,8 @@ type Client interface {
 	Invoke(ctx context.Context, service, method string, in, out Message) error
 
 	// NewStream starts a streaming RPC with the remote & returns the stream.
-	NewStream(ctx context.Context, service, method string) (Stream, error)
+	// firstMsg is optional.
+	NewStream(ctx context.Context, service, method string, firstMsg Message) (Stream, error)
 }
 
 // OpenStreamFunc opens a stream with a remote.
@@ -68,8 +69,27 @@ func (c *client) Invoke(rctx context.Context, service, method string, in, out Me
 }
 
 // NewStream starts a streaming RPC with the remote & returns the stream.
-func (c *client) NewStream(ctx context.Context, service, method string) (Stream, error) {
-	return nil, ErrUnimplemented
+// firstMsg is optional.
+func (c *client) NewStream(ctx context.Context, service, method string, firstMsg Message) (Stream, error) {
+	var firstMsgData []byte
+	if firstMsg != nil {
+		var err error
+		firstMsgData, err = firstMsg.MarshalVT()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	clientRPC := NewClientRPC(ctx, service, method)
+	writer, err := c.openStream(ctx, clientRPC.HandlePacket)
+	if err != nil {
+		return nil, err
+	}
+	if err := clientRPC.Start(writer, firstMsgData); err != nil {
+		return nil, err
+	}
+
+	return NewRPCStream(ctx, clientRPC.writer, clientRPC.dataCh), nil
 }
 
 // _ is a type assertion
