@@ -1,29 +1,26 @@
 package srpc
 
-import "context"
+import (
+	"context"
+	"net"
+)
 
 // NewServerPipe constructs a open stream func which creates an in-memory Pipe
 // Stream with the given Server. Starts read pumps for both. Starts the
-// HandleStream function on the server in a separate goroutine.
+// HandleConn function on the server in a separate goroutine.
 func NewServerPipe(server *Server) OpenStreamFunc {
 	return func(ctx context.Context, msgHandler func(pkt *Packet) error) (Writer, error) {
-		clientStream, serverStream := NewPipeStream(ctx)
+		srvPipe, clientPipe := net.Pipe()
 		go func() {
-			_ = server.HandleStream(serverStream)
+			_ = server.HandleConn(ctx, srvPipe)
 		}()
+		clientPrw := NewPacketReadWriter(clientPipe, msgHandler)
 		go func() {
-			defer serverStream.Close()
-			for {
-				msg := &Packet{}
-				err := clientStream.MsgRecv(msg)
-				if err != nil {
-					return
-				}
-				if err := msgHandler(msg); err != nil {
-					return
-				}
+			err := clientPrw.ReadPump()
+			if err != nil {
+				_ = clientPrw.Close()
 			}
 		}()
-		return clientStream, nil
+		return clientPrw, nil
 	}
 }

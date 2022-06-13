@@ -1,5 +1,8 @@
 package srpc
 
+// PacketHandler handles a packet.
+type PacketHandler = func(pkt *Packet) error
+
 // Validate performs cursory validation of the packet.
 func (p *Packet) Validate() error {
 	switch b := p.GetBody().(type) {

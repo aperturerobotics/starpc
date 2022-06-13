@@ -101,6 +101,7 @@ gents: $(PROTOWRAP) node_modules
 		--ts_proto_out=$$(pwd)/vendor \
 		--ts_proto_opt=forceLong=long \
 		--ts_proto_opt=oneof=unions \
+		--ts_proto_opt=esModuleInterop=true \
 		--proto_path $$(pwd)/vendor \
 		--print_structure \
 		--only_specified_files \
@@ -136,4 +137,4 @@ test:
 .PHONY: integration
 integration: node_modules vendor
 	cd ./integration
-	go run -v ./
+	bash integration.bash

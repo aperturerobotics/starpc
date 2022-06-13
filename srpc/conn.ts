@@ -1,7 +1,7 @@
 import type { Stream } from '@libp2p/interfaces/connection'
 import type { Duplex } from 'it-stream-types'
 import { Components } from '@libp2p/interfaces/components'
-import { MplexStreamMuxer } from '@libp2p/mplex/src/mplex'
+import { MplexStreamMuxer } from '@libp2p/mplex'
 import type { Stream as SRPCStream } from './stream'
 import { Client } from './client'
 
@@ -14,6 +14,7 @@ export class Conn implements Duplex<Uint8Array> {
   private muxer: MplexStreamMuxer
 
   constructor() {
+    // see https://github.com/libp2p/js-libp2p-mplex/pull/179
     this.muxer = new MplexStreamMuxer(new Components(), {
       onIncomingStream: this.handleIncomingStream.bind(this),
       onStreamEnd: this.handleStreamEnd.bind(this),

@@ -1,6 +1,9 @@
 package srpc
 
-import "context"
+import (
+	"context"
+	"io"
+)
 
 // Server handles incoming RPC streams with a mux.
 type Server struct {
@@ -15,24 +18,12 @@ func NewServer(mux Mux) *Server {
 	}
 }
 
-// HandleStream handles an incoming SRPC stream.
-// returns & closes the stream once the RPC is complete.
-func (s *Server) HandleStream(strm Stream) error {
-	rpc := NewServerRPC(strm.Context(), strm, s.mux)
-	ctx := rpc.Context()
-	defer rpc.Close()
-	for {
-		msg := &Packet{}
-		if err := strm.MsgRecv(msg); err != nil {
-			return err
-		}
-		if err := rpc.HandlePacket(msg); err != nil {
-			return err
-		}
-		select {
-		case <-ctx.Done():
-			return context.Canceled
-		default:
-		}
-	}
+// HandleConn handles an incoming ReadWriteCloser.
+func (s *Server) HandleConn(ctx context.Context, rwc io.ReadWriteCloser) error {
+	subCtx, subCtxCancel := context.WithCancel(ctx)
+	defer subCtxCancel()
+	serverRPC := NewServerRPC(subCtx, s.mux)
+	prw := NewPacketReadWriter(rwc, serverRPC.HandlePacket)
+	serverRPC.SetWriter(prw)
+	return prw.ReadPump()
 }

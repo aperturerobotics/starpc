@@ -157,8 +157,8 @@ export class ClientRPC {
         for await (const msg of source) {
           await this.handlePacket(msg)
         }
-      } catch (err: any) {
-        this.close(err)
+      } catch (err) {
+        this.close(err as Error)
       }
     }
   }

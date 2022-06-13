@@ -3,7 +3,12 @@ import type { TsProtoRpc } from './ts-proto-rpc'
 import type { OpenStreamFunc } from './stream'
 import { DataCb, ClientRPC } from './client-rpc'
 import { pipe } from 'it-pipe'
-import { decodePacketSource, encodePacketSource } from './packet'
+import {
+  decodePacketSource,
+  encodePacketSource,
+  parseLengthPrefixTransform,
+  prependLengthPrefixTransform,
+} from './packet'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
@@ -43,9 +48,9 @@ export class Client implements TsProtoRpc {
 
   // clientStreamingRequest starts a client side streaming request.
   public clientStreamingRequest(
-    service: string,
-    method: string,
-    data: Observable<Uint8Array>
+    _service: string,
+    _method: string,
+    _data: Observable<Uint8Array>
   ): Promise<Uint8Array> {
     // TODO
     throw new Error('TODO clientStreamingRequest')
@@ -53,18 +58,18 @@ export class Client implements TsProtoRpc {
 
   // serverStreamingRequest starts a server-side streaming request.
   public serverStreamingRequest(
-    service: string,
-    method: string,
-    data: Uint8Array
+    _service: string,
+    _method: string,
+    _data: Uint8Array
   ): Observable<Uint8Array> {
     throw new Error('TODO serverStreamingRequest')
   }
 
   // bidirectionalStreamingRequest starts a two-way streaming request.
   public bidirectionalStreamingRequest(
-    service: string,
-    method: string,
-    data: Observable<Uint8Array>
+    _service: string,
+    _method: string,
+    _data: Observable<Uint8Array>
   ): Observable<Uint8Array> {
     throw new Error('TODO bidirectionalStreamingRequest')
   }
@@ -80,7 +85,15 @@ export class Client implements TsProtoRpc {
   ): Promise<ClientRPC> {
     const conn = await this.openConnFn()
     const call = new ClientRPC(rpcService, rpcMethod, dataCb)
-    pipe(conn, decodePacketSource, call, encodePacketSource, conn)
+    pipe(
+      conn,
+      parseLengthPrefixTransform(),
+      decodePacketSource,
+      call,
+      encodePacketSource,
+      prependLengthPrefixTransform(),
+      conn,
+    )
     await call.writeCallStart(data)
     return call
   }

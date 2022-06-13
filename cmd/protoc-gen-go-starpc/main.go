@@ -434,6 +434,7 @@ func (s *srpc) generateUnimplementedServerMethod(method *protogen.Method) {
 	s.P()
 }
 
+/*
 func (s *srpc) generateServerReceiver(method *protogen.Method) {
 	s.P("func (srv interface{}, ctx context.Context, in1, in2 interface{}) (" + s.Ident(SRPCPackage, "Message") + ", error) {")
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
@@ -456,6 +457,7 @@ func (s *srpc) generateServerReceiver(method *protogen.Method) {
 	}
 	s.P(")")
 }
+*/
 
 func (s *srpc) generateServerMethod(method *protogen.Method) {
 	genSend := method.Desc.IsStreamingServer()

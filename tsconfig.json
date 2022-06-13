@@ -12,11 +12,15 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "error"
+    "importsNotUsedAsValues": "remove",
+    "esModuleInterop": true
   },
   "include": [
     "echo",
-    "srpc",
-    "integration"
-  ]
+    "srpc"
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": true
+  }
 }

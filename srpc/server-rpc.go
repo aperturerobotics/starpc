@@ -34,15 +34,19 @@ type ServerRPC struct {
 }
 
 // NewServerRPC constructs a new ServerRPC session.
-// the writer will be closed when the ServerRPC completes.
-func NewServerRPC(ctx context.Context, writer Writer, mux Mux) *ServerRPC {
+// note: call SetWriter before handling any incoming messages.
+func NewServerRPC(ctx context.Context, mux Mux) *ServerRPC {
 	rpc := &ServerRPC{
-		writer: writer,
 		dataCh: make(chan []byte, 5),
 		mux:    mux,
 	}
 	rpc.ctx, rpc.ctxCancel = context.WithCancel(ctx)
 	return rpc
+}
+
+// SetWriter sets the writer field.
+func (r *ServerRPC) SetWriter(w Writer) {
+	r.writer = w
 }
 
 // Context is canceled when the ServerRPC is no longer valid.
@@ -140,7 +144,7 @@ func (r *ServerRPC) invokeRPC() {
 		err = ErrUnimplemented
 	}
 	outPkt := NewCallDataPacket(nil, true, err)
-	_ = r.writer.MsgSend(outPkt)
+	_ = r.writer.WritePacket(outPkt)
 	r.ctxCancel()
 	_ = r.writer.Close()
 }

@@ -1,0 +1,4 @@
+Open issues:
+
+ - Change "importsNotUsedAsValues" to "error":
+   - https://github.com/stephenh/ts-proto/issues/594
