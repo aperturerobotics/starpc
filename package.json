@@ -35,6 +35,7 @@
     "singleQuote": true
   },
   "devDependencies": {
+    "@types/varint": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",
     "eslint": "^8.17.0",
@@ -49,6 +50,7 @@
   },
   "dependencies": {
     "@libp2p/mplex": "^1.1.2",
+    "event-iterator": "^2.0.0",
     "it-pipe": "^2.0.3",
     "it-pushable": "^3.0.0",
     "it-stream-types": "^1.0.4",
