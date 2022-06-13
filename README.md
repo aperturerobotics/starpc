@@ -30,7 +30,7 @@ Use the [protobuf-project] template on the "starpc" branch.
 A basic example can be found in the [e2e test]:
 
 ```go
-	// construct the server
+// construct the server
 echoServer := &echo.EchoServer{}
 mux := srpc.NewMux()
 if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
