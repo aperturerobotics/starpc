@@ -1,8 +1,9 @@
-import type { Observable } from 'rxjs'
+import { Observable, from as observableFrom } from 'rxjs'
 import type { TsProtoRpc } from './ts-proto-rpc'
 import type { OpenStreamFunc } from './stream'
 import { DataCb, ClientRPC } from './client-rpc'
 import { pipe } from 'it-pipe'
+import { pushable, Pushable } from 'it-pushable'
 import {
   decodePacketSource,
   encodePacketSource,
@@ -21,6 +22,17 @@ function unaryDataCb(resolve: (data: Uint8Array) => void): DataCb {
     return false
   }
 }
+
+// streamingDataCb builds a new streaming request data callback.
+/*
+function streamingDataCb(resolve: (data: Uint8Array) => void): DataCb {
+  return async (
+    data: Uint8Array
+  ): Promise<boolean | void> => {
+    // TODO
+  }
+}
+*/
 
 // writeClientStream registers the subscriber to write the client data stream.
 function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
@@ -45,7 +57,7 @@ function waitCallComplete(
 ) {
   call.waitComplete().catch(reject).finally(() => {
     // ensure we resolve it if no data was ever returned.
-    resolve(new Uint8Array(0))
+    resolve(new Uint8Array())
   })
 }
 
@@ -94,24 +106,58 @@ export class Client implements TsProtoRpc {
 
   // serverStreamingRequest starts a server-side streaming request.
   public serverStreamingRequest(
-    _service: string,
-    _method: string,
-    _data: Uint8Array
+    service: string,
+    method: string,
+    data: Uint8Array
   ): Observable<Uint8Array> {
-    throw new Error('TODO serverStreamingRequest')
+    const pushServerData: Pushable<Uint8Array> = pushable()
+    const serverData = observableFrom(pushServerData)
+    const dataCb: DataCb = async (data: Uint8Array): Promise<boolean | void> => {
+      // push the message to the observable
+      pushServerData.push(data)
+      // expect more messages
+      return true
+    }
+    this.startRpc(service, method, data, dataCb)
+      .then((call) => {
+        call.waitComplete().catch((err: Error) => {
+          pushServerData.throw(err)
+        }).finally(() => {
+          pushServerData.end()
+        })
+      })
+      .catch(pushServerData.throw.bind(pushServerData))
+    return serverData
   }
 
   // bidirectionalStreamingRequest starts a two-way streaming request.
   public bidirectionalStreamingRequest(
-    _service: string,
-    _method: string,
-    _data: Observable<Uint8Array>
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
   ): Observable<Uint8Array> {
-    throw new Error('TODO bidirectionalStreamingRequest')
+    const pushServerData: Pushable<Uint8Array> = pushable()
+    const serverData = observableFrom(pushServerData)
+    const dataCb: DataCb = async (data: Uint8Array): Promise<boolean | void> => {
+      // push the message to the observable
+      pushServerData.push(data)
+      // expect more messages
+      return true
+    }
+    this.startRpc(service, method, null, dataCb)
+      .then((call) => {
+        writeClientStream(call, data)
+        call.waitComplete().catch((err: Error) => {
+          pushServerData.throw(err)
+        }).finally(() => {
+          pushServerData.end()
+        })
+      })
+      .catch(pushServerData.throw.bind(pushServerData))
+    return serverData
   }
 
   // startRpc is a common utility function to begin a rpc call.
-  // returns the remote rpc id once the rpc call has begun
   // throws any error starting the rpc call
   private async startRpc(
     rpcService: string,

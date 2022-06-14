@@ -23,9 +23,27 @@ async function runRPC() {
     subscriber.complete()
   })
 
-  console.log('Calling Echo: client -> server streaming call...')
+  console.log('Calling EchoClientStream: client -> server...')
   result = await demoServiceClient.EchoClientStream(clientRequestStream)
   console.log('success: output', result.body)
+
+  console.log('Calling EchoServerStream: server -> client...')
+  const serverStream = demoServiceClient.EchoServerStream({
+    body: 'Hello world from server to client streaming request.',
+  })
+  await new Promise<void>((resolve, reject) => {
+    serverStream.subscribe({
+      next(result) {
+        console.log('server: output', result.body)
+      },
+      complete() {
+        resolve()
+      },
+      error(err: Error) {
+        reject(err)
+      },
+    })
+  })
 }
 
 runRPC().then(() => {
