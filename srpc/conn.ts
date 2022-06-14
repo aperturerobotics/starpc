@@ -5,9 +5,6 @@ import { MplexStreamMuxer } from '@libp2p/mplex'
 import type { Stream as SRPCStream } from './stream'
 import { Client } from './client'
 
-// ConnWriter is a function that writes a message to a connection.
-export type ConnWriter = (data: Uint8Array) => Promise<void>
-
 // Conn implements a generic connection with a two-way stream.
 export class Conn implements Duplex<Uint8Array> {
   // muxer is the mplex stream muxer.
