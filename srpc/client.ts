@@ -10,6 +10,45 @@ import {
   prependLengthPrefixTransform,
 } from './packet'
 
+// unaryDataCb builds a new unary request data callback.
+function unaryDataCb(resolve: (data: Uint8Array) => void): DataCb {
+  return async (
+    data: Uint8Array
+  ): Promise<boolean | void> => {
+    // resolve the promise
+    resolve(data)
+    // this is the last data we expect.
+    return false
+  }
+}
+
+// writeClientStream registers the subscriber to write the client data stream.
+function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
+  data.subscribe({
+    next(value) {
+      call.writeCallData(value)
+    },
+    error(err) {
+      call.close(err)
+    },
+    complete() {
+      call.writeCallData(new Uint8Array(0), true)
+    },
+  })
+}
+
+// waitCallComplete handles the call complete promise.
+function waitCallComplete(
+  call: ClientRPC,
+  resolve: (data: Uint8Array) => void,
+  reject: (err: Error) => void,
+) {
+  call.waitComplete().catch(reject).finally(() => {
+    // ensure we resolve it if no data was ever returned.
+    resolve(new Uint8Array(0))
+  })
+}
+
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
   // openConnFn is the open connection function.
@@ -27,20 +66,10 @@ export class Client implements TsProtoRpc {
     data: Uint8Array
   ): Promise<Uint8Array> {
     return new Promise<Uint8Array>((resolve, reject) => {
-      const dataCb: DataCb = async (
-        data: Uint8Array
-      ): Promise<boolean | void> => {
-        // resolve the promise
-        resolve(data)
-        // this is the last data we expect.
-        return false
-      }
+      const dataCb = unaryDataCb(resolve)
       this.startRpc(service, method, data, dataCb)
         .then((call) => {
-          call.waitComplete().finally(() => {
-            // ensure we resolve it if no data was ever returned.
-            resolve(new Uint8Array(0))
-          })
+          waitCallComplete(call, resolve, reject)
         })
         .catch(reject)
     })
@@ -48,12 +77,19 @@ export class Client implements TsProtoRpc {
 
   // clientStreamingRequest starts a client side streaming request.
   public clientStreamingRequest(
-    _service: string,
-    _method: string,
-    _data: Observable<Uint8Array>
+    service: string,
+    method: string,
+    data: Observable<Uint8Array>
   ): Promise<Uint8Array> {
-    // TODO
-    throw new Error('TODO clientStreamingRequest')
+    return new Promise<Uint8Array>((resolve, reject) => {
+      const dataCb = unaryDataCb(resolve)
+      this.startRpc(service, method, null, dataCb)
+        .then((call) => {
+          writeClientStream(call, data)
+          waitCallComplete(call, resolve, reject)
+        })
+        .catch(reject)
+    })
   }
 
   // serverStreamingRequest starts a server-side streaming request.
@@ -80,7 +116,7 @@ export class Client implements TsProtoRpc {
   private async startRpc(
     rpcService: string,
     rpcMethod: string,
-    data: Uint8Array,
+    data: Uint8Array | null,
     dataCb: DataCb
   ): Promise<ClientRPC> {
     const conn = await this.openConnFn()
@@ -94,7 +130,7 @@ export class Client implements TsProtoRpc {
       prependLengthPrefixTransform(),
       conn,
     )
-    await call.writeCallStart(data)
+    await call.writeCallStart(data || undefined)
     return call
   }
 }

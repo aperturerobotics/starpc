@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"nhooyr.io/websocket"
 )
 
@@ -33,7 +32,8 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
-		logrus.Error(err.Error())
+		// TODO: handle / log error?
+		_ = err
 		return
 	}
 	defer c.Close(websocket.StatusInternalError, "closed")
@@ -41,7 +41,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	wsConn, err := NewWebSocketConn(ctx, c, true)
 	if err != nil {
-		logrus.Error(err.Error())
+		// TODO: handle / log error?
 		c.Close(websocket.StatusInternalError, err.Error())
 		return
 	}
@@ -51,16 +51,16 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		strm, err := wsConn.AcceptStream()
 		if err != nil {
 			if err != io.EOF && err != context.Canceled {
-				logrus.Error(err.Error())
+				// TODO: handle / log error?
 				c.Close(websocket.StatusInternalError, err.Error())
 			}
 			return
 		}
 		go func() {
 			err := s.srpc.HandleConn(ctx, strm)
-			if err != nil && err != io.EOF && err != context.Canceled {
-				logrus.Error(err.Error())
-			}
+			_ = err
+			// TODO: handle / log error?
+			// err != nil && err != io.EOF && err != context.Canceled
 		}()
 	}
 }

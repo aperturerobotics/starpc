@@ -34,8 +34,11 @@ export class ClientRPC {
   private complete: Promise<void>
   // onComplete is called by the message handler when the call completes.
   private onComplete?: (err?: Error) => void
+  // closed indicates close has been called
+  private closed: boolean
 
   constructor(service: string, method: string, dataCb: DataCb | null) {
+    this.closed = false
     this.sink = this._createSink()
     const sourcev = this._createSource()
     this.source = sourcev
@@ -56,6 +59,7 @@ export class ClientRPC {
     })
     this.complete = new Promise<void>((resolveComplete, rejectComplete) => {
       this.onComplete = (err?: Error) => {
+        this.closed = true
         if (err) {
           rejectComplete(err)
         } else {
@@ -76,16 +80,31 @@ export class ClientRPC {
   }
 
   // writeCallStart writes the call start packet.
-  public async writeCallStart(data: Uint8Array) {
+  public async writeCallStart(data?: Uint8Array) {
     const callStart: CallStart = {
       rpcService: this.service,
       rpcMethod: this.method,
-      data,
+      data: data || new Uint8Array(0),
     }
     await this.writePacket({
       body: {
         $case: 'callStart',
         callStart,
+      },
+    })
+  }
+
+  // writeCallData writes the call data packet.
+  public async writeCallData(data: Uint8Array, complete?: boolean, error?: string) {
+    const callData: CallData = {
+      data,
+      complete: complete || false,
+      error: error || "",
+    }
+    await this.writePacket({
+      body: {
+        $case: 'callData',
+        callData,
       },
     })
   }
@@ -143,7 +162,10 @@ export class ClientRPC {
   }
 
   // close closes the active call if not already completed.
-  public close(err?: Error) {
+  public async close(err?: Error) {
+    if (!this.closed) {
+      await this.writeCallData(new Uint8Array(0), true, err ? err.message : "")
+    }
     if (!err) {
       err = new Error('call closed')
     }

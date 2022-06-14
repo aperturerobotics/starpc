@@ -1,6 +1,7 @@
 import { WebSocketConn } from '../dist/srpc/websocket.js'
-import { EchoerClientImpl } from '../dist/echo/echo.js'
+import { EchoerClientImpl, EchoMsg } from '../dist/echo/echo.js'
 import WebSocket from 'isomorphic-ws'
+import { Observable } from 'rxjs'
 
 async function runRPC() {
   const addr = 'ws://localhost:5000/demo'
@@ -10,11 +11,21 @@ async function runRPC() {
   const client = channel.buildClient()
   const demoServiceClient = new EchoerClientImpl(client)
 
-  console.log('Calling Echo...')
-  const result = await demoServiceClient.Echo({
+  console.log('Calling Echo: unary call...')
+  let result = await demoServiceClient.Echo({
     body: "Hello world!"
   })
-  console.log('output', result.body)
+  console.log('success: output', result.body)
+
+  // observable for client requests
+  const clientRequestStream = new Observable<EchoMsg>(subscriber => {
+    subscriber.next({body: 'Hello world from streaming request.'})
+    subscriber.complete()
+  })
+
+  console.log('Calling Echo: client -> server streaming call...')
+  result = await demoServiceClient.EchoClientStream(clientRequestStream)
+  console.log('success: output', result.body)
 }
 
 runRPC().then(() => {
