@@ -2,22 +2,14 @@
 
 **starpc** is a simple streaming Protobuf RPC service implementation.
 
-Decouples the RPC layer with the Stream and Message framing layers, which
-significantly simplifies the protocol. Supports any two-way stream with message
-framing, such as HTTP/2 or Yamux over WebSocket or BroadcastChannel.
-
 Implementation features:
 
  - Generates a Go server for proto3 services that does not use reflection.
  - Uses the **ts-proto** RPC interface to implement TypeScript clients.
  - Each RPC call is mapped to a Stream preventing head-of-line blocking.
 
-The Go backend provides an interface for forwarding the incoming RPC calls to
-the appropriate backend service.
-
-Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
-
-[vtprotobuf]: https://github.com/planetscale/vtprotobuf
+Decouples the RPC layer from the Stream and Message framing layers. Supports any
+two-way stream with message framing, such as HTTP/2 or WebSocket.
 
 # Usage: Client
 
@@ -91,6 +83,10 @@ console.log('output', result.body)
 Be sure to check out [drpc] as well: it's compatible with grpc, twirp, and more.
 
 [drpc]: https://github.com/storj/drpc
+
+Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
+
+[vtprotobuf]: https://github.com/planetscale/vtprotobuf
 
 # Support
 
