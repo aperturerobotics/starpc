@@ -68,7 +68,7 @@ func (r *PacketReaderWriter) ReadPump() error {
 				return errors.New("unexpected zero len prefix")
 			}
 			if currLen > uint32(maxMessageSize) {
-				return errors.Errorf("message size %d greater than maximum %d", currLen, maxMessageSize)
+				return errors.Errorf("message size %v greater than maximum %v", currLen, maxMessageSize)
 			}
 		}
 		if currLen != 0 && bufLen >= int(currLen)+4 {
