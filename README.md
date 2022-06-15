@@ -1,16 +1,15 @@
 # Stream RPC
 
-**starpc** is a fully-featured client and server for [Proto3 services] in both
-TypeScript and Go.
+**starpc** implements [Proto3 services] in both TypeScript and Go.
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
-One of the first libraries to support **client-to-server streaming** RPCs in the
-web browser.
+Supports **client-to-server streaming** RPCs in the web browser, currently not
+supported by any of the major RPC libraries.
 
-The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
+The [rpcproto](./srpc/rpcproto.proto) file describes the protocol.
 
-Uses any Stream multiplexer: implemented is [libp2p-mplex] over a WebSocket.
+Uses any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
