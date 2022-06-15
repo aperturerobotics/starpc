@@ -134,9 +134,9 @@ export class ClientRPC {
   }
 
   // handleCallStart handles a CallStart packet.
-  public async handleCallStart(_packet: Partial<CallStart>) {
+  public async handleCallStart(packet: Partial<CallStart>) {
     // we do not implement server -> client RPCs.
-    throw new Error('unexpected server to client rpc start')
+    throw new Error(`unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`)
   }
 
   // handleCallStartResp handles a CallStartResp packet.

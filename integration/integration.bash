@@ -20,8 +20,6 @@ trap cleanup EXIT
 sleep 1
 
 pushd ../
-# node --loader ts-node/esm ./integration/integration.ts
-# ./node_modules/.bin/ts-node --experimental-specifier-resolution=node --esm ./integration/integration.ts
 echo "Starting client..."
 node ./integration/integration.js
 popd

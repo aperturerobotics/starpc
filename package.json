@@ -2,7 +2,7 @@
   "name": "starpc",
   "version": "0.0.2",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "author": {
     "name": "Aperture Robotics LLC.",
     "email": "support@aperture.us",
@@ -15,6 +15,15 @@
       "url": "http://github.com/paralin"
     }
   ],
+  "main": "dist/srpc/index.js",
+  "types": "./dist/srpc/index.d.ts",
+  "files": [
+    "srpc",
+    "echo",
+    "dist/srpc",
+    "dist/echo",
+    "!**/*.tsbuildinfo"
+  ],
   "repository": {
     "url": "git@github.com:aperturerobotics/starpc.git"
   },
@@ -22,13 +31,14 @@
     "build": "tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "tsc",
     "codegen": "npm run gen",
+    "ci": "npm run build && npm run lint:js && npm run lint:go",
     "format": "prettier --write './srpc/**/(*.ts|*.tsx|*.js|*.html|*.css)'",
     "gen": "make genproto",
-    "test": "make test",
+    "test": "make test && npm run check",
     "test:integration": "make integration",
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
-    "lint:js": "eslint -c .eslintrc.js --ext .ts ./",
+    "lint:js": "eslint -c .eslintrc.js --ext .ts ./{srpc,echo}/**/*.ts",
     "postinstall": "patch-package",
     "precommit": "npm run format"
   },
@@ -44,12 +54,10 @@
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
-    "eslint-plugin-react-hooks": "^4.5.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.1",
     "patch-package": "^6.4.7",
-    "prettier": "^2.6.2",
-    "rimraf": "^3.0.2",
-    "ts-node": "^10.8.1",
+    "prettier": "^2.7.0",
     "ts-proto": "^1.115.4",
     "typescript": "^4.7.3"
   },
