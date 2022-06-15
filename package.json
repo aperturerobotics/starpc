@@ -56,7 +56,6 @@
     "eslint-config-standard-with-typescript": "^21.0.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.1",
-    "patch-package": "^6.4.7",
     "prettier": "^2.7.0",
     "ts-proto": "^1.115.4",
     "typescript": "^4.7.3"
@@ -71,6 +70,7 @@
     "it-stream-types": "^1.0.4",
     "it-ws": "^5.0.2",
     "protobufjs": "^6.11.3",
+    "patch-package": "^6.4.7",
     "rxjs": "^7.5.5",
     "ws": "^8.8.0"
   }
