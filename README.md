@@ -1,28 +1,25 @@
 # Stream RPC
 
-**starpc** is a simple streaming Protobuf RPC service implementation.
+Protobuf service implementation supporting **client-to-server streaming** RPCs.
 
 The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
-
-Implements a fully-featured client and server for Proto3 services in both
-TypeScript and Go.
-
-Implementation features:
-
- - Generates a Go server for proto3 services that does not use reflection.
- - Uses the **ts-proto** RPC interface to implement TypeScript clients.
- - Each RPC call is mapped to a Stream preventing head-of-line blocking.
 
 Leverages the Stream multiplexing of the underlying transport; for example:
 HTTP/2 or [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
-# Usage: Client
+# Example
 
-Use the [protobuf-project] template on the "starpc" branch.
+See the [protobuf-project] template on the "starpc" branch.
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project
+
+# Usage
+
+**starpc** is a fully-featured client and server for Proto3 services in both
+TypeScript and Go. Supports any AsyncIterable communication channel with an
+included implementation for WebSockets.
 
 ## Go
 
@@ -37,8 +34,10 @@ if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
 }
 server := srpc.NewServer(mux)
 
-// construct the client
+// create an in-memory connection to the server
 openStream := srpc.NewServerPipe(server)
+
+// construct the client
 client := srpc.NewClient(openStream)
 
 // construct the client rpc interface
@@ -62,6 +61,8 @@ if out.GetBody() != bodyTxt {
 
 See the ts-proto README to generate the TypeScript for your protobufs.
 
+Also check out the [integration](./integration/integration.ts) test.
+
 This repository uses protowrap, see the [Makefile](./Makefile).
 
 ```typescript
@@ -77,6 +78,15 @@ const result = await demoServiceClient.Echo({
   body: "Hello world!"
 })
 console.log('output', result.body)
+
+const clientRequestStream = new Observable<EchoMsg>(subscriber => {
+  subscriber.next({body: 'Hello world from streaming request.'})
+  subscriber.complete()
+})
+
+console.log('Calling EchoClientStream: client -> server...')
+result = await demoServiceClient.EchoClientStream(clientRequestStream)
+console.log('success: output', result.body)
 ```
 
 `WebSocketConn` uses [js-libp2p-mplex] to multiplex streams over the WebSocket.
