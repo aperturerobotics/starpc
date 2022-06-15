@@ -1,7 +1,9 @@
 # Stream RPC
 
-**starpc** is a fully-featured client and server for Proto3 services in both
+**starpc** is a fully-featured client and server for [Proto3 services] in both
 TypeScript and Go.
+
+[Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
 One of the first libraries to support **client-to-server streaming** RPCs.
 
