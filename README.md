@@ -14,6 +14,8 @@ HTTP/2 or [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
+The server side has not yet been implemented in TypeScript.
+
 # Examples
 
 See the [protobuf-project] template on the "starpc" branch.
