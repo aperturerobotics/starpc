@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -18,11 +18,17 @@
   "main": "dist/srpc/index.js",
   "types": "./dist/srpc/index.d.ts",
   "files": [
-    "srpc",
-    "echo",
-    "dist/srpc",
+    "!**/*.tsbuildinfo",
+    "Makefile",
     "dist/echo",
-    "!**/*.tsbuildinfo"
+    "dist/srpc",
+    "e2e",
+    "echo",
+    "go.mod",
+    "go.sum",
+    "integration",
+    "patches",
+    "srpc"
   ],
   "repository": {
     "url": "git@github.com:aperturerobotics/starpc.git"

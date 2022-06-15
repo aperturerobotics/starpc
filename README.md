@@ -16,6 +16,13 @@ HTTP/2 or [libp2p-mplex] over a WebSocket.
 
 The server side has not yet been implemented in TypeScript.
 
+# Usage
+
+Starting with the [protobuf-project] repository on the "starpc" branch.
+
+Use "git add" to add your new .proto files, then `yarn gen` to generate the
+TypeScript and Go code for them.
+
 # Examples
 
 See the [protobuf-project] template on the "starpc" branch.
