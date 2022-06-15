@@ -2,6 +2,7 @@
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
 import { Observable } from 'rxjs'
+import { EchoMsg } from '../vendor/github.com/aperturerobotics/starpc/echo/echo'
 import { map } from 'rxjs/operators'
 
 export const protobufPackage = 'echo'

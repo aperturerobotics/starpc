@@ -1,6 +1,11 @@
 /* eslint-disable */
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
+import {
+  CallStart,
+  CallStartResp,
+  CallData,
+} from '../vendor/github.com/aperturerobotics/starpc/srpc/rpcproto'
 
 export const protobufPackage = 'srpc'
 

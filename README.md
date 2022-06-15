@@ -151,7 +151,7 @@ Community contributions and discussion are welcomed!
 
 Please open a [GitHub issue] with any questions / issues.
 
-[GitHub issue]: https://github.com/aperturerobotics/bifrost/issues/new
+[GitHub issue]: https://github.com/aperturerobotics/starpc/issues/new
 
 ... or feel free to reach out on [Matrix Chat] or [Discord].
 

@@ -4,14 +4,14 @@ go 1.18
 
 require (
 	github.com/pkg/errors v0.9.1
-	google.golang.org/protobuf v1.26.0
-	nhooyr.io/websocket v1.8.7
+	google.golang.org/protobuf v1.27.1
+	nhooyr.io/websocket v1.8.8-0.20210410000328-8dee580a7f74
 )
 
 require (
 	github.com/libp2p/go-libp2p v0.20.1
-	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
+	github.com/libp2p/go-libp2p-core v0.16.1
+	github.com/sirupsen/logrus v1.8.2-0.20220112234510-85981c045988
 )
 
 require (
@@ -23,9 +23,8 @@ require (
 	github.com/ipfs/go-cid v0.1.0 // indirect
 	github.com/ipfs/go-log/v2 v2.5.1 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect
-	github.com/libp2p/go-libp2p-core v0.16.1 // indirect
 	github.com/libp2p/go-mplex v0.7.0 // indirect
 	github.com/libp2p/go-openssl v0.0.7 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
@@ -44,7 +43,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.19.1 // indirect
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
+	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
+	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	lukechampine.com/blake3 v1.1.6 // indirect
 )
