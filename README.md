@@ -5,7 +5,8 @@ TypeScript and Go.
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
-One of the first libraries to support **client-to-server streaming** RPCs.
+One of the first libraries to support **client-to-server streaming** RPCs in the
+web browser.
 
 The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
 
