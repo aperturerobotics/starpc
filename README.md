@@ -10,8 +10,7 @@ web browser.
 
 The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
 
-Leverages the Stream multiplexing of the underlying transport; for example:
-HTTP/2 or [libp2p-mplex] over a WebSocket.
+Uses any Stream multiplexer: implemented is [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
