@@ -9,18 +9,30 @@ on:
 
 # Builds images for target boards.
 jobs:
-  build:
+  integration:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         go: ['1.18']
+        node: [16.x]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup go
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - name: Setup Go ${{ matrix.go }}
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
-      - name: Run go tests
-        run: |
-          go test -v ./...
+      - name: Setup Node.JS ${{ matrix.node }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Yarn install
+        run: yarn install
+      - name: Build Javascript
+        run: yarn run build
+      - name: Lint Javascript
+        run: yarn run lint:js
+      - name: Test Go
+        run: make test
+      - name: Test integration of Go and TypeScript
+        run: make integration

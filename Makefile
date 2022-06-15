@@ -136,5 +136,5 @@ test:
 
 .PHONY: integration
 integration: node_modules vendor
-	cd ./integration
-	bash integration.bash
+	cd ./integration && \
+		bash ./integration.bash

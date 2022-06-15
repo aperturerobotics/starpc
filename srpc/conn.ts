@@ -14,7 +14,6 @@ export class Conn implements Duplex<Uint8Array> {
     // see https://github.com/libp2p/js-libp2p-mplex/pull/179
     this.muxer = new MplexStreamMuxer(new Components(), {
       onIncomingStream: this.handleIncomingStream.bind(this),
-      onStreamEnd: this.handleStreamEnd.bind(this),
     })
   }
 
@@ -46,10 +45,5 @@ export class Conn implements Duplex<Uint8Array> {
   // handleIncomingStream handles an incoming stream.
   private handleIncomingStream(strm: Stream) {
     strm.abort(new Error('server -> client streams not implemented'))
-  }
-
-  // handleStreamEnd handles a stream closing.
-  private handleStreamEnd(_strm: Stream) {
-    // noop
   }
 }
