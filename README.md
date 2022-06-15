@@ -2,14 +2,21 @@
 
 **starpc** is a simple streaming Protobuf RPC service implementation.
 
+The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
+
+Implements a fully-featured client and server for Proto3 services in both
+TypeScript and Go.
+
 Implementation features:
 
  - Generates a Go server for proto3 services that does not use reflection.
  - Uses the **ts-proto** RPC interface to implement TypeScript clients.
  - Each RPC call is mapped to a Stream preventing head-of-line blocking.
 
-Decouples the RPC layer from the Stream and Message framing layers. Supports any
-two-way stream with message framing, such as HTTP/2 or WebSocket.
+Leverages the Stream multiplexing of the underlying transport; for example:
+HTTP/2 or [libp2p-mplex] over a WebSocket.
+
+[libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
 # Usage: Client
 
