@@ -27,7 +27,9 @@ TypeScript and Go code for them.
 
 See the [protobuf-project] template on the "starpc" branch.
 
-[protobuf-project]: https://github.com/aperturerobotics/protobuf-project
+The demo/boilerplate project implements the Echo example below.
+
+[protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
 
 ## Protobuf
 
