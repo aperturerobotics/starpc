@@ -1,6 +1,9 @@
 # Stream RPC
 
-Protobuf service implementation supporting **client-to-server streaming** RPCs.
+**starpc** is a fully-featured client and server for Proto3 services in both
+TypeScript and Go.
+
+One of the first libraries to support **client-to-server streaming** RPCs.
 
 The [rpcproto](./srpc/rpcproto.proto) file contains the entire protocol.
 
@@ -9,17 +12,37 @@ HTTP/2 or [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
-# Example
+# Examples
 
 See the [protobuf-project] template on the "starpc" branch.
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project
 
-# Usage
+## Protobuf
 
-**starpc** is a fully-featured client and server for Proto3 services in both
-TypeScript and Go. Supports any AsyncIterable communication channel with an
-included implementation for WebSockets.
+The following examples use the [echo](./echo/echo.proto) protobuf sample.
+
+```protobuf
+syntax = "proto3";
+package echo;
+
+// Echoer service returns the given message.
+service Echoer {
+  // Echo returns the given message.
+  rpc Echo(EchoMsg) returns (EchoMsg);
+  // EchoServerStream is an example of a server -> client one-way stream.
+  rpc EchoServerStream(EchoMsg) returns (stream EchoMsg);
+  // EchoClientStream is an example of client->server one-way stream.
+  rpc EchoClientStream(stream EchoMsg) returns (EchoMsg);
+  // EchoBidiStream is an example of a two-way stream.
+  rpc EchoBidiStream(stream EchoMsg) returns (stream EchoMsg);
+}
+
+// EchoMsg is the message body for Echo.
+message EchoMsg {
+  string body = 1;
+}
+```
 
 ## Go
 
@@ -62,6 +85,9 @@ if out.GetBody() != bodyTxt {
 See the ts-proto README to generate the TypeScript for your protobufs.
 
 Also check out the [integration](./integration/integration.ts) test.
+
+Supports any AsyncIterable communication channel with an included implementation
+for WebSockets.
 
 This repository uses protowrap, see the [Makefile](./Makefile).
 
