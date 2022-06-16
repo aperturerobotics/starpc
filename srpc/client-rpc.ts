@@ -95,11 +95,15 @@ export class ClientRPC {
   }
 
   // writeCallData writes the call data packet.
-  public async writeCallData(data: Uint8Array, complete?: boolean, error?: string) {
+  public async writeCallData(
+    data: Uint8Array,
+    complete?: boolean,
+    error?: string
+  ) {
     const callData: CallData = {
       data,
       complete: complete || false,
-      error: error || "",
+      error: error || '',
     }
     await this.writePacket({
       body: {
@@ -136,7 +140,9 @@ export class ClientRPC {
   // handleCallStart handles a CallStart packet.
   public async handleCallStart(packet: Partial<CallStart>) {
     // we do not implement server -> client RPCs.
-    throw new Error(`unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`)
+    throw new Error(
+      `unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`
+    )
   }
 
   // handleCallStartResp handles a CallStartResp packet.
@@ -164,7 +170,7 @@ export class ClientRPC {
   // close closes the active call if not already completed.
   public async close(err?: Error) {
     if (!this.closed) {
-      await this.writeCallData(new Uint8Array(0), true, err ? err.message : "")
+      await this.writeCallData(new Uint8Array(0), true, err ? err.message : '')
     }
     if (!err) {
       err = new Error('call closed')

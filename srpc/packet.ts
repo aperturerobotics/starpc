@@ -47,7 +47,11 @@ const uint32LEDecode = (data: Uint8Array) => {
 uint32LEDecode.bytes = 4
 
 // uint32LEEncode adds the length prefix.
-const uint32LEEncode = (value: number, target?: Uint8Array, offset?: number) => {
+const uint32LEEncode = (
+  value: number,
+  target?: Uint8Array,
+  offset?: number
+) => {
   target = target ?? new Uint8Array(4)
   const view = new DataView(target.buffer, target.byteOffset, target.byteLength)
   view.setUint32(offset ?? 0, value, true)
@@ -58,7 +62,7 @@ uint32LEEncode.bytes = 4
 // prependLengthPrefixTransform adds a length prefix to a message source.
 // little-endian uint32
 export function prependLengthPrefixTransform(): Transform<Uint8Array> {
-  return lengthPrefixEncode({lengthEncoder: uint32LEEncode})
+  return lengthPrefixEncode({ lengthEncoder: uint32LEEncode })
 }
 
 // parseLengthPrefixTransform parses the length prefix from a message source.

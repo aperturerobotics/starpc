@@ -13,9 +13,7 @@ import {
 
 // unaryDataCb builds a new unary request data callback.
 function unaryDataCb(resolve: (data: Uint8Array) => void): DataCb {
-  return async (
-    data: Uint8Array
-  ): Promise<boolean | void> => {
+  return async (data: Uint8Array): Promise<boolean | void> => {
     // resolve the promise
     resolve(data)
     // this is the last data we expect.
@@ -53,12 +51,15 @@ function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
 function waitCallComplete(
   call: ClientRPC,
   resolve: (data: Uint8Array) => void,
-  reject: (err: Error) => void,
+  reject: (err: Error) => void
 ) {
-  call.waitComplete().catch(reject).finally(() => {
-    // ensure we resolve it if no data was ever returned.
-    resolve(new Uint8Array())
-  })
+  call
+    .waitComplete()
+    .catch(reject)
+    .finally(() => {
+      // ensure we resolve it if no data was ever returned.
+      resolve(new Uint8Array())
+    })
 }
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
@@ -112,7 +113,9 @@ export class Client implements TsProtoRpc {
   ): Observable<Uint8Array> {
     const pushServerData: Pushable<Uint8Array> = pushable()
     const serverData = observableFrom(pushServerData)
-    const dataCb: DataCb = async (data: Uint8Array): Promise<boolean | void> => {
+    const dataCb: DataCb = async (
+      data: Uint8Array
+    ): Promise<boolean | void> => {
       // push the message to the observable
       pushServerData.push(data)
       // expect more messages
@@ -120,11 +123,14 @@ export class Client implements TsProtoRpc {
     }
     this.startRpc(service, method, data, dataCb)
       .then((call) => {
-        call.waitComplete().catch((err: Error) => {
-          pushServerData.throw(err)
-        }).finally(() => {
-          pushServerData.end()
-        })
+        call
+          .waitComplete()
+          .catch((err: Error) => {
+            pushServerData.throw(err)
+          })
+          .finally(() => {
+            pushServerData.end()
+          })
       })
       .catch(pushServerData.throw.bind(pushServerData))
     return serverData
@@ -138,7 +144,9 @@ export class Client implements TsProtoRpc {
   ): Observable<Uint8Array> {
     const pushServerData: Pushable<Uint8Array> = pushable()
     const serverData = observableFrom(pushServerData)
-    const dataCb: DataCb = async (data: Uint8Array): Promise<boolean | void> => {
+    const dataCb: DataCb = async (
+      data: Uint8Array
+    ): Promise<boolean | void> => {
       // push the message to the observable
       pushServerData.push(data)
       // expect more messages
@@ -147,11 +155,14 @@ export class Client implements TsProtoRpc {
     this.startRpc(service, method, null, dataCb)
       .then((call) => {
         writeClientStream(call, data)
-        call.waitComplete().catch((err: Error) => {
-          pushServerData.throw(err)
-        }).finally(() => {
-          pushServerData.end()
-        })
+        call
+          .waitComplete()
+          .catch((err: Error) => {
+            pushServerData.throw(err)
+          })
+          .finally(() => {
+            pushServerData.end()
+          })
       })
       .catch(pushServerData.throw.bind(pushServerData))
     return serverData
@@ -174,7 +185,7 @@ export class Client implements TsProtoRpc {
       call,
       encodePacketSource,
       prependLengthPrefixTransform(),
-      conn,
+      conn
     )
     await call.writeCallStart(data || undefined)
     return call
