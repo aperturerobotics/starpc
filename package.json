@@ -56,7 +56,7 @@
     "@types/varint": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",
-    "esbuild": "^0.14.43",
+    "esbuild": "^0.14.44",
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard-with-typescript": "^21.0.1",
@@ -67,7 +67,7 @@
     "typescript": "^4.7.3"
   },
   "dependencies": {
-    "@libp2p/mplex": "^1.2.1",
+    "@libp2p/mplex": "^2.0.0",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^4.0.1",
     "it-length-prefixed": "^7.0.1",
@@ -75,8 +75,8 @@
     "it-pushable": "^3.0.0",
     "it-stream-types": "^1.0.4",
     "it-ws": "^5.0.2",
-    "protobufjs": "^6.11.3",
     "patch-package": "^6.4.7",
+    "protobufjs": "^6.11.3",
     "rxjs": "^7.5.5",
     "ws": "^8.8.0"
   }
