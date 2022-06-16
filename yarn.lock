@@ -1686,7 +1686,7 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
-ts-poet@^4.11.0:
+ts-poet@^4.11.0, ts-poet@^4.12.0:
   version "4.12.0"
   resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-4.12.0.tgz#84fbd95c30fae3e87c7d4c5f2961a19b45bf645f"
   integrity sha512-faSedZm8S0ophkGm9VenV3P2e7IoUwReMLzLaBb4JBPsHTk/nuwWj4iQcs3D9bI5bdnTmCq0xnAgj2MU5y4BBQ==
