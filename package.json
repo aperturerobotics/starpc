@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -45,7 +45,7 @@
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
     "lint:js": "eslint -c .eslintrc.js --ext .ts ./{srpc,echo}/**/*.ts",
-    "postinstall": "patch-package",
+    "prepare": "patch-package",
     "precommit": "npm run format"
   },
   "prettier": {
