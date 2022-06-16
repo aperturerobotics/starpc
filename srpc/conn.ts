@@ -1,6 +1,6 @@
-import type { Stream } from '@libp2p/interfaces/connection'
+import type { Stream } from '@libp2p/interface-connection'
 import type { Duplex } from 'it-stream-types'
-import { Components } from '@libp2p/interfaces/components'
+import { Components } from '@libp2p/components'
 import { MplexStreamMuxer } from '@libp2p/mplex'
 import type { Stream as SRPCStream } from './stream'
 import { Client } from './client'
