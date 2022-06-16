@@ -1,5 +1,5 @@
 diff --git a/node_modules/ts-poet/build/Import.js b/node_modules/ts-poet/build/Import.js
-index 955a7eb..8c8b806 100644
+index 955a7eb..0ad3a67 100644
 --- a/node_modules/ts-poet/build/Import.js
 +++ b/node_modules/ts-poet/build/Import.js
 @@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
@@ -10,24 +10,41 @@ index 955a7eb..8c8b806 100644
  const Node_1 = require("./Node");
  const typeImportMarker = '(?:t:)?';
  const fileNamePattern = '(?:[a-zA-Z0-9._-]+)';
-@@ -288,6 +289,16 @@ function emitImports(imports, ourModulePath, importMappings) {
+@@ -274,6 +275,15 @@ function emitImports(imports, ourModulePath, importMappings) {
+         return '';
+     }
+     let result = '';
++    const thisProject = process.env.PROJECT;
++    let ourModuleImportPath = path.normalize(ourModulePath);
++    // HACK: if this is an import from our project, set the path accordingly
++    // github.com/aperturerobotics/protobuf-project/example/example -> ./example/example
++    if (thisProject && ourModuleImportPath.startsWith(thisProject)) {
++        ourModuleImportPath = './' + ourModuleImportPath.substr(thisProject.length + 1);
++    }
++    // result += `// ourModulePath: ${ourModulePath}\n`;
++    // result += `// ourModuleImportPath: ${ourModuleImportPath}\n`;
+     const augmentImports = lodash_1.default.groupBy(filterInstances(imports, Augmented), (a) => a.augmented);
+     // Group the imports by source module they're imported from
+     const importsByModule = lodash_1.default.groupBy(imports.filter((it) => it.source !== undefined &&
+@@ -288,7 +298,16 @@ function emitImports(imports, ourModulePath, importMappings) {
          if (modulePath in importMappings) {
              modulePath = importMappings[modulePath];
          }
-+      const thisProject = 'github.com/aperturerobotics/starpc';
-+      if (ourModulePath.startsWith(thisProject)) {
-+        // throw new Error(ourModulePath + ' : ' + modulePath);
-+        const projectModulePath = path.dirname(ourModulePath.substring(thisProject.length))
-+        ourModulePath = "./" + projectModulePath
-+      }
-+      if (modulePath.startsWith('./')) {
-+        modulePath = modulePath.substr(2);
-+        modulePath = './vendor/' + modulePath;
-+      }
-         const importPath = maybeRelativePath(ourModulePath, modulePath);
+-        const importPath = maybeRelativePath(ourModulePath, modulePath);
++        // HACK: if this is an import from a different project, use vendor/ tree.
++        if (thisProject && modulePath.startsWith('./')) {
++            if (!modulePath.substr(2).startsWith(thisProject)) {
++                modulePath = './vendor/' + path.normalize(modulePath);
++            } else {
++                modulePath = './' + modulePath.substr(3 + thisProject.length);
++            }
++        }
++        // result += `// modulePath: ${modulePath}\n`;
++        const importPath = maybeRelativePath(ourModuleImportPath, modulePath);
          // Output star imports individually
          unique(filterInstances(imports, ImportsAll).map((i) => i.symbol)).forEach((symbol) => {
-@@ -337,17 +348,15 @@ function maybeRelativePath(outputPath, importPath) {
+             result += `import * as ${symbol} from '${importPath}';\n`;
+@@ -337,17 +356,15 @@ function maybeRelativePath(outputPath, importPath) {
      if (!importPath.startsWith('./')) {
          return importPath;
      }
@@ -37,20 +54,19 @@ index 955a7eb..8c8b806 100644
 -    const numberOfDirs = basePath.split('').filter((l) => l === '/').length;
 -    if (numberOfDirs === 0) {
 -        return importPath;
--    }
++    importPath = path.normalize(importPath);
++    outputPath = path.normalize(outputPath);
++    const outputPathDir = path.dirname(outputPath);
++    let relativePath = path.relative(outputPathDir, importPath);
++    if (!relativePath.startsWith('.')) {
++      // ensure the js compiler recognizes this is a relative path.
++      relativePath = './' + relativePath;
+     }
 -    // Make an array of `..` to get our importPath to the root directory.
 -    const a = new Array(numberOfDirs);
 -    const prefix = a.fill('..', 0, numberOfDirs).join('/');
 -    return prefix + importPath.substring(1);
-+    // Drop the last element of importPath.
-+    // const importPathDir = path.dirname(importPath);
-+    // const outputPathDir = path.dirname(outputPath);
-+    // TODO
-+    // throw new Error('basePath: ' + basePath + ' importPath: ' + importPathDir);
-+    // Get the relative path from basePath to importPathDir.
-+    // return path.relative(basePath, importPathDir);
-+    // return path.relative(outputPathDir, importPath);
-+    return path.relative(outputPath, importPath);
++    return relativePath;
  }
  exports.maybeRelativePath = maybeRelativePath;
  /** Checks if `path1 === path2` despite minor path differences like `./foo` and `foo`. */
