@@ -1,18 +1,27 @@
 import type { Stream } from '@libp2p/interface-connection'
+import type { StreamMuxer, StreamMuxerFactory } from '@libp2p/interface-stream-muxer'
 import type { Duplex } from 'it-stream-types'
-import { Components } from '@libp2p/components'
-import { MplexStreamMuxer } from '@libp2p/mplex'
+import { Mplex } from '@libp2p/mplex'
 import type { Stream as SRPCStream } from './stream'
 import { Client } from './client'
+
+// ConnParams are parameters that can be passed to the Conn constructor.
+export interface ConnParams {
+  // muxerFactory overrides using the default factory (@libp2p/mplex).
+  muxerFactory?: StreamMuxerFactory
+}
 
 // Conn implements a generic connection with a two-way stream.
 export class Conn implements Duplex<Uint8Array> {
   // muxer is the mplex stream muxer.
-  private muxer: MplexStreamMuxer
+  private muxer: StreamMuxer
 
-  constructor() {
-    // see https://github.com/libp2p/js-libp2p-mplex/pull/179
-    this.muxer = new MplexStreamMuxer(new Components(), {
+  constructor(connParams?: ConnParams) {
+    let muxerFactory = connParams?.muxerFactory
+    if (!muxerFactory) {
+      muxerFactory = new Mplex()
+    }
+    this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
     })
   }

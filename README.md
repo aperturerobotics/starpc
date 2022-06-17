@@ -9,11 +9,11 @@ supported by any of the major RPC libraries.
 
 The [rpcproto](./srpc/rpcproto.proto) file describes the protocol.
 
-Uses any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
+Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
-The server side has not yet been implemented in TypeScript.
+Note: the server has not yet been implemented in TypeScript.
 
 # Usage
 
