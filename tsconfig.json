@@ -13,7 +13,8 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "importsNotUsedAsValues": "remove",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitOverride": true
   },
   "include": [
     "echo",

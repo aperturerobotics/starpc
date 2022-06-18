@@ -8,7 +8,6 @@ export const protobufPackage = 'srpc'
 export interface Packet {
   body?:
     | { $case: 'callStart'; callStart: CallStart }
-    | { $case: 'callStartResp'; callStartResp: CallStartResp }
     | { $case: 'callData'; callData: CallData }
 }
 
@@ -29,21 +28,16 @@ export interface CallStart {
    * Optional if streaming.
    */
   data: Uint8Array
-}
-
-/** CallStartResp is the response to CallStart. */
-export interface CallStartResp {
-  /**
-   * Error contains any error starting the RPC call.
-   * Empty if successful.
-   */
-  error: string
+  /** DataIsZero indicates Data is set with an empty message. */
+  dataIsZero: boolean
 }
 
 /** CallData contains a message in a streaming RPC sequence. */
 export interface CallData {
   /** Data contains the packet in the sequence. */
   data: Uint8Array
+  /** DataIsZero indicates Data is set with an empty message. */
+  dataIsZero: boolean
   /** Complete indicates the RPC call is completed. */
   complete: boolean
   /**
@@ -68,14 +62,8 @@ export const Packet = {
         writer.uint32(10).fork()
       ).ldelim()
     }
-    if (message.body?.$case === 'callStartResp') {
-      CallStartResp.encode(
-        message.body.callStartResp,
-        writer.uint32(18).fork()
-      ).ldelim()
-    }
     if (message.body?.$case === 'callData') {
-      CallData.encode(message.body.callData, writer.uint32(26).fork()).ldelim()
+      CallData.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
     }
     return writer
   },
@@ -94,12 +82,6 @@ export const Packet = {
           }
           break
         case 2:
-          message.body = {
-            $case: 'callStartResp',
-            callStartResp: CallStartResp.decode(reader, reader.uint32()),
-          }
-          break
-        case 3:
           message.body = {
             $case: 'callData',
             callData: CallData.decode(reader, reader.uint32()),
@@ -120,11 +102,6 @@ export const Packet = {
             $case: 'callStart',
             callStart: CallStart.fromJSON(object.callStart),
           }
-        : isSet(object.callStartResp)
-        ? {
-            $case: 'callStartResp',
-            callStartResp: CallStartResp.fromJSON(object.callStartResp),
-          }
         : isSet(object.callData)
         ? { $case: 'callData', callData: CallData.fromJSON(object.callData) }
         : undefined,
@@ -136,10 +113,6 @@ export const Packet = {
     message.body?.$case === 'callStart' &&
       (obj.callStart = message.body?.callStart
         ? CallStart.toJSON(message.body?.callStart)
-        : undefined)
-    message.body?.$case === 'callStartResp' &&
-      (obj.callStartResp = message.body?.callStartResp
-        ? CallStartResp.toJSON(message.body?.callStartResp)
         : undefined)
     message.body?.$case === 'callData' &&
       (obj.callData = message.body?.callData
@@ -161,16 +134,6 @@ export const Packet = {
       }
     }
     if (
-      object.body?.$case === 'callStartResp' &&
-      object.body?.callStartResp !== undefined &&
-      object.body?.callStartResp !== null
-    ) {
-      message.body = {
-        $case: 'callStartResp',
-        callStartResp: CallStartResp.fromPartial(object.body.callStartResp),
-      }
-    }
-    if (
       object.body?.$case === 'callData' &&
       object.body?.callData !== undefined &&
       object.body?.callData !== null
@@ -185,7 +148,12 @@ export const Packet = {
 }
 
 function createBaseCallStart(): CallStart {
-  return { rpcService: '', rpcMethod: '', data: new Uint8Array() }
+  return {
+    rpcService: '',
+    rpcMethod: '',
+    data: new Uint8Array(),
+    dataIsZero: false,
+  }
 }
 
 export const CallStart = {
@@ -201,6 +169,9 @@ export const CallStart = {
     }
     if (message.data.length !== 0) {
       writer.uint32(26).bytes(message.data)
+    }
+    if (message.dataIsZero === true) {
+      writer.uint32(32).bool(message.dataIsZero)
     }
     return writer
   },
@@ -221,6 +192,9 @@ export const CallStart = {
         case 3:
           message.data = reader.bytes()
           break
+        case 4:
+          message.dataIsZero = reader.bool()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -236,6 +210,7 @@ export const CallStart = {
       data: isSet(object.data)
         ? bytesFromBase64(object.data)
         : new Uint8Array(),
+      dataIsZero: isSet(object.dataIsZero) ? Boolean(object.dataIsZero) : false,
     }
   },
 
@@ -247,6 +222,7 @@ export const CallStart = {
       (obj.data = base64FromBytes(
         message.data !== undefined ? message.data : new Uint8Array()
       ))
+    message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
     return obj
   },
 
@@ -257,66 +233,18 @@ export const CallStart = {
     message.rpcService = object.rpcService ?? ''
     message.rpcMethod = object.rpcMethod ?? ''
     message.data = object.data ?? new Uint8Array()
-    return message
-  },
-}
-
-function createBaseCallStartResp(): CallStartResp {
-  return { error: '' }
-}
-
-export const CallStartResp = {
-  encode(
-    message: CallStartResp,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.error !== '') {
-      writer.uint32(10).string(message.error)
-    }
-    return writer
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): CallStartResp {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
-    let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBaseCallStartResp()
-    while (reader.pos < end) {
-      const tag = reader.uint32()
-      switch (tag >>> 3) {
-        case 1:
-          message.error = reader.string()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
-      }
-    }
-    return message
-  },
-
-  fromJSON(object: any): CallStartResp {
-    return {
-      error: isSet(object.error) ? String(object.error) : '',
-    }
-  },
-
-  toJSON(message: CallStartResp): unknown {
-    const obj: any = {}
-    message.error !== undefined && (obj.error = message.error)
-    return obj
-  },
-
-  fromPartial<I extends Exact<DeepPartial<CallStartResp>, I>>(
-    object: I
-  ): CallStartResp {
-    const message = createBaseCallStartResp()
-    message.error = object.error ?? ''
+    message.dataIsZero = object.dataIsZero ?? false
     return message
   },
 }
 
 function createBaseCallData(): CallData {
-  return { data: new Uint8Array(), complete: false, error: '' }
+  return {
+    data: new Uint8Array(),
+    dataIsZero: false,
+    complete: false,
+    error: '',
+  }
 }
 
 export const CallData = {
@@ -327,11 +255,14 @@ export const CallData = {
     if (message.data.length !== 0) {
       writer.uint32(10).bytes(message.data)
     }
+    if (message.dataIsZero === true) {
+      writer.uint32(16).bool(message.dataIsZero)
+    }
     if (message.complete === true) {
-      writer.uint32(16).bool(message.complete)
+      writer.uint32(24).bool(message.complete)
     }
     if (message.error !== '') {
-      writer.uint32(26).string(message.error)
+      writer.uint32(34).string(message.error)
     }
     return writer
   },
@@ -347,9 +278,12 @@ export const CallData = {
           message.data = reader.bytes()
           break
         case 2:
-          message.complete = reader.bool()
+          message.dataIsZero = reader.bool()
           break
         case 3:
+          message.complete = reader.bool()
+          break
+        case 4:
           message.error = reader.string()
           break
         default:
@@ -365,6 +299,7 @@ export const CallData = {
       data: isSet(object.data)
         ? bytesFromBase64(object.data)
         : new Uint8Array(),
+      dataIsZero: isSet(object.dataIsZero) ? Boolean(object.dataIsZero) : false,
       complete: isSet(object.complete) ? Boolean(object.complete) : false,
       error: isSet(object.error) ? String(object.error) : '',
     }
@@ -376,6 +311,7 @@ export const CallData = {
       (obj.data = base64FromBytes(
         message.data !== undefined ? message.data : new Uint8Array()
       ))
+    message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
     message.complete !== undefined && (obj.complete = message.complete)
     message.error !== undefined && (obj.error = message.error)
     return obj
@@ -384,6 +320,7 @@ export const CallData = {
   fromPartial<I extends Exact<DeepPartial<CallData>, I>>(object: I): CallData {
     const message = createBaseCallData()
     message.data = object.data ?? new Uint8Array()
+    message.dataIsZero = object.dataIsZero ?? false
     message.complete = object.complete ?? false
     message.error = object.error ?? ''
     return message

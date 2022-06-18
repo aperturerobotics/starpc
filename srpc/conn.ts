@@ -1,9 +1,13 @@
 import type { Stream } from '@libp2p/interface-connection'
-import type { StreamMuxer, StreamMuxerFactory } from '@libp2p/interface-stream-muxer'
+import type {
+  StreamMuxer,
+  StreamMuxerFactory,
+} from '@libp2p/interface-stream-muxer'
 import type { Duplex } from 'it-stream-types'
 import { Mplex } from '@libp2p/mplex'
-import type { Stream as SRPCStream } from './stream'
-import { Client } from './client'
+
+import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
+import { Client } from './client.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
 export interface ConnParams {
@@ -11,12 +15,27 @@ export interface ConnParams {
   muxerFactory?: StreamMuxerFactory
 }
 
+// StreamHandler handles incoming streams.
+// Implemented by Server.
+export interface StreamHandler {
+  // handleStream handles an incoming stream.
+  handleStream(strm: Duplex<Uint8Array>): Promise<void>
+}
+
 // Conn implements a generic connection with a two-way stream.
+// Implements the client by opening streams with the remote.
+// Implements the server by handling incoming streams.
+// If the server is unset, rejects any incoming streams.
 export class Conn implements Duplex<Uint8Array> {
   // muxer is the mplex stream muxer.
   private muxer: StreamMuxer
+  // server is the server side, if set.
+  private server?: StreamHandler
 
-  constructor(connParams?: ConnParams) {
+  constructor(server?: StreamHandler, connParams?: ConnParams) {
+    if (server) {
+      this.server = server
+    }
     let muxerFactory = connParams?.muxerFactory
     if (!muxerFactory) {
       muxerFactory = new Mplex()
@@ -51,8 +70,17 @@ export class Conn implements Duplex<Uint8Array> {
     return this.muxer.newStream()
   }
 
+  // buildOpenStreamFunc returns openStream bound to this conn.
+  public buildOpenStreamFunc(): OpenStreamFunc {
+    return this.openStream.bind(this)
+  }
+
   // handleIncomingStream handles an incoming stream.
   private handleIncomingStream(strm: Stream) {
-    strm.abort(new Error('server -> client streams not implemented'))
+    const server = this.server
+    if (!server) {
+      return strm.abort(new Error('server not implemented'))
+    }
+    server.handleStream(strm)
   }
 }

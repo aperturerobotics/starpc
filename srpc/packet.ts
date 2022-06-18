@@ -1,39 +1,20 @@
 import type { Source, Transform } from 'it-stream-types'
-import { Packet } from './rpcproto'
 import {
   encode as lengthPrefixEncode,
   decode as lengthPrefixDecode,
 } from 'it-length-prefixed'
 
-// decodePacketSource unmarshals and async yields encoded Packets.
-export async function* decodePacketSource(
-  source: Source<Uint8Array | Uint8Array[]>
-): AsyncIterable<Packet> {
-  for await (const pkt of source) {
-    if (Array.isArray(pkt)) {
-      for (const p of pkt) {
-        yield* [Packet.decode(p)]
-      }
-    } else {
-      yield* [Packet.decode(pkt)]
-    }
-  }
-}
+import { CallData, Packet } from './rpcproto.js'
+import {
+  buildDecodeMessageTransform,
+  buildEncodeMessageTransform,
+} from './message.js'
 
-// encodePacketSource marshals and async yields packets.
-export async function* encodePacketSource(
-  source: Source<Packet | Packet[]>
-): AsyncIterable<Uint8Array> {
-  for await (const pkt of source) {
-    if (Array.isArray(pkt)) {
-      for (const p of pkt) {
-        yield* [Packet.encode(p).finish()]
-      }
-    } else {
-      yield* [Packet.encode(pkt).finish()]
-    }
-  }
-}
+// decodePacketSource decodes packets from a binary data stream.
+export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
+
+// encodePacketSource encodes packets from a packet object stream.
+export const encodePacketSource = buildEncodeMessageTransform<Packet>(Packet)
 
 // uint32LEDecode removes the length prefix.
 const uint32LEDecode = (data: Uint8Array) => {
@@ -107,3 +88,36 @@ export function prependPacketLen(msgData: Uint8Array): Uint8Array {
   merged.set(msgData, msgLenData.length)
   return merged
 }
+
+/*
+// buildCallDataPacket builds a CallData packet.
+function buildCallDataPacket(data: Uint8Array): Packet {
+  const callData: CallData = {
+    data: p,
+    complete: false,
+    error: '',
+  }
+  const pkt: Packet = {
+    body: {
+      $case: 'callData',
+      callData: callData,
+    }
+  }
+  return pkt
+}
+
+// wrapCallDataTransform is a transformer that wraps call data into a Packet.
+export async function* wrapCallDataTransform(
+  source: Source<Uint8Array | Uint8Array>
+): AsyncIterable<Packet> {
+  for await (const pkt of source) {
+    if (Array.isArray(pkt)) {
+      for (const p of pkt) {
+        yield* [buildCallDataPacket(p)]
+      }
+    } else {
+      yield* [buildCallDataPacket(pkt)]
+    }
+  }
+}
+*/

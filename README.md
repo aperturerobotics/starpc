@@ -56,7 +56,7 @@ message EchoMsg {
 }
 ```
 
-## Go
+## Go: Server & Client
 
 A basic example can be found in the [e2e test]:
 
@@ -103,6 +103,29 @@ for WebSockets.
 
 This repository uses protowrap, see the [Makefile](./Makefile).
 
+`WebSocketConn` uses [js-libp2p-mplex] to multiplex streams over the WebSocket.
+
+[js-libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
+
+### Server
+
+```typescript
+import { WebSocketConn, Server, createMux } from '../srpc'
+import { EchoerClientImpl } from '../echo/echo'
+
+const mux = createMux()
+mux.register(TODO)
+const server = new Server(mux)
+
+// TODO: accept a WebSocket-like object.
+const ws = TODO
+const channel = new WebSocketConn(ws, server)
+// incoming streams will be handled by server.
+```
+
+
+### Client
+
 ```typescript
 import { WebSocketConn } from '../srpc'
 import { EchoerClientImpl } from '../echo/echo'
@@ -126,10 +149,6 @@ console.log('Calling EchoClientStream: client -> server...')
 result = await demoServiceClient.EchoClientStream(clientRequestStream)
 console.log('success: output', result.body)
 ```
-
-`WebSocketConn` uses [js-libp2p-mplex] to multiplex streams over the WebSocket.
-
-[js-libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
 # Attribution
 

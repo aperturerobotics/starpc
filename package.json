@@ -15,7 +15,7 @@
       "url": "http://github.com/paralin"
     }
   ],
-  "main": "dist/srpc/index.js",
+  "main": "./dist/srpc/index.js",
   "types": "./dist/srpc/index.d.ts",
   "files": [
     "!**/*.tsbuildinfo",
@@ -34,13 +34,15 @@
     "url": "git@github.com:aperturerobotics/starpc.git"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json --outDir ./dist/",
+    "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "tsc",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
-    "format": "prettier --write './srpc/**/(*.ts|*.tsx|*.js|*.html|*.css)'",
+    "format": "prettier --write './{srpc,echo,e2e,integration}/**/(*.ts|*.tsx|*.html|*.css)'",
     "gen": "make genproto",
-    "test": "make test && npm run check",
+    "test": "npm run test:js && npm run test:go",
+    "test:go": "make test",
+    "test:js": "npm run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.js --bundle --platform=node && node ./e2e.js",
     "test:integration": "make integration",
     "integration": "npm run test:integration",
     "lint": "npm run lint:go && npm run lint:js",
@@ -54,6 +56,9 @@
     "singleQuote": true
   },
   "devDependencies": {
+    "@babel/core": "^7.18.5",
+    "@babel/preset-env": "^7.18.2",
+    "@babel/preset-typescript": "^7.17.12",
     "@types/varint": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",
@@ -64,6 +69,9 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.1",
     "prettier": "^2.7.0",
+    "rimraf": "^3.0.2",
+    "ts-eager": "^2.0.2",
+    "ts-node": "^10.8.1",
     "ts-proto": "^1.115.4",
     "typescript": "^4.7.3"
   },

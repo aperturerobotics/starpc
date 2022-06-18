@@ -10,8 +10,6 @@ func (p *Packet) Validate() error {
 		return b.CallStart.Validate()
 	case *Packet_CallData:
 		return b.CallData.Validate()
-	case *Packet_CallStartResp:
-		return b.CallStartResp.Validate()
 	default:
 		return ErrUnrecognizedPacket
 	}
@@ -49,9 +47,10 @@ func NewCallDataPacket(data []byte, complete bool, err error) *Packet {
 	}
 	return &Packet{Body: &Packet_CallData{
 		CallData: &CallData{
-			Data:     data,
-			Complete: err != nil || complete,
-			Error:    errStr,
+			Data:       data,
+			DataIsZero: len(data) == 0 && !complete && err == nil,
+			Complete:   err != nil || complete,
+			Error:      errStr,
 		},
 	}}
 }
@@ -61,11 +60,5 @@ func (p *CallData) Validate() error {
 	if len(p.GetData()) == 0 && !p.GetComplete() && len(p.GetError()) == 0 {
 		return ErrEmptyPacket
 	}
-	return nil
-}
-
-// Validate performs cursory validation of the packet.
-func (p *CallStartResp) Validate() error {
-	// nothing to check, empty packet is valid.
 	return nil
 }

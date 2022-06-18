@@ -3,7 +3,7 @@ set -eo pipefail
 
 echo "Compiling ts..."
 # ../node_modules/.bin/tsc --out integration.js --project tsconfig.json
-../node_modules/.bin/esbuild integration.ts --bundle --platform=node --outfile=integration.js 
+../node_modules/.bin/esbuild integration.ts --bundle --platform=node --outfile=integration.js
 
 echo "Compiling go..."
 go build -o integration -v ./

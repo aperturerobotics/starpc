@@ -1,7 +1,8 @@
 import type { Duplex, Sink } from 'it-stream-types'
-import { Conn } from './conn'
+import { Conn, ConnParams } from './conn'
 import { EventIterator } from 'event-iterator'
 import { pipe } from 'it-pipe'
+import { Server } from './server'
 
 // BroadcastChannelIterable is a AsyncIterable wrapper for BroadcastChannel.
 export class BroadcastChannelIterable<T> implements Duplex<T> {
@@ -59,8 +60,12 @@ export class BroadcastChannelConn extends Conn {
   // channel is the broadcast channel iterable
   private channel: BroadcastChannelIterable<Uint8Array>
 
-  constructor(channel: BroadcastChannel) {
-    super()
+  constructor(
+    channel: BroadcastChannel,
+    server?: Server,
+    connParams?: ConnParams
+  ) {
+    super(server, connParams)
     this.channel = new BroadcastChannelIterable<Uint8Array>(channel)
     pipe(this, this.channel, this)
   }

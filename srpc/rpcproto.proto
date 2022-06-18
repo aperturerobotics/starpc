@@ -7,10 +7,8 @@ message Packet {
   oneof body {
     // CallStart initiates a new call.
     CallStart call_start = 1;
-    // CallStartResp is the response to CallStart.
-    CallStartResp call_start_resp = 2;
     // CallData is a message in a streaming RPC sequence.
-    CallData call_data = 3;
+    CallData call_data = 2;
   }
 }
 
@@ -25,22 +23,19 @@ message CallStart {
   // Data contains the request or the first message in the stream.
   // Optional if streaming.
   bytes data = 3;
-}
-
-// CallStartResp is the response to CallStart.
-message CallStartResp {
-  // Error contains any error starting the RPC call.
-  // Empty if successful.
-  string error = 1;
+  // DataIsZero indicates Data is set with an empty message.
+  bool data_is_zero = 4;
 }
 
 // CallData contains a message in a streaming RPC sequence.
 message CallData {
   // Data contains the packet in the sequence.
   bytes data = 1;
+  // DataIsZero indicates Data is set with an empty message.
+  bool data_is_zero = 2;
   // Complete indicates the RPC call is completed.
-  bool complete = 2;
+  bool complete = 3;
   // Error contains any error that caused the RPC to fail.
   // If set, implies complete=true.
-  string error = 3;
+  string error = 4;
 }

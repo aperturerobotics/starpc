@@ -66,8 +66,6 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 		return r.HandleCallStart(b.CallStart)
 	case *Packet_CallData:
 		return r.HandleCallData(b.CallData)
-	case *Packet_CallStartResp:
-		return r.HandleCallStartResp(b.CallStartResp)
 	default:
 		return nil
 	}
@@ -85,7 +83,10 @@ func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 	r.method, r.service = pkt.GetRpcMethod(), pkt.GetRpcService()
 
 	// process first data packet, if included
-	if data := pkt.GetData(); len(data) != 0 {
+	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
+		if data == nil {
+			data = []byte{}
+		}
 		select {
 		case r.dataCh <- data:
 		default:
@@ -106,7 +107,7 @@ func (r *ServerRPC) HandleCallData(pkt *CallData) error {
 		return ErrCompleted
 	}
 
-	if data := pkt.GetData(); len(data) != 0 {
+	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
 		select {
 		case <-r.ctx.Done():
 			return context.Canceled
@@ -126,12 +127,6 @@ func (r *ServerRPC) HandleCallData(pkt *CallData) error {
 	}
 
 	return nil
-}
-
-// HandleCallStartResp handles the CallStartResp packet.
-func (r *ServerRPC) HandleCallStartResp(resp *CallStartResp) error {
-	// client-side calls not supported
-	return errors.Wrap(ErrUnrecognizedPacket, "call start resp packet unexpected")
 }
 
 // invoke invokes the RPC after CallStart is received.
