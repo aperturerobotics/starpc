@@ -64,10 +64,18 @@ export class StaticHandler implements Handler {
   }
 }
 
+// MethodProto is a function which matches one of the RPC signatures.
+type MethodProto =
+  ((request: unknown) => Promise<unknown>) |
+    ((request: unknown) => Observable<unknown>) |
+    ((request: Observable<unknown>) => Promise<unknown>) |
+    ((request: Observable<unknown>) => Observable<unknown>)
+
+
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn(
   methodInfo: MethodDefinition<unknown, unknown>,
-  methodProto: Function
+  methodProto: MethodProto
 ): InvokeFn {
   const requestDecode = buildDecodeMessageTransform(methodInfo.requestType)
   return async (dataSource: Source<Uint8Array>, dataSink: Sink<Uint8Array>) => {
@@ -155,7 +163,7 @@ export function createHandler(definition: Definition, impl: any): Handler {
   const methodMap: MethodMap = {}
   for (const methodInfo of Object.values(definition.methods)) {
     const methodName = methodInfo.name
-    let methodProto: Function = impl[methodName]
+    let methodProto: MethodProto = impl[methodName]
     if (!methodProto) {
       continue
     }

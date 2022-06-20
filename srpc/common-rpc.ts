@@ -96,8 +96,11 @@ export class CommonRPC {
   }
 
   // handleCallStart handles a CallStart packet.
-  public async handleCallStart(_packet: Partial<CallStart>) {
+  public async handleCallStart(packet: Partial<CallStart>) {
     // no-op
+    throw new Error(
+      `unexpected call start: ${packet.rpcService}/${packet.rpcMethod}`
+    )
   }
 
  // pushRpcData pushes incoming rpc data to the rpc data source.

@@ -1,10 +1,10 @@
-import type { Source, Transform } from 'it-stream-types'
+import type { Transform } from 'it-stream-types'
 import {
   encode as lengthPrefixEncode,
   decode as lengthPrefixDecode,
 } from 'it-length-prefixed'
 
-import { CallData, Packet } from './rpcproto.js'
+import { Packet } from './rpcproto.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
