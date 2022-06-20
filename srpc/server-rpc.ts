@@ -31,7 +31,6 @@ export class ServerRPC extends CommonRPC {
     }
     this.pushRpcData(packet.data, packet.dataIsZero)
     this.invokeRPC(methodDef)
-    return super.handleCallStart(packet)
   }
 
   // handleCallData handles a CallData packet.
