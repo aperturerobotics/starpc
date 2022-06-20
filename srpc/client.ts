@@ -133,7 +133,7 @@ export class Client implements TsProtoRpc {
   private async startRpc(
     rpcService: string,
     rpcMethod: string,
-    data: Uint8Array | null,
+    data: Uint8Array | null
   ): Promise<ClientRPC> {
     const conn = await this.openConnFn()
     const call = new ClientRPC(rpcService, rpcMethod)

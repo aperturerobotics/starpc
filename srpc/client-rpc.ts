@@ -19,7 +19,7 @@ export class ClientRPC extends CommonRPC {
       rpcService: this.service,
       rpcMethod: this.method,
       data: data || new Uint8Array(0),
-      dataIsZero: (!!data) && data.length === 0,
+      dataIsZero: !!data && data.length === 0,
     }
     await this.writePacket({
       body: {

@@ -66,11 +66,10 @@ export class StaticHandler implements Handler {
 
 // MethodProto is a function which matches one of the RPC signatures.
 type MethodProto =
-  ((request: unknown) => Promise<unknown>) |
-    ((request: unknown) => Observable<unknown>) |
-    ((request: Observable<unknown>) => Promise<unknown>) |
-    ((request: Observable<unknown>) => Observable<unknown>)
-
+  | ((request: unknown) => Promise<unknown>)
+  | ((request: unknown) => Observable<unknown>)
+  | ((request: Observable<unknown>) => Promise<unknown>)
+  | ((request: Observable<unknown>) => Observable<unknown>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn(

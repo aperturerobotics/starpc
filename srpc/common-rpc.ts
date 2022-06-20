@@ -48,7 +48,7 @@ export class CommonRPC {
   ) {
     const callData: CallData = {
       data: data || new Uint8Array(0),
-      dataIsZero: (!!data) && data.length === 0,
+      dataIsZero: !!data && data.length === 0,
       complete: complete || false,
       error: error || '',
     }
@@ -103,8 +103,11 @@ export class CommonRPC {
     )
   }
 
- // pushRpcData pushes incoming rpc data to the rpc data source.
-  protected pushRpcData(data: Uint8Array | undefined, dataIsZero: boolean | undefined) {
+  // pushRpcData pushes incoming rpc data to the rpc data source.
+  protected pushRpcData(
+    data: Uint8Array | undefined,
+    dataIsZero: boolean | undefined
+  ) {
     if (dataIsZero) {
       if (!data || data.length !== 0) {
         data = new Uint8Array(0)

@@ -1,5 +1,4 @@
-import { InvokeFn } from 'srpc'
-import { Handler } from './handler'
+import { InvokeFn, Handler } from './handler'
 
 // Mux contains a set of <service, method> handlers.
 export interface Mux {

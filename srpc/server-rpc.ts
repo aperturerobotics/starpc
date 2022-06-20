@@ -44,10 +44,9 @@ export class ServerRPC extends CommonRPC {
   // invokeRPC starts invoking the RPC handler.
   private invokeRPC(invokeFn: InvokeFn) {
     const dataSink = this._createDataSink()
-    invokeFn(this.rpcDataSource, dataSink)
-      .catch((err) => {
-        this.close(err)
-      })
+    invokeFn(this.rpcDataSource, dataSink).catch((err) => {
+      this.close(err)
+    })
   }
 
   // _createDataSink creates a sink for outgoing data packets.
