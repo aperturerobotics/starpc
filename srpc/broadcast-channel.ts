@@ -51,11 +51,11 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
 // newBroadcastChannelIterable constructs a BroadcastChannelIterable with a channel name.
 export function newBroadcastChannelIterable<T>(
   readName: string,
-  writeName: string,
+  writeName: string
 ): BroadcastChannelIterable<T> {
   return new BroadcastChannelIterable<T>(
     new BroadcastChannel(readName),
-    new BroadcastChannel(writeName),
+    new BroadcastChannel(writeName)
   )
 }
 
@@ -73,7 +73,10 @@ export class BroadcastChannelConn extends Conn {
     connParams?: ConnParams
   ) {
     super(server, connParams)
-    this.channel = new BroadcastChannelIterable<Uint8Array>(readChannel, writeChannel)
+    this.channel = new BroadcastChannelIterable<Uint8Array>(
+      readChannel,
+      writeChannel
+    )
     pipe(this, this.channel, this)
   }
 
