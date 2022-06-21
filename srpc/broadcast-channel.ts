@@ -6,15 +6,18 @@ import { Server } from './server'
 
 // BroadcastChannelIterable is a AsyncIterable wrapper for BroadcastChannel.
 export class BroadcastChannelIterable<T> implements Duplex<T> {
-  // channel is the broadcast channel
-  public readonly channel: BroadcastChannel
+  // readChannel is the incoming broadcast channel
+  public readonly readChannel: BroadcastChannel
+  // writeChannel is the outgoing broadcast channel
+  public readonly writeChannel: BroadcastChannel
   // sink is the sink for incoming messages.
   public sink: Sink<T>
   // source is the source for outgoing messages.
   public source: AsyncIterable<T>
 
-  constructor(channel: BroadcastChannel) {
-    this.channel = channel
+  constructor(readChannel: BroadcastChannel, writeChannel: BroadcastChannel) {
+    this.readChannel = readChannel
+    this.writeChannel = writeChannel
     this.sink = this._createSink()
     this.source = this._createSource()
   }
@@ -23,7 +26,7 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
   private _createSink(): Sink<T> {
     return async (source) => {
       for await (const msg of source) {
-        this.channel.postMessage(msg)
+        this.writeChannel.postMessage(msg)
       }
     }
   }
@@ -36,10 +39,10 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
           queue.push(ev.data)
         }
       }
-      this.channel.addEventListener('message', messageListener)
+      this.readChannel.addEventListener('message', messageListener)
 
       return () => {
-        this.channel.removeEventListener('message', messageListener)
+        this.readChannel.removeEventListener('message', messageListener)
       }
     })
   }
@@ -47,10 +50,13 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
 
 // newBroadcastChannelIterable constructs a BroadcastChannelIterable with a channel name.
 export function newBroadcastChannelIterable<T>(
-  name: string
+  readName: string,
+  writeName: string,
 ): BroadcastChannelIterable<T> {
-  const channel = new BroadcastChannel(name)
-  return new BroadcastChannelIterable<T>(channel)
+  return new BroadcastChannelIterable<T>(
+    new BroadcastChannel(readName),
+    new BroadcastChannel(writeName),
+  )
 }
 
 // BroadcastChannelConn implements a connection with a BroadcastChannel.
@@ -61,17 +67,23 @@ export class BroadcastChannelConn extends Conn {
   private channel: BroadcastChannelIterable<Uint8Array>
 
   constructor(
-    channel: BroadcastChannel,
+    readChannel: BroadcastChannel,
+    writeChannel: BroadcastChannel,
     server?: Server,
     connParams?: ConnParams
   ) {
     super(server, connParams)
-    this.channel = new BroadcastChannelIterable<Uint8Array>(channel)
+    this.channel = new BroadcastChannelIterable<Uint8Array>(readChannel, writeChannel)
     pipe(this, this.channel, this)
   }
 
-  // getBroadcastChannel returns the BroadcastChannel.
-  public getBroadcastChannel(): BroadcastChannel {
-    return this.channel.channel
+  // getReadChannel returns the read BroadcastChannel.
+  public getReadChannel(): BroadcastChannel {
+    return this.channel.readChannel
+  }
+
+  // getWriteChannel returns the write BroadcastChannel.
+  public getWriteChannel(): BroadcastChannel {
+    return this.channel.writeChannel
   }
 }
