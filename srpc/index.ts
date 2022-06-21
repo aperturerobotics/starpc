@@ -5,3 +5,8 @@ export { Conn } from './conn.js'
 export { Handler, InvokeFn, createHandler, createInvokeFn } from './handler.js'
 export { Mux, createMux } from './mux.js'
 export { WebSocketConn } from './websocket.js'
+export {
+  BroadcastChannelIterable,
+  newBroadcastChannelIterable,
+  BroadcastChannelConn,
+} from './broadcast-channel'
