@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eo pipefail
 
+unset GOOS
+unset GOARCH
+
 echo "Compiling ts..."
 # ../node_modules/.bin/tsc --out integration.js --project tsconfig.json
 ../node_modules/.bin/esbuild integration.ts --bundle --platform=node --outfile=integration.js

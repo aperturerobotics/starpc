@@ -1,4 +1,4 @@
-import { WebSocketConn } from '../srpc'
+import { WebSocketConn } from '../srpc/websocket'
 import { runClientTest } from '../echo'
 import WebSocket from 'isomorphic-ws'
 
