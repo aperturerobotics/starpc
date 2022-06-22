@@ -37,6 +37,11 @@ export class Client implements TsProtoRpc {
     this.openConnFn = openConnFn
   }
 
+  // setOpenConnFn updates the openConnFn for the Client.
+  public setOpenConnFn(openConnFn: OpenStreamFunc) {
+    this.openConnFn = openConnFn
+  }
+
   // request starts a non-streaming request.
   public async request(
     service: string,
