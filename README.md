@@ -1,6 +1,6 @@
 # Stream RPC
 
-**starpc** implements [Proto3 services] in both TypeScript and Go.
+**starpc** implements [Proto3 services] (server & client) in both TypeScript and Go.
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
@@ -12,8 +12,6 @@ The [rpcproto](./srpc/rpcproto.proto) file describes the protocol.
 Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
-
-Note: the server has not yet been implemented in TypeScript.
 
 # Usage
 
