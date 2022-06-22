@@ -23,6 +23,11 @@ export class MessagePortIterable<T> implements Duplex<T> {
     this.source = this._source
   }
 
+  // close closes the message port.
+  public close() {
+    this.port.close()
+  }
+
   // _createSink initializes the sink field.
   private _createSink(): Sink<T> {
     return async (source) => {
@@ -72,5 +77,10 @@ export class MessagePortConn extends DuplexConn {
   // getMessagePort returns the MessagePort.
   public getMessagePort(): MessagePort {
     return this.messagePort.port
+  }
+
+  // close closes the message port.
+  public close() {
+    this.messagePort.close()
   }
 }

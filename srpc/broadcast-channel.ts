@@ -23,6 +23,12 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
     this.source = this._createSource()
   }
 
+  // close closes the broadcast channels.
+  public close() {
+    this.readChannel.close()
+    this.writeChannel.close()
+  }
+
   // _createSink initializes the sink field.
   private _createSink(): Sink<T> {
     return async (source) => {
@@ -89,5 +95,10 @@ export class BroadcastChannelConn extends DuplexConn {
   // getWriteChannel returns the write BroadcastChannel.
   public getWriteChannel(): BroadcastChannel {
     return this.broadcastChannel.writeChannel
+  }
+
+  // close closes the read and write channels.
+  public close() {
+    this.broadcastChannel.close()
   }
 }
