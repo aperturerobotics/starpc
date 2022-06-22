@@ -57,7 +57,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go func() {
-			err := s.srpc.HandleConn(ctx, strm)
+			err := s.srpc.HandleStream(ctx, strm)
 			_ = err
 			// TODO: handle / log error?
 			// err != nil && err != io.EOF && err != context.Canceled

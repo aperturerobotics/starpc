@@ -7,12 +7,12 @@ import (
 
 // NewServerPipe constructs a open stream func which creates an in-memory Pipe
 // Stream with the given Server. Starts read pumps for both. Starts the
-// HandleConn function on the server in a separate goroutine.
+// HandleStream function on the server in a separate goroutine.
 func NewServerPipe(server *Server) OpenStreamFunc {
 	return func(ctx context.Context, msgHandler func(pkt *Packet) error) (Writer, error) {
 		srvPipe, clientPipe := net.Pipe()
 		go func() {
-			_ = server.HandleConn(ctx, srvPipe)
+			_ = server.HandleStream(ctx, srvPipe)
 		}()
 		clientPrw := NewPacketReadWriter(clientPipe, msgHandler)
 		go func() {
