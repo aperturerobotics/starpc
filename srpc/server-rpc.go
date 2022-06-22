@@ -138,7 +138,7 @@ func (r *ServerRPC) invokeRPC() {
 	if err == nil && !ok {
 		err = ErrUnimplemented
 	}
-	outPkt := NewCallDataPacket(nil, true, err)
+	outPkt := NewCallDataPacket(nil, false, true, err)
 	_ = r.writer.WritePacket(outPkt)
 	r.ctxCancel()
 	_ = r.writer.Close()
@@ -150,6 +150,7 @@ func (r *ServerRPC) Close() {
 	r.ctxCancel()
 	if r.service == "" {
 		// invokeRPC has not been called
+		// otherwise, invokeRPC will call Close.
 		_ = r.writer.Close()
 	}
 }

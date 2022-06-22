@@ -3,10 +3,13 @@ package e2e
 import (
 	"context"
 	"io"
+	"net"
 	"testing"
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/libp2p/go-libp2p/p2p/muxer/mplex"
+	mp "github.com/libp2p/go-mplex"
 	"github.com/pkg/errors"
 )
 
@@ -20,9 +23,24 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	}
 	server := srpc.NewServer(mux)
 
+	// note: also possible to do without mplex:
+	// openStream := srpc.NewServerPipe(server)
+	// client := srpc.NewClient(openStream)
+
 	// construct the client
-	openStream := srpc.NewServerPipe(server)
-	client := srpc.NewClient(openStream)
+	clientPipe, serverPipe := net.Pipe()
+
+	ctx := context.Background()
+	go func() {
+		serverMp, _ := mp.NewMultiplex(serverPipe, false, nil)
+		_ = server.AcceptMuxedConn(ctx, mplex.NewMuxedConn(serverMp))
+	}()
+
+	clientMp, err := mp.NewMultiplex(clientPipe, true, nil)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	client := srpc.NewClientWithMuxedConn(mplex.NewMuxedConn(clientMp))
 
 	// construct the client rpc interface
 	clientEcho := echo.NewSRPCEchoerClient(client)

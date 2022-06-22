@@ -48,7 +48,7 @@ func (c *client) Invoke(rctx context.Context, service, method string, in, out Me
 	if err != nil {
 		return err
 	}
-	if err := clientRPC.Start(writer, firstMsg); err != nil {
+	if err := clientRPC.Start(writer, true, firstMsg); err != nil {
 		return err
 	}
 	msgs, err := clientRPC.ReadAll()
@@ -85,7 +85,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	if err != nil {
 		return nil, err
 	}
-	if err := clientRPC.Start(writer, firstMsgData); err != nil {
+	if err := clientRPC.Start(writer, firstMsg != nil, firstMsgData); err != nil {
 		return nil, err
 	}
 

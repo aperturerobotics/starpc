@@ -16,12 +16,13 @@ func (p *Packet) Validate() error {
 }
 
 // NewCallStartPacket constructs a new CallStart packet.
-func NewCallStartPacket(service, method string, data []byte) *Packet {
+func NewCallStartPacket(service, method string, data []byte, dataIsZero bool) *Packet {
 	return &Packet{Body: &Packet_CallStart{
 		CallStart: &CallStart{
 			RpcService: service,
 			RpcMethod:  method,
 			Data:       data,
+			DataIsZero: dataIsZero,
 		},
 	}}
 }
@@ -40,7 +41,7 @@ func (p *CallStart) Validate() error {
 }
 
 // NewCallDataPacket constructs a new CallData packet.
-func NewCallDataPacket(data []byte, complete bool, err error) *Packet {
+func NewCallDataPacket(data []byte, dataIsZero bool, complete bool, err error) *Packet {
 	var errStr string
 	if err != nil {
 		errStr = err.Error()
@@ -48,7 +49,7 @@ func NewCallDataPacket(data []byte, complete bool, err error) *Packet {
 	return &Packet{Body: &Packet_CallData{
 		CallData: &CallData{
 			Data:       data,
-			DataIsZero: len(data) == 0 && !complete && err == nil,
+			DataIsZero: dataIsZero,
 			Complete:   err != nil || complete,
 			Error:      errStr,
 		},

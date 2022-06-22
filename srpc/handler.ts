@@ -84,26 +84,42 @@ export function createInvokeFn(
     })
 
     // pipe responseSink to dataSink.
-    const responsePipe = pipe(
+    pipe(
       responseSink,
       buildEncodeMessageTransform(methodInfo.responseType),
       dataSink
     )
 
+    // requestSource is a Source of decoded request messages.
+    const requestSource = pipe(dataSource, requestDecode)
+
     // build the request argument.
     let requestArg: any
     if (methodInfo.requestStream) {
-      // requestSource is a Source of decoded request messages.
-      const requestSource = pipe(dataSource, requestDecode)
       // convert the request data source into an Observable<T>
       requestArg = observableFrom(requestSource)
     } else {
       // receive a single message for the argument.
-      const requestRx = requestDecode(dataSource)
-      for await (const msg of requestRx) {
-        requestArg = msg
-        break
+      for await (const msg of requestSource) {
+        if (msg) {
+          requestArg = msg
+          break
+        }
       }
+      if (!requestArg) {
+        console.error(
+          'BUG',
+          'requestDecode await loop returned nothing',
+          requestArg,
+          dataSource
+        )
+      } else {
+        console.log('got request object', requestArg)
+      }
+    }
+
+    if (!requestArg) {
+      throw new Error('request object was empty')
     }
 
     // Call the implementation.
@@ -128,18 +144,18 @@ export function createInvokeFn(
             },
             complete: () => {
               responseSink.end()
-              responsePipe.finally(() => {
-                resolve()
-              })
+              resolve()
             },
           })
         })
       } else {
         const responsePromise = responseObj as Promise<unknown>
+        console.log('responsePromise', responsePromise)
         if (!responsePromise.then) {
           throw new Error('expected return value to be a Promise')
         }
         const responseMsg = await responsePromise
+        console.log('responseMsg', responseMsg)
         if (!responseMsg) {
           throw new Error('expected non-empty response object')
         }
