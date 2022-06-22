@@ -63,6 +63,3 @@ func (w *WebSocketConn) OpenStream(ctx context.Context, msgHandler func(pkt *Pac
 func (w *WebSocketConn) Close() error {
 	return w.conn.Close(websocket.StatusGoingAway, "conn closed")
 }
-
-// _ is a type assertion
-var _ Conn = ((*WebSocketConn)(nil))
