@@ -1,8 +1,9 @@
 import type { Duplex, Sink } from 'it-stream-types'
-import { Conn, ConnParams } from './conn'
 import { EventIterator } from 'event-iterator'
-import { pipe } from 'it-pipe'
-import { Server } from './server'
+
+import { ConnParams } from './conn.js'
+import { Server } from './server.js'
+import { DuplexConn } from './conn-duplex.js'
 
 // BroadcastChannelIterable is a AsyncIterable wrapper for BroadcastChannel.
 export class BroadcastChannelIterable<T> implements Duplex<T> {
@@ -62,9 +63,9 @@ export function newBroadcastChannelIterable<T>(
 // BroadcastChannelConn implements a connection with a BroadcastChannel.
 //
 // expects Uint8Array objects over the BroadcastChannel.
-export class BroadcastChannelConn extends Conn {
-  // channel is the broadcast channel iterable
-  private channel: BroadcastChannelIterable<Uint8Array>
+export class BroadcastChannelConn extends DuplexConn {
+  // broadcastChannel is the broadcast channel iterable
+  private broadcastChannel: BroadcastChannelIterable<Uint8Array>
 
   constructor(
     readChannel: BroadcastChannel,
@@ -72,21 +73,21 @@ export class BroadcastChannelConn extends Conn {
     server?: Server,
     connParams?: ConnParams
   ) {
-    super(server, connParams)
-    this.channel = new BroadcastChannelIterable<Uint8Array>(
+    const broadcastChannel = new BroadcastChannelIterable<Uint8Array>(
       readChannel,
       writeChannel
     )
-    pipe(this, this.channel, this)
+    super(broadcastChannel, server, connParams)
+    this.broadcastChannel = broadcastChannel
   }
 
   // getReadChannel returns the read BroadcastChannel.
   public getReadChannel(): BroadcastChannel {
-    return this.channel.readChannel
+    return this.broadcastChannel.readChannel
   }
 
   // getWriteChannel returns the write BroadcastChannel.
   public getWriteChannel(): BroadcastChannel {
-    return this.channel.writeChannel
+    return this.broadcastChannel.writeChannel
   }
 }

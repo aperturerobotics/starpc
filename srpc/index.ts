@@ -9,4 +9,10 @@ export {
   BroadcastChannelIterable,
   newBroadcastChannelIterable,
   BroadcastChannelConn,
-} from './broadcast-channel'
+} from './broadcast-channel.js'
+
+export {
+  MessagePortIterable,
+  newMessagePortIterable,
+  MessagePortConn,
+} from './message-port.js'
