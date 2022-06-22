@@ -18,7 +18,7 @@ export class DuplexConn extends Conn {
   ) {
     super(server, connParams)
     this.channel = duplex
-    pipe(this, this.channel, this)
+    pipe(this.channel, this, this.channel)
   }
 
   // getChannelDuplex returns the Duplex channel.

@@ -84,26 +84,32 @@ export function createInvokeFn(
     })
 
     // pipe responseSink to dataSink.
-    const responsePipe = pipe(
+    pipe(
       responseSink,
       buildEncodeMessageTransform(methodInfo.responseType),
       dataSink
     )
 
+    // requestSource is a Source of decoded request messages.
+    const requestSource = pipe(dataSource, requestDecode)
+
     // build the request argument.
     let requestArg: any
     if (methodInfo.requestStream) {
-      // requestSource is a Source of decoded request messages.
-      const requestSource = pipe(dataSource, requestDecode)
       // convert the request data source into an Observable<T>
       requestArg = observableFrom(requestSource)
     } else {
       // receive a single message for the argument.
-      const requestRx = requestDecode(dataSource)
-      for await (const msg of requestRx) {
-        requestArg = msg
-        break
+      for await (const msg of requestSource) {
+        if (msg) {
+          requestArg = msg
+          break
+        }
       }
+    }
+
+    if (!requestArg) {
+      throw new Error('request object was empty')
     }
 
     // Call the implementation.
@@ -128,9 +134,7 @@ export function createInvokeFn(
             },
             complete: () => {
               responseSink.end()
-              responsePipe.finally(() => {
-                resolve()
-              })
+              resolve()
             },
           })
         })

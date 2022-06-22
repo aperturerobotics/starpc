@@ -46,9 +46,8 @@ func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 }
 
 // Start sets the writer and writes the MsgSend message.
-// firstMsg can be nil, but is usually set if this is a non-streaming rpc.
 // must only be called once!
-func (r *ClientRPC) Start(writer Writer, firstMsg []byte) error {
+func (r *ClientRPC) Start(writer Writer, writeFirstMsg bool, firstMsg []byte) error {
 	select {
 	case <-r.ctx.Done():
 		r.Close()
@@ -56,7 +55,13 @@ func (r *ClientRPC) Start(writer Writer, firstMsg []byte) error {
 	default:
 	}
 	r.writer = writer
-	pkt := NewCallStartPacket(r.service, r.method, firstMsg)
+	var firstMsgEmpty bool
+	if writeFirstMsg {
+		firstMsgEmpty = len(firstMsg) == 0
+	} else {
+		firstMsg = nil
+	}
+	pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
 	if err := writer.WritePacket(pkt); err != nil {
 		r.Close()
 		return err

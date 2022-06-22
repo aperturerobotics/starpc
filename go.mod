@@ -9,8 +9,9 @@ require (
 )
 
 require (
-	github.com/libp2p/go-libp2p v0.20.1
+	github.com/libp2p/go-libp2p v0.20.1-0.20220622205512-3cf611ad8c9c
 	github.com/libp2p/go-libp2p-core v0.16.1
+	github.com/libp2p/go-mplex v0.7.0
 	github.com/sirupsen/logrus v1.8.2-0.20220112234510-85981c045988
 )
 
@@ -25,7 +26,6 @@ require (
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect
-	github.com/libp2p/go-mplex v0.7.0 // indirect
 	github.com/libp2p/go-openssl v0.0.7 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1 // indirect

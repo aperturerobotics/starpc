@@ -42,7 +42,7 @@ func (r *RPCStream) MsgSend(msg Message) error {
 	if err != nil {
 		return err
 	}
-	outPkt := NewCallDataPacket(msgData, false, nil)
+	outPkt := NewCallDataPacket(msgData, len(msgData) == 0, false, nil)
 	return r.writer.WritePacket(outPkt)
 }
 
@@ -62,7 +62,7 @@ func (r *RPCStream) MsgRecv(msg Message) error {
 
 // CloseSend signals to the remote that we will no longer send any messages.
 func (r *RPCStream) CloseSend() error {
-	outPkt := NewCallDataPacket(nil, true, nil)
+	outPkt := NewCallDataPacket(nil, false, true, nil)
 	return r.writer.WritePacket(outPkt)
 }
 

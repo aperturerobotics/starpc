@@ -109,7 +109,7 @@ export class Client implements TsProtoRpc {
     method: string,
     data: Uint8Array
   ): Observable<Uint8Array> {
-    const pushServerData: Pushable<Uint8Array> = pushable()
+    const pushServerData: Pushable<Uint8Array> = pushable({ objectMode: true })
     const serverData = observableFrom(pushServerData)
     this.startRpc(service, method, data)
       .then(async (call) => {
@@ -132,7 +132,7 @@ export class Client implements TsProtoRpc {
     method: string,
     data: Observable<Uint8Array>
   ): Observable<Uint8Array> {
-    const pushServerData: Pushable<Uint8Array> = pushable()
+    const pushServerData: Pushable<Uint8Array> = pushable({ objectMode: true })
     const serverData = observableFrom(pushServerData)
     this.startRpc(service, method, null)
       .then(async (call) => {

@@ -17,7 +17,7 @@ export class WebSocketConn extends Conn {
     })
     this.socket = socket
     const socketDuplex = duplex(socket)
-    pipe(this.source, socketDuplex, this.sink)
+    pipe(socketDuplex, this, socketDuplex)
   }
 
   // getSocket returns the websocket.
