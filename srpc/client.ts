@@ -29,17 +29,45 @@ function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
-  // openConnFn is the open connection function.
-  // called when starting RPC.
-  private openConnFn: OpenStreamFunc
+  // openConnFn is a promise which contains the OpenStreamFunc.
+  private openConnFn: Promise<OpenStreamFunc>
+  // _openConnFn resolves openConnFn.
+  private _openConnFn?: (conn?: OpenStreamFunc, err?: Error) => void
 
-  constructor(openConnFn: OpenStreamFunc) {
-    this.openConnFn = openConnFn
+  constructor(openConnFn?: OpenStreamFunc) {
+    this.openConnFn = this.setOpenConnFn(openConnFn)
   }
 
   // setOpenConnFn updates the openConnFn for the Client.
-  public setOpenConnFn(openConnFn: OpenStreamFunc) {
-    this.openConnFn = openConnFn
+  public setOpenConnFn(openConnFn?: OpenStreamFunc): Promise<OpenStreamFunc> {
+    if (this._openConnFn) {
+      if (openConnFn) {
+        this._openConnFn(openConnFn)
+        this._openConnFn = undefined
+      }
+    } else {
+      if (openConnFn) {
+        this.openConnFn = Promise.resolve(openConnFn)
+      } else {
+        this.initOpenConnFn()
+      }
+    }
+    return this.openConnFn
+  }
+
+  // initOpenConnFn creates the empty Promise for openConnFn.
+  private initOpenConnFn(): Promise<OpenStreamFunc> {
+    const openPromise = new Promise<OpenStreamFunc>((resolve, reject) => {
+      this._openConnFn = (conn?: OpenStreamFunc, err?: Error) => {
+        if (err) {
+          reject(err)
+        } else if (conn) {
+          resolve(conn)
+        }
+      }
+    })
+    this.openConnFn = openPromise
+    return this.openConnFn
   }
 
   // request starts a non-streaming request.
@@ -140,7 +168,8 @@ export class Client implements TsProtoRpc {
     rpcMethod: string,
     data: Uint8Array | null
   ): Promise<ClientRPC> {
-    const conn = await this.openConnFn()
+    const openConnFn = await this.openConnFn
+    const conn = await openConnFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     pipe(
       conn,
