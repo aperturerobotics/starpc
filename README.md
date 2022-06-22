@@ -28,6 +28,8 @@ The demo/boilerplate project implements the Echo example below.
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
 
+This repository uses protowrap, see the [Makefile](./Makefile).
+
 ## Protobuf
 
 The following examples use the [echo](./echo/echo.proto) protobuf sample.
@@ -54,9 +56,9 @@ message EchoMsg {
 }
 ```
 
-## Go: Server & Client
+## Go
 
-A basic example can be found in the [e2e test]:
+This example demonstrates both the server and client:
 
 ```go
 // construct the server
@@ -94,39 +96,58 @@ if out.GetBody() != bodyTxt {
 
 See the ts-proto README to generate the TypeScript for your protobufs.
 
-Also check out the [integration](./integration/integration.ts) test.
+For an example of Go <-> TypeScript interop, see the [integration] test. For an
+example of TypeScript <-> TypeScript interop, see the [e2e] test.
 
-Supports any AsyncIterable communication channel with an included implementation
-for WebSockets.
+[e2e]: ./e2e/e2e.ts
+[integration]: ./integration/integration.ts
 
-This repository uses protowrap, see the [Makefile](./Makefile).
-
-`WebSocketConn` uses [js-libp2p-mplex] to multiplex streams over the WebSocket.
+Supports any AsyncIterable communication channel. `DuplexConn`,
+`MessagePortConn`, and `WebSocketConn` use [js-libp2p-mplex] to multiplex
+streams, but any multiplexer can be used.
 
 [js-libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
-### Server
+This example demonstrates both the server and client:
 
 ```typescript
-import { WebSocketConn, Server, createMux } from '../srpc'
-import { EchoerClientImpl } from '../echo/echo'
+import { pipe } from 'it-pipe'
+import { createHandler, createMux, Server, Client, Conn } from 'srpc'
+import { EchoerDefinition, EchoerServer, runClientTest } from 'srpc/echo'
 
 const mux = createMux()
-mux.register(TODO)
+const echoer = new EchoerServer()
+mux.register(createHandler(EchoerDefinition, echoer))
 const server = new Server(mux)
 
-// TODO: accept a WebSocket-like object.
-const ws = TODO
-const channel = new WebSocketConn(ws, server)
-// incoming streams will be handled by server.
+const clientConn = new Conn()
+const serverConn = new Conn(server)
+pipe(clientConn, serverConn, clientConn)
+const client = new Client(clientConn.buildOpenStreamFunc())
+
+console.log('Calling Echo: unary call...')
+let result = await demoServiceClient.Echo({
+  body: 'Hello world!',
+})
+console.log('success: output', result.body)
+
+const clientRequestStream = new Observable<EchoMsg>(subscriber => {
+  subscriber.next({body: 'Hello world from streaming request.'})
+  subscriber.complete()
+})
+
+console.log('Calling EchoClientStream: client -> server...')
+result = await demoServiceClient.EchoClientStream(clientRequestStream)
+console.log('success: output', result.body)
 ```
 
+## WebSocket
 
-### Client
+One way to integrate Go and TypeScript is over a WebSocket:
 
 ```typescript
-import { WebSocketConn } from '../srpc'
-import { EchoerClientImpl } from '../echo/echo'
+import { WebSocketConn } from 'srpc'
+import { EchoerClientImpl } from 'srpc/echo'
 
 const ws = new WebSocket('ws://localhost:5000/demo')
 const channel = new WebSocketConn(ws)
@@ -137,15 +158,6 @@ const result = await demoServiceClient.Echo({
   body: "Hello world!"
 })
 console.log('output', result.body)
-
-const clientRequestStream = new Observable<EchoMsg>(subscriber => {
-  subscriber.next({body: 'Hello world from streaming request.'})
-  subscriber.complete()
-})
-
-console.log('Calling EchoClientStream: client -> server...')
-result = await demoServiceClient.EchoClientStream(clientRequestStream)
-console.log('success: output', result.body)
 ```
 
 # Attribution
