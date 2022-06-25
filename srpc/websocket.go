@@ -43,7 +43,7 @@ func (w *WebSocketConn) AcceptStream() (io.ReadWriteCloser, error) {
 }
 
 // OpenStream tries to open a stream with the remote.
-func (w *WebSocketConn) OpenStream(ctx context.Context, msgHandler func(pkt *Packet) error) (Writer, error) {
+func (w *WebSocketConn) OpenStream(ctx context.Context, msgHandler PacketHandler) (Writer, error) {
 	muxedStream, err := w.mconn.OpenStream(ctx)
 	if err != nil {
 		return nil, err

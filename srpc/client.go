@@ -19,7 +19,7 @@ type Client interface {
 
 // OpenStreamFunc opens a stream with a remote.
 // msgHandler must not be called concurrently.
-type OpenStreamFunc = func(ctx context.Context, msgHandler func(pkt *Packet) error) (Writer, error)
+type OpenStreamFunc = func(ctx context.Context, msgHandler PacketHandler) (Writer, error)
 
 // client implements Client with a transport.
 type client struct {

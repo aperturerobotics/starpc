@@ -9,7 +9,7 @@ import (
 // Stream with the given Server. Starts read pumps for both. Starts the
 // HandleStream function on the server in a separate goroutine.
 func NewServerPipe(server *Server) OpenStreamFunc {
-	return func(ctx context.Context, msgHandler func(pkt *Packet) error) (Writer, error) {
+	return func(ctx context.Context, msgHandler PacketHandler) (Writer, error) {
 		srvPipe, clientPipe := net.Pipe()
 		go func() {
 			_ = server.HandleStream(ctx, srvPipe)
