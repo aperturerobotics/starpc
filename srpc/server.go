@@ -20,6 +20,11 @@ func NewServer(mux Mux) *Server {
 	}
 }
 
+// GetMux returns the mux.
+func (s *Server) GetMux() Mux {
+	return s.mux
+}
+
 // HandleStream handles an incoming ReadWriteCloser stream.
 func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) error {
 	subCtx, subCtxCancel := context.WithCancel(ctx)

@@ -46,8 +46,8 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
           queue.push(ev.data)
         }
       }
-      this.readChannel.addEventListener('message', messageListener)
 
+      this.readChannel.addEventListener('message', messageListener)
       return () => {
         this.readChannel.removeEventListener('message', messageListener)
       }
