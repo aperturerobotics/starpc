@@ -6,7 +6,6 @@ package echo
 
 import (
 	context "context"
-
 	srpc "github.com/aperturerobotics/starpc/srpc"
 )
 

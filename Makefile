@@ -1,12 +1,17 @@
+# https://github.com/aperturerobotics/protobuf-project
+
 PROTOWRAP=hack/bin/protowrap
 PROTOC_GEN_GO=hack/bin/protoc-gen-go
+PROTOC_GEN_GO_STARPC=hack/bin/protoc-gen-go-starpc
 PROTOC_GEN_VTPROTO=hack/bin/protoc-gen-go-vtproto
-PROTOC_GEN_STARPC=hack/bin/protoc-gen-go-starpc
 GOIMPORTS=hack/bin/goimports
 GOLANGCI_LINT=hack/bin/golangci-lint
 GO_MOD_OUTDATED=hack/bin/go-mod-outdated
-export GO111MODULE=on
 GOLIST=go list -f "{{ .Dir }}" -m
+
+export GO111MODULE=on
+undefine GOARCH
+undefine GOOS
 
 all:
 
@@ -17,19 +22,19 @@ $(PROTOC_GEN_GO):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/protoc-gen-go \
-		github.com/golang/protobuf/protoc-gen-go
+		google.golang.org/protobuf/cmd/protoc-gen-go
+
+$(PROTOC_GEN_GO_STARPC):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/protoc-gen-go-starpc \
+		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
 
 $(PROTOC_GEN_VTPROTO):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/protoc-gen-go-vtproto \
 		github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
-
-$(PROTOC_GEN_STARPC):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/protoc-gen-go-starpc \
-		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
 
 $(GOIMPORTS):
 	cd ./hack; \
@@ -56,7 +61,7 @@ $(GO_MOD_OUTDATED):
 		github.com/psampaz/go-mod-outdated
 
 .PHONY: gengo
-gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_VTPROTO) $(PROTOC_GEN_STARPC)
+gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_STARPC) $(PROTOC_GEN_VTPROTO)
 	go mod vendor
 	shopt -s globstar; \
 	set -eo pipefail; \
@@ -68,7 +73,6 @@ gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_VTPROTO) $(PROTOC
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
 		--go_out=$$(pwd)/vendor \
-		--go-starpc_out=$$(pwd)/vendor \
 		--go-vtproto_out=$$(pwd)/vendor \
 		--go-vtproto_opt=features=marshal+unmarshal+size+equal \
 		--proto_path $$(pwd)/vendor \
@@ -98,6 +102,7 @@ gents: $(PROTOWRAP) node_modules
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+		--go-starpc_out=$$(pwd)/vendor \
 		--ts_proto_out=$$(pwd)/vendor \
 		--ts_proto_opt=esModuleInterop=true \
 		--ts_proto_opt=fileSuffix=.pb \
@@ -120,15 +125,19 @@ genproto: gengo gents
 .PHONY: gen
 gen: genproto
 
+.PHONY: outdated
 outdated: $(GO_MOD_OUTDATED)
 	go list -mod=mod -u -m -json all | $(GO_MOD_OUTDATED) -update -direct
 
+.PHONY: list
 list: $(GO_MOD_OUTDATED)
 	go list -mod=mod -u -m -json all | $(GO_MOD_OUTDATED)
 
+.PHONY: lint
 lint: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run
 
+.PHONY: fix
 fix: $(GOLANGCI_LINT)
 	$(GOLANGCI_LINT) run --fix
 
@@ -138,5 +147,4 @@ test:
 
 .PHONY: integration
 integration: node_modules vendor
-	cd ./integration && \
-		bash ./integration.bash
+	cd ./integration && bash ./integration.bash
