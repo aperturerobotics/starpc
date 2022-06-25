@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-// RPCStream implements the stream interface passed to implementations.
-type RPCStream struct {
+// MsgStream implements the stream interface passed to implementations.
+type MsgStream struct {
 	// ctx is the stream context
 	ctx context.Context
 	// writer is the stream writer
@@ -15,10 +15,10 @@ type RPCStream struct {
 	dataCh chan []byte
 }
 
-// NewRPCStream constructs a new Stream with a ClientRPC.
+// NewMsgStream constructs a new Stream with a ClientRPC.
 // dataCh should be closed when no more messages will arrive.
-func NewRPCStream(ctx context.Context, writer Writer, dataCh chan []byte) *RPCStream {
-	return &RPCStream{
+func NewMsgStream(ctx context.Context, writer Writer, dataCh chan []byte) *MsgStream {
+	return &MsgStream{
 		ctx:    ctx,
 		writer: writer,
 		dataCh: dataCh,
@@ -26,12 +26,12 @@ func NewRPCStream(ctx context.Context, writer Writer, dataCh chan []byte) *RPCSt
 }
 
 // Context is canceled when the Stream is no longer valid.
-func (r *RPCStream) Context() context.Context {
+func (r *MsgStream) Context() context.Context {
 	return r.ctx
 }
 
 // MsgSend sends the message to the remote.
-func (r *RPCStream) MsgSend(msg Message) error {
+func (r *MsgStream) MsgSend(msg Message) error {
 	select {
 	case <-r.ctx.Done():
 		return context.Canceled
@@ -48,7 +48,7 @@ func (r *RPCStream) MsgSend(msg Message) error {
 
 // MsgRecv receives an incoming message from the remote.
 // Parses the message into the object at msg.
-func (r *RPCStream) MsgRecv(msg Message) error {
+func (r *MsgStream) MsgRecv(msg Message) error {
 	select {
 	case <-r.Context().Done():
 		return context.Canceled
@@ -61,16 +61,16 @@ func (r *RPCStream) MsgRecv(msg Message) error {
 }
 
 // CloseSend signals to the remote that we will no longer send any messages.
-func (r *RPCStream) CloseSend() error {
+func (r *MsgStream) CloseSend() error {
 	outPkt := NewCallDataPacket(nil, false, true, nil)
 	return r.writer.WritePacket(outPkt)
 }
 
 // Close closes the stream.
-func (r *RPCStream) Close() error {
+func (r *MsgStream) Close() error {
 	_ = r.writer.Close()
 	return nil
 }
 
 // _ is a type assertion
-var _ Stream = ((*RPCStream)(nil))
+var _ Stream = ((*MsgStream)(nil))

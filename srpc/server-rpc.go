@@ -133,7 +133,7 @@ func (r *ServerRPC) HandleCallData(pkt *CallData) error {
 func (r *ServerRPC) invokeRPC() {
 	// ctx := r.ctx
 	serviceID, methodID := r.service, r.method
-	strm := NewRPCStream(r.ctx, r.writer, r.dataCh)
+	strm := NewMsgStream(r.ctx, r.writer, r.dataCh)
 	ok, err := r.mux.InvokeMethod(serviceID, methodID, strm)
 	if err == nil && !ok {
 		err = ErrUnimplemented
