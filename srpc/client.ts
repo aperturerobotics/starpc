@@ -39,7 +39,9 @@ export class Client implements TsProtoRpc {
   }
 
   // setOpenStreamFn updates the openStreamFn for the Client.
-  public setOpenStreamFn(openStreamFn?: OpenStreamFunc): Promise<OpenStreamFunc> {
+  public setOpenStreamFn(
+    openStreamFn?: OpenStreamFunc
+  ): Promise<OpenStreamFunc> {
     if (this._openStreamFn) {
       if (openStreamFn) {
         this._openStreamFn(openStreamFn)

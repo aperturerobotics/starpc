@@ -13,6 +13,10 @@ Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 [libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
 
+[rpcstream] supports sub-streams for per-component sub-services.
+
+[rpcstream]: ./rpcstream
+
 # Usage
 
 Starting with the [protobuf-project] repository on the "starpc" branch.

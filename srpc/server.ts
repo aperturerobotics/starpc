@@ -29,15 +29,14 @@ export class Server implements StreamHandler {
   }
 
   // handleStream handles an incoming Uint8Array message duplex.
-  // closes the stream when the rpc completes.
-  public handleStream(stream: Stream): Promise<void> {
+  public handleStream(stream: Stream): ServerRPC {
     return this.handleDuplex(stream)
   }
 
   // handleDuplex handles an incoming message duplex.
-  public async handleDuplex(stream: Duplex<Uint8Array>): Promise<void> {
+  public handleDuplex(stream: Duplex<Uint8Array>): ServerRPC {
     const rpc = this.startRpc()
-    await pipe(
+    pipe(
       stream,
       parseLengthPrefixTransform(),
       decodePacketSource,
@@ -46,11 +45,13 @@ export class Server implements StreamHandler {
       prependLengthPrefixTransform(),
       stream
     )
+    return rpc
   }
 
   // handlePacketStream handles an incoming Packet duplex.
-  public async handlePacketStream(stream: Duplex<Packet>): Promise<void> {
+  public handlePacketStream(stream: Duplex<Packet>): ServerRPC {
     const rpc = this.startRpc()
-    await pipe(stream, rpc, stream)
+    pipe(stream, rpc, stream)
+    return rpc
   }
 }

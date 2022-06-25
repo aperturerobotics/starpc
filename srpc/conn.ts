@@ -19,7 +19,7 @@ export interface ConnParams {
 // Implemented by Server.
 export interface StreamHandler {
   // handleStream handles an incoming stream.
-  handleStream(strm: Duplex<Uint8Array>): Promise<void>
+  handleStream(strm: Duplex<Uint8Array>): void
 }
 
 // Conn implements a generic connection with a two-way stream.

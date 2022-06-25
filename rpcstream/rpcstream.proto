@@ -1,0 +1,19 @@
+syntax = "proto3";
+package rpcstream;
+
+// Packet is a packet encapsulating data for a RPC stream.
+message Packet {
+  oneof body {
+    // Init is the first packet in the stream.
+    // Sent only by the initiator.
+    RpcStreamInit init = 1;
+    // Data is the encapsulated data packet.
+    bytes data = 2;
+  }
+}
+
+// RpcStreamInit is the first message in a RPC stream.
+message RpcStreamInit {
+  // ComponentId is the identifier of the component making the request.
+  string component_id = 1;
+}

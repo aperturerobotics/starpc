@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -22,6 +22,7 @@
     "Makefile",
     "dist/echo",
     "dist/srpc",
+    "dist/rpcstream",
     "e2e",
     "echo",
     "go.mod",
@@ -39,7 +40,7 @@
     "deps": "depcheck",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
-    "format": "prettier --write './{srpc,echo,e2e,integration}/**/(*.ts|*.tsx|*.html|*.css)'",
+    "format": "prettier --write './{srpc,echo,e2e,integration,rpcstream}/**/(*.ts|*.tsx|*.html|*.css)'",
     "gen": "make genproto",
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",
@@ -48,7 +49,7 @@
     "integration": "npm run test:integration",
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
-    "lint:js": "eslint -c .eslintrc.js --ext .ts ./{srpc,echo}/**/*.ts",
+    "lint:js": "eslint -c .eslintrc.js --ext .ts ./{srpc,echo,rpcstream}/**/*.ts",
     "prepare": "patch-package",
     "precommit": "npm run format"
   },
