@@ -1,4 +1,4 @@
-import type { CallStart } from './rpcproto.js'
+import type { CallStart } from './rpcproto.pb.js'
 import { CommonRPC } from './common-rpc.js'
 
 // ClientRPC is an ongoing RPC from the client side.

@@ -1,5 +1,5 @@
 import { Observable, from as observableFrom } from 'rxjs'
-import { Echoer, EchoMsg } from './echo'
+import { Echoer, EchoMsg } from './echo.pb.js'
 import { pushable, Pushable } from 'it-pushable'
 
 // EchoServer implements the Echoer server.

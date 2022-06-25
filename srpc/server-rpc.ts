@@ -1,6 +1,6 @@
 import type { Sink } from 'it-stream-types'
 
-import type { CallData, CallStart } from './rpcproto.js'
+import type { CallData, CallStart } from './rpcproto.pb.js'
 import { CommonRPC } from './common-rpc.js'
 import { InvokeFn } from './handler.js'
 import { Mux } from './mux.js'

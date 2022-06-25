@@ -29,36 +29,36 @@ function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
-  // openConnFn is a promise which contains the OpenStreamFunc.
-  private openConnFn: Promise<OpenStreamFunc>
-  // _openConnFn resolves openConnFn.
-  private _openConnFn?: (conn?: OpenStreamFunc, err?: Error) => void
+  // openStreamFn is a promise which contains the OpenStreamFunc.
+  private openStreamFn: Promise<OpenStreamFunc>
+  // _openStreamFn resolves openStreamFn.
+  private _openStreamFn?: (conn?: OpenStreamFunc, err?: Error) => void
 
-  constructor(openConnFn?: OpenStreamFunc) {
-    this.openConnFn = this.setOpenConnFn(openConnFn)
+  constructor(openStreamFn?: OpenStreamFunc) {
+    this.openStreamFn = this.setOpenStreamFn(openStreamFn)
   }
 
-  // setOpenConnFn updates the openConnFn for the Client.
-  public setOpenConnFn(openConnFn?: OpenStreamFunc): Promise<OpenStreamFunc> {
-    if (this._openConnFn) {
-      if (openConnFn) {
-        this._openConnFn(openConnFn)
-        this._openConnFn = undefined
+  // setOpenStreamFn updates the openStreamFn for the Client.
+  public setOpenStreamFn(openStreamFn?: OpenStreamFunc): Promise<OpenStreamFunc> {
+    if (this._openStreamFn) {
+      if (openStreamFn) {
+        this._openStreamFn(openStreamFn)
+        this._openStreamFn = undefined
       }
     } else {
-      if (openConnFn) {
-        this.openConnFn = Promise.resolve(openConnFn)
+      if (openStreamFn) {
+        this.openStreamFn = Promise.resolve(openStreamFn)
       } else {
-        this.initOpenConnFn()
+        this.initOpenStreamFn()
       }
     }
-    return this.openConnFn
+    return this.openStreamFn
   }
 
-  // initOpenConnFn creates the empty Promise for openConnFn.
-  private initOpenConnFn(): Promise<OpenStreamFunc> {
+  // initOpenStreamFn creates the empty Promise for openStreamFn.
+  private initOpenStreamFn(): Promise<OpenStreamFunc> {
     const openPromise = new Promise<OpenStreamFunc>((resolve, reject) => {
-      this._openConnFn = (conn?: OpenStreamFunc, err?: Error) => {
+      this._openStreamFn = (conn?: OpenStreamFunc, err?: Error) => {
         if (err) {
           reject(err)
         } else if (conn) {
@@ -66,8 +66,8 @@ export class Client implements TsProtoRpc {
         }
       }
     })
-    this.openConnFn = openPromise
-    return this.openConnFn
+    this.openStreamFn = openPromise
+    return this.openStreamFn
   }
 
   // request starts a non-streaming request.
@@ -168,8 +168,8 @@ export class Client implements TsProtoRpc {
     rpcMethod: string,
     data: Uint8Array | null
   ): Promise<ClientRPC> {
-    const openConnFn = await this.openConnFn
-    const conn = await openConnFn()
+    const openStreamFn = await this.openStreamFn
+    const conn = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     pipe(
       conn,

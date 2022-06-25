@@ -4,7 +4,7 @@ import {
   decode as lengthPrefixDecode,
 } from 'it-length-prefixed'
 
-import { Packet } from './rpcproto.js'
+import { Packet } from './rpcproto.pb.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,

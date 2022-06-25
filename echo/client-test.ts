@@ -1,5 +1,5 @@
 import { Client } from '../srpc/index.js'
-import { EchoerClientImpl, EchoMsg } from './echo.js'
+import { EchoerClientImpl, EchoMsg } from './echo.pb.js'
 import { Observable } from 'rxjs'
 
 export async function runClientTest(client: Client) {

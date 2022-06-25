@@ -4,7 +4,7 @@ import { pipe } from 'it-pipe'
 
 import { Mux } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
-import { Packet } from './rpcproto.js'
+import { Packet } from './rpcproto.pb.js'
 import {
   parseLengthPrefixTransform,
   prependLengthPrefixTransform,

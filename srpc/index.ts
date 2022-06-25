@@ -1,4 +1,4 @@
-export type { OpenStreamFunc } from './stream.js'
+export type { PacketHandler, Stream, OpenStreamFunc } from './stream.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
 export { Conn, ConnParams } from './conn.js'

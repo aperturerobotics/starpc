@@ -1,4 +1,4 @@
-import type { Packet } from './rpcproto'
+import type { Packet } from './rpcproto.pb.js'
 import type { Duplex } from 'it-stream-types'
 
 // PacketHandler handles incoming packets.

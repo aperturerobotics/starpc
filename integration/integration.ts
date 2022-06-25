@@ -1,5 +1,5 @@
-import { WebSocketConn } from '../srpc/websocket'
-import { runClientTest } from '../echo'
+import { WebSocketConn } from '../srpc/websocket.js'
+import { runClientTest } from '../echo/client-test.js'
 import WebSocket from 'isomorphic-ws'
 
 async function runRPC() {

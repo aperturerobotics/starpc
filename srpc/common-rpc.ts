@@ -1,8 +1,8 @@
 import type { Source, Sink } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 
-import type { CallData, CallStart } from './rpcproto.js'
-import { Packet } from './rpcproto.js'
+import type { CallData, CallStart } from './rpcproto.pb.js'
+import { Packet } from './rpcproto.pb.js'
 
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
