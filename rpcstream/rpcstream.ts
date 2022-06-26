@@ -70,8 +70,10 @@ export async function *handleRpcStream(stream: Observable<Packet>, getter: RpcSt
   const rpcStream = new RpcStream(packetSink, stream)
   server.handleDuplex(rpcStream)
 
-  // return the outgoing packet sink
-  return packetSink
+  // process packets
+  for await (const packet of packetSink) {
+    yield* [packet]
+  }
 }
 
 
