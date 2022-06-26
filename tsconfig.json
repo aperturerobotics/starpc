@@ -19,7 +19,8 @@
   "include": [
     "echo",
     "srpc",
-    "rpcstream"
+    "rpcstream",
+    "index.ts"
   ],
   "ts-node": {
     "esm": true,

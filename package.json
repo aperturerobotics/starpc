@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -15,8 +15,8 @@
       "url": "http://github.com/paralin"
     }
   ],
-  "main": "./dist/srpc/index.js",
-  "types": "./dist/srpc/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "!**/*.tsbuildinfo",
     "Makefile",
