@@ -73,6 +73,7 @@ gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_STARPC) $(PROT
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
 		--go_out=$$(pwd)/vendor \
+		--go-starpc_out=$$(pwd)/vendor \
 		--go-vtproto_out=$$(pwd)/vendor \
 		--go-vtproto_opt=features=marshal+unmarshal+size+equal \
 		--proto_path $$(pwd)/vendor \
@@ -102,7 +103,6 @@ gents: $(PROTOWRAP) node_modules
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
 		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--go-starpc_out=$$(pwd)/vendor \
 		--ts_proto_out=$$(pwd)/vendor \
 		--ts_proto_opt=esModuleInterop=true \
 		--ts_proto_opt=fileSuffix=.pb \
