@@ -11,8 +11,8 @@ import (
 // sub-components which have a different set of services & calls available.
 type RpcStream interface {
 	srpc.Stream
-	Send(*Packet) error
-	Recv() (*Packet, error)
+	Send(*RpcStreamPacket) error
+	Recv() (*RpcStreamPacket, error)
 }
 
 // RpcStreamGetter returns the Mux for the component ID from the remote.
@@ -31,8 +31,8 @@ func NewRpcStreamOpenStream(componentID string, rpcCaller RpcStreamCaller) srpc.
 		}
 
 		// write the component id
-		err = rpcStream.Send(&Packet{
-			Body: &Packet_Init{
+		err = rpcStream.Send(&RpcStreamPacket{
+			Body: &RpcStreamPacket_Init{
 				Init: &RpcStreamInit{
 					ComponentId: componentID,
 				},
@@ -66,7 +66,7 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	if err != nil {
 		return err
 	}
-	initInner, ok := initPkt.GetBody().(*Packet_Init)
+	initInner, ok := initPkt.GetBody().(*RpcStreamPacket_Init)
 	if !ok || initInner.Init == nil {
 		return errors.New("expected init packet")
 	}
@@ -113,8 +113,8 @@ func (r *RpcStreamReadWriter) WritePacket(p *srpc.Packet) error {
 	if err != nil {
 		return err
 	}
-	return r.stream.Send(&Packet{
-		Body: &Packet_Data{
+	return r.stream.Send(&RpcStreamPacket{
+		Body: &RpcStreamPacket_Data{
 			Data: data,
 		},
 	})
@@ -127,7 +127,7 @@ func (r *RpcStreamReadWriter) ReadPump() error {
 		if err != nil {
 			return err
 		}
-		dataPkt, ok := rpcStreamPkt.GetBody().(*Packet_Data)
+		dataPkt, ok := rpcStreamPkt.GetBody().(*RpcStreamPacket_Data)
 		if !ok {
 			return errors.New("expected data packet")
 		}

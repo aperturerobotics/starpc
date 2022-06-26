@@ -21,20 +21,20 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Packet is a packet encapsulating data for a RPC stream.
-type Packet struct {
+// RpcStreamPacket is a packet encapsulating data for a RPC stream.
+type RpcStreamPacket struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Body:
-	//	*Packet_Init
-	//	*Packet_Data
-	Body isPacket_Body `protobuf_oneof:"body"`
+	//	*RpcStreamPacket_Init
+	//	*RpcStreamPacket_Data
+	Body isRpcStreamPacket_Body `protobuf_oneof:"body"`
 }
 
-func (x *Packet) Reset() {
-	*x = Packet{}
+func (x *RpcStreamPacket) Reset() {
+	*x = RpcStreamPacket{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -42,13 +42,13 @@ func (x *Packet) Reset() {
 	}
 }
 
-func (x *Packet) String() string {
+func (x *RpcStreamPacket) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Packet) ProtoMessage() {}
+func (*RpcStreamPacket) ProtoMessage() {}
 
-func (x *Packet) ProtoReflect() protoreflect.Message {
+func (x *RpcStreamPacket) ProtoReflect() protoreflect.Message {
 	mi := &file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,50 +60,50 @@ func (x *Packet) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Packet.ProtoReflect.Descriptor instead.
-func (*Packet) Descriptor() ([]byte, []int) {
+// Deprecated: Use RpcStreamPacket.ProtoReflect.Descriptor instead.
+func (*RpcStreamPacket) Descriptor() ([]byte, []int) {
 	return file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_rawDescGZIP(), []int{0}
 }
 
-func (m *Packet) GetBody() isPacket_Body {
+func (m *RpcStreamPacket) GetBody() isRpcStreamPacket_Body {
 	if m != nil {
 		return m.Body
 	}
 	return nil
 }
 
-func (x *Packet) GetInit() *RpcStreamInit {
-	if x, ok := x.GetBody().(*Packet_Init); ok {
+func (x *RpcStreamPacket) GetInit() *RpcStreamInit {
+	if x, ok := x.GetBody().(*RpcStreamPacket_Init); ok {
 		return x.Init
 	}
 	return nil
 }
 
-func (x *Packet) GetData() []byte {
-	if x, ok := x.GetBody().(*Packet_Data); ok {
+func (x *RpcStreamPacket) GetData() []byte {
+	if x, ok := x.GetBody().(*RpcStreamPacket_Data); ok {
 		return x.Data
 	}
 	return nil
 }
 
-type isPacket_Body interface {
-	isPacket_Body()
+type isRpcStreamPacket_Body interface {
+	isRpcStreamPacket_Body()
 }
 
-type Packet_Init struct {
+type RpcStreamPacket_Init struct {
 	// Init is the first packet in the stream.
 	// Sent only by the initiator.
 	Init *RpcStreamInit `protobuf:"bytes,1,opt,name=init,proto3,oneof"`
 }
 
-type Packet_Data struct {
+type RpcStreamPacket_Data struct {
 	// Data is the encapsulated data packet.
 	Data []byte `protobuf:"bytes,2,opt,name=data,proto3,oneof"`
 }
 
-func (*Packet_Init) isPacket_Body() {}
+func (*RpcStreamPacket_Init) isRpcStreamPacket_Body() {}
 
-func (*Packet_Data) isPacket_Body() {}
+func (*RpcStreamPacket_Data) isRpcStreamPacket_Body() {}
 
 // RpcStreamInit is the first message in a RPC stream.
 type RpcStreamInit struct {
@@ -161,16 +161,17 @@ var file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_rawDesc = 
 	0x72, 0x74, 0x75, 0x72, 0x65, 0x72, 0x6f, 0x62, 0x6f, 0x74, 0x69, 0x63, 0x73, 0x2f, 0x73, 0x74,
 	0x61, 0x72, 0x70, 0x63, 0x2f, 0x72, 0x70, 0x63, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2f, 0x72,
 	0x70, 0x63, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09,
-	0x72, 0x70, 0x63, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x22, 0x56, 0x0a, 0x06, 0x50, 0x61, 0x63,
-	0x6b, 0x65, 0x74, 0x12, 0x2e, 0x0a, 0x04, 0x69, 0x6e, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x18, 0x2e, 0x72, 0x70, 0x63, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x52, 0x70,
-	0x63, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x69, 0x74, 0x48, 0x00, 0x52, 0x04, 0x69,
-	0x6e, 0x69, 0x74, 0x12, 0x14, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x0c, 0x48, 0x00, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x42, 0x06, 0x0a, 0x04, 0x62, 0x6f, 0x64,
-	0x79, 0x22, 0x32, 0x0a, 0x0d, 0x52, 0x70, 0x63, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x49, 0x6e,
-	0x69, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x5f,
-	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e,
-	0x65, 0x6e, 0x74, 0x49, 0x64, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x72, 0x70, 0x63, 0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x22, 0x5f, 0x0a, 0x0f, 0x52, 0x70, 0x63,
+	0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x50, 0x61, 0x63, 0x6b, 0x65, 0x74, 0x12, 0x2e, 0x0a, 0x04,
+	0x69, 0x6e, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x72, 0x70, 0x63,
+	0x73, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x2e, 0x52, 0x70, 0x63, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d,
+	0x49, 0x6e, 0x69, 0x74, 0x48, 0x00, 0x52, 0x04, 0x69, 0x6e, 0x69, 0x74, 0x12, 0x14, 0x0a, 0x04,
+	0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x48, 0x00, 0x52, 0x04, 0x64, 0x61,
+	0x74, 0x61, 0x42, 0x06, 0x0a, 0x04, 0x62, 0x6f, 0x64, 0x79, 0x22, 0x32, 0x0a, 0x0d, 0x52, 0x70,
+	0x63, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x49, 0x6e, 0x69, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x63,
+	0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x0b, 0x63, 0x6f, 0x6d, 0x70, 0x6f, 0x6e, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -187,11 +188,11 @@ func file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_rawDescGZ
 
 var file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_goTypes = []interface{}{
-	(*Packet)(nil),        // 0: rpcstream.Packet
-	(*RpcStreamInit)(nil), // 1: rpcstream.RpcStreamInit
+	(*RpcStreamPacket)(nil), // 0: rpcstream.RpcStreamPacket
+	(*RpcStreamInit)(nil),   // 1: rpcstream.RpcStreamInit
 }
 var file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_depIdxs = []int32{
-	1, // 0: rpcstream.Packet.init:type_name -> rpcstream.RpcStreamInit
+	1, // 0: rpcstream.RpcStreamPacket.init:type_name -> rpcstream.RpcStreamInit
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -206,7 +207,7 @@ func file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Packet); i {
+			switch v := v.(*RpcStreamPacket); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -231,8 +232,8 @@ func file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_init() {
 		}
 	}
 	file_github_com_aperturerobotics_starpc_rpcstream_rpcstream_proto_msgTypes[0].OneofWrappers = []interface{}{
-		(*Packet_Init)(nil),
-		(*Packet_Data)(nil),
+		(*RpcStreamPacket_Init)(nil),
+		(*RpcStreamPacket_Data)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

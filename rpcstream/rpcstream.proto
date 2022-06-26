@@ -1,8 +1,8 @@
 syntax = "proto3";
 package rpcstream;
 
-// Packet is a packet encapsulating data for a RPC stream.
-message Packet {
+// RpcStreamPacket is a packet encapsulating data for a RPC stream.
+message RpcStreamPacket {
   oneof body {
     // Init is the first packet in the stream.
     // Sent only by the initiator.

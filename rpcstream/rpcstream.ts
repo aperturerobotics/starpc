@@ -1,5 +1,5 @@
 import { Observable, from as obsFrom } from 'rxjs'
-import { Packet } from './rpcstream.pb.js'
+import { RpcStreamPacket } from './rpcstream.pb.js'
 import { Server } from '../srpc/server.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
@@ -7,8 +7,8 @@ import { Source, Sink } from 'it-stream-types'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
-  request: Observable<Packet>
-) => Observable<Packet>
+  request: Observable<RpcStreamPacket>
+) => Observable<RpcStreamPacket>
 
 // buildRpcStreamOpenStream builds a OpenStream func with a RpcStream.
 export function buildRpcStreamOpenStream(
@@ -16,7 +16,7 @@ export function buildRpcStreamOpenStream(
   caller: RpcStreamCaller
 ): OpenStreamFunc {
   return async (): Promise<Stream> => {
-    const packetSink: Pushable<Packet> = pushable({ objectMode: true })
+    const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
     const packetObs = obsFrom(packetSink)
     const packetSource = caller(packetObs)
 
@@ -37,11 +37,11 @@ export function buildRpcStreamOpenStream(
 export type RpcStreamGetter = (componentId: string) => Promise<Server>
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
-export async function *handleRpcStream(stream: Observable<Packet>, getter: RpcStreamGetter): AsyncIterable<Packet> {
+export async function *handleRpcStream(stream: Observable<RpcStreamPacket>, getter: RpcStreamGetter): AsyncIterable<RpcStreamPacket> {
   // read the component id
-  const initPromise = new Promise<Packet>((resolve, reject) => {
+  const initPromise = new Promise<RpcStreamPacket>((resolve, reject) => {
     const subscription = stream.subscribe({
-      next(value: Packet) {
+      next(value: RpcStreamPacket) {
         resolve(value)
         subscription.unsubscribe()
       },
@@ -55,16 +55,16 @@ export async function *handleRpcStream(stream: Observable<Packet>, getter: RpcSt
   })
 
   // read the init packet
-  const initPacket = await initPromise
-  if (initPacket?.body?.$case !== 'init') {
+  const initRpcStreamPacket = await initPromise
+  if (initRpcStreamPacket?.body?.$case !== 'init') {
     throw new Error('expected init packet')
   }
 
   // lookup the server for the component id.
-  const server = await getter(initPacket.body.init.componentId)
+  const server = await getter(initRpcStreamPacket.body.init.componentId)
 
   // build the outgoing packet sink & the packet source
-  const packetSink: Pushable<Packet> = pushable({ objectMode: true })
+  const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
   // handle the stream
   const rpcStream = new RpcStream(packetSink, stream)
@@ -86,7 +86,7 @@ export class RpcStream implements Stream {
 
   // _packetSink writes packets to the remote.
   private readonly _packetSink: {
-    push: (val: Packet) => void
+    push: (val: RpcStreamPacket) => void
     end: (err?: Error) => void
   }
   // _source emits incoming data to the source.
@@ -95,7 +95,7 @@ export class RpcStream implements Stream {
     end: (err?: Error) => void
   }
 
-  constructor(packetSink: Pushable<Packet>, packetSource: Observable<Packet>) {
+  constructor(packetSink: Pushable<RpcStreamPacket>, packetSource: Observable<RpcStreamPacket>) {
     this._packetSink = packetSink
     this.sink = this._createSink()
 
@@ -103,7 +103,7 @@ export class RpcStream implements Stream {
     this.source = source
     this._source = source
 
-    this._subscribePacketSource(packetSource)
+    this._subscribeRpcStreamPacketSource(packetSource)
   }
 
   // _createSink initializes the sink field.
@@ -122,10 +122,10 @@ export class RpcStream implements Stream {
     }
   }
 
-  // _subscribePacketSource starts the subscription to the response data.
-  private _subscribePacketSource(packetSource: Observable<Packet>) {
+  // _subscribeRpcStreamPacketSource starts the subscription to the response data.
+  private _subscribeRpcStreamPacketSource(packetSource: Observable<RpcStreamPacket>) {
     packetSource.subscribe({
-      next: (value: Packet) => {
+      next: (value: RpcStreamPacket) => {
         if (value?.body?.$case === 'data') {
           this._source.push(value.body.data)
         }

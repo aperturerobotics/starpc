@@ -4,8 +4,8 @@ import * as _m0 from 'protobufjs/minimal'
 
 export const protobufPackage = 'rpcstream'
 
-/** Packet is a packet encapsulating data for a RPC stream. */
-export interface Packet {
+/** RpcStreamPacket is a packet encapsulating data for a RPC stream. */
+export interface RpcStreamPacket {
   body?:
     | { $case: 'init'; init: RpcStreamInit }
     | { $case: 'data'; data: Uint8Array }
@@ -17,13 +17,13 @@ export interface RpcStreamInit {
   componentId: string
 }
 
-function createBasePacket(): Packet {
+function createBaseRpcStreamPacket(): RpcStreamPacket {
   return { body: undefined }
 }
 
-export const Packet = {
+export const RpcStreamPacket = {
   encode(
-    message: Packet,
+    message: RpcStreamPacket,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.body?.$case === 'init') {
@@ -35,10 +35,10 @@ export const Packet = {
     return writer
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): Packet {
+  decode(input: _m0.Reader | Uint8Array, length?: number): RpcStreamPacket {
     const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
     let end = length === undefined ? reader.len : reader.pos + length
-    const message = createBasePacket()
+    const message = createBaseRpcStreamPacket()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
@@ -59,7 +59,7 @@ export const Packet = {
     return message
   },
 
-  fromJSON(object: any): Packet {
+  fromJSON(object: any): RpcStreamPacket {
     return {
       body: isSet(object.init)
         ? { $case: 'init', init: RpcStreamInit.fromJSON(object.init) }
@@ -69,7 +69,7 @@ export const Packet = {
     }
   },
 
-  toJSON(message: Packet): unknown {
+  toJSON(message: RpcStreamPacket): unknown {
     const obj: any = {}
     message.body?.$case === 'init' &&
       (obj.init = message.body?.init
@@ -83,8 +83,10 @@ export const Packet = {
     return obj
   },
 
-  fromPartial<I extends Exact<DeepPartial<Packet>, I>>(object: I): Packet {
-    const message = createBasePacket()
+  fromPartial<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
+    object: I
+  ): RpcStreamPacket {
+    const message = createBaseRpcStreamPacket()
     if (
       object.body?.$case === 'init' &&
       object.body?.init !== undefined &&

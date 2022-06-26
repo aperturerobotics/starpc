@@ -19,7 +19,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-func (this *Packet) EqualVT(that *Packet) bool {
+func (this *RpcStreamPacket) EqualVT(that *RpcStreamPacket) bool {
 	if this == nil {
 		return that == nil || that.String() == ""
 	} else if that == nil {
@@ -53,7 +53,7 @@ func (this *RpcStreamInit) EqualVT(that *RpcStreamInit) bool {
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (m *Packet) MarshalVT() (dAtA []byte, err error) {
+func (m *RpcStreamPacket) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -66,12 +66,12 @@ func (m *Packet) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Packet) MarshalToVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Packet) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -95,12 +95,12 @@ func (m *Packet) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Packet_Init) MarshalToVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket_Init) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Packet_Init) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket_Init) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	if m.Init != nil {
 		size, err := m.Init.MarshalToSizedBufferVT(dAtA[:i])
@@ -114,12 +114,12 @@ func (m *Packet_Init) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Packet_Data) MarshalToVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket_Data) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *Packet_Data) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *RpcStreamPacket_Data) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	i -= len(m.Data)
 	copy(dAtA[i:], m.Data)
@@ -179,7 +179,7 @@ func encodeVarint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *Packet) SizeVT() (n int) {
+func (m *RpcStreamPacket) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -192,7 +192,7 @@ func (m *Packet) SizeVT() (n int) {
 	return n
 }
 
-func (m *Packet_Init) SizeVT() (n int) {
+func (m *RpcStreamPacket_Init) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -204,7 +204,7 @@ func (m *Packet_Init) SizeVT() (n int) {
 	}
 	return n
 }
-func (m *Packet_Data) SizeVT() (n int) {
+func (m *RpcStreamPacket_Data) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -234,7 +234,7 @@ func sov(x uint64) (n int) {
 func soz(x uint64) (n int) {
 	return sov(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *Packet) UnmarshalVT(dAtA []byte) error {
+func (m *RpcStreamPacket) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -257,10 +257,10 @@ func (m *Packet) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Packet: wiretype end group for non-group")
+			return fmt.Errorf("proto: RpcStreamPacket: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Packet: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: RpcStreamPacket: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -292,7 +292,7 @@ func (m *Packet) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if oneof, ok := m.Body.(*Packet_Init); ok {
+			if oneof, ok := m.Body.(*RpcStreamPacket_Init); ok {
 				if err := oneof.Init.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -301,7 +301,7 @@ func (m *Packet) UnmarshalVT(dAtA []byte) error {
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
-				m.Body = &Packet_Init{v}
+				m.Body = &RpcStreamPacket_Init{v}
 			}
 			iNdEx = postIndex
 		case 2:
@@ -335,7 +335,7 @@ func (m *Packet) UnmarshalVT(dAtA []byte) error {
 			}
 			v := make([]byte, postIndex-iNdEx)
 			copy(v, dAtA[iNdEx:postIndex])
-			m.Body = &Packet_Data{v}
+			m.Body = &RpcStreamPacket_Data{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
