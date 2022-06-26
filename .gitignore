@@ -21,6 +21,7 @@ yarn-error.log*
 .vs/
 .vscode/
 !.vscode/launch.json
+*.test
 
 vendor/
 debug.test
