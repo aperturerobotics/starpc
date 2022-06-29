@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
@@ -30,17 +31,21 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	// construct the client
 	clientPipe, serverPipe := net.Pipe()
 
-	ctx := context.Background()
-	go func() {
-		serverMp, _ := mp.NewMultiplex(serverPipe, false, nil)
-		_ = server.AcceptMuxedConn(ctx, mplex.NewMuxedConn(serverMp))
-	}()
-
-	clientMp, err := mp.NewMultiplex(clientPipe, true, nil)
+	clientMp, err := mp.NewMultiplex(clientPipe, false, nil)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	client := srpc.NewClientWithMuxedConn(mplex.NewMuxedConn(clientMp))
+
+	ctx := context.Background()
+	serverMp, _ := mp.NewMultiplex(serverPipe, true, nil)
+	go func() {
+		_ = server.AcceptMuxedConn(ctx, mplex.NewMuxedConn(serverMp))
+	}()
+
+	// TODO: requires a moment for the listener to start: not sure why.
+	// the packets /should/ be buffered in the pipe.
+	<-time.After(time.Millisecond * 100)
 
 	// construct the client rpc interface
 	clientEcho := echo.NewSRPCEchoerClient(client)
