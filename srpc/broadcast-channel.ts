@@ -5,8 +5,8 @@ import { ConnParams } from './conn.js'
 import { Server } from './server.js'
 import { DuplexConn } from './conn-duplex.js'
 
-// BroadcastChannelIterable is a AsyncIterable wrapper for BroadcastChannel.
-export class BroadcastChannelIterable<T> implements Duplex<T> {
+// BroadcastChannelDuplex is a AsyncIterable wrapper for BroadcastChannel.
+export class BroadcastChannelDuplex<T> implements Duplex<T> {
   // readChannel is the incoming broadcast channel
   public readonly readChannel: BroadcastChannel
   // writeChannel is the outgoing broadcast channel
@@ -55,12 +55,12 @@ export class BroadcastChannelIterable<T> implements Duplex<T> {
   }
 }
 
-// newBroadcastChannelIterable constructs a BroadcastChannelIterable with a channel name.
-export function newBroadcastChannelIterable<T>(
+// newBroadcastChannelDuplex constructs a BroadcastChannelDuplex with a channel name.
+export function newBroadcastChannelDuplex<T>(
   readName: string,
   writeName: string
-): BroadcastChannelIterable<T> {
-  return new BroadcastChannelIterable<T>(
+): BroadcastChannelDuplex<T> {
+  return new BroadcastChannelDuplex<T>(
     new BroadcastChannel(readName),
     new BroadcastChannel(writeName)
   )
@@ -71,7 +71,7 @@ export function newBroadcastChannelIterable<T>(
 // expects Uint8Array objects over the BroadcastChannel.
 export class BroadcastChannelConn extends DuplexConn {
   // broadcastChannel is the broadcast channel iterable
-  private broadcastChannel: BroadcastChannelIterable<Uint8Array>
+  private broadcastChannel: BroadcastChannelDuplex<Uint8Array>
 
   constructor(
     readChannel: BroadcastChannel,
@@ -79,7 +79,7 @@ export class BroadcastChannelConn extends DuplexConn {
     server?: Server,
     connParams?: ConnParams
   ) {
-    const broadcastChannel = new BroadcastChannelIterable<Uint8Array>(
+    const broadcastChannel = new BroadcastChannelDuplex<Uint8Array>(
       readChannel,
       writeChannel
     )

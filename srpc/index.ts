@@ -6,8 +6,8 @@ export { Handler, InvokeFn, createHandler, createInvokeFn } from './handler.js'
 export { Packet, CallStart, CallData } from './rpcproto.pb.js'
 export { Mux, createMux } from './mux.js'
 export {
-  BroadcastChannelIterable,
-  newBroadcastChannelIterable,
+  BroadcastChannelDuplex,
+  newBroadcastChannelDuplex,
   BroadcastChannelConn,
 } from './broadcast-channel.js'
 export {
