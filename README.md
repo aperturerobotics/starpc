@@ -19,18 +19,16 @@ Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 # Usage
 
-Starting with the [protobuf-project] repository on the "starpc" branch.
+Start with the [protobuf-project] template repository on the "starpc" branch.
+
+[protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
 
 Use "git add" to add your new .proto files, then `yarn gen` to generate the
-TypeScript and Go code for them.
+TypeScript and Go code.
 
 # Examples
 
-See the [protobuf-project] template on the "starpc" branch.
-
 The demo/boilerplate project implements the Echo example below.
-
-[protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
 
 This repository uses protowrap, see the [Makefile](./Makefile).
 
@@ -118,6 +116,7 @@ This example demonstrates both the server and client:
 import { pipe } from 'it-pipe'
 import { createHandler, createMux, Server, Client, Conn } from 'srpc'
 import { EchoerDefinition, EchoerServer, runClientTest } from 'srpc/echo'
+import { pushable } from 'it-pushable'
 
 const mux = createMux()
 const echoer = new EchoerServer()
@@ -129,20 +128,31 @@ const serverConn = new Conn(server)
 pipe(clientConn, serverConn, clientConn)
 const client = new Client(clientConn.buildOpenStreamFunc())
 
+// call the unary rpc
 console.log('Calling Echo: unary call...')
 let result = await demoServiceClient.Echo({
   body: 'Hello world!',
 })
 console.log('success: output', result.body)
 
-const clientRequestStream = new Observable<EchoMsg>(subscriber => {
-  subscriber.next({body: 'Hello world from streaming request.'})
-  subscriber.complete()
-})
+// create a client -> server stream
+const clientRequestStream = pushable<EchoMsg>({objectMode: true})
+clientRequestStream.push({body: 'Hello world from streaming request.'})
+clientRequestStream.end()
 
+// call the client -> server streaming rpc
 console.log('Calling EchoClientStream: client -> server...')
 result = await demoServiceClient.EchoClientStream(clientRequestStream)
 console.log('success: output', result.body)
+
+// call the server -> client streaming rpc
+console.log('Calling EchoServerStream: server -> client...')
+const serverStream = demoServiceClient.EchoServerStream({
+  body: 'Hello world from server to client streaming request.',
+})
+for await (const msg of serverStream) {
+  console.log('server: output', msg.body)
+}
 ```
 
 ## WebSocket

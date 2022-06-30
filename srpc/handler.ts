@@ -1,13 +1,13 @@
 import type { Sink, Source } from 'it-stream-types'
 import { pipe } from 'it-pipe'
 import { pushable } from 'it-pushable'
-import { Observable, from as observableFrom } from 'rxjs'
 
 import { Definition, MethodDefinition } from './definition.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
 } from './message.js'
+import { writeToPushable } from './pushable.js'
 
 // InvokeFn describes an SRPC call method invoke function.
 export type InvokeFn = (
@@ -65,21 +65,21 @@ export class StaticHandler implements Handler {
 }
 
 // MethodProto is a function which matches one of the RPC signatures.
-type MethodProto =
-  | ((request: unknown) => Promise<unknown>)
-  | ((request: unknown) => Observable<unknown>)
-  | ((request: Observable<unknown>) => Promise<unknown>)
-  | ((request: Observable<unknown>) => Observable<unknown>)
+type MethodProto<R, O> =
+  | ((request: R) => Promise<O>)
+  | ((request: R) => AsyncIterable<O>)
+  | ((request: AsyncIterable<R>) => Promise<O>)
+  | ((request: AsyncIterable<R>) => AsyncIterable<O>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
-export function createInvokeFn(
-  methodInfo: MethodDefinition<unknown, unknown>,
-  methodProto: MethodProto
+export function createInvokeFn<R, O>(
+  methodInfo: MethodDefinition<R, O>,
+  methodProto: MethodProto<R, O>
 ): InvokeFn {
-  const requestDecode = buildDecodeMessageTransform(methodInfo.requestType)
+  const requestDecode = buildDecodeMessageTransform<R>(methodInfo.requestType)
   return async (dataSource: Source<Uint8Array>, dataSink: Sink<Uint8Array>) => {
     // responseSink is a Sink for response messages.
-    const responseSink = pushable<unknown>({
+    const responseSink = pushable<O>({
       objectMode: true,
     })
 
@@ -96,8 +96,8 @@ export function createInvokeFn(
     // build the request argument.
     let requestArg: any
     if (methodInfo.requestStream) {
-      // convert the request data source into an Observable<T>
-      requestArg = observableFrom(requestSource)
+      // use the request source as the argument.
+      requestArg = requestSource
     } else {
       // receive a single message for the argument.
       for await (const msg of requestSource) {
@@ -119,27 +119,10 @@ export function createInvokeFn(
         throw new Error('return value was undefined')
       }
       if (methodInfo.responseStream) {
-        const responseObs = responseObj as Observable<unknown>
-        if (!responseObs.subscribe) {
-          throw new Error('expected return value to be an Observable')
-        }
-        return new Promise<void>((resolve, reject) => {
-          responseObs.subscribe({
-            next(value) {
-              responseSink.push(value)
-            },
-            error: (err: any) => {
-              responseSink.throw(err)
-              reject(err)
-            },
-            complete: () => {
-              responseSink.end()
-              resolve()
-            },
-          })
-        })
+        const response = responseObj as AsyncIterable<O>
+        return writeToPushable(response, responseSink)
       } else {
-        const responsePromise = responseObj as Promise<unknown>
+        const responsePromise = responseObj as Promise<O>
         if (!responsePromise.then) {
           throw new Error('expected return value to be a Promise')
         }
@@ -166,7 +149,7 @@ export function createHandler(definition: Definition, impl: any): Handler {
   const methodMap: MethodMap = {}
   for (const methodInfo of Object.values(definition.methods)) {
     const methodName = methodInfo.name
-    let methodProto: MethodProto = impl[methodName]
+    let methodProto: MethodProto<unknown, unknown> = impl[methodName]
     if (!methodProto) {
       continue
     }

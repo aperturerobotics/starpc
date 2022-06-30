@@ -4,14 +4,14 @@ For a service:
 
 ```protobuf
 syntax = "proto3";
-package web.demo;
+package simple;
 
 service DemoService {
-  rpc DemoEcho(DemoEchoMsg) returns (DemoEchoMsg) {}
+  rpc BidiStreaming(stream TestMessage) returns (stream TestMessage) {}
 }
 
-message DemoEchoMsg {
-  string msg = 1;
+message TestMessage {
+  string value = 1;
 }
 ```
 
@@ -19,19 +19,19 @@ ts-proto generates a RPC interface like:
 
 ```typescript
 export interface DemoService {
-  DemoEcho(request: DemoEchoMsg): Promise<DemoEchoMsg>
+  BidiStreaming(request: AsyncIterable<TestMessage>): AsyncIterable<TestMsg>
 }
 
 export class DemoServiceClientImpl implements DemoService {
   private readonly rpc: Rpc
   constructor(rpc: Rpc) {
     this.rpc = rpc
-    this.DemoEcho = this.DemoEcho.bind(this)
+    this.BidiStreaming = this.BidiStreaming.bind(this)
   }
-  DemoEcho(request: DemoEchoMsg): Promise<DemoEchoMsg> {
-    const data = DemoEchoMsg.encode(request).finish()
-    const promise = this.rpc.request('web.demo.DemoService', 'DemoEcho', data)
-    return promise.then((data) => DemoEchoMsg.decode(new _m0.Reader(data)))
+  BidiStreaming(request: AsyncIterable<TestMessage>): AsyncIterable<TestMessage> {
+    const data = TestMessage.encodeTransform(request);
+    const result = this.rpc.bidirectionalStreamingRequest('simple.Test', 'BidiStreaming', data);
+    return TestMessage.decodeTransform(result);
   }
 }
 ```
@@ -48,18 +48,18 @@ interface Rpc {
   clientStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
+    data: AsyncIterable<Uint8Array>
   ): Promise<Uint8Array>
   serverStreamingRequest(
     service: string,
     method: string,
     data: Uint8Array
-  ): Observable<Uint8Array>
+  ): AsyncIterable<Uint8Array>
   bidirectionalStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
-  ): Observable<Uint8Array>
+    data: AsyncIterable<Uint8Array>
+  ): AsyncIterable<Uint8Array>
 }
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.4.9",
+  "version": "0.5.0",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -42,7 +42,9 @@
     "gen": "make genproto",
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",
-    "test:js": "npm run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.js --bundle --platform=node && node ./e2e.js",
+    "build:e2e": "npm run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.js --bundle --platform=node",
+    "test:js": "npm run build:e2e && cd e2e && node ./e2e.js",
+    "debug:js": "npm run build:e2e && cd e2e && node --inspect --inspect-brk ./e2e.js",
     "test:integration": "make integration",
     "integration": "npm run test:integration",
     "lint": "npm run lint:go && npm run lint:js",
@@ -73,6 +75,7 @@
     "@libp2p/mplex": "^4.0.0",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
+    "it-first": "^1.0.7",
     "it-length-prefixed": "^7.0.1",
     "it-pipe": "^2.0.3",
     "it-pushable": "^3.0.0",
@@ -81,7 +84,6 @@
     "long": "^5.2.0",
     "patch-package": "^6.4.7",
     "protobufjs": "^6.11.3",
-    "rxjs": "^7.5.5",
     "ws": "^8.8.0"
   }
 }

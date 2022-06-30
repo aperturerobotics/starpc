@@ -48,6 +48,14 @@ export class Server implements StreamHandler {
     return rpc
   }
 
+  // handlePacketDuplex handles an incoming Uint8Array duplex.
+  // skips the packet length prefix transform.
+  public handlePacketDuplex(stream: Duplex<Uint8Array>): ServerRPC {
+    const rpc = this.startRpc()
+    pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
+    return rpc
+  }
+
   // handlePacketStream handles an incoming Packet duplex.
   public handlePacketStream(stream: Duplex<Packet>): ServerRPC {
     const rpc = this.startRpc()

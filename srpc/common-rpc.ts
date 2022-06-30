@@ -1,4 +1,4 @@
-import type { Source, Sink } from 'it-stream-types'
+import type { Sink } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 
 import type { CallData, CallStart } from './rpcproto.pb.js'
@@ -16,7 +16,7 @@ export class CommonRPC {
     end: (err?: Error) => void
   }
   // rpcDataSource emits incoming client RPC messages to the caller.
-  public readonly rpcDataSource: Source<Uint8Array>
+  public readonly rpcDataSource: AsyncIterable<Uint8Array>
   // _rpcDataSource is used to write to the rpc message source.
   private readonly _rpcDataSource: {
     push: (val: Uint8Array) => void
@@ -58,6 +58,18 @@ export class CommonRPC {
         callData,
       },
     })
+  }
+
+  // writeCallDataFromSource writes all call data from the iterable.
+  public async writeCallDataFromSource(dataSource: AsyncIterable<Uint8Array>) {
+    try {
+      for await (const data of dataSource) {
+        this.writeCallData(data)
+      }
+      this.writeCallData(undefined, true)
+    } catch (err) {
+      this.close(err as Error)
+    }
   }
 
   // writePacket writes a packet to the stream.

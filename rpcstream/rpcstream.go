@@ -1,10 +1,13 @@
 package rpcstream
 
 import (
+	"bytes"
 	"context"
-	"errors"
+	"io"
 
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // RpcStream implements a RPC call stream over a RPC call. Used to implement
@@ -21,35 +24,63 @@ type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Mux, er
 // RpcStreamCaller is a function which starts the RpcStream call.
 type RpcStreamCaller func(ctx context.Context) (RpcStream, error)
 
-// NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
-func NewRpcStreamOpenStream(componentID string, rpcCaller RpcStreamCaller) srpc.OpenStreamFunc {
-	return func(ctx context.Context, msgHandler srpc.PacketHandler) (srpc.Writer, error) {
-		// open the rpc stream
-		rpcStream, err := rpcCaller(ctx)
-		if err != nil {
-			return nil, err
-		}
+// OpenRpcStream opens a RPC stream with a remote.
+func OpenRpcStream(ctx context.Context, rpcCaller RpcStreamCaller, componentID string) (*srpc.PacketReaderWriter, error) {
+	// open the rpc stream
+	rpcStream, err := rpcCaller(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-		// write the component id
-		err = rpcStream.Send(&RpcStreamPacket{
-			Body: &RpcStreamPacket_Init{
-				Init: &RpcStreamInit{
-					ComponentId: componentID,
-				},
+	// write the component id
+	err = rpcStream.Send(&RpcStreamPacket{
+		Body: &RpcStreamPacket_Init{
+			Init: &RpcStreamInit{
+				ComponentId: componentID,
 			},
-		})
+		},
+	})
+	if err != nil {
+		_ = rpcStream.Close()
+		return nil, err
+	}
+
+	// wait for ack
+	pkt, err := rpcStream.Recv()
+	if err == nil {
+		switch b := pkt.GetBody().(type) {
+		case *RpcStreamPacket_Ack:
+			if errStr := b.Ack.GetError(); errStr != "" {
+				err = errors.Errorf("remote: %s", errStr)
+			}
+		default:
+			err = errors.New("expected ack packet")
+		}
+	}
+	if err != nil {
+		_ = rpcStream.Close()
+		return nil, err
+	}
+
+	// ready
+	rw := NewRpcStreamReadWriter(rpcStream)
+	return srpc.NewPacketReadWriter(rw), nil
+}
+
+// NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
+func NewRpcStreamOpenStream(rpcCaller RpcStreamCaller, componentID string) srpc.OpenStreamFunc {
+	return func(ctx context.Context, msgHandler srpc.PacketHandler) (srpc.Writer, error) {
+		// open the stream
+		rw, err := OpenRpcStream(ctx, rpcCaller, componentID)
 		if err != nil {
-			_ = rpcStream.Close()
 			return nil, err
 		}
-
-		// initialize the rpc
-		rw := NewRpcStreamReadWriter(rpcStream, msgHandler)
 
 		// start the read pump
 		go func() {
-			err := rw.ReadPump()
+			err := rw.ReadPump(msgHandler)
 			if err != nil {
+				logrus.Errorf("TODO: ReadPump exited with error: %v", err)
 				_ = rw.Close()
 			}
 		}()
@@ -78,67 +109,104 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	// lookup the server for this component id
 	ctx := stream.Context()
 	mux, err := getter(ctx, componentID)
+	if err == nil && mux == nil {
+		err = errors.New("no server for that component")
+	}
+
+	// send ack
+	var errStr string
+	if err != nil {
+		errStr = err.Error()
+	}
+	sendErr := stream.Send(&RpcStreamPacket{
+		Body: &RpcStreamPacket_Ack{
+			Ack: &RpcAck{Error: errStr},
+		},
+	})
 	if err != nil {
 		return err
 	}
-	if mux == nil {
-		return errors.New("no server for that component")
+	if sendErr != nil {
+		return sendErr
 	}
 
 	// handle the rpc
 	serverRPC := srpc.NewServerRPC(ctx, mux)
-	prw := NewRpcStreamReadWriter(stream, serverRPC.HandlePacket)
+	srw := NewRpcStreamReadWriter(stream)
+	prw := srpc.NewPacketReadWriter(srw)
 	serverRPC.SetWriter(prw)
-	err = prw.ReadPump()
+	err = prw.ReadPump(serverRPC.HandlePacket)
 	_ = prw.Close()
 	return err
 }
 
-// RpcStreamReadWriter reads and writes packets from a RpcStream.
+// RpcStreamReadWriter reads and writes a buffered RpcStream.
 type RpcStreamReadWriter struct {
 	// stream is the RpcStream
 	stream RpcStream
-	// cb is the callback
-	cb srpc.PacketHandler
+	// buf is the incoming data buffer
+	buf bytes.Buffer
 }
 
 // NewRpcStreamReadWriter constructs a new read/writer.
-func NewRpcStreamReadWriter(stream RpcStream, cb srpc.PacketHandler) *RpcStreamReadWriter {
-	return &RpcStreamReadWriter{stream: stream, cb: cb}
+func NewRpcStreamReadWriter(stream RpcStream) *RpcStreamReadWriter {
+	return &RpcStreamReadWriter{stream: stream}
 }
 
-// WritePacket writes a packet to the writer.
-func (r *RpcStreamReadWriter) WritePacket(p *srpc.Packet) error {
-	data, err := p.MarshalVT()
-	if err != nil {
-		return err
-	}
-	return r.stream.Send(&RpcStreamPacket{
+// Write writes a packet to the writer.
+func (r *RpcStreamReadWriter) Write(p []byte) (n int, err error) {
+	err = r.stream.Send(&RpcStreamPacket{
 		Body: &RpcStreamPacket_Data{
-			Data: data,
+			Data: p,
 		},
 	})
+	if err != nil {
+		return 0, err
+	}
+	return len(p), nil
 }
 
-// ReadPump executes the read pump in a goroutine.
-func (r *RpcStreamReadWriter) ReadPump() error {
-	for {
-		rpcStreamPkt, err := r.stream.Recv()
+// Read reads a packet from the writer.
+func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
+	toRead := p
+	// while we can still read more data
+	for len(toRead) != 0 {
+		// if the buffer is empty and we have unbuffered none, read more.
+		if r.buf.Len() == 0 {
+			if n != 0 {
+				break
+			}
+			pkt, err := r.stream.Recv()
+			if err != nil {
+				return n, err
+			}
+			data := pkt.GetData()
+			if len(data) == 0 {
+				continue
+			}
+			// if len(toRead) <= len(data), read fully w/o buffering
+			if len(toRead) <= len(data) {
+				copy(toRead, data)
+				n += len(data)
+				toRead = toRead[len(data):]
+			} else {
+				// otherwise buffer it & continue
+				_, err = r.buf.Write(data)
+				if err != nil {
+					return n, err
+				}
+			}
+		}
+		// read from the buffer to toRead
+		rn, err := r.buf.Read(toRead)
 		if err != nil {
-			return err
+			return n, err
 		}
-		dataPkt, ok := rpcStreamPkt.GetBody().(*RpcStreamPacket_Data)
-		if !ok {
-			return errors.New("expected data packet")
-		}
-		pkt := &srpc.Packet{}
-		if err := pkt.UnmarshalVT(dataPkt.Data); err != nil {
-			return err
-		}
-		if err := r.cb(pkt); err != nil {
-			return err
-		}
+		// advance toRead by rn
+		n += rn
+		toRead = toRead[rn:]
 	}
+	return n, nil
 }
 
 // Close closes the packet rw.
@@ -147,4 +215,4 @@ func (r *RpcStreamReadWriter) Close() error {
 }
 
 // _ is a type assertion
-var _ srpc.Writer = (*RpcStreamReadWriter)(nil)
+var _ io.ReadWriteCloser = (*RpcStreamReadWriter)(nil)

@@ -49,9 +49,9 @@ func (w *WebSocketConn) OpenStream(ctx context.Context, msgHandler PacketHandler
 		return nil, err
 	}
 
-	rw := NewPacketReadWriter(muxedStream, msgHandler)
+	rw := NewPacketReadWriter(muxedStream)
 	go func() {
-		err := rw.ReadPump()
+		err := rw.ReadPump(msgHandler)
 		if err != nil {
 			_ = rw.Close()
 		}

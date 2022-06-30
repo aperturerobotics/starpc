@@ -1,13 +1,18 @@
 /* eslint-disable */
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
+import {
+  RpcStreamInit as RpcStreamInit1,
+  RpcAck as RpcAck2,
+} from './rpcstream.pb.js'
 
 export const protobufPackage = 'rpcstream'
 
 /** RpcStreamPacket is a packet encapsulating data for a RPC stream. */
 export interface RpcStreamPacket {
   body?:
-    | { $case: 'init'; init: RpcStreamInit }
+    | { $case: 'init'; init: RpcStreamInit1 }
+    | { $case: 'ack'; ack: RpcAck2 }
     | { $case: 'data'; data: Uint8Array }
 }
 
@@ -15,6 +20,12 @@ export interface RpcStreamPacket {
 export interface RpcStreamInit {
   /** ComponentId is the identifier of the component making the request. */
   componentId: string
+}
+
+/** RpcAck is the ack message in a RPC stream. */
+export interface RpcAck {
+  /** Error indicates there was some error setting up the stream. */
+  error: string
 }
 
 function createBaseRpcStreamPacket(): RpcStreamPacket {
@@ -27,10 +38,16 @@ export const RpcStreamPacket = {
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.body?.$case === 'init') {
-      RpcStreamInit.encode(message.body.init, writer.uint32(10).fork()).ldelim()
+      RpcStreamInit1.encode(
+        message.body.init,
+        writer.uint32(10).fork()
+      ).ldelim()
+    }
+    if (message.body?.$case === 'ack') {
+      RpcAck2.encode(message.body.ack, writer.uint32(18).fork()).ldelim()
     }
     if (message.body?.$case === 'data') {
-      writer.uint32(18).bytes(message.body.data)
+      writer.uint32(26).bytes(message.body.data)
     }
     return writer
   },
@@ -45,10 +62,16 @@ export const RpcStreamPacket = {
         case 1:
           message.body = {
             $case: 'init',
-            init: RpcStreamInit.decode(reader, reader.uint32()),
+            init: RpcStreamInit1.decode(reader, reader.uint32()),
           }
           break
         case 2:
+          message.body = {
+            $case: 'ack',
+            ack: RpcAck2.decode(reader, reader.uint32()),
+          }
+          break
+        case 3:
           message.body = { $case: 'data', data: reader.bytes() }
           break
         default:
@@ -59,10 +82,48 @@ export const RpcStreamPacket = {
     return message
   },
 
+  // encodeTransform encodes a source of message objects.
+  // Transform<RpcStreamPacket, Uint8Array>
+  async *encodeTransform(
+    source:
+      | AsyncIterable<RpcStreamPacket | RpcStreamPacket[]>
+      | Iterable<RpcStreamPacket | RpcStreamPacket[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcStreamPacket.encode(p).finish()]
+        }
+      } else {
+        yield* [RpcStreamPacket.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, RpcStreamPacket>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<RpcStreamPacket> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcStreamPacket.decode(p)]
+        }
+      } else {
+        yield* [RpcStreamPacket.decode(pkt)]
+      }
+    }
+  },
+
   fromJSON(object: any): RpcStreamPacket {
     return {
       body: isSet(object.init)
-        ? { $case: 'init', init: RpcStreamInit.fromJSON(object.init) }
+        ? { $case: 'init', init: RpcStreamInit1.fromJSON(object.init) }
+        : isSet(object.ack)
+        ? { $case: 'ack', ack: RpcAck2.fromJSON(object.ack) }
         : isSet(object.data)
         ? { $case: 'data', data: bytesFromBase64(object.data) }
         : undefined,
@@ -73,7 +134,11 @@ export const RpcStreamPacket = {
     const obj: any = {}
     message.body?.$case === 'init' &&
       (obj.init = message.body?.init
-        ? RpcStreamInit.toJSON(message.body?.init)
+        ? RpcStreamInit1.toJSON(message.body?.init)
+        : undefined)
+    message.body?.$case === 'ack' &&
+      (obj.ack = message.body?.ack
+        ? RpcAck2.toJSON(message.body?.ack)
         : undefined)
     message.body?.$case === 'data' &&
       (obj.data =
@@ -94,8 +159,15 @@ export const RpcStreamPacket = {
     ) {
       message.body = {
         $case: 'init',
-        init: RpcStreamInit.fromPartial(object.body.init),
+        init: RpcStreamInit1.fromPartial(object.body.init),
       }
+    }
+    if (
+      object.body?.$case === 'ack' &&
+      object.body?.ack !== undefined &&
+      object.body?.ack !== null
+    ) {
+      message.body = { $case: 'ack', ack: RpcAck2.fromPartial(object.body.ack) }
     }
     if (
       object.body?.$case === 'data' &&
@@ -141,6 +213,42 @@ export const RpcStreamInit = {
     return message
   },
 
+  // encodeTransform encodes a source of message objects.
+  // Transform<RpcStreamInit, Uint8Array>
+  async *encodeTransform(
+    source:
+      | AsyncIterable<RpcStreamInit | RpcStreamInit[]>
+      | Iterable<RpcStreamInit | RpcStreamInit[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcStreamInit.encode(p).finish()]
+        }
+      } else {
+        yield* [RpcStreamInit.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, RpcStreamInit>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<RpcStreamInit> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcStreamInit.decode(p)]
+        }
+      } else {
+        yield* [RpcStreamInit.decode(pkt)]
+      }
+    }
+  },
+
   fromJSON(object: any): RpcStreamInit {
     return {
       componentId: isSet(object.componentId) ? String(object.componentId) : '',
@@ -158,6 +266,92 @@ export const RpcStreamInit = {
   ): RpcStreamInit {
     const message = createBaseRpcStreamInit()
     message.componentId = object.componentId ?? ''
+    return message
+  },
+}
+
+function createBaseRpcAck(): RpcAck {
+  return { error: '' }
+}
+
+export const RpcAck = {
+  encode(
+    message: RpcAck,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.error !== '') {
+      writer.uint32(10).string(message.error)
+    }
+    return writer
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): RpcAck {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = createBaseRpcAck()
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.error = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  // encodeTransform encodes a source of message objects.
+  // Transform<RpcAck, Uint8Array>
+  async *encodeTransform(
+    source: AsyncIterable<RpcAck | RpcAck[]> | Iterable<RpcAck | RpcAck[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcAck.encode(p).finish()]
+        }
+      } else {
+        yield* [RpcAck.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, RpcAck>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<RpcAck> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [RpcAck.decode(p)]
+        }
+      } else {
+        yield* [RpcAck.decode(pkt)]
+      }
+    }
+  },
+
+  fromJSON(object: any): RpcAck {
+    return {
+      error: isSet(object.error) ? String(object.error) : '',
+    }
+  },
+
+  toJSON(message: RpcAck): unknown {
+    const obj: any = {}
+    message.error !== undefined && (obj.error = message.error)
+    return obj
+  },
+
+  fromPartial<I extends Exact<DeepPartial<RpcAck>, I>>(object: I): RpcAck {
+    const message = createBaseRpcAck()
+    message.error = object.error ?? ''
     return message
   },
 }

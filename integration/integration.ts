@@ -1,5 +1,5 @@
 import { WebSocketConn } from '../srpc/websocket.js'
-import { runClientTest } from '../echo/client-test.js'
+import { runClientTest, runRpcStreamTest } from '../echo/client-test.js'
 import WebSocket from 'isomorphic-ws'
 
 async function runRPC() {
@@ -9,7 +9,11 @@ async function runRPC() {
   const channel = new WebSocketConn(ws)
   const client = channel.buildClient()
 
+  console.log('Running client test via WebSocket..')
   await runClientTest(client)
+
+  console.log('Running RpcStream test via WebSocket..')
+  await runRpcStreamTest(client)
 }
 
 runRPC()

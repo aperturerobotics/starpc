@@ -30,9 +30,9 @@ func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) error
 	subCtx, subCtxCancel := context.WithCancel(ctx)
 	defer subCtxCancel()
 	serverRPC := NewServerRPC(subCtx, s.mux)
-	prw := NewPacketReadWriter(rwc, serverRPC.HandlePacket)
+	prw := NewPacketReadWriter(rwc)
 	serverRPC.SetWriter(prw)
-	err := prw.ReadPump()
+	err := prw.ReadPump(serverRPC.HandlePacket)
 	_ = rwc.Close()
 	return err
 }

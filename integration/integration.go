@@ -11,8 +11,7 @@ import (
 
 func main() {
 	mux := srpc.NewMux()
-
-	echoServer := &echo.EchoServer{}
+	echoServer := echo.NewEchoServer(mux)
 	if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
 		logrus.Fatal(err.Error())
 	}
