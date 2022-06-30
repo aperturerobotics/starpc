@@ -1,4 +1,3 @@
-import { Observable, from as obsFrom } from 'rxjs'
 import { RpcStreamPacket } from './rpcstream.pb.js'
 import { Server } from '../srpc/server.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
@@ -7,8 +6,46 @@ import { Source, Sink } from 'it-stream-types'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
-  request: Observable<RpcStreamPacket>
-) => Observable<RpcStreamPacket>
+  request: AsyncIterable<RpcStreamPacket>
+) => AsyncIterable<RpcStreamPacket>
+
+// openRpcStream attempts to open a stream over a RPC call.
+// waits for the remote to ack the stream before returning.
+export async function openRpcStream(
+  componentId: string,
+  caller: RpcStreamCaller
+): Promise<Stream> {
+  const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
+  const packetSource = caller(packetSink)
+
+  // write the component id
+  packetSink.push({
+    body: {
+      $case: 'init',
+      init: { componentId },
+    },
+  })
+
+  // wait for ack
+  const packetIt = packetSource[Symbol.asyncIterator]()
+  const ackPacketIt = await packetIt.next()
+  if (ackPacketIt.done) {
+    throw new Error(`rpcstream: closed before ack packet`)
+  }
+  const ackPacket = ackPacketIt.value
+  const ackBody = ackPacket?.body
+  if (!ackBody || ackBody.$case !== 'ack') {
+    const msgType = ackBody?.$case || 'none'
+    throw new Error(`rpcstream: expected ack packet but got ${msgType}`)
+  }
+  const errStr = ackBody.ack?.error
+  if (errStr) {
+    throw new Error(`rpcstream: remote: ${errStr}`)
+  }
+
+  // build & return the data stream
+  return new RpcStream(packetSink, packetIt) // packetSource)
+}
 
 // buildRpcStreamOpenStream builds a OpenStream func with a RpcStream.
 export function buildRpcStreamOpenStream(
@@ -16,20 +53,7 @@ export function buildRpcStreamOpenStream(
   caller: RpcStreamCaller
 ): OpenStreamFunc {
   return async (): Promise<Stream> => {
-    const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
-    const packetObs = obsFrom(packetSink)
-    const packetSource = caller(packetObs)
-
-    // write the component id
-    packetSink.push({
-      body: {
-        $case: 'init',
-        init: { componentId },
-      },
-    })
-
-    // build & return the stream
-    return new RpcStream(packetSink, packetSource)
+    return openRpcStream(componentId, caller)
   }
 }
 
@@ -38,40 +62,61 @@ export type RpcStreamGetter = (componentId: string) => Promise<Server>
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
 export async function* handleRpcStream(
-  stream: Observable<RpcStreamPacket>,
+  packetStream: AsyncIterator<RpcStreamPacket>,
   getter: RpcStreamGetter
 ): AsyncIterable<RpcStreamPacket> {
   // read the component id
-  const initPromise = new Promise<RpcStreamPacket>((resolve, reject) => {
-    const subscription = stream.subscribe({
-      next(value: RpcStreamPacket) {
-        resolve(value)
-        subscription.unsubscribe()
-      },
-      error(err) {
-        reject(err)
-      },
-      complete() {
-        reject(new Error('no packet received'))
-      },
-    })
-  })
+  const initRpcStreamIt = await packetStream.next()
+  if (initRpcStreamIt.done) {
+    throw new Error('closed before init received')
+  }
 
-  // read the init packet
-  const initRpcStreamPacket = await initPromise
+  const initRpcStreamPacket = initRpcStreamIt.value
+
+  // ensure we received an init packet
   if (initRpcStreamPacket?.body?.$case !== 'init') {
     throw new Error('expected init packet')
   }
 
   // lookup the server for the component id.
-  const server = await getter(initRpcStreamPacket.body.init.componentId)
+  let server: Server | undefined
+  let err: Error | undefined
+  try {
+    server = await getter(initRpcStreamPacket.body.init.componentId)
+  } catch (errAny) {
+    err = errAny as Error
+    if (!err) {
+      err = new Error(`rpc getter failed`)
+    } else if (!err.message) {
+      err = new Error(`rpc getter failed: ${err}`)
+    }
+  }
+
+  if (!server && !err) {
+    err = new Error('not implemented')
+  }
+
+  yield* [
+    <RpcStreamPacket>{
+      body: {
+        $case: 'ack',
+        ack: {
+          error: err?.message || '',
+        },
+      },
+    },
+  ]
+
+  if (err) {
+    throw err
+  }
 
   // build the outgoing packet sink & the packet source
   const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
   // handle the stream
-  const rpcStream = new RpcStream(packetSink, stream)
-  server.handleDuplex(rpcStream)
+  const rpcStream = new RpcStream(packetSink, packetStream)
+  server!.handleDuplex(rpcStream)
 
   // process packets
   for await (const packet of packetSink) {
@@ -80,35 +125,31 @@ export async function* handleRpcStream(
 }
 
 // RpcStream implements the Stream on top of a RPC call.
+// Note: expects the stream to already have been negotiated.
 export class RpcStream implements Stream {
   // source is the source for incoming Uint8Array packets.
   public readonly source: Source<Uint8Array>
   // sink is the sink for outgoing Uint8Array packets.
   public readonly sink: Sink<Uint8Array>
 
+  // _packetStream receives packets from the remote.
+  private readonly _packetStream: AsyncIterator<RpcStreamPacket>
   // _packetSink writes packets to the remote.
   private readonly _packetSink: {
     push: (val: RpcStreamPacket) => void
     end: (err?: Error) => void
   }
-  // _source emits incoming data to the source.
-  private readonly _source: {
-    push: (val: Uint8Array) => void
-    end: (err?: Error) => void
-  }
 
+  // packetSink writes packets to the remote.
+  // packetSource receives packets from the remote.
   constructor(
     packetSink: Pushable<RpcStreamPacket>,
-    packetSource: Observable<RpcStreamPacket>
+    packetStream: AsyncIterator<RpcStreamPacket>
   ) {
     this._packetSink = packetSink
+    this._packetStream = packetStream
     this.sink = this._createSink()
-
-    const source: Pushable<Uint8Array> = pushable({ objectMode: true })
-    this.source = source
-    this._source = source
-
-    this._subscribeRpcStreamPacketSource(packetSource)
+    this.source = this._createSource()
   }
 
   // _createSink initializes the sink field.
@@ -127,22 +168,22 @@ export class RpcStream implements Stream {
     }
   }
 
-  // _subscribeRpcStreamPacketSource starts the subscription to the response data.
-  private _subscribeRpcStreamPacketSource(
-    packetSource: Observable<RpcStreamPacket>
-  ) {
-    packetSource.subscribe({
-      next: (value: RpcStreamPacket) => {
-        if (value?.body?.$case === 'data') {
-          this._source.push(value.body.data)
+  // _createSource initializes the source field.
+  private _createSource(): Source<Uint8Array> {
+    const packetSource = this._packetStream
+    return (async function* packetDataSource(): AsyncIterable<Uint8Array> {
+      while (true) {
+        const msgIt = await packetSource.next()
+        if (msgIt.done) {
+          return
         }
-      },
-      error: (err) => {
-        this._source.end(err)
-      },
-      complete: () => {
-        this._source.end()
-      },
-    })
+        const value = msgIt.value
+        const body = value?.body
+        if (!body || body.$case !== 'data') {
+          continue
+        }
+        yield* [body.data]
+      }
+    })()
   }
 }

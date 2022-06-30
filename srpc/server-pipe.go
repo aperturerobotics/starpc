@@ -14,9 +14,9 @@ func NewServerPipe(server *Server) OpenStreamFunc {
 		go func() {
 			_ = server.HandleStream(ctx, srvPipe)
 		}()
-		clientPrw := NewPacketReadWriter(clientPipe, msgHandler)
+		clientPrw := NewPacketReadWriter(clientPipe)
 		go func() {
-			err := clientPrw.ReadPump()
+			err := clientPrw.ReadPump(msgHandler)
 			if err != nil {
 				_ = clientPrw.Close()
 			}

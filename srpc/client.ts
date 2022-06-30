@@ -1,31 +1,16 @@
 import { pipe } from 'it-pipe'
 import { pushable, Pushable } from 'it-pushable'
-import { Observable, from as observableFrom } from 'rxjs'
 
 import type { TsProtoRpc } from './ts-proto-rpc.js'
 import type { OpenStreamFunc } from './stream.js'
 import { ClientRPC } from './client-rpc.js'
+import { writeToPushable } from './pushable.js'
 import {
   decodePacketSource,
   encodePacketSource,
   parseLengthPrefixTransform,
   prependLengthPrefixTransform,
 } from './packet.js'
-
-// writeClientStream registers the subscriber to write the client data stream.
-function writeClientStream(call: ClientRPC, data: Observable<Uint8Array>) {
-  data.subscribe({
-    next(value) {
-      call.writeCallData(value)
-    },
-    error(err) {
-      call.close(err)
-    },
-    complete() {
-      call.writeCallData(undefined, true)
-    },
-  })
-}
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
@@ -92,10 +77,10 @@ export class Client implements TsProtoRpc {
   public async clientStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
+    data: AsyncIterable<Uint8Array>
   ): Promise<Uint8Array> {
     const call = await this.startRpc(service, method, null)
-    writeClientStream(call, data)
+    call.writeCallDataFromSource(data)
     for await (const data of call.rpcDataSource) {
       call.close()
       return data
@@ -110,21 +95,13 @@ export class Client implements TsProtoRpc {
     service: string,
     method: string,
     data: Uint8Array
-  ): Observable<Uint8Array> {
-    const pushServerData: Pushable<Uint8Array> = pushable({ objectMode: true })
-    const serverData = observableFrom(pushServerData)
+  ): AsyncIterable<Uint8Array> {
+    const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, data)
       .then(async (call) => {
-        try {
-          for await (const data of call.rpcDataSource) {
-            pushServerData.push(data)
-          }
-        } catch (err) {
-          pushServerData.throw(err as Error)
-        }
-        pushServerData.end()
+        return writeToPushable(call.rpcDataSource, serverData)
       })
-      .catch(pushServerData.throw.bind(pushServerData))
+      .catch(serverData.throw.bind(serverData))
     return serverData
   }
 
@@ -132,33 +109,22 @@ export class Client implements TsProtoRpc {
   public bidirectionalStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
-  ): Observable<Uint8Array> {
-    const pushServerData: Pushable<Uint8Array> = pushable({ objectMode: true })
-    const serverData = observableFrom(pushServerData)
+    data: AsyncIterable<Uint8Array>
+  ): AsyncIterable<Uint8Array> {
+    const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, null)
       .then(async (call) => {
+        call.writeCallDataFromSource(data)
         try {
-          data.subscribe({
-            next(value) {
-              call.writeCallData(value)
-            },
-            error(err) {
-              call.close(err)
-            },
-            complete() {
-              call.close()
-            },
-          })
-          for await (const data of call.rpcDataSource) {
-            pushServerData.push(data)
+          for await (const message of call.rpcDataSource) {
+            serverData.push(message)
           }
         } catch (err) {
-          pushServerData.throw(err as Error)
+          serverData.throw(err as Error)
         }
-        pushServerData.end()
+        serverData.end()
       })
-      .catch(pushServerData.throw.bind(pushServerData))
+      .catch(serverData.throw.bind(serverData))
     return serverData
   }
 

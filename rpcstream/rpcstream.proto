@@ -5,10 +5,13 @@ package rpcstream;
 message RpcStreamPacket {
   oneof body {
     // Init is the first packet in the stream.
-    // Sent only by the initiator.
+    // Sent by the initiator.
     RpcStreamInit init = 1;
+    // Ack is sent in response to Init.
+    // Sent by the server.
+    RpcAck ack = 2;
     // Data is the encapsulated data packet.
-    bytes data = 2;
+    bytes data = 3;
   }
 }
 
@@ -16,4 +19,10 @@ message RpcStreamPacket {
 message RpcStreamInit {
   // ComponentId is the identifier of the component making the request.
   string component_id = 1;
+}
+
+// RpcAck is the ack message in a RPC stream.
+message RpcAck {
+  // Error indicates there was some error setting up the stream.
+  string error = 1;
 }

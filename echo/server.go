@@ -6,11 +6,19 @@ import (
 	"io"
 	"time"
 
+	rpcstream "github.com/aperturerobotics/starpc/rpcstream"
+	srpc "github.com/aperturerobotics/starpc/srpc"
 	"google.golang.org/protobuf/proto"
 )
 
 // EchoServer implements the server side of Echo.
 type EchoServer struct {
+	rpcStreamMux srpc.Mux
+}
+
+// NewEchoServer constructs a EchoServer with a RpcStream mux.
+func NewEchoServer(rpcStreamMux srpc.Mux) *EchoServer {
+	return &EchoServer{rpcStreamMux: rpcStreamMux}
 }
 
 // Echo implements echo.SRPCEchoerServer
@@ -67,6 +75,16 @@ func (s *EchoServer) EchoBidiStream(strm SRPCEchoer_EchoBidiStreamStream) error 
 			return err
 		}
 	}
+}
+
+// RpcStream runs a rpc stream
+func (r *EchoServer) RpcStream(stream SRPCEchoer_RpcStreamStream) error {
+	return rpcstream.HandleRpcStream(stream, func(ctx context.Context, componentID string) (srpc.Mux, error) {
+		if r.rpcStreamMux == nil {
+			return nil, errors.New("not implemented")
+		}
+		return r.rpcStreamMux, nil
+	})
 }
 
 // _ is a type assertion

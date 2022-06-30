@@ -88,36 +88,3 @@ export function prependPacketLen(msgData: Uint8Array): Uint8Array {
   merged.set(msgData, msgLenData.length)
   return merged
 }
-
-/*
-// buildCallDataPacket builds a CallData packet.
-function buildCallDataPacket(data: Uint8Array): Packet {
-  const callData: CallData = {
-    data: p,
-    complete: false,
-    error: '',
-  }
-  const pkt: Packet = {
-    body: {
-      $case: 'callData',
-      callData: callData,
-    }
-  }
-  return pkt
-}
-
-// wrapCallDataTransform is a transformer that wraps call data into a Packet.
-export async function* wrapCallDataTransform(
-  source: Source<Uint8Array | Uint8Array>
-): AsyncIterable<Packet> {
-  for await (const pkt of source) {
-    if (Array.isArray(pkt)) {
-      for (const p of pkt) {
-        yield* [buildCallDataPacket(p)]
-      }
-    } else {
-      yield* [buildCallDataPacket(pkt)]
-    }
-  }
-}
-*/

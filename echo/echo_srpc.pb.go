@@ -7,6 +7,7 @@ package echo
 import (
 	context "context"
 
+	rpcstream "github.com/aperturerobotics/starpc/rpcstream"
 	srpc "github.com/aperturerobotics/starpc/srpc"
 )
 
@@ -17,6 +18,7 @@ type SRPCEchoerClient interface {
 	EchoServerStream(ctx context.Context, in *EchoMsg) (SRPCEchoer_EchoServerStreamClient, error)
 	EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error)
 	EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error)
+	RpcStream(ctx context.Context) (SRPCEchoer_RpcStreamClient, error)
 }
 
 type srpcEchoerClient struct {
@@ -149,11 +151,48 @@ func (x *srpcEchoer_EchoBidiStreamClient) RecvTo(m *EchoMsg) error {
 	return x.MsgRecv(m)
 }
 
+func (c *srpcEchoerClient) RpcStream(ctx context.Context) (SRPCEchoer_RpcStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "RpcStream", nil)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcEchoer_RpcStreamClient{stream}
+	return strm, nil
+}
+
+type SRPCEchoer_RpcStreamClient interface {
+	srpc.Stream
+	Send(*rpcstream.RpcStreamPacket) error
+	Recv() (*rpcstream.RpcStreamPacket, error)
+	RecvTo(*rpcstream.RpcStreamPacket) error
+}
+
+type srpcEchoer_RpcStreamClient struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_RpcStreamClient) Send(m *rpcstream.RpcStreamPacket) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcEchoer_RpcStreamClient) Recv() (*rpcstream.RpcStreamPacket, error) {
+	m := new(rpcstream.RpcStreamPacket)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_RpcStreamClient) RecvTo(m *rpcstream.RpcStreamPacket) error {
+	return x.MsgRecv(m)
+}
+
 type SRPCEchoerServer interface {
 	Echo(context.Context, *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error
 	EchoClientStream(SRPCEchoer_EchoClientStreamStream) error
 	EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error
+	RpcStream(SRPCEchoer_RpcStreamStream) error
 }
 
 type SRPCEchoerUnimplementedServer struct{}
@@ -174,6 +213,10 @@ func (s *SRPCEchoerUnimplementedServer) EchoBidiStream(SRPCEchoer_EchoBidiStream
 	return srpc.ErrUnimplemented
 }
 
+func (s *SRPCEchoerUnimplementedServer) RpcStream(SRPCEchoer_RpcStreamStream) error {
+	return srpc.ErrUnimplemented
+}
+
 const SRPCEchoerServiceID = "echo.Echoer"
 
 type SRPCEchoerHandler struct {
@@ -188,6 +231,7 @@ func (SRPCEchoerHandler) GetMethodIDs() []string {
 		"EchoServerStream",
 		"EchoClientStream",
 		"EchoBidiStream",
+		"RpcStream",
 	}
 }
 
@@ -208,6 +252,8 @@ func (d *SRPCEchoerHandler) InvokeMethod(
 		return true, d.InvokeMethod_EchoClientStream(d.impl, strm)
 	case "EchoBidiStream":
 		return true, d.InvokeMethod_EchoBidiStream(d.impl, strm)
+	case "RpcStream":
+		return true, d.InvokeMethod_RpcStream(d.impl, strm)
 	default:
 		return false, nil
 	}
@@ -242,6 +288,11 @@ func (SRPCEchoerHandler) InvokeMethod_EchoClientStream(impl SRPCEchoerServer, st
 func (SRPCEchoerHandler) InvokeMethod_EchoBidiStream(impl SRPCEchoerServer, strm srpc.Stream) error {
 	clientStrm := &srpcEchoer_EchoBidiStreamStream{strm}
 	return impl.EchoBidiStream(clientStrm)
+}
+
+func (SRPCEchoerHandler) InvokeMethod_RpcStream(impl SRPCEchoerServer, strm srpc.Stream) error {
+	clientStrm := &srpcEchoer_RpcStreamStream{strm}
+	return impl.RpcStream(clientStrm)
 }
 
 func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
@@ -329,5 +380,31 @@ func (x *srpcEchoer_EchoBidiStreamStream) Recv() (*EchoMsg, error) {
 }
 
 func (x *srpcEchoer_EchoBidiStreamStream) RecvTo(m *EchoMsg) error {
+	return x.MsgRecv(m)
+}
+
+type SRPCEchoer_RpcStreamStream interface {
+	srpc.Stream
+	Send(*rpcstream.RpcStreamPacket) error
+	Recv() (*rpcstream.RpcStreamPacket, error)
+}
+
+type srpcEchoer_RpcStreamStream struct {
+	srpc.Stream
+}
+
+func (x *srpcEchoer_RpcStreamStream) Send(m *rpcstream.RpcStreamPacket) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcEchoer_RpcStreamStream) Recv() (*rpcstream.RpcStreamPacket, error) {
+	m := new(rpcstream.RpcStreamPacket)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcEchoer_RpcStreamStream) RecvTo(m *rpcstream.RpcStreamPacket) error {
 	return x.MsgRecv(m)
 }

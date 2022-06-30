@@ -19,9 +19,9 @@ func NewOpenStreamWithMuxedConn(conn network.MuxedConn) OpenStreamFunc {
 		if err != nil {
 			return nil, err
 		}
-		rw := NewPacketReadWriter(mstrm, msgHandler)
+		rw := NewPacketReadWriter(mstrm)
 		go func() {
-			err := rw.ReadPump()
+			err := rw.ReadPump(msgHandler)
 			if err != nil {
 				_ = rw.Close()
 			}

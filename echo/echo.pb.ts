@@ -1,8 +1,8 @@
 /* eslint-disable */
 import Long from 'long'
+import { EchoMsg as EchoMsg1 } from './echo.pb.js'
+import { RpcStreamPacket } from '../rpcstream/rpcstream.pb.js'
 import * as _m0 from 'protobufjs/minimal'
-import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
 
 export const protobufPackage = 'echo'
 
@@ -44,6 +44,40 @@ export const EchoMsg = {
     return message
   },
 
+  // encodeTransform encodes a source of message objects.
+  // Transform<EchoMsg, Uint8Array>
+  async *encodeTransform(
+    source: AsyncIterable<EchoMsg | EchoMsg[]> | Iterable<EchoMsg | EchoMsg[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [EchoMsg.encode(p).finish()]
+        }
+      } else {
+        yield* [EchoMsg.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, EchoMsg>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<EchoMsg> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [EchoMsg.decode(p)]
+        }
+      } else {
+        yield* [EchoMsg.decode(pkt)]
+      }
+    }
+  },
+
   fromJSON(object: any): EchoMsg {
     return {
       body: isSet(object.body) ? String(object.body) : '',
@@ -66,13 +100,17 @@ export const EchoMsg = {
 /** Echoer service returns the given message. */
 export interface Echoer {
   /** Echo returns the given message. */
-  Echo(request: EchoMsg): Promise<EchoMsg>
+  Echo(request: EchoMsg1): Promise<EchoMsg1>
   /** EchoServerStream is an example of a server -> client one-way stream. */
-  EchoServerStream(request: EchoMsg): Observable<EchoMsg>
+  EchoServerStream(request: EchoMsg1): AsyncIterable<EchoMsg1>
   /** EchoClientStream is an example of client->server one-way stream. */
-  EchoClientStream(request: Observable<EchoMsg>): Promise<EchoMsg>
+  EchoClientStream(request: AsyncIterable<EchoMsg1>): Promise<EchoMsg1>
   /** EchoBidiStream is an example of a two-way stream. */
-  EchoBidiStream(request: Observable<EchoMsg>): Observable<EchoMsg>
+  EchoBidiStream(request: AsyncIterable<EchoMsg1>): AsyncIterable<EchoMsg1>
+  /** RpcStream opens a nested rpc call stream. */
+  RpcStream(
+    request: AsyncIterable<RpcStreamPacket>
+  ): AsyncIterable<RpcStreamPacket>
 }
 
 export class EchoerClientImpl implements Echoer {
@@ -83,45 +121,54 @@ export class EchoerClientImpl implements Echoer {
     this.EchoServerStream = this.EchoServerStream.bind(this)
     this.EchoClientStream = this.EchoClientStream.bind(this)
     this.EchoBidiStream = this.EchoBidiStream.bind(this)
+    this.RpcStream = this.RpcStream.bind(this)
   }
-  Echo(request: EchoMsg): Promise<EchoMsg> {
-    const data = EchoMsg.encode(request).finish()
+  Echo(request: EchoMsg1): Promise<EchoMsg1> {
+    const data = EchoMsg1.encode(request).finish()
     const promise = this.rpc.request('echo.Echoer', 'Echo', data)
-    return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)))
+    return promise.then((data) => EchoMsg1.decode(new _m0.Reader(data)))
   }
 
-  EchoServerStream(request: EchoMsg): Observable<EchoMsg> {
-    const data = EchoMsg.encode(request).finish()
+  EchoServerStream(request: EchoMsg1): AsyncIterable<EchoMsg1> {
+    const data = EchoMsg1.encode(request).finish()
     const result = this.rpc.serverStreamingRequest(
       'echo.Echoer',
       'EchoServerStream',
       data
     )
-    return result.pipe(map((data) => EchoMsg.decode(new _m0.Reader(data))))
+    return EchoMsg1.decodeTransform(result)
   }
 
-  EchoClientStream(request: Observable<EchoMsg>): Promise<EchoMsg> {
-    const data = request.pipe(
-      map((request) => EchoMsg.encode(request).finish())
-    )
+  EchoClientStream(request: AsyncIterable<EchoMsg1>): Promise<EchoMsg1> {
+    const data = EchoMsg1.encodeTransform(request)
     const promise = this.rpc.clientStreamingRequest(
       'echo.Echoer',
       'EchoClientStream',
       data
     )
-    return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)))
+    return promise.then((data) => EchoMsg1.decode(new _m0.Reader(data)))
   }
 
-  EchoBidiStream(request: Observable<EchoMsg>): Observable<EchoMsg> {
-    const data = request.pipe(
-      map((request) => EchoMsg.encode(request).finish())
-    )
+  EchoBidiStream(request: AsyncIterable<EchoMsg1>): AsyncIterable<EchoMsg1> {
+    const data = EchoMsg1.encodeTransform(request)
     const result = this.rpc.bidirectionalStreamingRequest(
       'echo.Echoer',
       'EchoBidiStream',
       data
     )
-    return result.pipe(map((data) => EchoMsg.decode(new _m0.Reader(data))))
+    return EchoMsg1.decodeTransform(result)
+  }
+
+  RpcStream(
+    request: AsyncIterable<RpcStreamPacket>
+  ): AsyncIterable<RpcStreamPacket> {
+    const data = RpcStreamPacket.encodeTransform(request)
+    const result = this.rpc.bidirectionalStreamingRequest(
+      'echo.Echoer',
+      'RpcStream',
+      data
+    )
+    return RpcStreamPacket.decodeTransform(result)
   }
 }
 
@@ -134,36 +181,45 @@ export const EchoerDefinition = {
     /** Echo returns the given message. */
     echo: {
       name: 'Echo',
-      requestType: EchoMsg,
+      requestType: EchoMsg1,
       requestStream: false,
-      responseType: EchoMsg,
+      responseType: EchoMsg1,
       responseStream: false,
       options: {},
     },
     /** EchoServerStream is an example of a server -> client one-way stream. */
     echoServerStream: {
       name: 'EchoServerStream',
-      requestType: EchoMsg,
+      requestType: EchoMsg1,
       requestStream: false,
-      responseType: EchoMsg,
+      responseType: EchoMsg1,
       responseStream: true,
       options: {},
     },
     /** EchoClientStream is an example of client->server one-way stream. */
     echoClientStream: {
       name: 'EchoClientStream',
-      requestType: EchoMsg,
+      requestType: EchoMsg1,
       requestStream: true,
-      responseType: EchoMsg,
+      responseType: EchoMsg1,
       responseStream: false,
       options: {},
     },
     /** EchoBidiStream is an example of a two-way stream. */
     echoBidiStream: {
       name: 'EchoBidiStream',
-      requestType: EchoMsg,
+      requestType: EchoMsg1,
       requestStream: true,
-      responseType: EchoMsg,
+      responseType: EchoMsg1,
+      responseStream: true,
+      options: {},
+    },
+    /** RpcStream opens a nested rpc call stream. */
+    rpcStream: {
+      name: 'RpcStream',
+      requestType: RpcStreamPacket,
+      requestStream: true,
+      responseType: RpcStreamPacket,
       responseStream: true,
       options: {},
     },
@@ -179,18 +235,18 @@ interface Rpc {
   clientStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
+    data: AsyncIterable<Uint8Array>
   ): Promise<Uint8Array>
   serverStreamingRequest(
     service: string,
     method: string,
     data: Uint8Array
-  ): Observable<Uint8Array>
+  ): AsyncIterable<Uint8Array>
   bidirectionalStreamingRequest(
     service: string,
     method: string,
-    data: Observable<Uint8Array>
-  ): Observable<Uint8Array>
+    data: AsyncIterable<Uint8Array>
+  ): AsyncIterable<Uint8Array>
 }
 
 type Builtin =

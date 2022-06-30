@@ -1,18 +1,20 @@
 import { pipe } from 'it-pipe'
 import { createHandler, createMux, Server, Client, Conn } from '../srpc'
 import { EchoerDefinition, EchoerServer, runClientTest } from '../echo'
+import { runRpcStreamTest } from '../echo/client-test'
 
 async function runRPC() {
   const mux = createMux()
-  const echoer = new EchoerServer()
-  mux.register(createHandler(EchoerDefinition, echoer))
   const server = new Server(mux)
+  const echoer = new EchoerServer(server)
+  mux.register(createHandler(EchoerDefinition, echoer))
 
   const clientConn = new Conn()
   const serverConn = new Conn(server)
   pipe(clientConn, serverConn, clientConn)
   const client = new Client(clientConn.buildOpenStreamFunc())
 
+  await runRpcStreamTest(client)
   await runClientTest(client)
 }
 
@@ -21,7 +23,6 @@ runRPC()
     console.log('finished successfully')
   })
   .catch((err) => {
-    console.log('failed')
     console.error(err)
     process.exit(1)
   })

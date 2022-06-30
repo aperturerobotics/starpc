@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aperturerobotics/starpc/echo"
+	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/libp2p/go-libp2p/p2p/muxer/mplex"
 	mp "github.com/libp2p/go-mplex"
@@ -17,8 +18,8 @@ import (
 // RunE2E runs an end to end test with a callback.
 func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	// construct the server
-	echoServer := &echo.EchoServer{}
 	mux := srpc.NewMux()
+	echoServer := echo.NewEchoServer(mux)
 	if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
 		t.Fatal(err.Error())
 	}
@@ -177,5 +178,27 @@ func TestE2E_BidiStream(t *testing.T) {
 		}
 		// expect no error closing
 		return strm.Close()
+	})
+}
+
+func TestE2E_RpcStream(t *testing.T) {
+	ctx := context.Background()
+	RunE2E(t, func(client echo.SRPCEchoerClient) error {
+		openStreamFn := rpcstream.NewRpcStreamOpenStream(func(ctx context.Context) (rpcstream.RpcStream, error) {
+			return client.RpcStream(ctx)
+		}, "test")
+		proxiedClient := srpc.NewClient(openStreamFn)
+		proxiedSvc := echo.NewSRPCEchoerClient(proxiedClient)
+
+		// run a RPC proxied over another RPC
+		resp, err := proxiedSvc.Echo(ctx, &echo.EchoMsg{Body: "hello world"})
+		if err != nil {
+			return err
+		}
+		if resp.GetBody() != "hello world" {
+			return errors.Errorf("response body incorrect: %q", resp.GetBody())
+		}
+
+		return nil
 	})
 }

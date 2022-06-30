@@ -16,15 +16,13 @@ var maxMessageSize = 1e7
 type PacketReaderWriter struct {
 	// rw is the io.ReadWriterCloser
 	rw io.ReadWriteCloser
-	// cb is the callback
-	cb PacketHandler
 	// buf is the buffered data
 	buf bytes.Buffer
 }
 
 // NewPacketReadWriter constructs a new read/writer.
-func NewPacketReadWriter(rw io.ReadWriteCloser, cb PacketHandler) *PacketReaderWriter {
-	return &PacketReaderWriter{rw: rw, cb: cb}
+func NewPacketReadWriter(rw io.ReadWriteCloser) *PacketReaderWriter {
+	return &PacketReaderWriter{rw: rw}
 }
 
 // WritePacket writes a packet to the writer.
@@ -41,7 +39,7 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 }
 
 // ReadPump executes the read pump in a goroutine.
-func (r *PacketReaderWriter) ReadPump() error {
+func (r *PacketReaderWriter) ReadPump(cb PacketHandler) error {
 	var currLen uint32
 	buf := make([]byte, 2048)
 	for {
@@ -78,7 +76,7 @@ func (r *PacketReaderWriter) ReadPump() error {
 			if err := npkt.UnmarshalVT(pkt); err != nil {
 				return err
 			}
-			if err := r.cb(npkt); err != nil {
+			if err := cb(npkt); err != nil {
 				return err
 			}
 		}

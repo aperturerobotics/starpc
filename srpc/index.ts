@@ -15,4 +15,4 @@ export {
   newMessagePortIterable,
   MessagePortConn,
 } from './message-port.js'
-export { ObservableSource } from './observable-source.js'
+export { writeToPushable } from './pushable'

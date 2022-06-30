@@ -1,14 +1,18 @@
 /* eslint-disable */
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
+import {
+  CallStart as CallStart1,
+  CallData as CallData2,
+} from './rpcproto.pb.js'
 
 export const protobufPackage = 'srpc'
 
 /** Packet is a message sent over a srpc packet connection. */
 export interface Packet {
   body?:
-    | { $case: 'callStart'; callStart: CallStart }
-    | { $case: 'callData'; callData: CallData }
+    | { $case: 'callStart'; callStart: CallStart1 }
+    | { $case: 'callData'; callData: CallData2 }
 }
 
 /** CallStart requests starting a new RPC call. */
@@ -57,13 +61,13 @@ export const Packet = {
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.body?.$case === 'callStart') {
-      CallStart.encode(
+      CallStart1.encode(
         message.body.callStart,
         writer.uint32(10).fork()
       ).ldelim()
     }
     if (message.body?.$case === 'callData') {
-      CallData.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
+      CallData2.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
     }
     return writer
   },
@@ -78,13 +82,13 @@ export const Packet = {
         case 1:
           message.body = {
             $case: 'callStart',
-            callStart: CallStart.decode(reader, reader.uint32()),
+            callStart: CallStart1.decode(reader, reader.uint32()),
           }
           break
         case 2:
           message.body = {
             $case: 'callData',
-            callData: CallData.decode(reader, reader.uint32()),
+            callData: CallData2.decode(reader, reader.uint32()),
           }
           break
         default:
@@ -95,15 +99,49 @@ export const Packet = {
     return message
   },
 
+  // encodeTransform encodes a source of message objects.
+  // Transform<Packet, Uint8Array>
+  async *encodeTransform(
+    source: AsyncIterable<Packet | Packet[]> | Iterable<Packet | Packet[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [Packet.encode(p).finish()]
+        }
+      } else {
+        yield* [Packet.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, Packet>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<Packet> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [Packet.decode(p)]
+        }
+      } else {
+        yield* [Packet.decode(pkt)]
+      }
+    }
+  },
+
   fromJSON(object: any): Packet {
     return {
       body: isSet(object.callStart)
         ? {
             $case: 'callStart',
-            callStart: CallStart.fromJSON(object.callStart),
+            callStart: CallStart1.fromJSON(object.callStart),
           }
         : isSet(object.callData)
-        ? { $case: 'callData', callData: CallData.fromJSON(object.callData) }
+        ? { $case: 'callData', callData: CallData2.fromJSON(object.callData) }
         : undefined,
     }
   },
@@ -112,11 +150,11 @@ export const Packet = {
     const obj: any = {}
     message.body?.$case === 'callStart' &&
       (obj.callStart = message.body?.callStart
-        ? CallStart.toJSON(message.body?.callStart)
+        ? CallStart1.toJSON(message.body?.callStart)
         : undefined)
     message.body?.$case === 'callData' &&
       (obj.callData = message.body?.callData
-        ? CallData.toJSON(message.body?.callData)
+        ? CallData2.toJSON(message.body?.callData)
         : undefined)
     return obj
   },
@@ -130,7 +168,7 @@ export const Packet = {
     ) {
       message.body = {
         $case: 'callStart',
-        callStart: CallStart.fromPartial(object.body.callStart),
+        callStart: CallStart1.fromPartial(object.body.callStart),
       }
     }
     if (
@@ -140,7 +178,7 @@ export const Packet = {
     ) {
       message.body = {
         $case: 'callData',
-        callData: CallData.fromPartial(object.body.callData),
+        callData: CallData2.fromPartial(object.body.callData),
       }
     }
     return message
@@ -201,6 +239,42 @@ export const CallStart = {
       }
     }
     return message
+  },
+
+  // encodeTransform encodes a source of message objects.
+  // Transform<CallStart, Uint8Array>
+  async *encodeTransform(
+    source:
+      | AsyncIterable<CallStart | CallStart[]>
+      | Iterable<CallStart | CallStart[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [CallStart.encode(p).finish()]
+        }
+      } else {
+        yield* [CallStart.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, CallStart>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<CallStart> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [CallStart.decode(p)]
+        }
+      } else {
+        yield* [CallStart.decode(pkt)]
+      }
+    }
   },
 
   fromJSON(object: any): CallStart {
@@ -292,6 +366,42 @@ export const CallData = {
       }
     }
     return message
+  },
+
+  // encodeTransform encodes a source of message objects.
+  // Transform<CallData, Uint8Array>
+  async *encodeTransform(
+    source:
+      | AsyncIterable<CallData | CallData[]>
+      | Iterable<CallData | CallData[]>
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [CallData.encode(p).finish()]
+        }
+      } else {
+        yield* [CallData.encode(pkt).finish()]
+      }
+    }
+  },
+
+  // decodeTransform decodes a source of encoded messages.
+  // Transform<Uint8Array, CallData>
+  async *decodeTransform(
+    source:
+      | AsyncIterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>
+  ): AsyncIterable<CallData> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield* [CallData.decode(p)]
+        }
+      } else {
+        yield* [CallData.decode(pkt)]
+      }
+    }
   },
 
   fromJSON(object: any): CallData {
