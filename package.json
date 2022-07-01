@@ -35,7 +35,7 @@
   "scripts": {
     "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "tsc",
-    "deps": "depcheck",
+    "deps": "depcheck --ignores 'bufferutil,utf-8-validate'",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
     "format": "prettier --write './{srpc,echo,e2e,integration,rpcstream}/**/(*.ts|*.tsx|*.html|*.css)'",
@@ -58,16 +58,18 @@
     "singleQuote": true
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.30.0",
-    "@typescript-eslint/parser": "^5.30.0",
+    "@typescript-eslint/eslint-plugin": "^5.30.3",
+    "@typescript-eslint/parser": "^5.30.3",
+    "bufferutil": "^4.0.6",
     "depcheck": "^1.4.3",
-    "esbuild": "^0.14.47",
+    "esbuild": "^0.14.48",
     "eslint": "^8.18.0",
     "eslint-config-prettier": "^8.5.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
-    "ts-proto": "^1.115.5",
-    "typescript": "^4.7.4"
+    "ts-proto": "^1.116.0",
+    "typescript": "^4.7.4",
+    "utf-8-validate": "^5.0.9"
   },
   "dependencies": {
     "@libp2p/interface-connection": "^2.1.1",
