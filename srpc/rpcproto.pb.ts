@@ -1,18 +1,14 @@
 /* eslint-disable */
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
-import {
-  CallStart as CallStart1,
-  CallData as CallData2,
-} from './rpcproto.pb.js'
 
 export const protobufPackage = 'srpc'
 
 /** Packet is a message sent over a srpc packet connection. */
 export interface Packet {
   body?:
-    | { $case: 'callStart'; callStart: CallStart1 }
-    | { $case: 'callData'; callData: CallData2 }
+    | { $case: 'callStart'; callStart: CallStart }
+    | { $case: 'callData'; callData: CallData }
 }
 
 /** CallStart requests starting a new RPC call. */
@@ -61,13 +57,13 @@ export const Packet = {
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.body?.$case === 'callStart') {
-      CallStart1.encode(
+      CallStart.encode(
         message.body.callStart,
         writer.uint32(10).fork()
       ).ldelim()
     }
     if (message.body?.$case === 'callData') {
-      CallData2.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
+      CallData.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
     }
     return writer
   },
@@ -82,13 +78,13 @@ export const Packet = {
         case 1:
           message.body = {
             $case: 'callStart',
-            callStart: CallStart1.decode(reader, reader.uint32()),
+            callStart: CallStart.decode(reader, reader.uint32()),
           }
           break
         case 2:
           message.body = {
             $case: 'callData',
-            callData: CallData2.decode(reader, reader.uint32()),
+            callData: CallData.decode(reader, reader.uint32()),
           }
           break
         default:
@@ -138,10 +134,10 @@ export const Packet = {
       body: isSet(object.callStart)
         ? {
             $case: 'callStart',
-            callStart: CallStart1.fromJSON(object.callStart),
+            callStart: CallStart.fromJSON(object.callStart),
           }
         : isSet(object.callData)
-        ? { $case: 'callData', callData: CallData2.fromJSON(object.callData) }
+        ? { $case: 'callData', callData: CallData.fromJSON(object.callData) }
         : undefined,
     }
   },
@@ -150,11 +146,11 @@ export const Packet = {
     const obj: any = {}
     message.body?.$case === 'callStart' &&
       (obj.callStart = message.body?.callStart
-        ? CallStart1.toJSON(message.body?.callStart)
+        ? CallStart.toJSON(message.body?.callStart)
         : undefined)
     message.body?.$case === 'callData' &&
       (obj.callData = message.body?.callData
-        ? CallData2.toJSON(message.body?.callData)
+        ? CallData.toJSON(message.body?.callData)
         : undefined)
     return obj
   },
@@ -168,7 +164,7 @@ export const Packet = {
     ) {
       message.body = {
         $case: 'callStart',
-        callStart: CallStart1.fromPartial(object.body.callStart),
+        callStart: CallStart.fromPartial(object.body.callStart),
       }
     }
     if (
@@ -178,7 +174,7 @@ export const Packet = {
     ) {
       message.body = {
         $case: 'callData',
-        callData: CallData2.fromPartial(object.body.callData),
+        callData: CallData.fromPartial(object.body.callData),
       }
     }
     return message

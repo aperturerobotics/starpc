@@ -1,18 +1,14 @@
 /* eslint-disable */
 import Long from 'long'
 import * as _m0 from 'protobufjs/minimal'
-import {
-  RpcStreamInit as RpcStreamInit1,
-  RpcAck as RpcAck2,
-} from './rpcstream.pb.js'
 
 export const protobufPackage = 'rpcstream'
 
 /** RpcStreamPacket is a packet encapsulating data for a RPC stream. */
 export interface RpcStreamPacket {
   body?:
-    | { $case: 'init'; init: RpcStreamInit1 }
-    | { $case: 'ack'; ack: RpcAck2 }
+    | { $case: 'init'; init: RpcStreamInit }
+    | { $case: 'ack'; ack: RpcAck }
     | { $case: 'data'; data: Uint8Array }
 }
 
@@ -38,13 +34,10 @@ export const RpcStreamPacket = {
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
     if (message.body?.$case === 'init') {
-      RpcStreamInit1.encode(
-        message.body.init,
-        writer.uint32(10).fork()
-      ).ldelim()
+      RpcStreamInit.encode(message.body.init, writer.uint32(10).fork()).ldelim()
     }
     if (message.body?.$case === 'ack') {
-      RpcAck2.encode(message.body.ack, writer.uint32(18).fork()).ldelim()
+      RpcAck.encode(message.body.ack, writer.uint32(18).fork()).ldelim()
     }
     if (message.body?.$case === 'data') {
       writer.uint32(26).bytes(message.body.data)
@@ -62,13 +55,13 @@ export const RpcStreamPacket = {
         case 1:
           message.body = {
             $case: 'init',
-            init: RpcStreamInit1.decode(reader, reader.uint32()),
+            init: RpcStreamInit.decode(reader, reader.uint32()),
           }
           break
         case 2:
           message.body = {
             $case: 'ack',
-            ack: RpcAck2.decode(reader, reader.uint32()),
+            ack: RpcAck.decode(reader, reader.uint32()),
           }
           break
         case 3:
@@ -121,9 +114,9 @@ export const RpcStreamPacket = {
   fromJSON(object: any): RpcStreamPacket {
     return {
       body: isSet(object.init)
-        ? { $case: 'init', init: RpcStreamInit1.fromJSON(object.init) }
+        ? { $case: 'init', init: RpcStreamInit.fromJSON(object.init) }
         : isSet(object.ack)
-        ? { $case: 'ack', ack: RpcAck2.fromJSON(object.ack) }
+        ? { $case: 'ack', ack: RpcAck.fromJSON(object.ack) }
         : isSet(object.data)
         ? { $case: 'data', data: bytesFromBase64(object.data) }
         : undefined,
@@ -134,11 +127,11 @@ export const RpcStreamPacket = {
     const obj: any = {}
     message.body?.$case === 'init' &&
       (obj.init = message.body?.init
-        ? RpcStreamInit1.toJSON(message.body?.init)
+        ? RpcStreamInit.toJSON(message.body?.init)
         : undefined)
     message.body?.$case === 'ack' &&
       (obj.ack = message.body?.ack
-        ? RpcAck2.toJSON(message.body?.ack)
+        ? RpcAck.toJSON(message.body?.ack)
         : undefined)
     message.body?.$case === 'data' &&
       (obj.data =
@@ -159,7 +152,7 @@ export const RpcStreamPacket = {
     ) {
       message.body = {
         $case: 'init',
-        init: RpcStreamInit1.fromPartial(object.body.init),
+        init: RpcStreamInit.fromPartial(object.body.init),
       }
     }
     if (
@@ -167,7 +160,7 @@ export const RpcStreamPacket = {
       object.body?.ack !== undefined &&
       object.body?.ack !== null
     ) {
-      message.body = { $case: 'ack', ack: RpcAck2.fromPartial(object.body.ack) }
+      message.body = { $case: 'ack', ack: RpcAck.fromPartial(object.body.ack) }
     }
     if (
       object.body?.$case === 'data' &&
