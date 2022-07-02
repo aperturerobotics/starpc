@@ -63,7 +63,9 @@ export type RpcStreamHandler = (stream: Duplex<Uint8Array>) => void
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
-export type RpcStreamGetter = (componentId: string) => Promise<RpcStreamHandler | null>
+export type RpcStreamGetter = (
+  componentId: string
+) => Promise<RpcStreamHandler | null>
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
 export async function* handleRpcStream(
