@@ -1,5 +1,4 @@
 import { RpcStreamPacket } from './rpcstream.pb.js'
-import { Server } from '../srpc/server.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
 import { Duplex, Source, Sink } from 'it-stream-types'
