@@ -4,7 +4,7 @@ import first from 'it-first'
 import { Server } from '../srpc/server.js'
 import { writeToPushable } from '../srpc/pushable.js'
 import { RpcStreamPacket } from '../rpcstream/rpcstream.pb.js'
-import { handleRpcStream } from '../rpcstream/rpcstream.js'
+import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
 
 // EchoServer implements the Echoer server.
 export class EchoerServer implements Echoer {
@@ -52,11 +52,11 @@ export class EchoerServer implements Echoer {
   ): AsyncIterable<RpcStreamPacket> {
     return handleRpcStream(
       request[Symbol.asyncIterator](),
-      async (_componentId: string): Promise<Server> => {
+      async (_componentId: string): Promise<RpcStreamHandler> => {
         if (!this.proxyServer) {
           throw new Error('rpc stream proxy server not set')
         }
-        return this.proxyServer
+        return this.proxyServer.rpcStreamHandler
       }
     )
   }

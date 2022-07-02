@@ -12,6 +12,7 @@ import {
   encodePacketSource,
 } from './packet.js'
 import { StreamHandler } from './conn.js'
+import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
 
 // Server implements the SRPC server in TypeScript with a Mux.
 export class Server implements StreamHandler {
@@ -20,6 +21,11 @@ export class Server implements StreamHandler {
 
   constructor(mux: Mux) {
     this.mux = mux
+  }
+
+  // rpcStreamHandler implements the RpcStreamHandler interface.
+  public get rpcStreamHandler(): RpcStreamHandler {
+    return this.handleDuplex.bind(this)
   }
 
   // startRpc starts a new server-side RPC.

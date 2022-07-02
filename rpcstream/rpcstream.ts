@@ -2,7 +2,7 @@ import { RpcStreamPacket } from './rpcstream.pb.js'
 import { Server } from '../srpc/server.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
-import { Source, Sink } from 'it-stream-types'
+import { Duplex, Source, Sink } from 'it-stream-types'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
@@ -57,8 +57,13 @@ export function buildRpcStreamOpenStream(
   }
 }
 
-// RpcStreamGetter looks up the Server to use for the given Component ID.
-export type RpcStreamGetter = (componentId: string) => Promise<Server>
+// RpcStreamHandler handles an incoming RPC stream.
+// implemented by server.handleDuplex.
+export type RpcStreamHandler = (stream: Duplex<Uint8Array>) => void
+
+// RpcStreamGetter looks up the handler to use for the given Component ID.
+// If null is returned, throws an error: "not implemented"
+export type RpcStreamGetter = (componentId: string) => Promise<RpcStreamHandler | null>
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
 export async function* handleRpcStream(
@@ -79,10 +84,10 @@ export async function* handleRpcStream(
   }
 
   // lookup the server for the component id.
-  let server: Server | undefined
+  let handler: RpcStreamHandler | null = null
   let err: Error | undefined
   try {
-    server = await getter(initRpcStreamPacket.body.init.componentId)
+    handler = await getter(initRpcStreamPacket.body.init.componentId)
   } catch (errAny) {
     err = errAny as Error
     if (!err) {
@@ -92,7 +97,7 @@ export async function* handleRpcStream(
     }
   }
 
-  if (!server && !err) {
+  if (!handler && !err) {
     err = new Error('not implemented')
   }
 
@@ -114,9 +119,11 @@ export async function* handleRpcStream(
   // build the outgoing packet sink & the packet source
   const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
-  // handle the stream
+  // handle the stream in the next event queue tick.
   const rpcStream = new RpcStream(packetSink, packetStream)
-  server!.handleDuplex(rpcStream)
+  setTimeout(() => {
+    handler!(rpcStream)
+  }, 1)
 
   // process packets
   for await (const packet of packetSink) {
