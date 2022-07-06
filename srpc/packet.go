@@ -58,7 +58,7 @@ func NewCallDataPacket(data []byte, dataIsZero bool, complete bool, err error) *
 
 // Validate performs cursory validation of the packet.
 func (p *CallData) Validate() error {
-	if len(p.GetData()) == 0 && !p.GetComplete() && len(p.GetError()) == 0 {
+	if len(p.GetData()) == 0 && !p.GetComplete() && len(p.GetError()) == 0 && !p.GetDataIsZero() {
 		return ErrEmptyPacket
 	}
 	return nil
