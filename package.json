@@ -35,6 +35,7 @@
   "scripts": {
     "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "tsc",
+    "typecheck": "tsc",
     "deps": "depcheck --ignores 'bufferutil,utf-8-validate'",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
