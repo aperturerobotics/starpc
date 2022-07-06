@@ -19,6 +19,8 @@
   "include": [
     "echo",
     "srpc",
+    "e2e",
+    "integration",
     "rpcstream",
     "index.ts"
   ],

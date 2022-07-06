@@ -3,16 +3,16 @@ import type { Sink } from 'it-stream-types'
 import type { CallData, CallStart } from './rpcproto.pb.js'
 import { CommonRPC } from './common-rpc.js'
 import { InvokeFn } from './handler.js'
-import { Mux } from './mux.js'
+import { LookupMethod } from './mux.js'
 
 // ServerRPC is an ongoing RPC from the server side.
 export class ServerRPC extends CommonRPC {
-  // mux is used to handle incoming rpcs.
-  private mux: Mux
+  // lookupMethod looks up the incoming RPC methods.
+  private lookupMethod: LookupMethod
 
-  constructor(mux: Mux) {
+  constructor(lookupMethod: LookupMethod) {
     super()
-    this.mux = mux
+    this.lookupMethod = lookupMethod
   }
 
   // handleCallStart handles a CallStart cket.
@@ -25,7 +25,7 @@ export class ServerRPC extends CommonRPC {
     if (!this.service || !this.method) {
       throw new Error('rpcService and rpcMethod cannot be empty')
     }
-    const methodDef = await this.mux.lookupMethod(this.service, this.method)
+    const methodDef = await this.lookupMethod(this.service, this.method)
     if (!methodDef) {
       throw new Error(`not found: ${this.service}/${this.method}`)
     }

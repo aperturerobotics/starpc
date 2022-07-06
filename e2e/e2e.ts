@@ -5,7 +5,7 @@ import { runRpcStreamTest } from '../echo/client-test'
 
 async function runRPC() {
   const mux = createMux()
-  const server = new Server(mux)
+  const server = new Server(mux.lookupMethodFunc)
   const echoer = new EchoerServer(server)
   mux.register(createHandler(EchoerDefinition, echoer))
 

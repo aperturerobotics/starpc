@@ -2,7 +2,7 @@ import { Stream } from '@libp2p/interface-connection'
 import { Duplex } from 'it-stream-types'
 import { pipe } from 'it-pipe'
 
-import { Mux } from './mux.js'
+import { LookupMethod } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
 import { Packet } from './rpcproto.pb.js'
 import {
@@ -16,11 +16,11 @@ import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
 
 // Server implements the SRPC server in TypeScript with a Mux.
 export class Server implements StreamHandler {
-  // mux is the mux used to handle requests.
-  private mux: Mux
+  // lookupMethod looks up the incoming RPC methods.
+  private lookupMethod: LookupMethod
 
-  constructor(mux: Mux) {
-    this.mux = mux
+  constructor(lookupMethod: LookupMethod) {
+    this.lookupMethod = lookupMethod
   }
 
   // rpcStreamHandler implements the RpcStreamHandler interface.
@@ -31,7 +31,7 @@ export class Server implements StreamHandler {
   // startRpc starts a new server-side RPC.
   // the returned RPC handles incoming Packets.
   public startRpc(): ServerRPC {
-    return new ServerRPC(this.mux)
+    return new ServerRPC(this.lookupMethod)
   }
 
   // handleStream handles an incoming Uint8Array message duplex.

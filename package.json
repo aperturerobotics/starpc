@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -34,8 +34,8 @@
   },
   "scripts": {
     "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
-    "check": "tsc",
-    "typecheck": "tsc",
+    "check": "npm run typecheck",
+    "typecheck": "tsc --noEmit",
     "deps": "depcheck --ignores 'bufferutil,utf-8-validate'",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
