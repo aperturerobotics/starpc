@@ -121,7 +121,7 @@ import { pushable } from 'it-pushable'
 const mux = createMux()
 const echoer = new EchoerServer()
 mux.register(createHandler(EchoerDefinition, echoer))
-const server = new Server(mux)
+const server = new Server(mux.lookupMethodFunc)
 
 const clientConn = new Conn()
 const serverConn = new Conn(server)
