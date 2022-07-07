@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // ClientRPC represents the client side of an on-going RPC call message stream.
@@ -141,7 +140,6 @@ func (r *ClientRPC) HandleCallData(pkt *CallData) error {
 		return ErrCompleted
 	}
 
-	logrus.Infof("DEBUG: handling call data for %s/%s: %s", r.service, r.method, pkt)
 	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
 		select {
 		case <-r.ctx.Done():
