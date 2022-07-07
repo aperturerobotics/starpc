@@ -40,7 +40,11 @@ export async function runRpcStreamTest(client: Client) {
   )
   const proxiedClient = new Client(openStreamFn)
   const proxiedService = new EchoerClientImpl(proxiedClient)
+
   console.log('Calling Echo via RPC stream...')
   const resp = await proxiedService.Echo({ body: 'hello world via proxy' })
   console.log('rpc stream test: succeeded: response: ' + resp.body)
+
+  console.log('Running client test over RPC stream...')
+  await runClientTest(proxiedClient)
 }

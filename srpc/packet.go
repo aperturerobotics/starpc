@@ -1,7 +1,13 @@
 package srpc
 
 // PacketHandler handles a packet.
+//
+// pkt is optional (can be nil)
+// if closeErr is set, the stream is closed after pkt.
 type PacketHandler = func(pkt *Packet) error
+
+// CloseHandler handles the stream closing with an optional error.
+type CloseHandler = func(closeErr error)
 
 // Validate performs cursory validation of the packet.
 func (p *Packet) Validate() error {

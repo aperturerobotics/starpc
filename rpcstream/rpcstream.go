@@ -7,7 +7,6 @@ import (
 
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // RpcStream implements a RPC call stream over a RPC call. Used to implement
@@ -69,7 +68,7 @@ func OpenRpcStream(ctx context.Context, rpcCaller RpcStreamCaller, componentID s
 
 // NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
 func NewRpcStreamOpenStream(rpcCaller RpcStreamCaller, componentID string) srpc.OpenStreamFunc {
-	return func(ctx context.Context, msgHandler srpc.PacketHandler) (srpc.Writer, error) {
+	return func(ctx context.Context, msgHandler srpc.PacketHandler, closeHandler srpc.CloseHandler) (srpc.Writer, error) {
 		// open the stream
 		rw, err := OpenRpcStream(ctx, rpcCaller, componentID)
 		if err != nil {
@@ -77,13 +76,7 @@ func NewRpcStreamOpenStream(rpcCaller RpcStreamCaller, componentID string) srpc.
 		}
 
 		// start the read pump
-		go func() {
-			err := rw.ReadPump(msgHandler)
-			if err != nil {
-				logrus.Errorf("TODO: ReadPump exited with error: %v", err)
-				_ = rw.Close()
-			}
-		}()
+		go rw.ReadPump(msgHandler, closeHandler)
 
 		// return the writer
 		return rw, nil
@@ -135,9 +128,8 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	srw := NewRpcStreamReadWriter(stream)
 	prw := srpc.NewPacketReadWriter(srw)
 	serverRPC.SetWriter(prw)
-	err = prw.ReadPump(serverRPC.HandlePacket)
-	_ = prw.Close()
-	return err
+	go prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
+	return serverRPC.Wait(ctx)
 }
 
 // RpcStreamReadWriter reads and writes a buffered RpcStream.

@@ -14,18 +14,13 @@ func NewClientWithMuxedConn(conn network.MuxedConn) Client {
 
 // NewOpenStreamWithMuxedConn constructs a OpenStream func with a MuxedConn.
 func NewOpenStreamWithMuxedConn(conn network.MuxedConn) OpenStreamFunc {
-	return func(ctx context.Context, msgHandler PacketHandler) (Writer, error) {
+	return func(ctx context.Context, msgHandler PacketHandler, closeHandler CloseHandler) (Writer, error) {
 		mstrm, err := conn.OpenStream(ctx)
 		if err != nil {
 			return nil, err
 		}
 		rw := NewPacketReadWriter(mstrm)
-		go func() {
-			err := rw.ReadPump(msgHandler)
-			if err != nil {
-				_ = rw.Close()
-			}
-		}()
+		go rw.ReadPump(msgHandler, closeHandler)
 		return rw, nil
 	}
 }

@@ -19,7 +19,11 @@ type Client interface {
 
 // OpenStreamFunc opens a stream with a remote.
 // msgHandler must not be called concurrently.
-type OpenStreamFunc = func(ctx context.Context, msgHandler PacketHandler) (Writer, error)
+type OpenStreamFunc = func(
+	ctx context.Context,
+	msgHandler PacketHandler,
+	closeHandler CloseHandler,
+) (Writer, error)
 
 // client implements Client with a transport.
 type client struct {
@@ -44,7 +48,7 @@ func (c *client) Invoke(rctx context.Context, service, method string, in, out Me
 		return err
 	}
 	clientRPC := NewClientRPC(ctx, service, method)
-	writer, err := c.openStream(ctx, clientRPC.HandlePacket)
+	writer, err := c.openStream(ctx, clientRPC.HandlePacket, clientRPC.HandleStreamClose)
 	if err != nil {
 		return err
 	}
@@ -81,7 +85,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	}
 
 	clientRPC := NewClientRPC(ctx, service, method)
-	writer, err := c.openStream(ctx, clientRPC.HandlePacket)
+	writer, err := c.openStream(ctx, clientRPC.HandlePacket, clientRPC.HandleStreamClose)
 	if err != nil {
 		return nil, err
 	}

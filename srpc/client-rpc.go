@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // ClientRPC represents the client side of an on-going RPC call message stream.
@@ -101,6 +102,16 @@ func (r *ClientRPC) HandlePacketData(data []byte) error {
 	return r.HandlePacket(pkt)
 }
 
+// HandleStreamClose handles the incoming stream closing w/ optional error.
+func (r *ClientRPC) HandleStreamClose(closeErr error) {
+	if closeErr != nil {
+		if r.serverErr == nil {
+			r.serverErr = closeErr
+		}
+		r.Close()
+	}
+}
+
 // HandlePacket handles an incoming parsed message packet.
 // Not concurrency safe: use a mutex if calling concurrently.
 func (r *ClientRPC) HandlePacket(msg *Packet) error {
@@ -130,6 +141,7 @@ func (r *ClientRPC) HandleCallData(pkt *CallData) error {
 		return ErrCompleted
 	}
 
+	logrus.Infof("DEBUG: handling call data for %s/%s: %s", r.service, r.method, pkt)
 	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
 		select {
 		case <-r.ctx.Done():

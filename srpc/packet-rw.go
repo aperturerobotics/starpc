@@ -39,10 +39,23 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 }
 
 // ReadPump executes the read pump in a goroutine.
-func (r *PacketReaderWriter) ReadPump(cb PacketHandler) error {
+//
+// calls the handler when closed or returning an error
+func (r *PacketReaderWriter) ReadPump(cb PacketHandler, closed CloseHandler) {
+	err := r.ReadToHandler(cb)
+	// signal that the stream is now closed.
+	if closed != nil {
+		closed(err)
+	}
+}
+
+// ReadToHandler reads data to the given handler.
+// Does not handle closing the stream, use ReadPump instead.
+func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 	var currLen uint32
 	buf := make([]byte, 2048)
 	for {
+		// read some data into the buffer
 		n, err := r.rw.Read(buf)
 		if err != nil {
 			if err == io.EOF {
@@ -50,17 +63,20 @@ func (r *PacketReaderWriter) ReadPump(cb PacketHandler) error {
 			}
 			return err
 		}
+		// push the data to r.buf
 		_, err = r.buf.Write(buf[:n])
 		if err != nil {
 			return err
 		}
 
-		// check if we have enough for a length prefix
+		// check if we have enough data for a length prefix
 		bufLen := r.buf.Len()
+		if bufLen < 4 {
+			continue
+		}
+
+		// parse the length prefix if not done already
 		if currLen == 0 {
-			if bufLen < 4 {
-				continue
-			}
 			currLen = r.readLengthPrefix(r.buf.Bytes())
 			if currLen == 0 {
 				return errors.New("unexpected zero len prefix")
@@ -69,6 +85,8 @@ func (r *PacketReaderWriter) ReadPump(cb PacketHandler) error {
 				return errors.Errorf("message size %v greater than maximum %v", currLen, maxMessageSize)
 			}
 		}
+
+		// emit the packet if fully buffered
 		if currLen != 0 && bufLen >= int(currLen)+4 {
 			pkt := r.buf.Next(int(currLen + 4))[4:]
 			currLen = 0

@@ -29,7 +29,7 @@ type ServerRPC struct {
 	dataChClosed bool
 	// clientErr is an error set by the client.
 	// before dataCh is closed, managed by HandlePacket.
-	// immutable after dataCh is closed.
+	// immutable after dataCh is closed or ctxCancel
 	clientErr error
 }
 
@@ -54,9 +54,32 @@ func (r *ServerRPC) Context() context.Context {
 	return r.ctx
 }
 
+// Wait waits for the RPC to finish.
+func (r *ServerRPC) Wait(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return context.Canceled
+	case <-r.ctx.Done():
+	}
+	return r.clientErr
+}
+
+// HandleStreamClose handles the incoming stream closing w/ optional error.
+func (r *ServerRPC) HandleStreamClose(closeErr error) {
+	if closeErr != nil {
+		if r.clientErr == nil {
+			r.clientErr = closeErr
+		}
+		r.Close()
+	}
+}
+
 // HandlePacket handles an incoming parsed message packet.
 // Not concurrency safe: use a mutex if calling concurrently.
 func (r *ServerRPC) HandlePacket(msg *Packet) error {
+	if msg == nil {
+		return nil
+	}
 	if err := msg.Validate(); err != nil {
 		return err
 	}
@@ -147,6 +170,9 @@ func (r *ServerRPC) invokeRPC() {
 // Close releases any resources held by the ServerRPC.
 // not concurrency safe with HandlePacket.
 func (r *ServerRPC) Close() {
+	if r.clientErr == nil {
+		r.clientErr = context.Canceled
+	}
 	r.ctxCancel()
 	if r.service == "" {
 		// invokeRPC has not been called, otherwise it would call Close()
