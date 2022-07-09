@@ -21,6 +21,11 @@ func NewEchoServer(rpcStreamMux srpc.Mux) *EchoServer {
 	return &EchoServer{rpcStreamMux: rpcStreamMux}
 }
 
+// Register registers the Echo server with the Mux.
+func (e *EchoServer) Register(mux srpc.Mux) error {
+	return SRPCRegisterEchoer(mux, e)
+}
+
 // Echo implements echo.SRPCEchoerServer
 func (*EchoServer) Echo(ctx context.Context, msg *EchoMsg) (*EchoMsg, error) {
 	return proto.Clone(msg).(*EchoMsg), nil
