@@ -2,6 +2,7 @@ package srpc
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"io"
 
@@ -54,15 +55,18 @@ func (r *PacketReaderWriter) ReadPump(cb PacketHandler, closed CloseHandler) {
 func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 	var currLen uint32
 	buf := make([]byte, 2048)
-	for {
+	isOpen := true
+	for isOpen {
 		// read some data into the buffer
 		n, err := r.rw.Read(buf)
 		if err != nil {
-			if err == io.EOF {
-				err = nil
+			if err == io.EOF || err == context.Canceled {
+				isOpen = false
+			} else {
+				return err
 			}
-			return err
 		}
+
 		// push the data to r.buf
 		_, err = r.buf.Write(buf[:n])
 		if err != nil {
@@ -99,6 +103,9 @@ func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 			}
 		}
 	}
+
+	// closed
+	return nil
 }
 
 // Close closes the packet rw.
