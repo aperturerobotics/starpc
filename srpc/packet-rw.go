@@ -35,7 +35,15 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 	if err != nil {
 		return err
 	}
-	_, err = r.rw.Write(data)
+	var n int
+	written := 0
+	for written < len(data) {
+		n, err = r.rw.Write(data)
+		if err != nil {
+			return err
+		}
+		written += n
+	}
 	return err
 }
 
