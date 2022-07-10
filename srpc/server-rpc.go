@@ -3,6 +3,8 @@ package srpc
 import (
 	"context"
 	"io"
+	"runtime"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -171,6 +173,14 @@ func (r *ServerRPC) invokeRPC() {
 	}
 	outPkt := NewCallDataPacket(nil, false, true, err)
 	_ = r.writer.WritePacket(outPkt)
+
+	// HACK: some multiplexers will drop the last packet if Close is called too
+	// soon after Write. Add a brief delay to ensure the packet is written.
+	//
+	// See: https://github.com/lucas-clemente/quic-go/issues/3472
+	runtime.Gosched()
+	time.Sleep(time.Millisecond)
+
 	_ = r.writer.Close()
 	r.ctxCancel()
 }
