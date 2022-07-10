@@ -2,7 +2,6 @@ package srpc
 
 import (
 	"context"
-	"io"
 
 	"github.com/pkg/errors"
 )
@@ -55,17 +54,12 @@ func (c *client) Invoke(rctx context.Context, service, method string, in, out Me
 	if err := clientRPC.Start(writer, true, firstMsg); err != nil {
 		return err
 	}
-	msgs, err := clientRPC.ReadAll()
+	msg, err := clientRPC.ReadOne()
 	if err != nil {
 		// this includes any server returned error.
 		return err
 	}
-	if len(msgs) == 0 {
-		// no reply? return eof.
-		return io.EOF
-	}
-	// parse first message to out
-	if err := out.UnmarshalVT(msgs[0]); err != nil {
+	if err := out.UnmarshalVT(msg); err != nil {
 		return errors.Wrap(ErrInvalidMessage, err.Error())
 	}
 	// done

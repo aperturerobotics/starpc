@@ -2,6 +2,7 @@ package srpc
 
 import (
 	"context"
+	"io"
 
 	"github.com/pkg/errors"
 )
@@ -83,6 +84,24 @@ func (r *ClientRPC) ReadAll() ([][]byte, error) {
 			}
 			msgs = append(msgs, data)
 		}
+	}
+}
+
+// ReadOne reads a single message and returns.
+//
+// returns io.EOF if the stream ended.
+func (r *ClientRPC) ReadOne() ([]byte, error) {
+	select {
+	case <-r.ctx.Done():
+		return nil, context.Canceled
+	case data, ok := <-r.dataCh:
+		if !ok {
+			if err := r.serverErr; err != nil {
+				return nil, err
+			}
+			return nil, io.EOF
+		}
+		return data, nil
 	}
 }
 
