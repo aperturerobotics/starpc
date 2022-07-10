@@ -2,6 +2,7 @@ package srpc
 
 import (
 	"context"
+	"io"
 
 	"github.com/pkg/errors"
 )
@@ -66,12 +67,19 @@ func (r *ServerRPC) Wait(ctx context.Context) error {
 
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (r *ServerRPC) HandleStreamClose(closeErr error) {
+	if r.dataChClosed {
+		return
+	}
 	if closeErr != nil {
 		if r.clientErr == nil {
 			r.clientErr = closeErr
 		}
-		r.Close()
+		if closeErr != io.EOF && closeErr != context.Canceled {
+			r.Close()
+		}
 	}
+	r.dataChClosed = true
+	close(r.dataCh)
 }
 
 // HandlePacket handles an incoming parsed message packet.
@@ -163,8 +171,8 @@ func (r *ServerRPC) invokeRPC() {
 	}
 	outPkt := NewCallDataPacket(nil, false, true, err)
 	_ = r.writer.WritePacket(outPkt)
-	r.ctxCancel()
 	_ = r.writer.Close()
+	r.ctxCancel()
 }
 
 // Close releases any resources held by the ServerRPC.
@@ -173,9 +181,9 @@ func (r *ServerRPC) Close() {
 	if r.clientErr == nil {
 		r.clientErr = context.Canceled
 	}
-	r.ctxCancel()
 	if r.service == "" {
 		// invokeRPC has not been called, otherwise it would call Close()
 		_ = r.writer.Close()
 	}
+	r.ctxCancel()
 }
