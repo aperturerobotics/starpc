@@ -15,7 +15,7 @@ func AcceptMuxedListener(ctx context.Context, lis net.Listener, srv *Server) err
 			return err
 		}
 
-		mc, err := NewMuxedConn(nc, true)
+		mc, err := NewMuxedConn(nc, false)
 		if err != nil {
 			_ = nc.Close()
 			continue

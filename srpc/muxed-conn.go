@@ -10,8 +10,8 @@ import (
 )
 
 // NewMuxedConn constructs a new MuxedConn from a Conn.
-func NewMuxedConn(conn net.Conn, isServer bool) (network.MuxedConn, error) {
-	m, err := mp.NewMultiplex(conn, isServer, nil)
+func NewMuxedConn(conn net.Conn, initiator bool) (network.MuxedConn, error) {
+	m, err := mp.NewMultiplex(conn, initiator, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -21,8 +21,8 @@ func NewMuxedConn(conn net.Conn, isServer bool) (network.MuxedConn, error) {
 // NewClientWithConn constructs the muxer and the client.
 //
 // uses libp2p mplex
-func NewClientWithConn(conn net.Conn, isServer bool) (Client, error) {
-	mconn, err := NewMuxedConn(conn, isServer)
+func NewClientWithConn(conn net.Conn, initiator bool) (Client, error) {
+	mconn, err := NewMuxedConn(conn, initiator)
 	if err != nil {
 		return nil, err
 	}
