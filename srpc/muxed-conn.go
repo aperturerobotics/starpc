@@ -2,6 +2,7 @@ package srpc
 
 import (
 	"context"
+	"io"
 	"net"
 
 	"github.com/libp2p/go-libp2p-core/network"
@@ -9,8 +10,8 @@ import (
 	mp "github.com/libp2p/go-mplex"
 )
 
-// NewMuxedConn constructs a new MuxedConn from a Conn.
-func NewMuxedConn(conn net.Conn, initiator bool) (network.MuxedConn, error) {
+// NewMuxedConn constructs a new MuxedConn from a ReadWriteCloser.
+func NewMuxedConn(conn io.ReadWriteCloser, initiator bool) (network.MuxedConn, error) {
 	m, err := mp.NewMultiplex(conn, initiator, nil)
 	if err != nil {
 		return nil, err

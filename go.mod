@@ -13,7 +13,7 @@ require (
 require (
 	github.com/libp2p/go-libp2p v0.20.1-0.20220622205512-3cf611ad8c9c
 	github.com/libp2p/go-libp2p-core v0.19.0
-	github.com/libp2p/go-mplex v0.7.0
+	github.com/libp2p/go-mplex v0.7.1-0.20220702225122-8cbdf39b21f5
 	github.com/sirupsen/logrus v1.8.2-0.20220112234510-85981c045988
 )
 
