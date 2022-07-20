@@ -32,14 +32,16 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	// construct the client
 	clientPipe, serverPipe := net.Pipe()
 
-	clientMp, err := mp.NewMultiplex(clientPipe, false, nil)
+	// outbound=true
+	clientMp, err := mp.NewMultiplex(clientPipe, true, nil)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	client := srpc.NewClientWithMuxedConn(mplex.NewMuxedConn(clientMp))
 
 	ctx := context.Background()
-	serverMp, _ := mp.NewMultiplex(serverPipe, true, nil)
+	// outbound=false
+	serverMp, _ := mp.NewMultiplex(serverPipe, false, nil)
 	go func() {
 		_ = server.AcceptMuxedConn(ctx, mplex.NewMuxedConn(serverMp))
 	}()

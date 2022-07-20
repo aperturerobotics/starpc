@@ -11,8 +11,8 @@ import (
 )
 
 // NewMuxedConn constructs a new MuxedConn from a ReadWriteCloser.
-func NewMuxedConn(conn io.ReadWriteCloser, initiator bool) (network.MuxedConn, error) {
-	m, err := mp.NewMultiplex(conn, initiator, nil)
+func NewMuxedConn(conn io.ReadWriteCloser, outbound bool) (network.MuxedConn, error) {
+	m, err := mp.NewMultiplex(conn, outbound, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -22,8 +22,8 @@ func NewMuxedConn(conn io.ReadWriteCloser, initiator bool) (network.MuxedConn, e
 // NewClientWithConn constructs the muxer and the client.
 //
 // uses libp2p mplex
-func NewClientWithConn(conn net.Conn, initiator bool) (Client, error) {
-	mconn, err := NewMuxedConn(conn, initiator)
+func NewClientWithConn(conn net.Conn, outbound bool) (Client, error) {
+	mconn, err := NewMuxedConn(conn, outbound)
 	if err != nil {
 		return nil, err
 	}

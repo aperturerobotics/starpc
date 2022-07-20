@@ -10,7 +10,7 @@ async function runRPC() {
   mux.register(createHandler(EchoerDefinition, echoer))
 
   const clientConn = new Conn()
-  const serverConn = new Conn(server)
+  const serverConn = new Conn(server, {direction: 'inbound'})
   pipe(clientConn, serverConn, clientConn)
   const client = new Client(clientConn.buildOpenStreamFunc())
 

@@ -6,7 +6,7 @@ async function runRPC() {
   const addr = 'ws://localhost:5000/demo'
   console.log(`Connecting to ${addr}`)
   const ws = new WebSocket(addr)
-  const channel = new WebSocketConn(ws)
+  const channel = new WebSocketConn(ws, 'outbound')
   const client = channel.buildClient()
 
   console.log('Running client test via WebSocket..')

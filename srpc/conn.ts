@@ -1,4 +1,4 @@
-import type { Stream } from '@libp2p/interface-connection'
+import type { Direction, Stream } from '@libp2p/interface-connection'
 import type {
   StreamMuxer,
   StreamMuxerFactory,
@@ -13,6 +13,9 @@ import { Client } from './client.js'
 export interface ConnParams {
   // muxerFactory overrides using the default factory (@libp2p/mplex).
   muxerFactory?: StreamMuxerFactory
+  // direction is the muxer connection direction.
+  // defaults to outbound.
+  direction?: Direction
 }
 
 // StreamHandler handles incoming streams.
@@ -42,6 +45,7 @@ export class Conn implements Duplex<Uint8Array> {
     }
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
+      direction: connParams?.direction || 'outbound',
     })
   }
 

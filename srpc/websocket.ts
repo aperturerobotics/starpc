@@ -1,6 +1,7 @@
 import { duplex } from 'it-ws'
 import { pipe } from 'it-pipe'
 import { Mplex } from '@libp2p/mplex'
+import { Direction } from '@libp2p/interface-connection'
 import type WebSocket from 'isomorphic-ws'
 
 import { Conn } from './conn.js'
@@ -11,8 +12,9 @@ export class WebSocketConn extends Conn {
   // socket is the web socket
   private socket: WebSocket
 
-  constructor(socket: WebSocket, server?: Server) {
+  constructor(socket: WebSocket, direction: Direction, server?: Server) {
     super(server, {
+      direction,
       muxerFactory: new Mplex(),
     })
     this.socket = socket
