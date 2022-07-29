@@ -746,6 +746,13 @@ bufferutil@^4.0.6:
   dependencies:
     node-gyp-build "^4.3.0"
 
+byte-access@^1.0.0, byte-access@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/byte-access/-/byte-access-1.0.1.tgz#84badd99be3671c03f0dd6a039a9c963983724af"
+  integrity sha512-GKYa+lvxnzhgHWj9X+LCsQ4s2/C5uvib573eAOiQKywXMkzFFErY2+yQdzmdE5iWVpmqecsRx3bOtOY4/1eINw==
+  dependencies:
+    uint8arraylist "^2.0.0"
+
 callsites@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/callsites/-/callsites-3.1.0.tgz#b3630abd8943432f54b3f0519238e33cd7df2f73"
@@ -1558,14 +1565,16 @@ it-first@^1.0.7:
   resolved "https://registry.yarnpkg.com/it-first/-/it-first-1.0.7.tgz#a4bef40da8be21667f7d23e44dae652f5ccd7ab1"
   integrity sha512-nvJKZoBpZD/6Rtde6FXqwDqDZGF1sCADmr2Zoc0hZsIvnE449gRFnGctxDf09Bzc/FWnHXAdaHVIetY6lrE0/g==
 
-it-length-prefixed@^7.0.1:
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-7.0.1.tgz#72993fa087e9064368c8835bc657491585afb183"
-  integrity sha512-UozKoT0zZPUa0LO9OSq5KaLKPn83U7Vsy/BNAN0TUXfTI/pKrOz6RuyTSOok6NDad12FZsShBGnl9DKlfDT95g==
+it-length-prefixed@^8.0.0:
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-8.0.0.tgz#549a618c524212292ad3bf0207fba092278e5cce"
+  integrity sha512-iCb64KfJRBaO8hOKOnN4as2LKhu2tylw2cnH+tRWoBsoqBDqtFW4IwED9te7P3vC7rpVNrYDxYzhhvhDTvIT/w==
   dependencies:
     err-code "^3.0.1"
     it-stream-types "^1.0.4"
-    uint8arraylist "^1.2.0"
+    uint8-varint "^1.0.0"
+    uint8arraylist "^2.0.0"
+    uint8arrays "^3.0.0"
     varint "^6.0.0"
 
 it-merge@^1.0.4:
@@ -1708,6 +1717,14 @@ long@^5.0.0, long@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/long/-/long-5.2.0.tgz#2696dadf4b4da2ce3f6f6b89186085d94d52fd61"
   integrity sha512-9RTUNjK60eJbx3uz+TEGF7fUr29ZDxR5QzXcyDpeSfeH28S9ycINflOgOlppit5U+4kNTe83KQnMEerw7GmE8w==
+
+longbits@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/longbits/-/longbits-1.0.1.tgz#f6b39ab914b40be65c241f63b072357a1f57f55b"
+  integrity sha512-hYsxrbz48HIYrAGaJOffdX5Pd3c4g81i9yacxZAaxo1oaRJ/Z1OOTGR3VpcebBpOkBiJvbQ/xUMt/b7C4jJluA==
+  dependencies:
+    byte-access "^1.0.1"
+    uint8arraylist "^2.0.0"
 
 loose-envify@^1.0.0:
   version "1.4.0"
@@ -2277,10 +2294,26 @@ typescript@^4.7.4:
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.7.4.tgz#1a88596d1cf47d59507a1bcdfb5b9dfe4d488235"
   integrity sha512-C0WQT0gezHuw6AdY1M2jxUO83Rjf0HP7Sk1DtXj6j1EwkQNZrHAg2XPWlq62oqEhYvONq5pkC2Y9oPljWToLmQ==
 
-uint8arraylist@^1.2.0, uint8arraylist@^1.4.0:
+uint8-varint@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/uint8-varint/-/uint8-varint-1.0.0.tgz#e8d211f6411cf4a8a6298e2503155b3e17a88411"
+  integrity sha512-cPJMAzTIlCxYE6snQh83h6vwmxXXFafOwMDOhy2IHaAFMsnkfXmcrKSiQbR92nckeFcKJq88v9Zk51QeRvp2xw==
+  dependencies:
+    byte-access "^1.0.0"
+    longbits "^1.0.1"
+    uint8arraylist "^2.0.0"
+
+uint8arraylist@^1.4.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/uint8arraylist/-/uint8arraylist-1.6.0.tgz#1a600e7b9bfb982631ee5ac130b7998becaaa998"
   integrity sha512-QOh6SQJQj/eEqQ6NJ8SI9LH875uI2ShcOtWE3Yupci0RaHsZm4oP+mUCJzBzKkp+8gCK7M4l+6Ubvlaimt7CSw==
+  dependencies:
+    uint8arrays "^3.0.0"
+
+uint8arraylist@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/uint8arraylist/-/uint8arraylist-2.0.0.tgz#8fa2e039183c49f01b84917fb52f18be8f82206c"
+  integrity sha512-OOx2TiInuBOlvDDhS0um83DWVTvgvazvo96xkMVBV3RbDI5HPxdqudzsIKMzh2lklP52diJ/tVhAhlxHS2f0jA==
   dependencies:
     uint8arrays "^3.0.0"
 

@@ -13,6 +13,7 @@ import {
 } from './packet.js'
 import { StreamHandler } from './conn.js'
 import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
+import { combineUint8ArrayListTransform } from './array-list.js'
 
 // Server implements the SRPC server in TypeScript with a Mux.
 export class Server implements StreamHandler {
@@ -45,10 +46,12 @@ export class Server implements StreamHandler {
     pipe(
       stream,
       parseLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
       decodePacketSource,
       rpc,
       encodePacketSource,
       prependLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
       stream
     )
     return rpc

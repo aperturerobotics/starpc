@@ -1,4 +1,3 @@
-import type { Transform } from 'it-stream-types'
 import {
   encode as lengthPrefixEncode,
   decode as lengthPrefixDecode,
@@ -9,6 +8,8 @@ import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
 } from './message.js'
+import { Uint8ArrayList } from 'uint8arraylist'
+import { Transform } from 'it-pipe'
 
 // decodePacketSource decodes packets from a binary data stream.
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
@@ -17,38 +18,34 @@ export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
 export const encodePacketSource = buildEncodeMessageTransform<Packet>(Packet)
 
 // uint32LEDecode removes the length prefix.
-const uint32LEDecode = (data: Uint8Array) => {
+const uint32LEDecode = (data: Uint8ArrayList) => {
   if (data.length < 4) {
     throw RangeError('Could not decode int32BE')
   }
 
-  const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
-  return view.getUint32(0, true)
+  return data.getUint32(0, true)
 }
 uint32LEDecode.bytes = 4
 
 // uint32LEEncode adds the length prefix.
 const uint32LEEncode = (
   value: number,
-  target?: Uint8Array,
-  offset?: number
 ) => {
-  target = target ?? new Uint8Array(4)
-  const view = new DataView(target.buffer, target.byteOffset, target.byteLength)
-  view.setUint32(offset ?? 0, value, true)
-  return target
+  const data = new Uint8ArrayList(new Uint8Array(4))
+  data.setUint32(0, value, true)
+  return data
 }
 uint32LEEncode.bytes = 4
 
 // prependLengthPrefixTransform adds a length prefix to a message source.
 // little-endian uint32
-export function prependLengthPrefixTransform(): Transform<Uint8Array> {
+export function prependLengthPrefixTransform(): Transform<Uint8Array | Uint8ArrayList, Uint8ArrayList> {
   return lengthPrefixEncode({ lengthEncoder: uint32LEEncode })
 }
 
 // parseLengthPrefixTransform parses the length prefix from a message source.
 // little-endian uint32
-export function parseLengthPrefixTransform(): Transform<Uint8Array> {
+export function parseLengthPrefixTransform(): Transform<Uint8Array | Uint8ArrayList, Uint8ArrayList> {
   return lengthPrefixDecode({ lengthDecoder: uint32LEDecode })
 }
 

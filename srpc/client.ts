@@ -11,6 +11,7 @@ import {
   parseLengthPrefixTransform,
   prependLengthPrefixTransform,
 } from './packet.js'
+import { combineUint8ArrayListTransform } from './array-list.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
@@ -142,10 +143,12 @@ export class Client implements TsProtoRpc {
     pipe(
       conn,
       parseLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
       decodePacketSource,
       call,
       encodePacketSource,
       prependLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
       conn
     )
     await call.writeCallStart(data || undefined)
