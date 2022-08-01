@@ -25,6 +25,9 @@ export class ServerRPC extends CommonRPC {
     if (!this.service || !this.method) {
       throw new Error('rpcService and rpcMethod cannot be empty')
     }
+    if (!this.lookupMethod) {
+      throw new Error('LookupMethod is not defined')
+    }
     const methodDef = await this.lookupMethod(this.service, this.method)
     if (!methodDef) {
       throw new Error(`not found: ${this.service}/${this.method}`)
