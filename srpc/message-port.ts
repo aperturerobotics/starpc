@@ -47,6 +47,7 @@ export class MessagePortIterable<T> implements Duplex<T> {
       }
 
       this.port.addEventListener('message', messageListener)
+      this.port.start()
       return () => {
         this.port.removeEventListener('message', messageListener)
       }
