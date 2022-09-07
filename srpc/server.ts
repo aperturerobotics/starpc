@@ -1,4 +1,3 @@
-import { Stream } from '@libp2p/interface-connection'
 import { Duplex } from 'it-stream-types'
 import { pipe } from 'it-pipe'
 import { Uint8ArrayList } from 'uint8arraylist'
@@ -13,6 +12,7 @@ import {
   encodePacketSource,
 } from './packet.js'
 import { StreamHandler } from './conn.js'
+import { Stream } from './stream.js'
 import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
 
@@ -27,7 +27,7 @@ export class Server implements StreamHandler {
 
   // rpcStreamHandler implements the RpcStreamHandler interface.
   public get rpcStreamHandler(): RpcStreamHandler {
-    return this.handleDuplex.bind(this)
+    return this.handleStream.bind(this)
   }
 
   // startRpc starts a new server-side RPC.
@@ -43,24 +43,7 @@ export class Server implements StreamHandler {
 
   // handleDuplex handles an incoming message duplex.
   public handleDuplex(
-    stream: Duplex<Uint8ArrayList | Uint8Array, Uint8ArrayList | Uint8Array>
-  ): ServerRPC {
-    const rpc = this.startRpc()
-    pipe(
-      stream,
-      parseLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
-      decodePacketSource,
-      rpc,
-      encodePacketSource,
-      prependLengthPrefixTransform(),
-      stream
-    )
-    return rpc
-  }
-
-  public handleUint8ArrayDuplex(
-    stream: Duplex<Uint8Array>
+    stream: Duplex<Uint8Array, Uint8Array>
   ): ServerRPC {
     const rpc = this.startRpc()
     pipe(

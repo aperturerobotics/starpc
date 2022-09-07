@@ -3,12 +3,14 @@ import type {
   StreamMuxer,
   StreamMuxerFactory,
 } from '@libp2p/interface-stream-muxer'
+import { pipe } from 'it-pipe'
 import type { Duplex } from 'it-stream-types'
 import { Mplex } from '@libp2p/mplex'
 import { Uint8ArrayList } from 'uint8arraylist'
 
 import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
 import { Client } from './client.js'
+import { combineUint8ArrayListTransform } from './array-list.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
 export interface ConnParams {
@@ -23,7 +25,15 @@ export interface ConnParams {
 // Implemented by Server.
 export interface StreamHandler {
   // handleStream handles an incoming stream.
-  handleStream(strm: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>): void
+  handleStream(strm: SRPCStream): void
+}
+
+// streamToSRPCStream converts a Stream to a SRPCStream.
+export function streamToSRPCStream(stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>): SRPCStream {
+  return {
+    source: pipe(stream, combineUint8ArrayListTransform()),
+    sink: stream.sink,
+  }
 }
 
 // Conn implements a generic connection with a two-way stream.
@@ -72,7 +82,8 @@ export class Conn implements Duplex<Uint8Array> {
 
   // openStream implements the client open stream function.
   public async openStream(): Promise<SRPCStream> {
-    return this.muxer.newStream()
+    const stream = this.muxer.newStream()
+    return streamToSRPCStream(stream)
   }
 
   // buildOpenStreamFunc returns openStream bound to this conn.
@@ -86,6 +97,6 @@ export class Conn implements Duplex<Uint8Array> {
     if (!server) {
       return strm.abort(new Error('server not implemented'))
     }
-    server.handleStream(strm)
+    server.handleStream(streamToSRPCStream(strm))
   }
 }

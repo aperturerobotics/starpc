@@ -1,7 +1,7 @@
 import { RpcStreamPacket } from './rpcstream.pb.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
-import { Duplex, Source, Sink } from 'it-stream-types'
+import { Source, Sink } from 'it-stream-types'
 import { Uint8ArrayList } from 'uint8arraylist'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
@@ -59,9 +59,7 @@ export function buildRpcStreamOpenStream(
 
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
-export type RpcStreamHandler = (
-  stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>
-) => void
+export type RpcStreamHandler = (stream: Stream) => void
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
@@ -139,7 +137,7 @@ export async function* handleRpcStream(
 // Note: expects the stream to already have been negotiated.
 export class RpcStream implements Stream {
   // source is the source for incoming Uint8Array packets.
-  public readonly source: Source<Uint8ArrayList>
+  public readonly source: Source<Uint8Array>
   // sink is the sink for outgoing Uint8Array packets.
   public readonly sink: Sink<Uint8ArrayList | Uint8Array>
 
@@ -188,9 +186,9 @@ export class RpcStream implements Stream {
   }
 
   // _createSource initializes the source field.
-  private _createSource(): Source<Uint8ArrayList> {
+  private _createSource(): Source<Uint8Array> {
     const packetSource = this._packetStream
-    return (async function* packetDataSource(): AsyncIterable<Uint8ArrayList> {
+    return (async function* packetDataSource(): AsyncIterable<Uint8Array> {
       while (true) {
         const msgIt = await packetSource.next()
         if (msgIt.done) {
@@ -201,7 +199,7 @@ export class RpcStream implements Stream {
         if (!body || body.$case !== 'data') {
           continue
         }
-        yield* [new Uint8ArrayList(body.data)]
+        yield* [body.data]
       }
     })()
   }
