@@ -43,7 +43,7 @@ export class Server implements StreamHandler {
 
   // handleDuplex handles an incoming message duplex.
   public handleDuplex(
-    stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>
+    stream: Duplex<Uint8ArrayList | Uint8Array, Uint8ArrayList | Uint8Array>
   ): ServerRPC {
     const rpc = this.startRpc()
     pipe(
@@ -54,6 +54,24 @@ export class Server implements StreamHandler {
       rpc,
       encodePacketSource,
       prependLengthPrefixTransform(),
+      stream
+    )
+    return rpc
+  }
+
+  public handleUint8ArrayDuplex(
+    stream: Duplex<Uint8Array>
+  ): ServerRPC {
+    const rpc = this.startRpc()
+    pipe(
+      stream,
+      parseLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
+      decodePacketSource,
+      rpc,
+      encodePacketSource,
+      prependLengthPrefixTransform(),
+      combineUint8ArrayListTransform(),
       stream
     )
     return rpc
