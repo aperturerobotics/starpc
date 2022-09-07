@@ -54,7 +54,6 @@ export class Server implements StreamHandler {
       rpc,
       encodePacketSource,
       prependLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
       stream
     )
     return rpc

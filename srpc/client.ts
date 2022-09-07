@@ -148,7 +148,6 @@ export class Client implements TsProtoRpc {
       call,
       encodePacketSource,
       prependLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
       conn
     )
     await call.writeCallStart(data || undefined)
