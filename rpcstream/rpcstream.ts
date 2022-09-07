@@ -59,7 +59,9 @@ export function buildRpcStreamOpenStream(
 
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
-export type RpcStreamHandler = (stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>) => void
+export type RpcStreamHandler = (
+  stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>
+) => void
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
@@ -167,14 +169,14 @@ export class RpcStream implements Stream {
       try {
         for await (const arr of source) {
           if (arr instanceof Uint8Array) {
-          this._packetSink.push({
-            body: { $case: 'data', data: arr },
-          })
+            this._packetSink.push({
+              body: { $case: 'data', data: arr },
+            })
           } else {
             for (const msg of arr) {
-            this._packetSink.push({
-              body: { $case: 'data', data: msg },
-            })
+              this._packetSink.push({
+                body: { $case: 'data', data: msg },
+              })
             }
           }
         }
