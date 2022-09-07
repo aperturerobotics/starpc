@@ -137,9 +137,7 @@ func (s *srpc) ServerStreamImpl(method *protogen.Method) string {
 		"Stream"
 }
 
-//
 // service generation
-//
 func (s *srpc) generateService(service *protogen.Service) {
 	// Client interface
 	s.P("type ", s.ClientIface(service), " interface {")

@@ -2,6 +2,7 @@ import { RpcStreamPacket } from './rpcstream.pb.js'
 import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
 import { Duplex, Source, Sink } from 'it-stream-types'
+import { Uint8ArrayList } from 'uint8arraylist'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
@@ -58,7 +59,7 @@ export function buildRpcStreamOpenStream(
 
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
-export type RpcStreamHandler = (stream: Duplex<Uint8Array>) => void
+export type RpcStreamHandler = (stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>) => void
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
@@ -136,9 +137,9 @@ export async function* handleRpcStream(
 // Note: expects the stream to already have been negotiated.
 export class RpcStream implements Stream {
   // source is the source for incoming Uint8Array packets.
-  public readonly source: Source<Uint8Array>
+  public readonly source: Source<Uint8ArrayList>
   // sink is the sink for outgoing Uint8Array packets.
-  public readonly sink: Sink<Uint8Array>
+  public readonly sink: Sink<Uint8ArrayList | Uint8Array>
 
   // _packetStream receives packets from the remote.
   private readonly _packetStream: AsyncIterator<RpcStreamPacket>
@@ -161,13 +162,21 @@ export class RpcStream implements Stream {
   }
 
   // _createSink initializes the sink field.
-  private _createSink(): Sink<Uint8Array> {
+  private _createSink(): Sink<Uint8ArrayList | Uint8Array> {
     return async (source) => {
       try {
-        for await (const msg of source) {
+        for await (const arr of source) {
+          if (arr instanceof Uint8Array) {
           this._packetSink.push({
-            body: { $case: 'data', data: msg },
+            body: { $case: 'data', data: arr },
           })
+          } else {
+            for (const msg of arr) {
+            this._packetSink.push({
+              body: { $case: 'data', data: msg },
+            })
+            }
+          }
         }
         this._packetSink.end()
       } catch (err) {
@@ -177,9 +186,9 @@ export class RpcStream implements Stream {
   }
 
   // _createSource initializes the source field.
-  private _createSource(): Source<Uint8Array> {
+  private _createSource(): Source<Uint8ArrayList> {
     const packetSource = this._packetStream
-    return (async function* packetDataSource(): AsyncIterable<Uint8Array> {
+    return (async function* packetDataSource(): AsyncIterable<Uint8ArrayList> {
       while (true) {
         const msgIt = await packetSource.next()
         if (msgIt.done) {
@@ -190,7 +199,7 @@ export class RpcStream implements Stream {
         if (!body || body.$case !== 'data') {
           continue
         }
-        yield* [body.data]
+        yield* [new Uint8ArrayList(body.data)]
       }
     })()
   }

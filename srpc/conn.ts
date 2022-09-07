@@ -5,6 +5,7 @@ import type {
 } from '@libp2p/interface-stream-muxer'
 import type { Duplex } from 'it-stream-types'
 import { Mplex } from '@libp2p/mplex'
+import { Uint8ArrayList } from 'uint8arraylist'
 
 import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
 import { Client } from './client.js'
@@ -22,7 +23,7 @@ export interface ConnParams {
 // Implemented by Server.
 export interface StreamHandler {
   // handleStream handles an incoming stream.
-  handleStream(strm: Duplex<Uint8Array>): void
+  handleStream(strm: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>): void
 }
 
 // Conn implements a generic connection with a two-way stream.

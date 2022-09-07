@@ -5,7 +5,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 	mplex "github.com/libp2p/go-libp2p/p2p/muxer/mplex"
 	mp "github.com/libp2p/go-mplex"
 )

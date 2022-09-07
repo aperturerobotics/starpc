@@ -39,7 +39,7 @@ uint32LEEncode.bytes = 4
 
 // prependLengthPrefixTransform adds a length prefix to a message source.
 // little-endian uint32
-export function prependLengthPrefixTransform(): Transform<Uint8Array | Uint8ArrayList, Uint8ArrayList> {
+export function prependLengthPrefixTransform(): Transform<Uint8Array | Uint8ArrayList, Uint8Array> {
   return lengthPrefixEncode({ lengthEncoder: uint32LEEncode })
 }
 

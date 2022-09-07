@@ -1,6 +1,7 @@
 import { Stream } from '@libp2p/interface-connection'
 import { Duplex } from 'it-stream-types'
 import { pipe } from 'it-pipe'
+import { Uint8ArrayList } from 'uint8arraylist'
 
 import { LookupMethod } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
@@ -41,7 +42,7 @@ export class Server implements StreamHandler {
   }
 
   // handleDuplex handles an incoming message duplex.
-  public handleDuplex(stream: Duplex<Uint8Array>): ServerRPC {
+  public handleDuplex(stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>): ServerRPC {
     const rpc = this.startRpc()
     pipe(
       stream,

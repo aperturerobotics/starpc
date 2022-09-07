@@ -145,7 +145,7 @@ fix: $(GOLANGCI_LINT)
 
 .PHONY: test
 test:
-	go test -v ./...
+	go test -timeout=30s -v ./...
 
 .PHONY: integration
 integration: node_modules vendor

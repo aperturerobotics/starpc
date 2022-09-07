@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 // Server handles incoming RPC streams with a mux.
