@@ -6,6 +6,10 @@ import "sync"
 type Mux interface {
 	// Register registers a new RPC method handler (service).
 	Register(handler Handler) error
+	// HasService checks if the service ID exists in the handlers.
+	HasService(serviceID string) bool
+	// HasServiceMethod checks if <service-id, method-id> exists in the handlers.
+	HasServiceMethod(serviceID, methodID string) bool
 	// InvokeMethod invokes the method matching the service & method ID.
 	// Returns false, nil if not found.
 	// If service string is empty, ignore it.
@@ -51,6 +55,39 @@ func (m *mux) Register(handler Handler) error {
 	}
 
 	return nil
+}
+
+// HasService checks if the service ID exists in the handlers.
+func (m *mux) HasService(serviceID string) bool {
+	if serviceID == "" {
+		return false
+	}
+
+	m.rmtx.Lock()
+	defer m.rmtx.Unlock()
+
+	return len(m.services[serviceID]) != 0
+}
+
+// HasServiceMethod checks if <service-id, method-id> exists in the handlers.
+func (m *mux) HasServiceMethod(serviceID, methodID string) bool {
+	if serviceID == "" || methodID == "" {
+		return false
+	}
+
+	m.rmtx.Lock()
+	defer m.rmtx.Unlock()
+
+	handlers := m.services[serviceID]
+	for _, mh := range handlers {
+		for _, mhMethodID := range mh.GetMethodIDs() {
+			if mhMethodID == methodID {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // InvokeMethod invokes the method matching the service & method ID.
