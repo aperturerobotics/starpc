@@ -171,13 +171,6 @@ func TestE2E_BidiStream(t *testing.T) {
 		if msg.GetBody() != expected {
 			t.Fatalf("expected %q got %q", expected, msg.GetBody())
 		}
-		msg, err = strm.Recv()
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		if msg.GetBody() != clientExpected {
-			t.Fatalf("expected %q got %q", clientExpected, msg.GetBody())
-		}
 		// expect no error closing
 		return strm.Close()
 	})
