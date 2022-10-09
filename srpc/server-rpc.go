@@ -16,8 +16,8 @@ type ServerRPC struct {
 	ctxCancel context.CancelFunc
 	// writer is the writer to write messages to
 	writer Writer
-	// mux is the mux to handle calls
-	mux Mux
+	// invoker is the rpc call invoker
+	invoker Invoker
 	// service is the rpc service
 	service string
 	// method is the rpc method
@@ -36,10 +36,10 @@ type ServerRPC struct {
 
 // NewServerRPC constructs a new ServerRPC session.
 // note: call SetWriter before handling any incoming messages.
-func NewServerRPC(ctx context.Context, mux Mux) *ServerRPC {
+func NewServerRPC(ctx context.Context, invoker Invoker) *ServerRPC {
 	rpc := &ServerRPC{
-		dataCh: make(chan []byte, 5),
-		mux:    mux,
+		dataCh:  make(chan []byte, 5),
+		invoker: invoker,
 	}
 	rpc.ctx, rpc.ctxCancel = context.WithCancel(ctx)
 	return rpc
@@ -165,7 +165,7 @@ func (r *ServerRPC) invokeRPC() {
 	// ctx := r.ctx
 	serviceID, methodID := r.service, r.method
 	strm := NewMsgStream(r.ctx, r.writer, r.dataCh)
-	ok, err := r.mux.InvokeMethod(serviceID, methodID, strm)
+	ok, err := r.invoker.InvokeMethod(serviceID, methodID, strm)
 	if err == nil && !ok {
 		err = ErrUnimplemented
 	}

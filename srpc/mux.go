@@ -4,16 +4,15 @@ import "sync"
 
 // Mux contains a set of <service, method> handlers.
 type Mux interface {
+	// Invoker invokes the methods.
+	Invoker
+
 	// Register registers a new RPC method handler (service).
 	Register(handler Handler) error
 	// HasService checks if the service ID exists in the handlers.
 	HasService(serviceID string) bool
 	// HasServiceMethod checks if <service-id, method-id> exists in the handlers.
 	HasServiceMethod(serviceID, methodID string) bool
-	// InvokeMethod invokes the method matching the service & method ID.
-	// Returns false, nil if not found.
-	// If service string is empty, ignore it.
-	InvokeMethod(serviceID, methodID string, strm Stream) (bool, error)
 }
 
 // muxMethods is a mapping from method id to handler.

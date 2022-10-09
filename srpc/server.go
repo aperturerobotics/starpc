@@ -9,27 +9,27 @@ import (
 
 // Server handles incoming RPC streams with a mux.
 type Server struct {
-	// mux is the srpc mux
-	mux Mux
+	// invoker is the method invoker
+	invoker Invoker
 }
 
 // NewServer constructs a new SRPC server.
-func NewServer(mux Mux) *Server {
+func NewServer(invoker Invoker) *Server {
 	return &Server{
-		mux: mux,
+		invoker: invoker,
 	}
 }
 
-// GetMux returns the mux.
-func (s *Server) GetMux() Mux {
-	return s.mux
+// GetInvoker returns the invoker.
+func (s *Server) GetInvoker() Invoker {
+	return s.invoker
 }
 
 // HandleStream handles an incoming ReadWriteCloser stream.
 func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) error {
 	subCtx, subCtxCancel := context.WithCancel(ctx)
 	defer subCtxCancel()
-	serverRPC := NewServerRPC(subCtx, s.mux)
+	serverRPC := NewServerRPC(subCtx, s.invoker)
 	prw := NewPacketReadWriter(rwc)
 	serverRPC.SetWriter(prw)
 	go prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
