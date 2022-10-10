@@ -1,11 +1,22 @@
 # Stream RPC
 
+[![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
+
+> Protobuf 3 RPC services over any stream multiplexer.
+
+[GoDoc]: https://godoc.org/github.com/aperturerobotics/starpc
+[GoDoc Widget]: https://godoc.org/github.com/aperturerobotics/starpc?status.svg
+[Go Report Card Widget]: https://goreportcard.com/badge/github.com/aperturerobotics/starpc
+[Go Report Card]: https://goreportcard.com/report/github.com/aperturerobotics/starpc
+
+## Introduction
+
 **starpc** implements [Proto3 services] (server & client) in both TypeScript and Go.
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
 Supports **client-to-server streaming** RPCs in the web browser, currently not
-supported by any of the major RPC libraries.
+supported by any of the other RPC libraries.
 
 The [rpcproto](./srpc/rpcproto.proto) file describes the protocol.
 
@@ -17,7 +28,7 @@ Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
 
 [rpcstream]: ./rpcstream
 
-# Usage
+## Usage
 
 Start with the [protobuf-project] template repository on the "starpc" branch.
 
@@ -26,13 +37,13 @@ Start with the [protobuf-project] template repository on the "starpc" branch.
 Use "git add" to add your new .proto files, then `yarn gen` to generate the
 TypeScript and Go code.
 
-# Examples
+## Examples
 
 The demo/boilerplate project implements the Echo example below.
 
 This repository uses protowrap, see the [Makefile](./Makefile).
 
-## Protobuf
+### Protobuf
 
 The following examples use the [echo](./echo/echo.proto) protobuf sample.
 
@@ -58,7 +69,7 @@ message EchoMsg {
 }
 ```
 
-## Go
+### Go
 
 This example demonstrates both the server and client:
 
@@ -94,7 +105,7 @@ if out.GetBody() != bodyTxt {
 
 [e2e test]: ./e2e/e2e_test.go
 
-## TypeScript
+### TypeScript
 
 See the ts-proto README to generate the TypeScript for your protobufs.
 
@@ -155,7 +166,7 @@ for await (const msg of serverStream) {
 }
 ```
 
-## WebSocket
+### WebSocket
 
 One way to integrate Go and TypeScript is over a WebSocket:
 
@@ -186,7 +197,7 @@ Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
 
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
 
-# Support
+## Support
 
 Starpc is built & supported by Aperture Robotics, LLC.
 
