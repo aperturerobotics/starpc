@@ -7,6 +7,7 @@ import { pipe } from 'it-pipe'
 import type { Duplex } from 'it-stream-types'
 import { Mplex } from '@libp2p/mplex'
 import { Uint8ArrayList } from 'uint8arraylist'
+import isPromise from 'is-promise'
 
 import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
 import { Client } from './client.js'
@@ -85,6 +86,9 @@ export class Conn implements Duplex<Uint8Array> {
   // openStream implements the client open stream function.
   public async openStream(): Promise<SRPCStream> {
     const stream = this.muxer.newStream()
+    if (isPromise(stream)) {
+      return streamToSRPCStream(await stream)
+    }
     return streamToSRPCStream(stream)
   }
 

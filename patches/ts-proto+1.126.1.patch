@@ -1,0 +1,25 @@
+diff --git a/node_modules/ts-proto/build/generate-services.js b/node_modules/ts-proto/build/generate-services.js
+index 8ae7981..5ab6bf6 100644
+--- a/node_modules/ts-proto/build/generate-services.js
++++ b/node_modules/ts-proto/build/generate-services.js
+@@ -129,7 +129,7 @@ function generateRegularRpcMethod(ctx, fileDesc, serviceDesc, methodDesc) {
+       const data = ${encode};
+       const ${returnVariable} = this.rpc.${rpcMethod}(
+         ${maybeCtx}
+-        "${(0, utils_1.maybePrefixPackage)(fileDesc, serviceDesc.name)}",
++        this.service,
+         "${methodDesc.name}",
+         data
+       );
+@@ -148,7 +148,10 @@ function generateServiceClientImpl(ctx, fileDesc, serviceDesc) {
+     // Create the constructor(rpc: Rpc)
+     const rpcType = options.context ? "Rpc<Context>" : "Rpc";
+     chunks.push((0, ts_poet_1.code) `private readonly rpc: ${rpcType};`);
+-    chunks.push((0, ts_poet_1.code) `constructor(rpc: ${rpcType}) {`);
++    chunks.push((0, ts_poet_1.code) `private readonly service: string;`);
++    chunks.push((0, ts_poet_1.code) `constructor(rpc: ${rpcType}, service?: string) {`);
++    const serviceID = (0, utils_1.maybePrefixPackage)(fileDesc, serviceDesc.name);
++    chunks.push((0, ts_poet_1.code) `this.service = service || "${serviceID}";`);
+     chunks.push((0, ts_poet_1.code) `this.rpc = rpc;`);
+     // Bind each FooService method to the FooServiceImpl class
+     for (const methodDesc of serviceDesc.method) {

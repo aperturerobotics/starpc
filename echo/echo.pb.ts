@@ -105,7 +105,9 @@ export interface Echoer {
 
 export class EchoerClientImpl implements Echoer {
   private readonly rpc: Rpc;
-  constructor(rpc: Rpc) {
+  private readonly service: string;
+  constructor(rpc: Rpc, service?: string) {
+    this.service = service || "echo.Echoer";
     this.rpc = rpc;
     this.Echo = this.Echo.bind(this);
     this.EchoServerStream = this.EchoServerStream.bind(this);
@@ -115,31 +117,31 @@ export class EchoerClientImpl implements Echoer {
   }
   Echo(request: EchoMsg): Promise<EchoMsg> {
     const data = EchoMsg.encode(request).finish();
-    const promise = this.rpc.request("echo.Echoer", "Echo", data);
+    const promise = this.rpc.request(this.service, "Echo", data);
     return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)));
   }
 
   EchoServerStream(request: EchoMsg): AsyncIterable<EchoMsg> {
     const data = EchoMsg.encode(request).finish();
-    const result = this.rpc.serverStreamingRequest("echo.Echoer", "EchoServerStream", data);
+    const result = this.rpc.serverStreamingRequest(this.service, "EchoServerStream", data);
     return EchoMsg.decodeTransform(result);
   }
 
   EchoClientStream(request: AsyncIterable<EchoMsg>): Promise<EchoMsg> {
     const data = EchoMsg.encodeTransform(request);
-    const promise = this.rpc.clientStreamingRequest("echo.Echoer", "EchoClientStream", data);
+    const promise = this.rpc.clientStreamingRequest(this.service, "EchoClientStream", data);
     return promise.then((data) => EchoMsg.decode(new _m0.Reader(data)));
   }
 
   EchoBidiStream(request: AsyncIterable<EchoMsg>): AsyncIterable<EchoMsg> {
     const data = EchoMsg.encodeTransform(request);
-    const result = this.rpc.bidirectionalStreamingRequest("echo.Echoer", "EchoBidiStream", data);
+    const result = this.rpc.bidirectionalStreamingRequest(this.service, "EchoBidiStream", data);
     return EchoMsg.decodeTransform(result);
   }
 
   RpcStream(request: AsyncIterable<RpcStreamPacket>): AsyncIterable<RpcStreamPacket> {
     const data = RpcStreamPacket.encodeTransform(request);
-    const result = this.rpc.bidirectionalStreamingRequest("echo.Echoer", "RpcStream", data);
+    const result = this.rpc.bidirectionalStreamingRequest(this.service, "RpcStream", data);
     return RpcStreamPacket.decodeTransform(result);
   }
 }
