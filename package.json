@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.10.8",
+  "version": "0.10.9",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
