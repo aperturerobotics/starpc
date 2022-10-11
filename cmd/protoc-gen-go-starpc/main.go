@@ -259,25 +259,12 @@ func (s *srpc) generateService(service *protogen.Service) {
 		s.P("}")
 	}
 
-	/*
-		s.P("func (", s.ServerHandler(service), ") NumMethods() int { return ", len(service.Methods), " }")
-		s.P()
-		s.P("func (", s.ServerHandler(service), ") Method(n int) (string, ", s.Ident(SRPCPackage, "Encoding"), ", ", s.Ident(SRPCPackage, "Receiver"), ", interface{}, bool) {")
-		s.P("switch n {")
-		for i, method := range service.Methods {
-			s.P("case ", i, ":")
-			// encodingName := s.EncodingName()
-			s.P("return ", s.RPCGoString(method), ", ", encodingName, "{}, ")
-			s.generateServerReceiver(method)
-			s.P("}, ", s.ServerIface(service), ".", method.GoName, ", true")
-		}
-		s.P("default:")
-		s.P(`return "", nil, nil, nil, false`)
-		s.P("}")
-		s.P("}")
-	*/
-
 	s.P()
+
+	// Constructor helper
+	s.P("func New", s.ServerHandler(service), "(impl ", s.ServerIface(service), ") srpc.Handler {")
+	s.P("return &", s.ServerHandler(service), "{impl: impl})")
+	s.P("}")
 
 	// Registration helper
 	s.P("func SRPCRegister", service.GoName, "(mux ", s.Ident(SRPCPackage, "Mux"), ", impl ", s.ServerIface(service), ") error {")

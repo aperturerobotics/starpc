@@ -10,13 +10,18 @@ import (
 	mp "github.com/libp2p/go-mplex"
 )
 
-// NewMuxedConn constructs a new MuxedConn from a ReadWriteCloser.
-func NewMuxedConn(conn io.ReadWriteCloser, outbound bool) (network.MuxedConn, error) {
+// NewMuxedConn constructs a new MuxedConn from a net.Conn.
+func NewMuxedConn(conn net.Conn, outbound bool) (network.MuxedConn, error) {
 	m, err := mp.NewMultiplex(conn, outbound, nil)
 	if err != nil {
 		return nil, err
 	}
 	return mplex.NewMuxedConn(m), nil
+}
+
+// NewMuxedConnWithRwc builds a new MuxedConn with a io.ReadWriteCloser.
+func NewMuxedConnWithRwc(ctx context.Context, rwc io.ReadWriteCloser, outbound bool) (network.MuxedConn, error) {
+	return NewMuxedConn(NewRwcConn(ctx, rwc, nil, nil, 10), outbound)
 }
 
 // NewClientWithConn constructs the muxer and the client.
