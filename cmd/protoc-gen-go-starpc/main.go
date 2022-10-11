@@ -263,8 +263,10 @@ func (s *srpc) generateService(service *protogen.Service) {
 
 	// Constructor helper
 	s.P("func New", s.ServerHandler(service), "(impl ", s.ServerIface(service), ") srpc.Handler {")
-	s.P("return &", s.ServerHandler(service), "{impl: impl})")
+	s.P("return &", s.ServerHandler(service), "{impl: impl}")
 	s.P("}")
+
+	s.P()
 
 	// Registration helper
 	s.P("func SRPCRegister", service.GoName, "(mux ", s.Ident(SRPCPackage, "Mux"), ", impl ", s.ServerIface(service), ") error {")

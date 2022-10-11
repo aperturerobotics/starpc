@@ -295,6 +295,10 @@ func (SRPCEchoerHandler) InvokeMethod_RpcStream(impl SRPCEchoerServer, strm srpc
 	return impl.RpcStream(clientStrm)
 }
 
+func NewSRPCEchoerHandler(impl SRPCEchoerServer) srpc.Handler {
+	return &SRPCEchoerHandler{impl: impl}
+}
+
 func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
 	return mux.Register(&SRPCEchoerHandler{impl: impl})
 }
