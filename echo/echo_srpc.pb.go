@@ -220,10 +220,25 @@ func (s *SRPCEchoerUnimplementedServer) RpcStream(SRPCEchoer_RpcStreamStream) er
 const SRPCEchoerServiceID = "echo.Echoer"
 
 type SRPCEchoerHandler struct {
-	impl SRPCEchoerServer
+	serviceID string
+	impl      SRPCEchoerServer
 }
 
-func (SRPCEchoerHandler) GetServiceID() string { return SRPCEchoerServiceID }
+// NewSRPCEchoerHandler constructs a new RPC handler.
+// serviceID: if empty, uses default: echo.Echoer
+func NewSRPCEchoerHandler(impl SRPCEchoerServer, serviceID string) srpc.Handler {
+	if serviceID == "" {
+		serviceID = SRPCEchoerServiceID
+	}
+	return &SRPCEchoerHandler{impl: impl, serviceID: serviceID}
+}
+
+// SRPCRegisterEchoer registers the implementation with the mux.
+// Uses the default serviceID: echo.Echoer
+func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
+	return mux.Register(NewSRPCEchoerHandler(impl, ""))
+}
+func (d *SRPCEchoerHandler) GetServiceID() string { return d.serviceID }
 
 func (SRPCEchoerHandler) GetMethodIDs() []string {
 	return []string{
@@ -293,14 +308,6 @@ func (SRPCEchoerHandler) InvokeMethod_EchoBidiStream(impl SRPCEchoerServer, strm
 func (SRPCEchoerHandler) InvokeMethod_RpcStream(impl SRPCEchoerServer, strm srpc.Stream) error {
 	clientStrm := &srpcEchoer_RpcStreamStream{strm}
 	return impl.RpcStream(clientStrm)
-}
-
-func NewSRPCEchoerHandler(impl SRPCEchoerServer) srpc.Handler {
-	return &SRPCEchoerHandler{impl: impl}
-}
-
-func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
-	return mux.Register(&SRPCEchoerHandler{impl: impl})
 }
 
 type SRPCEchoer_EchoStream interface {

@@ -29,7 +29,9 @@ export interface StreamHandler {
 }
 
 // streamToSRPCStream converts a Stream to a SRPCStream.
-export function streamToSRPCStream(stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>): SRPCStream {
+export function streamToSRPCStream(
+  stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>
+): SRPCStream {
   return {
     source: pipe(stream, combineUint8ArrayListTransform()),
     sink: stream.sink,

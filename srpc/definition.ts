@@ -7,6 +7,7 @@ export interface Definition {
   // e.x.: Echo
   name: string
   // fullName is the fully qualified name of the service
+  // this is also referred to as the "service ID"
   // e.x.: echoer.Echoer
   fullName: string
   // methods is the set of RPC methods.

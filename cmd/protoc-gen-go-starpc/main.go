@@ -190,11 +190,32 @@ func (s *srpc) generateService(service *protogen.Service) {
 
 	// Handler implementation.
 	s.P("type ", s.ServerHandler(service), " struct{")
+	s.P("serviceID string")
 	s.P("impl ", s.ServerIface(service))
 	s.P("}")
 	s.P()
-	s.P("func (", s.ServerHandler(service), ") GetServiceID() string { return ", s.ServerServiceID(service), " }")
+	// Constructor helper
+	s.P("// New", s.ServerHandler(service), " constructs a new RPC handler.")
+	s.P("// serviceID: if empty, uses default: ", serviceID)
+	s.P("func New", s.ServerHandler(service), "(impl ", s.ServerIface(service), ", serviceID string) srpc.Handler {")
+	s.P("if serviceID == \"\" { serviceID = ", s.ServerServiceID(service), " }")
+	s.P("return &", s.ServerHandler(service), "{impl: impl, serviceID: serviceID}")
+	s.P("}")
 	s.P()
+
+	// Registration helper
+	s.P("// SRPCRegister", service.GoName, " registers the implementation with the mux.")
+	s.P("// Uses the default serviceID: ", serviceID)
+	s.P("func SRPCRegister", service.GoName, "(mux ", s.Ident(SRPCPackage, "Mux"), ", impl ", s.ServerIface(service), ") error {")
+	s.P("return mux.Register(New", s.ServerHandler(service), "(impl, \"\"))")
+	s.P("}")
+	s.P()
+
+	// GetServiceID
+	s.P("func (d *", s.ServerHandler(service), ") GetServiceID() string { return d.serviceID }")
+	s.P()
+
+	// GetMethodIDs
 	s.P("func (", s.ServerHandler(service), ") GetMethodIDs() []string {")
 	s.P("return []string{")
 	for _, method := range service.Methods {
@@ -260,18 +281,6 @@ func (s *srpc) generateService(service *protogen.Service) {
 	}
 
 	s.P()
-
-	// Constructor helper
-	s.P("func New", s.ServerHandler(service), "(impl ", s.ServerIface(service), ") srpc.Handler {")
-	s.P("return &", s.ServerHandler(service), "{impl: impl}")
-	s.P("}")
-
-	s.P()
-
-	// Registration helper
-	s.P("func SRPCRegister", service.GoName, "(mux ", s.Ident(SRPCPackage, "Mux"), ", impl ", s.ServerIface(service), ") error {")
-	s.P("return mux.Register(&", s.ServerHandler(service), "{impl: impl})")
-	s.P("}")
 
 	// Server methods
 	for _, method := range service.Methods {

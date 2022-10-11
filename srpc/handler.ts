@@ -145,7 +145,16 @@ export function createInvokeFn<R, O>(
 }
 
 // createHandler creates a handler from a definition and an implementation.
-export function createHandler(definition: Definition, impl: any): Handler {
+// if serviceID is not set, uses the fullName of the service as the identifier.
+export function createHandler(
+  definition: Definition,
+  impl: any,
+  serviceID?: string
+): Handler {
+  // serviceID defaults to the full name of the service from Protobuf.
+  serviceID = serviceID || definition.fullName
+
+  // build map of method ID -> method prototype.
   const methodMap: MethodMap = {}
   for (const methodInfo of Object.values(definition.methods)) {
     const methodName = methodInfo.name
@@ -157,5 +166,5 @@ export function createHandler(definition: Definition, impl: any): Handler {
     methodMap[methodName] = createInvokeFn(methodInfo, methodProto)
   }
 
-  return new StaticHandler(definition.fullName, methodMap)
+  return new StaticHandler(serviceID, methodMap)
 }
