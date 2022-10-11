@@ -22,18 +22,26 @@ type SRPCEchoerClient interface {
 }
 
 type srpcEchoerClient struct {
-	cc srpc.Client
+	cc        srpc.Client
+	serviceID string
 }
 
 func NewSRPCEchoerClient(cc srpc.Client) SRPCEchoerClient {
-	return &srpcEchoerClient{cc}
+	return &srpcEchoerClient{cc: cc, serviceID: SRPCEchoerServiceID}
+}
+
+func NewSRPCEchoerClientWithServiceID(cc srpc.Client, serviceID string) SRPCEchoerClient {
+	if serviceID == "" {
+		serviceID = SRPCEchoerServiceID
+	}
+	return &srpcEchoerClient{cc: cc, serviceID: serviceID}
 }
 
 func (c *srpcEchoerClient) SRPCClient() srpc.Client { return c.cc }
 
 func (c *srpcEchoerClient) Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, error) {
 	out := new(EchoMsg)
-	err := c.cc.Invoke(ctx, "echo.Echoer", "Echo", in, out)
+	err := c.cc.Invoke(ctx, c.serviceID, "Echo", in, out)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +49,7 @@ func (c *srpcEchoerClient) Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, err
 }
 
 func (c *srpcEchoerClient) EchoServerStream(ctx context.Context, in *EchoMsg) (SRPCEchoer_EchoServerStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "EchoServerStream", in)
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "EchoServerStream", in)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +83,7 @@ func (x *srpcEchoer_EchoServerStreamClient) RecvTo(m *EchoMsg) error {
 }
 
 func (c *srpcEchoerClient) EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "EchoClientStream", nil)
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "EchoClientStream", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +124,7 @@ func (x *srpcEchoer_EchoClientStreamClient) CloseAndMsgRecv(m *EchoMsg) error {
 }
 
 func (c *srpcEchoerClient) EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "EchoBidiStream", nil)
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "EchoBidiStream", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +160,7 @@ func (x *srpcEchoer_EchoBidiStreamClient) RecvTo(m *EchoMsg) error {
 }
 
 func (c *srpcEchoerClient) RpcStream(ctx context.Context) (SRPCEchoer_RpcStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, "echo.Echoer", "RpcStream", nil)
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "RpcStream", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +246,7 @@ func NewSRPCEchoerHandler(impl SRPCEchoerServer, serviceID string) srpc.Handler 
 func SRPCRegisterEchoer(mux srpc.Mux, impl SRPCEchoerServer) error {
 	return mux.Register(NewSRPCEchoerHandler(impl, ""))
 }
+
 func (d *SRPCEchoerHandler) GetServiceID() string { return d.serviceID }
 
 func (SRPCEchoerHandler) GetMethodIDs() []string {

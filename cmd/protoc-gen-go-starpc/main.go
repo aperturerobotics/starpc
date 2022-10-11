@@ -152,12 +152,20 @@ func (s *srpc) generateService(service *protogen.Service) {
 	// Client implementation
 	s.P("type ", s.ClientImpl(service), " struct {")
 	s.P("cc ", s.Ident(SRPCPackage, "Client"))
+	s.P("serviceID string")
 	s.P("}")
 	s.P()
 
-	// Client constructor
+	// Client constructor: default service ID.
 	s.P("func New", s.ClientIface(service), "(cc ", s.Ident(SRPCPackage, "Client"), ") ", s.ClientIface(service), " {")
-	s.P("return &", s.ClientImpl(service), "{cc}")
+	s.P("return &", s.ClientImpl(service), "{cc: cc, serviceID: ", s.ServerServiceID(service), "}")
+	s.P("}")
+	s.P()
+
+	// Client constructor: with service ID.
+	s.P("func New", s.ClientIface(service), "WithServiceID(cc ", s.Ident(SRPCPackage, "Client"), ", serviceID string) ", s.ClientIface(service), " {")
+	s.P("if serviceID == \"\" { serviceID = ", s.ServerServiceID(service), " }")
+	s.P("return &", s.ClientImpl(service), "{cc: cc, serviceID: serviceID}")
 	s.P("}")
 	s.P()
 
@@ -309,13 +317,13 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 	outType := s.OutputType(p)
 	inType := s.InputType(p)
 
-	service, method := s.GetServiceAndMethodID(p)
-	serviceQuote, methodQuote := strconv.Quote(service), strconv.Quote(method)
+	_, method := s.GetServiceAndMethodID(p)
+	methodQuote := strconv.Quote(method)
 
 	s.P("func (c *", recvType, ") ", s.generateClientSignature(p), "{")
 	if !p.Desc.IsStreamingServer() && !p.Desc.IsStreamingClient() {
 		s.P("out := new(", outType, ")")
-		s.P("err := c.cc.Invoke(ctx, ", serviceQuote, ", ", methodQuote, ", ", "in, out)")
+		s.P("err := c.cc.Invoke(ctx, c.serviceID, ", methodQuote, ", ", "in, out)")
 		s.P("if err != nil { return nil, err }")
 		s.P("return out, nil")
 		s.P("}")
@@ -328,7 +336,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 		firstMsgRef = "in"
 	}
 
-	s.P("stream, err := c.cc.NewStream(ctx, ", serviceQuote, ", ", methodQuote, ", ", firstMsgRef, ")")
+	s.P("stream, err := c.cc.NewStream(ctx, c.serviceID, ", methodQuote, ", ", firstMsgRef, ")")
 	s.P("if err != nil { return nil, err }")
 	s.P("strm := &", s.ClientStreamImpl(p), "{stream}")
 	if !p.Desc.IsStreamingClient() {
