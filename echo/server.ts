@@ -52,7 +52,7 @@ export class EchoerServer implements Echoer {
   ): AsyncIterable<RpcStreamPacket> {
     return handleRpcStream(
       request[Symbol.asyncIterator](),
-      async (_componentId: string): Promise<RpcStreamHandler> => {
+      async (): Promise<RpcStreamHandler> => {
         if (!this.proxyServer) {
           throw new Error('rpc stream proxy server not set')
         }

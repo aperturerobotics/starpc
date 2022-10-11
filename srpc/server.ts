@@ -1,6 +1,5 @@
 import { Duplex } from 'it-stream-types'
 import { pipe } from 'it-pipe'
-import { Uint8ArrayList } from 'uint8arraylist'
 
 import { LookupMethod } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
