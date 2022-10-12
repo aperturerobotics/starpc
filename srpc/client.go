@@ -8,8 +8,8 @@ import (
 
 // Client implements a SRPC client which can initiate RPC streams.
 type Client interface {
-	// Invoke executes a unary RPC with the remote.
-	Invoke(ctx context.Context, service, method string, in, out Message) error
+	// ExecCall executes a request/reply RPC with the remote.
+	ExecCall(ctx context.Context, service, method string, in, out Message) error
 
 	// NewStream starts a streaming RPC with the remote & returns the stream.
 	// firstMsg is optional.
@@ -37,8 +37,8 @@ func NewClient(openStream OpenStreamFunc) Client {
 	}
 }
 
-// Invoke executes a unary RPC with the remote.
-func (c *client) Invoke(rctx context.Context, service, method string, in, out Message) error {
+// ExecCall executes a request/reply RPC with the remote.
+func (c *client) ExecCall(rctx context.Context, service, method string, in, out Message) error {
 	ctx, ctxCancel := context.WithCancel(rctx)
 	defer ctxCancel()
 

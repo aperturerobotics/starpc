@@ -323,7 +323,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 	s.P("func (c *", recvType, ") ", s.generateClientSignature(p), "{")
 	if !p.Desc.IsStreamingServer() && !p.Desc.IsStreamingClient() {
 		s.P("out := new(", outType, ")")
-		s.P("err := c.cc.Invoke(ctx, c.serviceID, ", methodQuote, ", ", "in, out)")
+		s.P("err := c.cc.ExecCall(ctx, c.serviceID, ", methodQuote, ", ", "in, out)")
 		s.P("if err != nil { return nil, err }")
 		s.P("return out, nil")
 		s.P("}")

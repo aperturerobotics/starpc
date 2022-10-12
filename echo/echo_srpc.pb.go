@@ -41,7 +41,7 @@ func (c *srpcEchoerClient) SRPCClient() srpc.Client { return c.cc }
 
 func (c *srpcEchoerClient) Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, error) {
 	out := new(EchoMsg)
-	err := c.cc.Invoke(ctx, c.serviceID, "Echo", in, out)
+	err := c.cc.ExecCall(ctx, c.serviceID, "Echo", in, out)
 	if err != nil {
 		return nil, err
 	}
