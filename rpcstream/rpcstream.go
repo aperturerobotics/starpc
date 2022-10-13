@@ -18,7 +18,9 @@ type RpcStream interface {
 }
 
 // RpcStreamGetter returns the Mux for the component ID from the remote.
-type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Mux, error)
+// Returns a release function to call when done with the Mux.
+// Returns nil, nil, nil if not found.
+type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Mux, func(), error)
 
 // RpcStreamCaller is a function which starts the RpcStream call.
 type RpcStreamCaller func(ctx context.Context) (RpcStream, error)
@@ -101,9 +103,12 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 
 	// lookup the server for this component id
 	ctx := stream.Context()
-	mux, err := getter(ctx, componentID)
+	mux, muxRel, err := getter(ctx, componentID)
 	if err == nil && mux == nil {
 		err = errors.New("no server for that component")
+	}
+	if mux != nil && muxRel != nil {
+		defer muxRel()
 	}
 
 	// send ack

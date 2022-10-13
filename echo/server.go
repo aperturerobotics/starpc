@@ -84,11 +84,11 @@ func (s *EchoServer) EchoBidiStream(strm SRPCEchoer_EchoBidiStreamStream) error 
 
 // RpcStream runs a rpc stream
 func (r *EchoServer) RpcStream(stream SRPCEchoer_RpcStreamStream) error {
-	return rpcstream.HandleRpcStream(stream, func(ctx context.Context, componentID string) (srpc.Mux, error) {
+	return rpcstream.HandleRpcStream(stream, func(ctx context.Context, componentID string) (srpc.Mux, func(), error) {
 		if r.rpcStreamMux == nil {
-			return nil, errors.New("not implemented")
+			return nil, nil, errors.New("not implemented")
 		}
-		return r.rpcStreamMux, nil
+		return r.rpcStreamMux, nil, nil
 	})
 }
 
