@@ -5,7 +5,7 @@ import type {
 } from '@libp2p/interface-stream-muxer'
 import { pipe } from 'it-pipe'
 import type { Duplex } from 'it-stream-types'
-import { Mplex } from '@libp2p/mplex'
+import { mplex } from '@libp2p/mplex'
 import { Uint8ArrayList } from 'uint8arraylist'
 import isPromise from 'is-promise'
 
@@ -55,7 +55,7 @@ export class Conn implements Duplex<Uint8Array> {
     }
     let muxerFactory = connParams?.muxerFactory
     if (!muxerFactory) {
-      muxerFactory = new Mplex()
+      muxerFactory = mplex()()
     }
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
