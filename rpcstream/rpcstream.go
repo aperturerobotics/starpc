@@ -23,10 +23,10 @@ type RpcStream interface {
 type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Mux, func(), error)
 
 // RpcStreamCaller is a function which starts the RpcStream call.
-type RpcStreamCaller func(ctx context.Context) (RpcStream, error)
+type RpcStreamCaller[T RpcStream] func(ctx context.Context) (T, error)
 
 // OpenRpcStream opens a RPC stream with a remote.
-func OpenRpcStream(ctx context.Context, rpcCaller RpcStreamCaller, componentID string) (*srpc.PacketReaderWriter, error) {
+func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T], componentID string) (*srpc.PacketReaderWriter, error) {
 	// open the rpc stream
 	rpcStream, err := rpcCaller(ctx)
 	if err != nil {
@@ -69,7 +69,7 @@ func OpenRpcStream(ctx context.Context, rpcCaller RpcStreamCaller, componentID s
 }
 
 // NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
-func NewRpcStreamOpenStream(rpcCaller RpcStreamCaller, componentID string) srpc.OpenStreamFunc {
+func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string) srpc.OpenStreamFunc {
 	return func(ctx context.Context, msgHandler srpc.PacketHandler, closeHandler srpc.CloseHandler) (srpc.Writer, error) {
 		// open the stream
 		rw, err := OpenRpcStream(ctx, rpcCaller, componentID)
