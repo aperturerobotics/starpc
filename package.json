@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -63,32 +63,32 @@
     "@typescript-eslint/parser": "^5.40.0",
     "bufferutil": "^4.0.6",
     "depcheck": "^1.4.3",
-    "esbuild": "^0.15.10",
+    "esbuild": "^0.15.11",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
-    "ts-proto": "^1.126.1",
+    "ts-proto": "^1.128.0",
     "typescript": "^4.8.4",
     "utf-8-validate": "^5.0.9"
   },
   "dependencies": {
     "@libp2p/interface-connection": "^3.0.2",
     "@libp2p/interface-stream-muxer": "^3.0.0",
-    "@libp2p/mplex": "^6.0.2",
+    "@libp2p/mplex": "^7.0.0",
     "event-iterator": "^2.0.0",
     "is-promise": "^4.0.0",
     "isomorphic-ws": "^5.0.0",
     "it-first": "^1.0.7",
-    "it-length-prefixed": "^8.0.2",
+    "it-length-prefixed": "^8.0.3",
     "it-pipe": "^2.0.4",
     "it-pushable": "^3.1.0",
     "it-stream-types": "^1.0.4",
-    "it-ws": "^5.0.2",
+    "it-ws": "^5.0.3",
     "long": "^5.2.0",
     "patch-package": "^6.4.7",
     "protobufjs": "^7.1.2",
-    "uint8arraylist": "^2.3.2",
+    "uint8arraylist": "^2.3.3",
     "ws": "^8.9.0"
   }
 }
