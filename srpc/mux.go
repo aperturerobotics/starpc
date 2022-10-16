@@ -20,6 +20,9 @@ type muxMethods map[string]Handler
 
 // mux is the default implementation of Mux.
 type mux struct {
+	// fallback is the list of fallback invokers
+	// if the mux doesn't match the service, calls the invokers.
+	fallback []Invoker
 	// rmtx guards below fields
 	rmtx sync.RWMutex
 	// services contains a mapping from services to handlers.
@@ -27,8 +30,14 @@ type mux struct {
 }
 
 // NewMux constructs a new Mux.
-func NewMux() Mux {
-	return &mux{services: make(map[string]muxMethods)}
+//
+// fallbackInvokers is the list of fallback Invokers to call in the case that
+// the service/method is not found on this mux.
+func NewMux(fallbackInvokers ...Invoker) Mux {
+	return &mux{
+		fallback: fallbackInvokers,
+		services: make(map[string]muxMethods),
+	}
 }
 
 // Register registers a new RPC method handler (service).
@@ -109,11 +118,20 @@ func (m *mux) InvokeMethod(serviceID, methodID string, strm Stream) (bool, error
 	}
 	m.rmtx.RUnlock()
 
-	if handler == nil {
-		return false, nil
+	if handler != nil {
+		return handler.InvokeMethod(serviceID, methodID, strm)
 	}
 
-	return handler.InvokeMethod(serviceID, methodID, strm)
+	for _, invoker := range m.fallback {
+		if invoker != nil {
+			handled, err := invoker.InvokeMethod(serviceID, methodID, strm)
+			if err != nil || handled {
+				return handled, err
+			}
+		}
+	}
+
+	return false, nil
 }
 
 // _ is a type assertion
