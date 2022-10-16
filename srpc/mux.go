@@ -95,9 +95,17 @@ func (m *mux) HasServiceMethod(serviceID, methodID string) bool {
 func (m *mux) InvokeMethod(serviceID, methodID string, strm Stream) (bool, error) {
 	var handler Handler
 	m.rmtx.RLock()
-	svcMethods := m.services[serviceID]
-	if svcMethods != nil {
-		handler = svcMethods[methodID]
+	if serviceID == "" {
+		for _, svc := range m.services {
+			if handler = svc[methodID]; handler != nil {
+				break
+			}
+		}
+	} else {
+		svcMethods := m.services[serviceID]
+		if svcMethods != nil {
+			handler = svcMethods[methodID]
+		}
 	}
 	m.rmtx.RUnlock()
 
