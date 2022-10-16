@@ -181,7 +181,7 @@ func (r *ServerRPC) Close() {
 	if r.clientErr == nil {
 		r.clientErr = context.Canceled
 	}
-	if r.service == "" {
+	if r.writer != nil && r.service == "" {
 		// invokeRPC has not been called, otherwise it would call Close()
 		_ = r.writer.Close()
 	}

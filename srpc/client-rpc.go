@@ -185,5 +185,7 @@ func (r *ClientRPC) HandleCallData(pkt *CallData) error {
 // not concurrency safe with HandlePacket.
 func (r *ClientRPC) Close() {
 	r.ctxCancel()
-	_ = r.writer.Close()
+	if r.writer != nil {
+		_ = r.writer.Close()
+	}
 }
