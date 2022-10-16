@@ -164,7 +164,7 @@ func (r *ServerRPC) HandleCallData(pkt *CallData) error {
 func (r *ServerRPC) invokeRPC() {
 	// ctx := r.ctx
 	serviceID, methodID := r.service, r.method
-	strm := NewMsgStream(r.ctx, r.writer, r.dataCh)
+	strm := NewMsgStream(r.ctx, r.writer, r.dataCh, r.ctxCancel)
 	ok, err := r.invoker.InvokeMethod(serviceID, methodID, strm)
 	if err == nil && !ok {
 		err = ErrUnimplemented

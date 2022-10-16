@@ -3,6 +3,7 @@ package srpc
 import (
 	"context"
 	"io"
+	"sync/atomic"
 )
 
 // MsgStream implements the stream interface passed to implementations.
@@ -13,15 +14,25 @@ type MsgStream struct {
 	writer Writer
 	// dataCh is the incoming data channel.
 	dataCh chan []byte
+	// closeCb is the close callback
+	closeCb func()
+	// sendClosed indicates sending is closed.
+	sendClosed atomic.Bool
 }
 
 // NewMsgStream constructs a new Stream with a ClientRPC.
 // dataCh should be closed when no more messages will arrive.
-func NewMsgStream(ctx context.Context, writer Writer, dataCh chan []byte) *MsgStream {
+func NewMsgStream(
+	ctx context.Context,
+	writer Writer,
+	dataCh chan []byte,
+	closeCb func(),
+) *MsgStream {
 	return &MsgStream{
-		ctx:    ctx,
-		writer: writer,
-		dataCh: dataCh,
+		ctx:     ctx,
+		writer:  writer,
+		dataCh:  dataCh,
+		closeCb: closeCb,
 	}
 }
 
@@ -32,6 +43,9 @@ func (r *MsgStream) Context() context.Context {
 
 // MsgSend sends the message to the remote.
 func (r *MsgStream) MsgSend(msg Message) error {
+	if r.sendClosed.Load() {
+		return context.Canceled
+	}
 	select {
 	case <-r.ctx.Done():
 		return context.Canceled
@@ -62,14 +76,34 @@ func (r *MsgStream) MsgRecv(msg Message) error {
 
 // CloseSend signals to the remote that we will no longer send any messages.
 func (r *MsgStream) CloseSend() error {
-	outPkt := NewCallDataPacket(nil, false, true, nil)
-	return r.writer.WritePacket(outPkt)
+	// if already closed, return
+	if r.sendClosed.Swap(true) {
+		return nil
+	}
+
+	return r.closeSend()
 }
 
 // Close closes the stream.
 func (r *MsgStream) Close() error {
-	_ = r.writer.Close()
-	return nil
+	// if already closed, return
+	if r.sendClosed.Swap(true) {
+		return nil
+	}
+
+	// don't close the writer: we will need to write the call result after the
+	// RPC function returns.
+	if r.closeCb != nil {
+		r.closeCb()
+	}
+
+	return r.closeSend()
+}
+
+// closeSend writes the CloseSend packet.
+func (r *MsgStream) closeSend() error {
+	outPkt := NewCallDataPacket(nil, false, true, nil)
+	return r.writer.WritePacket(outPkt)
 }
 
 // _ is a type assertion

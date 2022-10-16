@@ -87,7 +87,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 		return nil, err
 	}
 
-	return NewMsgStream(ctx, clientRPC.writer, clientRPC.dataCh), nil
+	return NewMsgStream(ctx, clientRPC.writer, clientRPC.dataCh, clientRPC.ctxCancel), nil
 }
 
 // _ is a type assertion
