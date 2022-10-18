@@ -199,11 +199,9 @@ Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
 
 ## Support
 
-Starpc is built & supported by Aperture Robotics, LLC.
+Community contributions are welcomed!
 
-Community contributions and discussion are welcomed!
-
-Please open a [GitHub issue] with any questions / issues.
+Please file a [GitHub issue] and/or [Join Discord] with any questions.
 
 [GitHub issue]: https://github.com/aperturerobotics/starpc/issues/new
 
@@ -211,3 +209,7 @@ Please open a [GitHub issue] with any questions / issues.
 
 [Discord]: https://discord.gg/KJutMESRsT
 [Matrix Chat]: https://matrix.to/#/#aperturerobotics:matrix.org
+
+## License
+
+MIT
