@@ -185,7 +185,7 @@ const result = await demoServiceClient.Echo({
 console.log('output', result.body)
 ```
 
-# Attribution
+## Attribution
 
 `protoc-gen-go-starpc` is a heavily modified version of `protoc-gen-go-drpc`.
 
@@ -199,15 +199,13 @@ Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
 
 ## Support
 
-Community contributions are welcomed!
-
 Please file a [GitHub issue] and/or [Join Discord] with any questions.
 
 [GitHub issue]: https://github.com/aperturerobotics/starpc/issues/new
 
-... or feel free to reach out on [Matrix Chat] or [Discord].
+... or feel free to reach out on [Matrix Chat].
 
-[Discord]: https://discord.gg/KJutMESRsT
+[Join Discord]: https://discord.gg/KJutMESRsT
 [Matrix Chat]: https://matrix.to/#/#aperturerobotics:matrix.org
 
 ## License
