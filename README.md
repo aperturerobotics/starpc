@@ -207,7 +207,3 @@ Please file a [GitHub issue] and/or [Join Discord] with any questions.
 
 [Join Discord]: https://discord.gg/KJutMESRsT
 [Matrix Chat]: https://matrix.to/#/#aperturerobotics:matrix.org
-
-## License
-
-MIT
