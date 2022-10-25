@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"io"
+	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -19,6 +20,8 @@ type PacketReaderWriter struct {
 	rw io.ReadWriteCloser
 	// buf is the buffered data
 	buf bytes.Buffer
+	// writeMtx is the write mutex
+	writeMtx sync.Mutex
 }
 
 // NewPacketReadWriter constructs a new read/writer.
@@ -28,6 +31,9 @@ func NewPacketReadWriter(rw io.ReadWriteCloser) *PacketReaderWriter {
 
 // WritePacket writes a packet to the writer.
 func (r *PacketReaderWriter) WritePacket(p *Packet) error {
+	r.writeMtx.Lock()
+	defer r.writeMtx.Unlock()
+
 	msgSize := p.SizeVT()
 	data := make([]byte, 4+msgSize)
 	binary.LittleEndian.PutUint32(data, uint32(msgSize))
