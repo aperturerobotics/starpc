@@ -106,8 +106,8 @@ export interface Echoer {
 export class EchoerClientImpl implements Echoer {
   private readonly rpc: Rpc;
   private readonly service: string;
-  constructor(rpc: Rpc, service?: string) {
-    this.service = service || "echo.Echoer";
+  constructor(rpc: Rpc, opts?: { service?: string }) {
+    this.service = opts?.service || "echo.Echoer";
     this.rpc = rpc;
     this.Echo = this.Echo.bind(this);
     this.EchoServerStream = this.EchoServerStream.bind(this);

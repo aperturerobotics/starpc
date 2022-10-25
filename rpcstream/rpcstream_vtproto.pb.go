@@ -9,6 +9,7 @@ import (
 	io "io"
 	bits "math/bits"
 
+	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
@@ -18,6 +19,94 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+func (m *RpcStreamPacket) CloneVT() *RpcStreamPacket {
+	if m == nil {
+		return (*RpcStreamPacket)(nil)
+	}
+	r := &RpcStreamPacket{}
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneVT() isRpcStreamPacket_Body }).CloneVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *RpcStreamPacket) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
+
+func (m *RpcStreamPacket_Init) CloneVT() isRpcStreamPacket_Body {
+	if m == nil {
+		return (*RpcStreamPacket_Init)(nil)
+	}
+	r := &RpcStreamPacket_Init{
+		Init: m.Init.CloneVT(),
+	}
+	return r
+}
+
+func (m *RpcStreamPacket_Ack) CloneVT() isRpcStreamPacket_Body {
+	if m == nil {
+		return (*RpcStreamPacket_Ack)(nil)
+	}
+	r := &RpcStreamPacket_Ack{
+		Ack: m.Ack.CloneVT(),
+	}
+	return r
+}
+
+func (m *RpcStreamPacket_Data) CloneVT() isRpcStreamPacket_Body {
+	if m == nil {
+		return (*RpcStreamPacket_Data)(nil)
+	}
+	r := &RpcStreamPacket_Data{}
+	if rhs := m.Data; rhs != nil {
+		tmpBytes := make([]byte, len(rhs))
+		copy(tmpBytes, rhs)
+		r.Data = tmpBytes
+	}
+	return r
+}
+
+func (m *RpcStreamInit) CloneVT() *RpcStreamInit {
+	if m == nil {
+		return (*RpcStreamInit)(nil)
+	}
+	r := &RpcStreamInit{
+		ComponentId: m.ComponentId,
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *RpcStreamInit) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
+
+func (m *RpcAck) CloneVT() *RpcAck {
+	if m == nil {
+		return (*RpcAck)(nil)
+	}
+	r := &RpcAck{
+		Error: m.Error,
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *RpcAck) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
 
 func (this *RpcStreamPacket) EqualVT(that *RpcStreamPacket) bool {
 	if this == nil {

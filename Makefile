@@ -2,7 +2,7 @@
 
 PROTOWRAP=hack/bin/protowrap
 PROTOC_GEN_GO=hack/bin/protoc-gen-go
-PROTOC_GEN_GO_STARPC=hack/bin/protoc-gen-go-starpc
+PROTOC_GEN_STARPC=hack/bin/protoc-gen-go-starpc
 PROTOC_GEN_VTPROTO=hack/bin/protoc-gen-go-vtproto
 GOIMPORTS=hack/bin/goimports
 GOLANGCI_LINT=hack/bin/golangci-lint
@@ -24,17 +24,17 @@ $(PROTOC_GEN_GO):
 		-o ./bin/protoc-gen-go \
 		google.golang.org/protobuf/cmd/protoc-gen-go
 
-$(PROTOC_GEN_GO_STARPC):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/protoc-gen-go-starpc \
-		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
-
 $(PROTOC_GEN_VTPROTO):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/protoc-gen-go-vtproto \
 		github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
+
+$(PROTOC_GEN_STARPC):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/protoc-gen-go-starpc \
+		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
 
 $(GOIMPORTS):
 	cd ./hack; \
@@ -46,7 +46,7 @@ $(PROTOWRAP):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/protowrap \
-		github.com/square/goprotowrap/cmd/protowrap
+		github.com/aperturerobotics/goprotowrap/cmd/protowrap
 
 $(GOLANGCI_LINT):
 	cd ./hack; \
@@ -61,7 +61,7 @@ $(GO_MOD_OUTDATED):
 		github.com/psampaz/go-mod-outdated
 
 .PHONY: gengo
-gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_STARPC) $(PROTOC_GEN_VTPROTO)
+gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_VTPROTO) $(PROTOC_GEN_STARPC)
 	go mod vendor
 	shopt -s globstar; \
 	set -eo pipefail; \
@@ -73,9 +73,9 @@ gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_GO_STARPC) $(PROT
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
 		--go_out=$$(pwd)/vendor \
-		--go-starpc_out=$$(pwd)/vendor \
 		--go-vtproto_out=$$(pwd)/vendor \
-		--go-vtproto_opt=features=marshal+unmarshal+size+equal \
+		--go-vtproto_opt=features=marshal+unmarshal+size+equal+clone \
+		--go-starpc_out=$$(pwd)/vendor \
 		--proto_path $$(pwd)/vendor \
 		--print_structure \
 		--only_specified_files \
@@ -110,6 +110,7 @@ gents: $(PROTOWRAP) node_modules
 		--ts_proto_opt=forceLong=long \
 		--ts_proto_opt=oneof=unions \
 		--ts_proto_opt=outputServices=default,outputServices=generic-definitions \
+		--ts_proto_opt=useDate=true \
 		--ts_proto_opt=useAsyncIterable=true \
 		--proto_path $$(pwd)/vendor \
 		--print_structure \

@@ -9,6 +9,7 @@ import (
 	io "io"
 	bits "math/bits"
 
+	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
@@ -18,6 +19,95 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+func (m *Packet) CloneVT() *Packet {
+	if m == nil {
+		return (*Packet)(nil)
+	}
+	r := &Packet{}
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneVT() isPacket_Body }).CloneVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *Packet) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
+
+func (m *Packet_CallStart) CloneVT() isPacket_Body {
+	if m == nil {
+		return (*Packet_CallStart)(nil)
+	}
+	r := &Packet_CallStart{
+		CallStart: m.CallStart.CloneVT(),
+	}
+	return r
+}
+
+func (m *Packet_CallData) CloneVT() isPacket_Body {
+	if m == nil {
+		return (*Packet_CallData)(nil)
+	}
+	r := &Packet_CallData{
+		CallData: m.CallData.CloneVT(),
+	}
+	return r
+}
+
+func (m *CallStart) CloneVT() *CallStart {
+	if m == nil {
+		return (*CallStart)(nil)
+	}
+	r := &CallStart{
+		RpcService: m.RpcService,
+		RpcMethod:  m.RpcMethod,
+		DataIsZero: m.DataIsZero,
+	}
+	if rhs := m.Data; rhs != nil {
+		tmpBytes := make([]byte, len(rhs))
+		copy(tmpBytes, rhs)
+		r.Data = tmpBytes
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *CallStart) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
+
+func (m *CallData) CloneVT() *CallData {
+	if m == nil {
+		return (*CallData)(nil)
+	}
+	r := &CallData{
+		DataIsZero: m.DataIsZero,
+		Complete:   m.Complete,
+		Error:      m.Error,
+	}
+	if rhs := m.Data; rhs != nil {
+		tmpBytes := make([]byte, len(rhs))
+		copy(tmpBytes, rhs)
+		r.Data = tmpBytes
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *CallData) CloneGenericVT() proto.Message {
+	return m.CloneVT()
+}
 
 func (this *Packet) EqualVT(that *Packet) bool {
 	if this == nil {

@@ -2,7 +2,7 @@ package hack
 
 import (
 	// _ imports protowrap
-	_ "github.com/square/goprotowrap"
+	_ "github.com/aperturerobotics/goprotowrap/cmd/protowrap"
 	// _ imports protoc-gen-go
 	_ "google.golang.org/protobuf/cmd/protoc-gen-go"
 	// _ imports protoc-gen-go-vtproto
@@ -15,4 +15,6 @@ import (
 	_ "github.com/psampaz/go-mod-outdated"
 	// _ imports protoc-gen-starpc
 	_ "github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc"
+	// _ imports esbuild
+	_ "github.com/evanw/esbuild/cmd/esbuild"
 )
