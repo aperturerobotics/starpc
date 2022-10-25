@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/p2p/muxer/mplex"
 	"nhooyr.io/websocket"
 )
 
@@ -20,7 +19,7 @@ type WebSocketConn struct {
 // NewWebSocketConn constructs a new WebSocket connection.
 func NewWebSocketConn(ctx context.Context, conn *websocket.Conn, isServer bool) (*WebSocketConn, error) {
 	nc := websocket.NetConn(ctx, conn, websocket.MessageBinary)
-	muxedConn, err := mplex.DefaultTransport.NewConn(nc, isServer, network.NullScope)
+	muxedConn, err := NewMuxedConn(nc, !isServer)
 	if err != nil {
 		return nil, err
 	}

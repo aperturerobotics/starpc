@@ -5,13 +5,10 @@ import (
 	"io"
 	"net"
 	"testing"
-	"time"
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
-	"github.com/libp2p/go-libp2p/p2p/muxer/mplex"
-	mp "github.com/libp2p/go-mplex"
 	"github.com/pkg/errors"
 )
 
@@ -25,7 +22,7 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	}
 	server := srpc.NewServer(mux)
 
-	// note: also possible to do without mplex:
+	// Alternatively:
 	// openStream := srpc.NewServerPipe(server)
 	// client := srpc.NewClient(openStream)
 
@@ -33,22 +30,21 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	clientPipe, serverPipe := net.Pipe()
 
 	// outbound=true
-	clientMp, err := mp.NewMultiplex(clientPipe, true, nil)
+	clientMp, err := srpc.NewMuxedConn(clientPipe, true)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	client := srpc.NewClientWithMuxedConn(mplex.NewMuxedConn(clientMp))
+	client := srpc.NewClientWithMuxedConn(clientMp)
 
 	ctx := context.Background()
 	// outbound=false
-	serverMp, _ := mp.NewMultiplex(serverPipe, false, nil)
+	serverMp, err := srpc.NewMuxedConn(serverPipe, false)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	go func() {
-		_ = server.AcceptMuxedConn(ctx, mplex.NewMuxedConn(serverMp))
+		_ = server.AcceptMuxedConn(ctx, serverMp)
 	}()
-
-	// TODO: requires a moment for the listener to start: not sure why.
-	// the packets /should/ be buffered in the pipe.
-	<-time.After(time.Millisecond * 100)
 
 	// construct the client rpc interface
 	clientEcho := echo.NewSRPCEchoerClient(client)

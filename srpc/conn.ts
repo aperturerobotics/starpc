@@ -5,7 +5,7 @@ import type {
 } from '@libp2p/interface-stream-muxer'
 import { pipe } from 'it-pipe'
 import type { Duplex } from 'it-stream-types'
-import { mplex } from '@libp2p/mplex'
+import { yamux } from '@chainsafe/libp2p-yamux'
 import { Uint8ArrayList } from 'uint8arraylist'
 import isPromise from 'is-promise'
 
@@ -15,10 +15,10 @@ import { combineUint8ArrayListTransform } from './array-list.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
 export interface ConnParams {
-  // muxerFactory overrides using the default factory (@libp2p/mplex).
+  // muxerFactory overrides using the default yamux factory.
   muxerFactory?: StreamMuxerFactory
   // direction is the muxer connection direction.
-  // defaults to outbound.
+  // defaults to outbound (client).
   direction?: Direction
 }
 
@@ -44,7 +44,7 @@ export function streamToSRPCStream(
 // Implements the server by handling incoming streams.
 // If the server is unset, rejects any incoming streams.
 export class Conn implements Duplex<Uint8Array> {
-  // muxer is the mplex stream muxer.
+  // muxer is the stream muxer.
   private muxer: StreamMuxer
   // server is the server side, if set.
   private server?: StreamHandler
@@ -55,7 +55,7 @@ export class Conn implements Duplex<Uint8Array> {
     }
     let muxerFactory = connParams?.muxerFactory
     if (!muxerFactory) {
-      muxerFactory = mplex()()
+      muxerFactory = yamux()()
     }
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),

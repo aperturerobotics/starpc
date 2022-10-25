@@ -7,7 +7,7 @@ import (
 
 // AcceptMuxedListener accepts incoming connections from a net.Listener.
 //
-// Uses the default mplex muxer.
+// Uses the default yamux muxer.
 func AcceptMuxedListener(ctx context.Context, lis net.Listener, srv *Server) error {
 	for {
 		nc, err := lis.Accept()

@@ -21,6 +21,7 @@ async function runRPC() {
 runRPC()
   .then(() => {
     console.log('finished successfully')
+    process.exit(0)
   })
   .catch((err) => {
     console.error(err)

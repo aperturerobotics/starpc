@@ -15,14 +15,9 @@
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 
-Supports **client-to-server streaming** RPCs in the web browser, currently not
-supported by any of the other RPC libraries.
+Supports **client-to-server and bidirectional streaming** in the web browser.
 
-The [rpcproto](./srpc/rpcproto.proto) file describes the protocol.
-
-Can use any Stream multiplexer: defaults to [libp2p-mplex] over a WebSocket.
-
-[libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
+[rpcproto.proto](./srpc/rpcproto.proto) contains the protocol definition.
 
 [rpcstream] supports sub-streams for per-component sub-services.
 
@@ -115,11 +110,7 @@ example of TypeScript <-> TypeScript interop, see the [e2e] test.
 [e2e]: ./e2e/e2e.ts
 [integration]: ./integration/integration.ts
 
-Supports any AsyncIterable communication channel. `DuplexConn`,
-`MessagePortConn`, and `WebSocketConn` use [js-libp2p-mplex] to multiplex
-streams, but any multiplexer can be used.
-
-[js-libp2p-mplex]: https://github.com/libp2p/js-libp2p-mplex
+Supports any AsyncIterable communication channel.
 
 This example demonstrates both the server and client:
 

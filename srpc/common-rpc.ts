@@ -159,7 +159,7 @@ export class CommonRPC {
         }
       } catch (err) {
         const anyErr = err as any
-        if (anyErr?.code !== 'ERR_MPLEX_STREAM_RESET') {
+        if (anyErr?.code !== 'ERR_STREAM_RESET' && anyErr?.code !== 'ERR_STREAM_ABORT') {
           this.close(err as Error)
         }
       }

@@ -6,17 +6,33 @@ import (
 	"net"
 
 	"github.com/libp2p/go-libp2p/core/network"
-	mplex "github.com/libp2p/go-libp2p/p2p/muxer/mplex"
-	mp "github.com/libp2p/go-mplex"
+	ymuxer "github.com/libp2p/go-libp2p/p2p/muxer/yamux"
+	yamux "github.com/libp2p/go-yamux/v4"
 )
+
+// NewYamuxConfig builds the default yamux configuration.
+func NewYamuxConfig() *yamux.Config {
+	// Configuration options from go-libp2p-yamux:
+	config := *ymuxer.DefaultTransport.Config()
+	return &config
+}
 
 // NewMuxedConn constructs a new MuxedConn from a net.Conn.
 func NewMuxedConn(conn net.Conn, outbound bool) (network.MuxedConn, error) {
-	m, err := mp.NewMultiplex(conn, outbound, nil)
+	yamuxConf := NewYamuxConfig()
+
+	var sess *yamux.Session
+	var err error
+	if outbound {
+		sess, err = yamux.Client(conn, yamuxConf, nil)
+	} else {
+		sess, err = yamux.Server(conn, yamuxConf, nil)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return mplex.NewMuxedConn(m), nil
+
+	return ymuxer.NewMuxedConn(sess), nil
 }
 
 // NewMuxedConnWithRwc builds a new MuxedConn with a io.ReadWriteCloser.
@@ -25,8 +41,6 @@ func NewMuxedConnWithRwc(ctx context.Context, rwc io.ReadWriteCloser, outbound b
 }
 
 // NewClientWithConn constructs the muxer and the client.
-//
-// uses libp2p mplex
 func NewClientWithConn(conn net.Conn, outbound bool) (Client, error) {
 	mconn, err := NewMuxedConn(conn, outbound)
 	if err != nil {

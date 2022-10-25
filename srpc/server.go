@@ -40,18 +40,18 @@ func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) error
 //
 // Starts HandleStream in a separate goroutine to handle the stream.
 // Returns context.Canceled or io.EOF when the loop is complete / closed.
-func (s *Server) AcceptMuxedConn(ctx context.Context, mplex network.MuxedConn) error {
+func (s *Server) AcceptMuxedConn(ctx context.Context, mc network.MuxedConn) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return context.Canceled
 		default:
-			if mplex.IsClosed() {
+			if mc.IsClosed() {
 				return io.EOF
 			}
 		}
 
-		muxedStream, err := mplex.AcceptStream()
+		muxedStream, err := mc.AcceptStream()
 		if err != nil {
 			return err
 		}
