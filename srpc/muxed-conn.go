@@ -14,6 +14,8 @@ import (
 func NewYamuxConfig() *yamux.Config {
 	// Configuration options from go-libp2p-yamux:
 	config := *ymuxer.DefaultTransport.Config()
+	config.AcceptBacklog = 512
+	config.MaxMessageSize = 2e6
 	return &config
 }
 
