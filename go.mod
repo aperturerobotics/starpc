@@ -34,7 +34,7 @@ require (
 	github.com/multiformats/go-varint v0.0.6 // indirect
 	github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
+	golang.org/x/crypto v0.1.1-0.20221024173537-a3485e174077 // indirect
+	golang.org/x/sys v0.1.1-0.20221025174404-572649812736 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
 )
