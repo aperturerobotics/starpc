@@ -85,6 +85,12 @@ func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], component
 	}
 }
 
+// NewRpcStreamClient constructs a Client which opens streams with a RpcStream.
+func NewRpcStreamClient[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string) srpc.Client {
+	openStream := NewRpcStreamOpenStream(rpcCaller, componentID)
+	return srpc.NewClient(openStream)
+}
+
 // HandleRpcStream handles an incoming RPC stream (remote is the initiator).
 func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	// Read the "init" packet.
