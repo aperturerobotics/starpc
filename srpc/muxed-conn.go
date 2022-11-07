@@ -20,8 +20,12 @@ func NewYamuxConfig() *yamux.Config {
 }
 
 // NewMuxedConn constructs a new MuxedConn from a net.Conn.
-func NewMuxedConn(conn net.Conn, outbound bool) (network.MuxedConn, error) {
-	yamuxConf := NewYamuxConfig()
+//
+// If yamuxConf is nil, uses defaults.
+func NewMuxedConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (network.MuxedConn, error) {
+	if yamuxConf == nil {
+		yamuxConf = NewYamuxConfig()
+	}
 
 	var sess *yamux.Session
 	var err error
@@ -38,13 +42,22 @@ func NewMuxedConn(conn net.Conn, outbound bool) (network.MuxedConn, error) {
 }
 
 // NewMuxedConnWithRwc builds a new MuxedConn with a io.ReadWriteCloser.
-func NewMuxedConnWithRwc(ctx context.Context, rwc io.ReadWriteCloser, outbound bool) (network.MuxedConn, error) {
-	return NewMuxedConn(NewRwcConn(ctx, rwc, nil, nil, 10), outbound)
+//
+// If yamuxConf is nil, uses defaults.
+func NewMuxedConnWithRwc(
+	ctx context.Context,
+	rwc io.ReadWriteCloser,
+	outbound bool,
+	yamuxConf *yamux.Config,
+) (network.MuxedConn, error) {
+	return NewMuxedConn(NewRwcConn(ctx, rwc, nil, nil, 10), outbound, yamuxConf)
 }
 
 // NewClientWithConn constructs the muxer and the client.
-func NewClientWithConn(conn net.Conn, outbound bool) (Client, error) {
-	mconn, err := NewMuxedConn(conn, outbound)
+//
+// if yamuxConf is nil, uses defaults.
+func NewClientWithConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (Client, error) {
+	mconn, err := NewMuxedConn(conn, outbound, yamuxConf)
 	if err != nil {
 		return nil, err
 	}

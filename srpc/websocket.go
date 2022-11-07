@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-yamux/v4"
 	"nhooyr.io/websocket"
 )
 
@@ -17,9 +18,11 @@ type WebSocketConn struct {
 }
 
 // NewWebSocketConn constructs a new WebSocket connection.
-func NewWebSocketConn(ctx context.Context, conn *websocket.Conn, isServer bool) (*WebSocketConn, error) {
+//
+// if yamuxConf is unset, uses the defaults.
+func NewWebSocketConn(ctx context.Context, conn *websocket.Conn, isServer bool, yamuxConf *yamux.Config) (*WebSocketConn, error) {
 	nc := websocket.NetConn(ctx, conn, websocket.MessageBinary)
-	muxedConn, err := NewMuxedConn(nc, !isServer)
+	muxedConn, err := NewMuxedConn(nc, !isServer, yamuxConf)
 	if err != nil {
 		return nil, err
 	}

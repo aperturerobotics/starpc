@@ -30,7 +30,7 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 	clientPipe, serverPipe := net.Pipe()
 
 	// outbound=true
-	clientMp, err := srpc.NewMuxedConn(clientPipe, true)
+	clientMp, err := srpc.NewMuxedConn(clientPipe, true, nil)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -38,7 +38,7 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 
 	ctx := context.Background()
 	// outbound=false
-	serverMp, err := srpc.NewMuxedConn(serverPipe, false)
+	serverMp, err := srpc.NewMuxedConn(serverPipe, false, nil)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
