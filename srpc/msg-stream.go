@@ -91,13 +91,15 @@ func (r *MsgStream) Close() error {
 		return nil
 	}
 
-	// don't close the writer: we will need to write the call result after the
-	// RPC function returns.
+	if err := r.closeSend(); err != nil {
+		return err
+	}
+
 	if r.closeCb != nil {
 		r.closeCb()
 	}
 
-	return r.closeSend()
+	return nil
 }
 
 // closeSend writes the CloseSend packet.
