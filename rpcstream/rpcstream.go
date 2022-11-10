@@ -212,7 +212,7 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 		n += rn
 		readBuf = readBuf[rn:]
 	}
-	return n, nil
+	return n, err
 }
 
 // Close closes the packet rw for sending.
