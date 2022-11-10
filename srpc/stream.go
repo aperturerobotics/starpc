@@ -19,6 +19,7 @@ type Stream interface {
 	// CloseSend signals to the remote that we will no longer send any messages.
 	CloseSend() error
 
-	// Close closes the stream.
+	// Close closes the stream, dropping any unsent messages.
+	// NOTE: usually you will want to use CloseSend instead.
 	Close() error
 }

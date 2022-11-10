@@ -41,7 +41,11 @@ func (w *WebSocketConn) GetOpenStreamFunc() OpenStreamFunc {
 
 // AcceptStream accepts an incoming stream.
 func (w *WebSocketConn) AcceptStream() (io.ReadWriteCloser, error) {
-	return w.mconn.AcceptStream()
+	strm, err := w.mconn.AcceptStream()
+	if err != nil {
+		return nil, err
+	}
+	return NewMuxedStreamRwc(strm), nil
 }
 
 // OpenStream tries to open a stream with the remote.
@@ -51,7 +55,7 @@ func (w *WebSocketConn) OpenStream(ctx context.Context, msgHandler PacketHandler
 		return nil, err
 	}
 
-	rw := NewPacketReadWriter(muxedStream)
+	rw := NewPacketReadWriter(NewMuxedStreamRwc(muxedStream))
 	go rw.ReadPump(msgHandler, closeHandler)
 	return rw, nil
 }
