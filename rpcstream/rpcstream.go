@@ -174,11 +174,13 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 	toRead := p
 	// while we can still read more data
 	for len(toRead) != 0 {
-		// if the buffer is empty and we have unbuffered none, read more.
+		// if the buffer is empty, read more.
 		if r.buf.Len() == 0 {
+			// if we have already read some data, return now.
 			if n != 0 {
 				break
 			}
+
 			pkt, err := r.stream.Recv()
 			if err != nil {
 				return n, err
@@ -187,22 +189,25 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 			if len(data) == 0 {
 				continue
 			}
+
 			// if len(toRead) <= len(data), read fully w/o buffering
 			if len(toRead) <= len(data) {
 				copy(toRead, data)
 				n += len(data)
 				toRead = toRead[len(data):]
-			} else {
-				// otherwise buffer it & continue
-				_, err = r.buf.Write(data)
-				if err != nil {
-					return n, err
-				}
+				break
+			}
+
+			// otherwise buffer it & continue
+			_, err = r.buf.Write(data)
+			if err != nil {
+				return n, err
 			}
 		}
 		// read from the buffer to toRead
 		rn, err := r.buf.Read(toRead)
 		if err != nil {
+			// only possible error is EOF if buffer is empty.
 			return n, err
 		}
 		// advance toRead by rn
