@@ -171,48 +171,46 @@ func (r *RpcStreamReadWriter) Write(p []byte) (n int, err error) {
 
 // Read reads a packet from the writer.
 func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
-	toRead := p
-	// while we can still read more data
-	for len(toRead) != 0 {
-		// if the buffer is empty, read more.
-		if r.buf.Len() == 0 {
-			// if we have already read some data, return now.
+	readBuf := p
+	for len(readBuf) != 0 && err == nil {
+		var rn int
+
+		// if the buffer has data, read from it.
+		if r.buf.Len() != 0 {
+			rn, err = r.buf.Read(readBuf)
+		} else {
 			if n != 0 {
+				// if we read data to p already, return now.
 				break
 			}
 
-			pkt, err := r.stream.Recv()
+			var pkt *RpcStreamPacket
+			pkt, err = r.stream.Recv()
 			if err != nil {
-				return n, err
+				break
 			}
+
 			data := pkt.GetData()
 			if len(data) == 0 {
+				// 0-length read, retry.
 				continue
 			}
 
-			// if len(toRead) <= len(data), read fully w/o buffering
-			if len(toRead) <= len(data) {
-				copy(toRead, data)
-				n += len(data)
-				toRead = toRead[len(data):]
-				break
+			// read as much as possible directly to the buffer
+			copy(readBuf, data)
+			if len(data) <= len(readBuf) {
+				// we read all of data
+				rn = len(data)
+			} else {
+				// we read some of the data, buffer the rest.
+				rn = len(readBuf)
+				_, _ = r.buf.Write(data[rn:]) // never returns an error
 			}
+		}
 
-			// otherwise buffer it & continue
-			_, err = r.buf.Write(data)
-			if err != nil {
-				return n, err
-			}
-		}
-		// read from the buffer to toRead
-		rn, err := r.buf.Read(toRead)
-		if err != nil {
-			// only possible error is EOF if buffer is empty.
-			return n, err
-		}
-		// advance toRead by rn
+		// advance readBuf by rn
 		n += rn
-		toRead = toRead[rn:]
+		readBuf = readBuf[rn:]
 	}
 	return n, nil
 }
