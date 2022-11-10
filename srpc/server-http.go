@@ -33,7 +33,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
 		w.WriteHeader(500)
-		w.Write([]byte(err.Error() + "\n"))
+		_, _ = w.Write([]byte(err.Error() + "\n"))
 		return
 	}
 	defer c.Close(websocket.StatusInternalError, "closed")
