@@ -183,7 +183,7 @@ func (r *ClientRPC) HandleCallData(pkt *CallData) error {
 
 // Close releases any resources held by the ClientRPC.
 // not concurrency safe with HandlePacket.
-func (r *ClientRPC) Closg() {
+func (r *ClientRPC) Close() {
 	r.ctxCancel()
 	if r.writer != nil {
 		_ = r.writer.Close()
