@@ -56,7 +56,7 @@ func (s *Server) AcceptMuxedConn(ctx context.Context, mc network.MuxedConn) erro
 			return err
 		}
 		go func() {
-			_ = s.HandleStream(ctx, NewMuxedStreamRwc(muxedStream))
+			_ = s.HandleStream(ctx, muxedStream)
 		}()
 	}
 }

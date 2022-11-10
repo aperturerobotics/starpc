@@ -217,9 +217,9 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-// Close closes the packet rw for sending.
+// Close closes the packet rw.
 func (r *RpcStreamReadWriter) Close() error {
-	return r.stream.CloseSend()
+	return r.stream.Close()
 }
 
 // _ is a type assertion
