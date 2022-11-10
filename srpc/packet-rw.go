@@ -41,8 +41,7 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 	if err != nil {
 		return err
 	}
-	var n int
-	written := 0
+	var written, n int
 	for written < len(data) {
 		n, err = r.rw.Write(data)
 		if err != nil {
@@ -50,7 +49,7 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 		}
 		written += n
 	}
-	return err
+	return nil
 }
 
 // ReadPump executes the read pump in a goroutine.

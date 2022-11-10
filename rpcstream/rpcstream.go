@@ -158,6 +158,9 @@ func NewRpcStreamReadWriter(stream RpcStream) *RpcStreamReadWriter {
 
 // Write writes a packet to the writer.
 func (r *RpcStreamReadWriter) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return 0, nil
+	}
 	err = r.stream.Send(&RpcStreamPacket{
 		Body: &RpcStreamPacket_Data{
 			Data: p,
@@ -192,19 +195,18 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 
 			data := pkt.GetData()
 			if len(data) == 0 {
-				// 0-length read, retry.
 				continue
 			}
 
-			// read as much as possible directly to the buffer
+			// read as much as possible directly to the output
 			copy(readBuf, data)
-			if len(data) <= len(readBuf) {
-				// we read all of data
-				rn = len(data)
-			} else {
+			if len(data) > len(readBuf) {
 				// we read some of the data, buffer the rest.
 				rn = len(readBuf)
 				_, _ = r.buf.Write(data[rn:]) // never returns an error
+			} else {
+				// we read all of data
+				rn = len(data)
 			}
 		}
 
