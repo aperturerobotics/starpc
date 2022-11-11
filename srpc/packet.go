@@ -16,6 +16,8 @@ func (p *Packet) Validate() error {
 		return b.CallStart.Validate()
 	case *Packet_CallData:
 		return b.CallData.Validate()
+	case *Packet_CallCancel:
+		return nil
 	default:
 		return ErrUnrecognizedPacket
 	}
@@ -60,6 +62,11 @@ func NewCallDataPacket(data []byte, dataIsZero bool, complete bool, err error) *
 			Error:      errStr,
 		},
 	}}
+}
+
+// NewCallCancelPacket constructs a new CallCancel packet with cancel.
+func NewCallCancelPacket() *Packet {
+	return &Packet{Body: &Packet_CallCancel{CallCancel: true}}
 }
 
 // Validate performs cursory validation of the packet.

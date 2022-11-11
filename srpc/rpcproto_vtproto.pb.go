@@ -59,6 +59,16 @@ func (m *Packet_CallData) CloneVT() isPacket_Body {
 	return r
 }
 
+func (m *Packet_CallCancel) CloneVT() isPacket_Body {
+	if m == nil {
+		return (*Packet_CallCancel)(nil)
+	}
+	r := &Packet_CallCancel{
+		CallCancel: m.CallCancel,
+	}
+	return r
+}
+
 func (m *CallStart) CloneVT() *CallStart {
 	if m == nil {
 		return (*CallStart)(nil)
@@ -174,6 +184,23 @@ func (this *Packet_CallData) EqualVT(thatIface isPacket_Body) bool {
 		if !p.EqualVT(q) {
 			return false
 		}
+	}
+	return true
+}
+
+func (this *Packet_CallCancel) EqualVT(thatIface isPacket_Body) bool {
+	that, ok := thatIface.(*Packet_CallCancel)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.CallCancel != that.CallCancel {
+		return false
 	}
 	return true
 }
@@ -298,6 +325,23 @@ func (m *Packet_CallData) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
+	return len(dAtA) - i, nil
+}
+func (m *Packet_CallCancel) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Packet_CallCancel) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i--
+	if m.CallCancel {
+		dAtA[i] = 1
+	} else {
+		dAtA[i] = 0
+	}
+	i--
+	dAtA[i] = 0x18
 	return len(dAtA) - i, nil
 }
 func (m *CallStart) MarshalVT() (dAtA []byte, err error) {
@@ -479,6 +523,15 @@ func (m *Packet_CallData) SizeVT() (n int) {
 	}
 	return n
 }
+func (m *Packet_CallCancel) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += 2
+	return n
+}
 func (m *CallStart) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -645,6 +698,27 @@ func (m *Packet) UnmarshalVT(dAtA []byte) error {
 				m.Body = &Packet_CallData{CallData: v}
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CallCancel", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			b := bool(v != 0)
+			m.Body = &Packet_CallCancel{CallCancel: b}
 		default:
 			iNdEx = preIndex
 			skippy, err := skip(dAtA[iNdEx:])

@@ -70,6 +70,12 @@ func (r *ClientRPC) Start(writer Writer, writeFirstMsg bool, firstMsg []byte) er
 	return nil
 }
 
+// SendCancel sends the message notifying the peer we want to cancel the request.
+func (r *ClientRPC) SendCancel(writer Writer) error {
+	pkt := NewCallCancelPacket()
+	return writer.WritePacket(pkt)
+}
+
 // ReadAll reads all returned Data packets and returns any error.
 // intended for use with unary rpcs.
 func (r *ClientRPC) ReadAll() ([][]byte, error) {

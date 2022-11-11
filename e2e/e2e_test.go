@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aperturerobotics/starpc/e2e/mock"
+	e2e_mock "github.com/aperturerobotics/starpc/e2e/mock"
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
