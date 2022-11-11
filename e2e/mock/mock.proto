@@ -1,0 +1,13 @@
+syntax = "proto3";
+package e2e.mock;
+
+// Mock service mocks some RPCs for the e2e tests.
+service Mock {
+  // MockRequest runs a mock unary request.
+  rpc MockRequest(MockMsg) returns (MockMsg);
+}
+
+// MockMsg is the mock message body.
+message MockMsg {
+  string body = 1;
+}

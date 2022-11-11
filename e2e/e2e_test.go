@@ -5,28 +5,37 @@ import (
 	"io"
 	"net"
 	"testing"
+	"time"
 
+	"github.com/aperturerobotics/starpc/e2e/mock"
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
 )
 
+const bodyTxt = "hello world via starpc e2e test"
+
 // RunE2E runs an end to end test with a callback.
 func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
-	// construct the server
-	mux := srpc.NewMux()
-	echoServer := echo.NewEchoServer(mux)
-	if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
-		t.Fatal(err.Error())
-	}
-	server := srpc.NewServer(mux)
+	RunE2E_Setup(t, func(server *srpc.Server, mux srpc.Mux, client srpc.Client) error {
+		// construct the server
+		echoServer := echo.NewEchoServer(mux)
+		if err := echo.SRPCRegisterEchoer(mux, echoServer); err != nil {
+			t.Fatal(err.Error())
+		}
 
+		// construct the client rpc interface
+		clientEcho := echo.NewSRPCEchoerClient(client)
+		return cb(clientEcho)
+	})
+}
+
+// RunE2E_Setup sets up the client and server and calls the callback.
+func RunE2E_Setup(t *testing.T, cb func(server *srpc.Server, mux srpc.Mux, client srpc.Client) error) {
 	// Alternatively:
 	// openStream := srpc.NewServerPipe(server)
 	// client := srpc.NewClient(openStream)
-
-	// construct the client
 	clientPipe, serverPipe := net.Pipe()
 
 	// outbound=true
@@ -35,6 +44,9 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 		t.Fatal(err.Error())
 	}
 	client := srpc.NewClientWithMuxedConn(clientMp)
+
+	mux := srpc.NewMux()
+	server := srpc.NewServer(mux)
 
 	ctx := context.Background()
 	// outbound=false
@@ -46,11 +58,8 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 		_ = server.AcceptMuxedConn(ctx, serverMp)
 	}()
 
-	// construct the client rpc interface
-	clientEcho := echo.NewSRPCEchoerClient(client)
-
 	// call
-	if err := cb(clientEcho); err != nil {
+	if err := cb(server, mux, client); err != nil {
 		t.Fatal(err.Error())
 	}
 }
@@ -58,7 +67,6 @@ func RunE2E(t *testing.T, cb func(client echo.SRPCEchoerClient) error) {
 func TestE2E_Unary(t *testing.T) {
 	ctx := context.Background()
 	RunE2E(t, func(client echo.SRPCEchoerClient) error {
-		bodyTxt := "hello world"
 		out, err := client.Echo(ctx, &echo.EchoMsg{
 			Body: bodyTxt,
 		})
@@ -102,7 +110,6 @@ func CheckServerStream(t *testing.T, out echo.SRPCEchoer_EchoServerStreamClient,
 func TestE2E_ServerStream(t *testing.T) {
 	ctx := context.Background()
 	RunE2E(t, func(client echo.SRPCEchoerClient) error {
-		bodyTxt := "hello world"
 		req := &echo.EchoMsg{
 			Body: bodyTxt,
 		}
@@ -111,6 +118,49 @@ func TestE2E_ServerStream(t *testing.T) {
 			t.Fatal(err.Error())
 		}
 		return CheckServerStream(t, out, req)
+	})
+}
+
+func TestE2E_Cancel(t *testing.T) {
+	rctx := context.Background()
+	RunE2E_Setup(t, func(server *srpc.Server, mux srpc.Mux, client srpc.Client) error {
+		ctxCh := make(chan context.Context, 1)
+		doneCh := make(chan error, 1)
+		msrv := &e2e_mock.MockServer{
+			MockRequestCb: func(ctx context.Context, msg *e2e_mock.MockMsg) (*e2e_mock.MockMsg, error) {
+				ctxCh <- ctx
+				<-ctx.Done()
+				return nil, context.Canceled
+			},
+		}
+		_ = msrv.Register(mux)
+
+		ctx, ctxCancel := context.WithCancel(rctx)
+		mclient := e2e_mock.NewSRPCMockClient(client)
+		go func() {
+			_, err := mclient.MockRequest(ctx, &e2e_mock.MockMsg{Body: bodyTxt})
+			doneCh <- err
+		}()
+
+		var reqCtx context.Context
+		select {
+		case reqCtx = <-ctxCh:
+		case <-time.After(time.Millisecond * 100):
+			t.FailNow()
+		}
+
+		ctxCancel()
+		select {
+		case <-reqCtx.Done():
+		case <-time.After(time.Millisecond * 100):
+			t.Fatal("request ctx did not cancel after we canceled client-side ctx")
+		}
+		select {
+		case <-doneCh:
+		case <-time.After(time.Millisecond * 100):
+			t.Fatal("request did not exit on client side after we canceled ctx")
+		}
+		return nil
 	})
 }
 
