@@ -9,6 +9,8 @@ message Packet {
     CallStart call_start = 1;
     // CallData is a message in a streaming RPC sequence.
     CallData call_data = 2;
+    // CallCancel cancels the call.
+    bool call_cancel = 3;
   }
 }
 

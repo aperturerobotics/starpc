@@ -12,7 +12,7 @@ export class WebSocketConn extends Conn {
   private socket: WebSocket
 
   constructor(socket: WebSocket, direction: Direction, server?: Server) {
-    super(server, {direction})
+    super(server, { direction })
     this.socket = socket
     const socketDuplex = duplex(socket)
     pipe(socketDuplex, this, socketDuplex)

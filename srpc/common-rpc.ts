@@ -60,6 +60,16 @@ export class CommonRPC {
     })
   }
 
+  // writeCallCancel writes the call cancel packet.
+  public async writeCallCancel() {
+    await this.writePacket({
+      body: {
+        $case: 'callCancel',
+        callCancel: true,
+      },
+    })
+  }
+
   // writeCallDataFromSource writes all call data from the iterable.
   public async writeCallDataFromSource(dataSource: AsyncIterable<Uint8Array>) {
     try {
@@ -144,10 +154,14 @@ export class CommonRPC {
     }
   }
 
-  // close marks the call as complete, optionally with an error.
+  // close closes the call, optionally with an error.
   public async close(err?: Error) {
-    this._rpcDataSource.end(err)
-    this._source.end(err)
+    try {
+      await this.writeCallCancel()
+    } finally {
+      this._rpcDataSource.end(err)
+      this._source.end(err)
+    }
   }
 
   // _createSink returns a value for the sink field.
@@ -159,7 +173,10 @@ export class CommonRPC {
         }
       } catch (err) {
         const anyErr = err as any
-        if (anyErr?.code !== 'ERR_STREAM_RESET' && anyErr?.code !== 'ERR_STREAM_ABORT') {
+        if (
+          anyErr?.code !== 'ERR_STREAM_RESET' &&
+          anyErr?.code !== 'ERR_STREAM_ABORT'
+        ) {
           this.close(err as Error)
         }
       }

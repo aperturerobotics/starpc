@@ -76,23 +76,18 @@ func (r *MsgStream) MsgRecv(msg Message) error {
 
 // CloseSend signals to the remote that we will no longer send any messages.
 func (r *MsgStream) CloseSend() error {
-	// if already closed, return
-	if r.sendClosed.Swap(true) {
-		return nil
+	if !r.sendClosed.Swap(true) {
+		return r.closeSend()
 	}
-
-	return r.closeSend()
+	return nil
 }
 
 // Close closes the stream.
 func (r *MsgStream) Close() error {
-	// if already closed, return
-	if r.sendClosed.Swap(true) {
-		return nil
-	}
-
-	if err := r.closeSend(); err != nil {
-		return err
+	if !r.sendClosed.Swap(true) {
+		if err := r.closeSend(); err != nil {
+			return err
+		}
 	}
 
 	if r.closeCb != nil {

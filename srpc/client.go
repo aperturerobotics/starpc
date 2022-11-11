@@ -51,11 +51,14 @@ func (c *client) ExecCall(rctx context.Context, service, method string, in, out 
 	if err != nil {
 		return err
 	}
+	defer writer.Close()
 	if err := clientRPC.Start(writer, true, firstMsg); err != nil {
 		return err
 	}
 	msg, err := clientRPC.ReadOne()
 	if err != nil {
+		// send cancel message, if possible.
+		_ = clientRPC.SendCancel(writer)
 		// this includes any server returned error.
 		return err
 	}

@@ -97,6 +97,11 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 		return r.HandleCallStart(b.CallStart)
 	case *Packet_CallData:
 		return r.HandleCallData(b.CallData)
+	case *Packet_CallCancel:
+		if b.CallCancel {
+			r.Close()
+		}
+		return nil
 	default:
 		return nil
 	}
