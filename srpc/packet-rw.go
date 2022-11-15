@@ -94,7 +94,7 @@ func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 
 		// parse the length prefix if not done already
 		if currLen == 0 {
-			currLen = r.readLengthPrefix(r.buf.Bytes())
+			currLen = r.readLengthPrefix(r.buf.Bytes()[:4])
 			if currLen == 0 {
 				return errors.New("unexpected zero len prefix")
 			}

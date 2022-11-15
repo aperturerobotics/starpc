@@ -15,4 +15,6 @@ export {
   newMessagePortIterable,
   MessagePortConn,
 } from './message-port.js'
+export { ValueCtr } from './value-ctr.js'
+export { OpenStreamCtr } from './open-stream-ctr.js'
 export { writeToPushable } from './pushable'

@@ -12,50 +12,20 @@ import {
   prependLengthPrefixTransform,
 } from './packet.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
+import { OpenStreamCtr } from './open-stream-ctr.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements TsProtoRpc {
-  // openStreamFn is a promise which contains the OpenStreamFunc.
-  private openStreamFn: Promise<OpenStreamFunc>
-  // _openStreamFn resolves openStreamFn.
-  private _openStreamFn?: (conn?: OpenStreamFunc, err?: Error) => void
+  // openStreamCtr contains the OpenStreamFunc.
+  private openStreamCtr: OpenStreamCtr
 
   constructor(openStreamFn?: OpenStreamFunc) {
-    this.openStreamFn = this.setOpenStreamFn(openStreamFn)
+    this.openStreamCtr = new OpenStreamCtr(openStreamFn || undefined)
   }
 
   // setOpenStreamFn updates the openStreamFn for the Client.
-  public setOpenStreamFn(
-    openStreamFn?: OpenStreamFunc
-  ): Promise<OpenStreamFunc> {
-    if (this._openStreamFn) {
-      if (openStreamFn) {
-        this._openStreamFn(openStreamFn)
-        this._openStreamFn = undefined
-      }
-    } else {
-      if (openStreamFn) {
-        this.openStreamFn = Promise.resolve(openStreamFn)
-      } else {
-        this.initOpenStreamFn()
-      }
-    }
-    return this.openStreamFn
-  }
-
-  // initOpenStreamFn creates the empty Promise for openStreamFn.
-  private initOpenStreamFn(): Promise<OpenStreamFunc> {
-    const openPromise = new Promise<OpenStreamFunc>((resolve, reject) => {
-      this._openStreamFn = (conn?: OpenStreamFunc, err?: Error) => {
-        if (err) {
-          reject(err)
-        } else if (conn) {
-          resolve(conn)
-        }
-      }
-    })
-    this.openStreamFn = openPromise
-    return this.openStreamFn
+  public setOpenStreamFn(openStreamFn?: OpenStreamFunc) {
+    this.openStreamCtr.set(openStreamFn || undefined)
   }
 
   // request starts a non-streaming request.
@@ -137,7 +107,7 @@ export class Client implements TsProtoRpc {
     rpcMethod: string,
     data: Uint8Array | null
   ): Promise<ClientRPC> {
-    const openStreamFn = await this.openStreamFn
+    const openStreamFn = await this.openStreamCtr.wait()
     const conn = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     pipe(
