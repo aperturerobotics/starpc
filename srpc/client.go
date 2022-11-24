@@ -38,34 +38,31 @@ func NewClient(openStream OpenStreamFunc) Client {
 }
 
 // ExecCall executes a request/reply RPC with the remote.
-func (c *client) ExecCall(rctx context.Context, service, method string, in, out Message) error {
-	ctx, ctxCancel := context.WithCancel(rctx)
-	defer ctxCancel()
-
+func (c *client) ExecCall(ctx context.Context, service, method string, in, out Message) error {
 	firstMsg, err := in.MarshalVT()
 	if err != nil {
 		return err
 	}
+
 	clientRPC := NewClientRPC(ctx, service, method)
+	defer clientRPC.Close()
+
 	writer, err := c.openStream(ctx, clientRPC.HandlePacket, clientRPC.HandleStreamClose)
 	if err != nil {
 		return err
 	}
-	defer writer.Close()
 	if err := clientRPC.Start(writer, true, firstMsg); err != nil {
 		return err
 	}
+
 	msg, err := clientRPC.ReadOne()
 	if err != nil {
-		// send cancel message, if possible.
-		_ = clientRPC.SendCancel(writer)
 		// this includes any server returned error.
 		return err
 	}
 	if err := out.UnmarshalVT(msg); err != nil {
 		return errors.Wrap(ErrInvalidMessage, err.Error())
 	}
-	// done
 	return nil
 }
 
@@ -90,7 +87,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 		return nil, err
 	}
 
-	return NewMsgStream(ctx, clientRPC.writer, clientRPC.dataCh, clientRPC.ctxCancel), nil
+	return NewMsgStream(ctx, clientRPC, clientRPC.ctxCancel), nil
 }
 
 // _ is a type assertion

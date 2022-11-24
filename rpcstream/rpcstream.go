@@ -135,10 +135,9 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	}
 
 	// handle the rpc
-	serverRPC := srpc.NewServerRPC(ctx, mux)
 	srw := NewRpcStreamReadWriter(stream)
 	prw := srpc.NewPacketReadWriter(srw)
-	serverRPC.SetWriter(prw)
+	serverRPC := srpc.NewServerRPC(ctx, mux, prw)
 	go prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
 	return serverRPC.Wait(ctx)
 }

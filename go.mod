@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/aperturerobotics/util v0.0.0-20221125031036-d86bb72019f6
 	github.com/libp2p/go-libp2p v0.23.3-0.20221109121032-c334288f8fe4
 	github.com/libp2p/go-yamux/v4 v4.0.1-0.20220919134236-1c09f2ab3ec1
 	github.com/sirupsen/logrus v1.9.0

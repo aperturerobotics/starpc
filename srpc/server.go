@@ -25,15 +25,13 @@ func (s *Server) GetInvoker() Invoker {
 	return s.invoker
 }
 
-// HandleStream handles an incoming ReadWriteCloser stream.
-func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) error {
+// HandleStream handles an incoming stream and runs the read loop.
+func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
 	subCtx, subCtxCancel := context.WithCancel(ctx)
 	defer subCtxCancel()
-	serverRPC := NewServerRPC(subCtx, s.invoker)
 	prw := NewPacketReadWriter(rwc)
-	serverRPC.SetWriter(prw)
-	go prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
-	return serverRPC.Wait(ctx)
+	serverRPC := NewServerRPC(subCtx, s.invoker, prw)
+	prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
 }
 
 // AcceptMuxedConn runs a loop which calls Accept on a muxer to handle streams.
@@ -55,8 +53,6 @@ func (s *Server) AcceptMuxedConn(ctx context.Context, mc network.MuxedConn) erro
 		if err != nil {
 			return err
 		}
-		go func() {
-			_ = s.HandleStream(ctx, muxedStream)
-		}()
+		go s.HandleStream(ctx, muxedStream)
 	}
 }

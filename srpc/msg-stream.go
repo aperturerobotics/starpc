@@ -2,36 +2,38 @@ package srpc
 
 import (
 	"context"
-	"io"
-	"sync/atomic"
 )
+
+// MsgStreamRw is the read-write interface for MsgStream.
+type MsgStreamRw interface {
+	// ReadOne reads a single message and returns.
+	//
+	// returns io.EOF if the stream ended.
+	ReadOne() ([]byte, error)
+	// WriteCallData writes a call data packet.
+	WriteCallData(data []byte, complete bool, err error) error
+}
 
 // MsgStream implements the stream interface passed to implementations.
 type MsgStream struct {
 	// ctx is the stream context
 	ctx context.Context
-	// writer is the stream writer
-	writer Writer
-	// dataCh is the incoming data channel.
-	dataCh chan []byte
+	// rw is the msg stream read-writer
+	rw MsgStreamRw
 	// closeCb is the close callback
 	closeCb func()
-	// sendClosed indicates sending is closed.
-	sendClosed atomic.Bool
 }
 
 // NewMsgStream constructs a new Stream with a ClientRPC.
 // dataCh should be closed when no more messages will arrive.
 func NewMsgStream(
 	ctx context.Context,
-	writer Writer,
-	dataCh chan []byte,
+	rw MsgStreamRw,
 	closeCb func(),
 ) *MsgStream {
 	return &MsgStream{
 		ctx:     ctx,
-		writer:  writer,
-		dataCh:  dataCh,
+		rw:      rw,
 		closeCb: closeCb,
 	}
 }
@@ -43,9 +45,6 @@ func (r *MsgStream) Context() context.Context {
 
 // MsgSend sends the message to the remote.
 func (r *MsgStream) MsgSend(msg Message) error {
-	if r.sendClosed.Load() {
-		return context.Canceled
-	}
 	select {
 	case <-r.ctx.Done():
 		return context.Canceled
@@ -56,51 +55,32 @@ func (r *MsgStream) MsgSend(msg Message) error {
 	if err != nil {
 		return err
 	}
-	outPkt := NewCallDataPacket(msgData, len(msgData) == 0, false, nil)
-	return r.writer.WritePacket(outPkt)
+	return r.rw.WriteCallData(msgData, false, nil)
 }
 
 // MsgRecv receives an incoming message from the remote.
 // Parses the message into the object at msg.
 func (r *MsgStream) MsgRecv(msg Message) error {
-	select {
-	case <-r.Context().Done():
-		return context.Canceled
-	case data, ok := <-r.dataCh:
-		if !ok {
-			return io.EOF
-		}
-		return msg.UnmarshalVT(data)
+	data, err := r.rw.ReadOne()
+	if err != nil {
+		return err
 	}
+	return msg.UnmarshalVT(data)
 }
 
 // CloseSend signals to the remote that we will no longer send any messages.
 func (r *MsgStream) CloseSend() error {
-	if !r.sendClosed.Swap(true) {
-		return r.closeSend()
-	}
-	return nil
+	return r.rw.WriteCallData(nil, true, nil)
 }
 
 // Close closes the stream.
 func (r *MsgStream) Close() error {
-	if !r.sendClosed.Swap(true) {
-		if err := r.closeSend(); err != nil {
-			return err
-		}
-	}
-
+	_ = r.CloseSend()
 	if r.closeCb != nil {
 		r.closeCb()
 	}
 
 	return nil
-}
-
-// closeSend writes the CloseSend packet.
-func (r *MsgStream) closeSend() error {
-	outPkt := NewCallDataPacket(nil, false, true, nil)
-	return r.writer.WritePacket(outPkt)
 }
 
 // _ is a type assertion
