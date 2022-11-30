@@ -26,7 +26,7 @@ type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Invoker
 type RpcStreamCaller[T RpcStream] func(ctx context.Context) (T, error)
 
 // OpenRpcStream opens a RPC stream with a remote.
-func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T], componentID string) (*srpc.PacketReaderWriter, error) {
+func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T], componentID string) (io.ReadWriteCloser, error) {
 	// open the rpc stream
 	rpcStream, err := rpcCaller(ctx)
 	if err != nil {
@@ -65,7 +65,7 @@ func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T
 
 	// ready
 	rw := NewRpcStreamReadWriter(rpcStream)
-	return srpc.NewPacketReadWriter(rw), nil
+	return rw, nil
 }
 
 // NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
@@ -77,11 +77,14 @@ func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], component
 			return nil, err
 		}
 
+		// construct the packet conn
+		prw := srpc.NewPacketReadWriter(rw)
+
 		// start the read pump
-		go rw.ReadPump(msgHandler, closeHandler)
+		go prw.ReadPump(msgHandler, closeHandler)
 
 		// return the writer
-		return rw, nil
+		return prw, nil
 	}
 }
 
