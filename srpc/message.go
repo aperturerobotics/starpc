@@ -9,9 +9,22 @@ type Message interface {
 // RawMessage is a raw protobuf message container.
 type RawMessage struct {
 	data []byte
+	copy bool
+}
+
+// NewRawMessage constructs a new raw message.
+// If copy=true, copies data in MarshalVT.
+// Note: the data buffer will be retained and used.
+// The data buffer will be written to and/or replaced in UnmarshalVT.
+func NewRawMessage(data []byte, copy bool) *RawMessage {
+	return &RawMessage{data: data, copy: copy}
 }
 
 func (m *RawMessage) MarshalVT() ([]byte, error) {
+	if !m.copy {
+		return m.data, nil
+	}
+
 	data := make([]byte, len(m.data))
 	copy(data, m.data)
 	return data, nil
