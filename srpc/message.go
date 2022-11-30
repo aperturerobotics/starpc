@@ -20,6 +20,11 @@ func NewRawMessage(data []byte, copy bool) *RawMessage {
 	return &RawMessage{data: data, copy: copy}
 }
 
+// GetData returns the data buffer without copying.
+func (m *RawMessage) GetData() []byte {
+	return m.data
+}
+
 func (m *RawMessage) MarshalVT() ([]byte, error) {
 	if !m.copy {
 		return m.data, nil
