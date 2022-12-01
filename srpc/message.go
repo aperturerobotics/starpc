@@ -25,6 +25,22 @@ func (m *RawMessage) GetData() []byte {
 	return m.data
 }
 
+// SetData sets the data buffer.
+// if copy=true, copies the data to the internal slice.
+// otherwise retains the buffer.
+func (m *RawMessage) SetData(data []byte) {
+	if m.copy {
+		if cap(m.data) >= len(data) {
+			m.data = m.data[:len(data)]
+		} else {
+			m.data = make([]byte, len(data))
+		}
+		copy(m.data, data)
+	} else {
+		m.data = data
+	}
+}
+
 func (m *RawMessage) MarshalVT() ([]byte, error) {
 	if !m.copy {
 		return m.data, nil
@@ -36,12 +52,7 @@ func (m *RawMessage) MarshalVT() ([]byte, error) {
 }
 
 func (m *RawMessage) UnmarshalVT(data []byte) error {
-	if cap(m.data) >= len(data) {
-		m.data = m.data[:len(data)]
-	} else {
-		m.data = make([]byte, len(data))
-	}
-	copy(m.data, data)
+	m.SetData(data)
 	return nil
 }
 
