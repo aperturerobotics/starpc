@@ -60,7 +60,7 @@
     "singleQuote": true
   },
   "devDependencies": {
-    "@aperturerobotics/ts-common": "^0.2.5",
+    "@aperturerobotics/ts-common": "^0.2.6",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "bufferutil": "^4.0.7",
