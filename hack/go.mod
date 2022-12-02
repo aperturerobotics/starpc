@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/aperturerobotics/starpc => ../
 
-replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.28.2-0.20221007002036-6510dd3bc392 // aperture
+replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.28.2-0.20221202092004-7e5a6a8cf680 // aperture
 
 require (
 	github.com/golangci/golangci-lint v1.50.1
@@ -15,8 +15,8 @@ require (
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.0
-	github.com/aperturerobotics/starpc v0.13.2
-	github.com/evanw/esbuild v0.15.13
+	github.com/aperturerobotics/starpc v0.15.1
+	github.com/evanw/esbuild v0.15.16
 )
 
 require (
@@ -177,7 +177,7 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20220827204233-334a2380cb91 // indirect
 	golang.org/x/mod v0.6.0 // indirect
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde // indirect
-	golang.org/x/sys v0.1.1-0.20221025174404-572649812736 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
