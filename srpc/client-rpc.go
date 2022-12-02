@@ -102,9 +102,8 @@ func (r *ClientRPC) Close() {
 	r.mtx.Lock()
 	if r.writer != nil {
 		_ = r.writeCancelLocked()
-		_ = r.writer.Close()
 	}
+	r.closeLocked()
 	r.bcast.Broadcast()
 	r.mtx.Unlock()
-	r.ctxCancel()
 }

@@ -50,7 +50,9 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 	for {
 		c.mtx.Lock()
 		if c.dataClosed {
-			break
+			err := c.remoteErr
+			c.mtx.Unlock()
+			return err
 		}
 		waiter := c.bcast.GetWaitCh()
 		c.mtx.Unlock()
@@ -60,9 +62,6 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 		case <-waiter:
 		}
 	}
-	err := c.remoteErr
-	c.mtx.Unlock()
-	return err
 }
 
 // ReadOne reads a single message and returns.
@@ -80,14 +79,14 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 			c.closeLocked()
 			err = context.Canceled
 			c.mtx.Unlock()
-			break
+			return nil, err
 		}
 		if len(c.dataQueue) != 0 {
 			msg = c.dataQueue[0]
 			c.dataQueue[0] = nil
 			c.dataQueue = c.dataQueue[1:]
 			c.mtx.Unlock()
-			break
+			return msg, nil
 		}
 		if c.dataClosed || c.remoteErr != nil {
 			err = c.remoteErr
@@ -95,7 +94,7 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 				err = io.EOF
 			}
 			c.mtx.Unlock()
-			break
+			return nil, err
 		}
 		c.mtx.Unlock()
 		select {
@@ -104,7 +103,6 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 		case <-waiter:
 		}
 	}
-	return msg, err
 }
 
 // WriteCallData writes a call data packet.
@@ -190,8 +188,8 @@ func (c *commonRPC) closeLocked() {
 		c.remoteErr = context.Canceled
 	}
 	if c.writer != nil {
-		_ = c.writeCancelLocked()
 		_ = c.writer.Close()
 	}
+	c.bcast.Broadcast()
 	c.ctxCancel()
 }
