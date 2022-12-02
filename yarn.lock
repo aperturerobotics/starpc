@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@aperturerobotics/ts-common@^0.2.5":
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/@aperturerobotics/ts-common/-/ts-common-0.2.5.tgz#66e3261dac2e9e3d72d246d29e1c122721b870ff"
+  integrity sha512-f4qiOKah93MJkVrRP3UwUYS076ppyvasLLuCiN26xzceke2ybSycGVyC7x2l8BsSFaLRm1DCI8urYuA7sVr14Q==
+  dependencies:
+    bufferutil "^4.0.7"
+    long "^5.2.1"
+    starpc "^0.15.0"
+    utf-8-validate "^5.0.10"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.18.6":
   version "7.18.6"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.18.6.tgz#3b25d38c89600baa2dcc219edfa88a74eb2c427a"
@@ -2155,6 +2165,29 @@ sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==
+
+starpc@^0.15.0:
+  version "0.15.2"
+  resolved "https://registry.yarnpkg.com/starpc/-/starpc-0.15.2.tgz#bfe906c32d2570ba21a9ff96119c548bef5be80a"
+  integrity sha512-RH2QGzEE/c+ovf4KF2isO2HLeOfmYn4JLL6Ekv4X4eYWjW3jD13AKsk7UvSHKxwOexLoWjnVOmuYte0wuqgU/Q==
+  dependencies:
+    "@chainsafe/libp2p-yamux" "^3.0.3"
+    "@libp2p/interface-connection" "^3.0.3"
+    "@libp2p/interface-stream-muxer" "^3.0.1"
+    event-iterator "^2.0.0"
+    is-promise "^4.0.0"
+    isomorphic-ws "^5.0.0"
+    it-first "^2.0.0"
+    it-length-prefixed "^8.0.3"
+    it-pipe "^2.0.4"
+    it-pushable "^3.1.0"
+    it-stream-types "^1.0.4"
+    it-ws "^5.0.3"
+    long "^5.2.1"
+    patch-package "^6.5.0"
+    protobufjs "^7.1.2"
+    uint8arraylist "^2.4.2"
+    ws "^8.11.0"
 
 streamsearch@^1.1.0:
   version "1.1.0"

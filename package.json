@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -36,7 +36,7 @@
     "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "npm run typecheck",
     "typecheck": "tsc --noEmit",
-    "deps": "depcheck --ignores 'bufferutil,utf-8-validate,ts-proto'",
+    "deps": "depcheck --ignores 'bufferutil,utf-8-validate,ts-proto,@aperturerobotics/ts-common'",
     "codegen": "npm run gen",
     "ci": "npm run build && npm run lint:js && npm run lint:go",
     "format": "prettier --write './{srpc,echo,e2e,integration,rpcstream}/**/(*.ts|*.tsx|*.html|*.css)'",
@@ -51,7 +51,8 @@
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
     "lint:js": "eslint -c .eslintrc.js --ext .ts ./{srpc,echo,rpcstream}/**/*.ts",
-    "prepare": "patch-package",
+    "patch": "patch-package --use-yarn --patch-dir ./node_modules/@aperturerobotics/ts-common/patches",
+    "prepare": "npm run patch && go mod vendor",
     "precommit": "npm run format"
   },
   "prettier": {
@@ -59,6 +60,7 @@
     "singleQuote": true
   },
   "devDependencies": {
+    "@aperturerobotics/ts-common": "^0.2.5",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "bufferutil": "^4.0.7",
