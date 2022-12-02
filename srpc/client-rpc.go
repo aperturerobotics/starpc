@@ -99,10 +99,10 @@ func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
 
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
-	r.mtx.Lock()
 	if r.writer != nil {
-		_ = r.writeCancelLocked()
+		_ = r.WriteCancel()
 	}
+	r.mtx.Lock()
 	r.closeLocked()
 	r.bcast.Broadcast()
 	r.mtx.Unlock()

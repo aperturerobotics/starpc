@@ -107,8 +107,6 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 
 // WriteCallData writes a call data packet.
 func (c *commonRPC) WriteCallData(data []byte, complete bool, err error) error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	if c.writer == nil {
 		return ErrCompleted
 	}
@@ -173,8 +171,8 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	return nil
 }
 
-// writeCancelLocked writes a call cancel packet.
-func (c *commonRPC) writeCancelLocked() error {
+// WriteCancel writes a call cancel packet.
+func (c *commonRPC) WriteCancel() error {
 	if c.writer != nil {
 		return c.writer.WritePacket(NewCallCancelPacket())
 	}
