@@ -74,9 +74,9 @@ export class CommonRPC {
   public async writeCallDataFromSource(dataSource: AsyncIterable<Uint8Array>) {
     try {
       for await (const data of dataSource) {
-        this.writeCallData(data)
+        await this.writeCallData(data)
       }
-      this.writeCallData(undefined, true)
+      await this.writeCallData(undefined, true)
     } catch (err) {
       this.close(err as Error)
     }
@@ -160,7 +160,8 @@ export class CommonRPC {
       await this.writeCallCancel()
     } finally {
       this._rpcDataSource.end(err)
-      this._source.end(err)
+      // note: don't pass error to _source here.
+      this._source.end()
     }
   }
 

@@ -1,4 +1,5 @@
 export type { PacketHandler, Stream, OpenStreamFunc } from './stream.js'
+export { ERR_RPC_ABORT, isAbortError } from './errors.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
 export { Conn, ConnParams } from './conn.js'
