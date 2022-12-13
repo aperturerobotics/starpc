@@ -1,6 +1,7 @@
 import { pipe } from 'it-pipe'
 import { pushable, Pushable } from 'it-pushable'
 
+import { ERR_RPC_ABORT } from './errors.js'
 import type { TsProtoRpc } from './ts-proto-rpc.js'
 import type { OpenStreamFunc } from './stream.js'
 import { ClientRPC } from './client-rpc.js'
@@ -32,9 +33,10 @@ export class Client implements TsProtoRpc {
   public async request(
     service: string,
     method: string,
-    data: Uint8Array
+    data: Uint8Array,
+    abortSignal?: AbortSignal
   ): Promise<Uint8Array> {
-    const call = await this.startRpc(service, method, data)
+    const call = await this.startRpc(service, method, data, abortSignal)
     for await (const data of call.rpcDataSource) {
       call.close()
       return data
@@ -48,9 +50,10 @@ export class Client implements TsProtoRpc {
   public async clientStreamingRequest(
     service: string,
     method: string,
-    data: AsyncIterable<Uint8Array>
+    data: AsyncIterable<Uint8Array>,
+    abortSignal?: AbortSignal
   ): Promise<Uint8Array> {
-    const call = await this.startRpc(service, method, null)
+    const call = await this.startRpc(service, method, null, abortSignal)
     call.writeCallDataFromSource(data)
     for await (const data of call.rpcDataSource) {
       call.close()
@@ -65,10 +68,11 @@ export class Client implements TsProtoRpc {
   public serverStreamingRequest(
     service: string,
     method: string,
-    data: Uint8Array
+    data: Uint8Array,
+    abortSignal?: AbortSignal
   ): AsyncIterable<Uint8Array> {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
-    this.startRpc(service, method, data)
+    this.startRpc(service, method, data, abortSignal)
       .then(async (call) => {
         return writeToPushable(call.rpcDataSource, serverData)
       })
@@ -80,10 +84,11 @@ export class Client implements TsProtoRpc {
   public bidirectionalStreamingRequest(
     service: string,
     method: string,
-    data: AsyncIterable<Uint8Array>
+    data: AsyncIterable<Uint8Array>,
+    abortSignal?: AbortSignal
   ): AsyncIterable<Uint8Array> {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
-    this.startRpc(service, method, null)
+    this.startRpc(service, method, null, abortSignal)
       .then(async (call) => {
         call.writeCallDataFromSource(data)
         try {
@@ -105,11 +110,18 @@ export class Client implements TsProtoRpc {
   private async startRpc(
     rpcService: string,
     rpcMethod: string,
-    data: Uint8Array | null
+    data: Uint8Array | null,
+    abortSignal?: AbortSignal
   ): Promise<ClientRPC> {
+    if (abortSignal?.aborted) {
+      throw new Error(ERR_RPC_ABORT)
+    }
     const openStreamFn = await this.openStreamCtr.wait()
     const conn = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
+    abortSignal?.addEventListener('abort', () => {
+      call.close(new Error(ERR_RPC_ABORT))
+    })
     pipe(
       conn,
       parseLengthPrefixTransform(),

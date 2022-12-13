@@ -96,7 +96,7 @@ export const MockMsg = {
 /** Mock service mocks some RPCs for the e2e tests. */
 export interface Mock {
   /** MockRequest runs a mock unary request. */
-  MockRequest(request: MockMsg): Promise<MockMsg>
+  MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>
 }
 
 export class MockClientImpl implements Mock {
@@ -107,9 +107,14 @@ export class MockClientImpl implements Mock {
     this.rpc = rpc
     this.MockRequest = this.MockRequest.bind(this)
   }
-  MockRequest(request: MockMsg): Promise<MockMsg> {
+  MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg> {
     const data = MockMsg.encode(request).finish()
-    const promise = this.rpc.request(this.service, 'MockRequest', data)
+    const promise = this.rpc.request(
+      this.service,
+      'MockRequest',
+      data,
+      abortSignal || undefined
+    )
     return promise.then((data) => MockMsg.decode(new _m0.Reader(data)))
   }
 }
@@ -136,7 +141,8 @@ interface Rpc {
   request(
     service: string,
     method: string,
-    data: Uint8Array
+    data: Uint8Array,
+    abortSignal?: AbortSignal
   ): Promise<Uint8Array>
 }
 

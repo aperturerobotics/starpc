@@ -121,11 +121,9 @@ export async function* handleRpcStream(
   // build the outgoing packet sink & the packet source
   const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
-  // handle the stream in the next event queue tick.
+  // start the handler
   const rpcStream = new RpcStream(packetSink, packetStream)
-  setTimeout(() => {
-    handler!(rpcStream)
-  }, 1)
+  handler!(rpcStream)
 
   // process packets
   for await (const packet of packetSink) {
