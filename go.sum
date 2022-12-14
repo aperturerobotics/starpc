@@ -152,5 +152,5 @@ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 lukechampine.com/blake3 v1.1.8-0.20220321170924-7afca5966e5e h1:YeQnmA0g9M+7uVBjUXNUpVQRfWrvTu4I5u+DjFudflw=
 lukechampine.com/blake3 v1.1.8-0.20220321170924-7afca5966e5e/go.mod h1:tkKEOtDkNtklkXtLNEOGNq5tcV90tJiA1vAA12R78LA=
-nhooyr.io/websocket v1.8.8-0.20210410000328-8dee580a7f74 h1:V2XOYY4rGPHLTGQD4TiOMOfVwNd0zAuEPofzzEqiFWk=
-nhooyr.io/websocket v1.8.8-0.20210410000328-8dee580a7f74/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0=
+nhooyr.io/websocket v1.8.8-0.20221213223501-14fb98eba64e h1:Sk+k5z84Elo/gfEvX1xQR83Yhd6ETPmVDJTXUd2BxR4=
+nhooyr.io/websocket v1.8.8-0.20221213223501-14fb98eba64e/go.mod h1:B70DZP8IakI65RVQ51MsWP/8jndNma26DVA/nFSCgW0=

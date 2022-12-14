@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/pkg/errors v0.9.1
 	google.golang.org/protobuf v1.28.1
-	nhooyr.io/websocket v1.8.8-0.20210410000328-8dee580a7f74
+	nhooyr.io/websocket v1.8.8-0.20221213223501-14fb98eba64e
 )
 
 require (
