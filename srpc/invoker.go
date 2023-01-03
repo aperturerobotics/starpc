@@ -22,7 +22,7 @@ func (s InvokerSlice) InvokeMethod(serviceID, methodID string, strm Stream) (boo
 
 		found, err := invoker.InvokeMethod(serviceID, methodID, strm)
 		if found || err != nil {
-			return found && err == nil, err
+			return true, err
 		}
 	}
 	return false, nil
