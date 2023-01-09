@@ -2,7 +2,8 @@ package srpc
 
 import (
 	"context"
-	"errors"
+
+	"github.com/pkg/errors"
 )
 
 // ClientSet wraps a list of clients into one Client.

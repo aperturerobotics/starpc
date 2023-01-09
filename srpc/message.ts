@@ -10,7 +10,7 @@ export interface MessageDefinition<T> {
 }
 
 // DecodeMessageTransform decodes messages to objects.
-type DecodeMessageTransform<T> = (
+export type DecodeMessageTransform<T> = (
   source: Source<Uint8Array | Uint8Array[]>
 ) => AsyncIterable<T>
 
@@ -35,7 +35,7 @@ export function buildDecodeMessageTransform<T>(
 }
 
 // EncodeMessageTransform is a transformer that encodes messages.
-type EncodeMessageTransform<T> = (
+export type EncodeMessageTransform<T> = (
   source: Source<T | T[]>
 ) => AsyncIterable<Uint8Array>
 
