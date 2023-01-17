@@ -141,6 +141,12 @@ export const RpcStreamPacket = {
     return obj
   },
 
+  create<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
+    base?: I
+  ): RpcStreamPacket {
+    return RpcStreamPacket.fromPartial(base ?? {})
+  },
+
   fromPartial<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
     object: I
   ): RpcStreamPacket {
@@ -254,6 +260,12 @@ export const RpcStreamInit = {
     return obj
   },
 
+  create<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
+    base?: I
+  ): RpcStreamInit {
+    return RpcStreamInit.fromPartial(base ?? {})
+  },
+
   fromPartial<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
     object: I
   ): RpcStreamInit {
@@ -338,6 +350,10 @@ export const RpcAck = {
     const obj: any = {}
     message.error !== undefined && (obj.error = message.error)
     return obj
+  },
+
+  create<I extends Exact<DeepPartial<RpcAck>, I>>(base?: I): RpcAck {
+    return RpcAck.fromPartial(base ?? {})
   },
 
   fromPartial<I extends Exact<DeepPartial<RpcAck>, I>>(object: I): RpcAck {

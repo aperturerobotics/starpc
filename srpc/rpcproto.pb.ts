@@ -169,6 +169,10 @@ export const Packet = {
     return obj
   },
 
+  create<I extends Exact<DeepPartial<Packet>, I>>(base?: I): Packet {
+    return Packet.fromPartial(base ?? {})
+  },
+
   fromPartial<I extends Exact<DeepPartial<Packet>, I>>(object: I): Packet {
     const message = createBasePacket()
     if (
@@ -317,6 +321,10 @@ export const CallStart = {
     return obj
   },
 
+  create<I extends Exact<DeepPartial<CallStart>, I>>(base?: I): CallStart {
+    return CallStart.fromPartial(base ?? {})
+  },
+
   fromPartial<I extends Exact<DeepPartial<CallStart>, I>>(
     object: I
   ): CallStart {
@@ -442,6 +450,10 @@ export const CallData = {
     message.complete !== undefined && (obj.complete = message.complete)
     message.error !== undefined && (obj.error = message.error)
     return obj
+  },
+
+  create<I extends Exact<DeepPartial<CallData>, I>>(base?: I): CallData {
+    return CallData.fromPartial(base ?? {})
   },
 
   fromPartial<I extends Exact<DeepPartial<CallData>, I>>(object: I): CallData {

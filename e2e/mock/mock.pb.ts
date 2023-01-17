@@ -86,6 +86,10 @@ export const MockMsg = {
     return obj
   },
 
+  create<I extends Exact<DeepPartial<MockMsg>, I>>(base?: I): MockMsg {
+    return MockMsg.fromPartial(base ?? {})
+  },
+
   fromPartial<I extends Exact<DeepPartial<MockMsg>, I>>(object: I): MockMsg {
     const message = createBaseMockMsg()
     message.body = object.body ?? ''
