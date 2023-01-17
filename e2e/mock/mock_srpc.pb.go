@@ -113,16 +113,8 @@ func (SRPCMockHandler) InvokeMethod_MockRequest(impl SRPCMockServer, strm srpc.S
 
 type SRPCMock_MockRequestStream interface {
 	srpc.Stream
-	SendAndClose(*MockMsg) error
 }
 
 type srpcMock_MockRequestStream struct {
 	srpc.Stream
-}
-
-func (x *srpcMock_MockRequestStream) SendAndClose(m *MockMsg) error {
-	if err := x.MsgSend(m); err != nil {
-		return err
-	}
-	return x.CloseSend()
 }

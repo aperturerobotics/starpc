@@ -268,7 +268,16 @@ func (s *srpc) generateService(service *protogen.Service) {
 		if method.Desc.IsStreamingClient() {
 			// streaming client
 			s.P("clientStrm := &", s.ServerStreamImpl(method), "{strm}")
-			s.P("return impl.", method.GoName, "(clientStrm)")
+
+			if method.Desc.IsStreamingServer() {
+				// streaming server
+				s.P("return impl.", method.GoName, "(clientStrm)")
+			} else {
+				// streaming client, non-streaming server.
+				s.P("out, err := impl.", method.GoName, "(clientStrm)")
+				s.P("if err != nil { return err }")
+				s.P("return strm.MsgSend(out)")
+			}
 		} else {
 			s.P("req := new(", inType, ")")
 			s.P("if err := strm.MsgRecv(req); err != nil { return err }")
@@ -413,23 +422,32 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 
 func (s *srpc) generateServerSignature(method *protogen.Method) string {
 	var reqArgs []string
-	ret := "error"
+	// if neither client nor server is streaming, expose ctx as a parameter.
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
 		reqArgs = append(reqArgs, s.Ident("context", "Context"))
-		ret = "(*" + s.OutputType(method) + ", error)"
 	}
+	// if the client isn't streaming, expect a single message from the client.
 	if !method.Desc.IsStreamingClient() {
 		reqArgs = append(reqArgs, "*"+s.InputType(method))
 	}
+	// if the server or client are streaming, pass a stream argument.
 	if method.Desc.IsStreamingServer() || method.Desc.IsStreamingClient() {
 		reqArgs = append(reqArgs, s.ServerStreamIface(method))
+	}
+
+	var ret string
+	// if the server isn't streaming, expect a single response object
+	if method.Desc.IsStreamingServer() {
+		ret = "error"
+	} else {
+		ret = "(*" + s.OutputType(method) + ", error)"
 	}
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
 }
 
 func (s *srpc) generateUnimplementedServerMethod(method *protogen.Method) {
 	s.P("func (s *", s.ServerUnimpl(method.Parent), ") ", s.generateServerSignature(method), " {")
-	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
+	if !method.Desc.IsStreamingServer() {
 		s.P("return nil, ", s.Ident(SRPCPackage, "ErrUnimplemented"))
 	} else {
 		s.P("return ", s.Ident(SRPCPackage, "ErrUnimplemented"))
@@ -465,7 +483,7 @@ func (s *srpc) generateServerReceiver(method *protogen.Method) {
 
 func (s *srpc) generateServerMethod(method *protogen.Method) {
 	genSend := method.Desc.IsStreamingServer()
-	genSendAndClose := !method.Desc.IsStreamingServer()
+	genSendAndClose := method.Desc.IsStreamingServer()
 	genRecv := method.Desc.IsStreamingClient()
 
 	// Stream auxiliary types and methods.

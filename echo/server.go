@@ -51,12 +51,8 @@ func (*EchoServer) EchoServerStream(msg *EchoMsg, strm SRPCEchoer_EchoServerStre
 }
 
 // EchoClientStream implements SRPCEchoerServer
-func (*EchoServer) EchoClientStream(strm SRPCEchoer_EchoClientStreamStream) error {
-	msg, err := strm.Recv()
-	if err != nil {
-		return err
-	}
-	return strm.SendAndClose(msg)
+func (*EchoServer) EchoClientStream(strm SRPCEchoer_EchoClientStreamStream) (*EchoMsg, error) {
+	return strm.Recv()
 }
 
 // EchoBidiStream implements SRPCEchoerServer
