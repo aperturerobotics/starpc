@@ -22,6 +22,8 @@ export {
   buildDecodeMessageTransform,
   EncodeMessageTransform,
   buildEncodeMessageTransform,
+  memoProto,
+  memoProtoDecode,
 } from './message.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
