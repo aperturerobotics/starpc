@@ -333,9 +333,9 @@
     multiformats "^11.0.0"
 
 "@libp2p/interface-stream-muxer@^3.0.0", "@libp2p/interface-stream-muxer@^3.0.1", "@libp2p/interface-stream-muxer@^3.0.4":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@libp2p/interface-stream-muxer/-/interface-stream-muxer-3.0.4.tgz#c0556fdb8d35a8ea2ed53ed851d14cf3a6008adb"
-  integrity sha512-AxqbBmOmxruAyIzscZOK5BwbKP6RscQToT4RielMh6JSsXDInDpAFcpa8qfQrb14mYIwIvQA4FzTaMMbNdDtew==
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/@libp2p/interface-stream-muxer/-/interface-stream-muxer-3.0.5.tgz#7cc6e3887e133e1ef54a515c9e21d7b889974c59"
+  integrity sha512-815aJ+qVswNcTEOuOUTcB+7OLzAfROyjjqoWpK0bD0P/xqTHqOQcqdaDuK02zPuAZqYq9uR3+SoBasrCg6k3zw==
   dependencies:
     "@libp2p/interface-connection" "^3.0.0"
     "@libp2p/interfaces" "^3.0.0"
