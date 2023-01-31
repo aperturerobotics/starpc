@@ -10,10 +10,11 @@ export type RpcStreamCaller = (
 ) => AsyncIterable<RpcStreamPacket>
 
 // openRpcStream attempts to open a stream over a RPC call.
-// waits for the remote to ack the stream before returning.
+// if waitAck is set, waits for the remote to ack the stream before returning.
 export async function openRpcStream(
   componentId: string,
-  caller: RpcStreamCaller
+  caller: RpcStreamCaller,
+  waitAck?: boolean
 ): Promise<Stream> {
   const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
   const packetSource = caller(packetSink)
@@ -26,21 +27,25 @@ export async function openRpcStream(
     },
   })
 
-  // wait for ack
+  // construct packet stream
   const packetIt = packetSource[Symbol.asyncIterator]()
-  const ackPacketIt = await packetIt.next()
-  if (ackPacketIt.done) {
-    throw new Error(`rpcstream: closed before ack packet`)
-  }
-  const ackPacket = ackPacketIt.value
-  const ackBody = ackPacket?.body
-  if (!ackBody || ackBody.$case !== 'ack') {
-    const msgType = ackBody?.$case || 'none'
-    throw new Error(`rpcstream: expected ack packet but got ${msgType}`)
-  }
-  const errStr = ackBody.ack?.error
-  if (errStr) {
-    throw new Error(`rpcstream: remote: ${errStr}`)
+
+  // wait for ack, if set.
+  if (waitAck) {
+    const ackPacketIt = await packetIt.next()
+    if (ackPacketIt.done) {
+      throw new Error(`rpcstream: closed before ack packet`)
+    }
+    const ackPacket = ackPacketIt.value
+    const ackBody = ackPacket?.body
+    if (!ackBody || ackBody.$case !== 'ack') {
+      const msgType = ackBody?.$case || 'none'
+      throw new Error(`rpcstream: expected ack packet but got ${msgType}`)
+    }
+    const errStr = ackBody.ack?.error
+    if (errStr) {
+      throw new Error(`rpcstream: remote: ${errStr}`)
+    }
   }
 
   // build & return the data stream
@@ -194,10 +199,19 @@ export class RpcStream implements Stream {
         }
         const value = msgIt.value
         const body = value?.body
-        if (!body || body.$case !== 'data') {
+        if (!body) {
           continue
         }
-        yield* [body.data]
+        switch (body.$case) {
+          case 'ack':
+            if (body.ack?.error?.length) {
+              throw new Error(body.ack.error)
+            }
+            break
+          case 'data':
+            yield* [body.data]
+            break
+        }
       }
     })()
   }

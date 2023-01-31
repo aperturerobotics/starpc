@@ -26,7 +26,9 @@ type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Invoker
 type RpcStreamCaller[T RpcStream] func(ctx context.Context) (T, error)
 
 // OpenRpcStream opens a RPC stream with a remote.
-func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T], componentID string) (io.ReadWriteCloser, error) {
+//
+// if waitAck is set, waits for acknowledgment from the remote before returning.
+func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T], componentID string, waitAck bool) (io.ReadWriteCloser, error) {
 	// open the rpc stream
 	rpcStream, err := rpcCaller(ctx)
 	if err != nil {
@@ -47,20 +49,22 @@ func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T
 	}
 
 	// wait for ack
-	pkt, err := rpcStream.Recv()
-	if err == nil {
-		switch b := pkt.GetBody().(type) {
-		case *RpcStreamPacket_Ack:
-			if errStr := b.Ack.GetError(); errStr != "" {
-				err = errors.Errorf("remote: %s", errStr)
+	if waitAck {
+		pkt, err := rpcStream.Recv()
+		if err == nil {
+			switch b := pkt.GetBody().(type) {
+			case *RpcStreamPacket_Ack:
+				if errStr := b.Ack.GetError(); errStr != "" {
+					err = errors.Errorf("remote: %s", errStr)
+				}
+			default:
+				err = errors.New("expected ack packet")
 			}
-		default:
-			err = errors.New("expected ack packet")
 		}
-	}
-	if err != nil {
-		_ = rpcStream.Close()
-		return nil, err
+		if err != nil {
+			_ = rpcStream.Close()
+			return nil, err
+		}
 	}
 
 	// ready
@@ -69,10 +73,12 @@ func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T
 }
 
 // NewRpcStreamOpenStream constructs an OpenStream function with a RpcStream.
-func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string) srpc.OpenStreamFunc {
+//
+// if waitAck is set, OpenStream waits for acknowledgment from the remote.
+func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string, waitAck bool) srpc.OpenStreamFunc {
 	return func(ctx context.Context, msgHandler srpc.PacketHandler, closeHandler srpc.CloseHandler) (srpc.Writer, error) {
 		// open the stream
-		rw, err := OpenRpcStream(ctx, rpcCaller, componentID)
+		rw, err := OpenRpcStream(ctx, rpcCaller, componentID, waitAck)
 		if err != nil {
 			return nil, err
 		}
@@ -89,8 +95,10 @@ func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], component
 }
 
 // NewRpcStreamClient constructs a Client which opens streams with a RpcStream.
-func NewRpcStreamClient[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string) srpc.Client {
-	openStream := NewRpcStreamOpenStream(rpcCaller, componentID)
+//
+// if waitAck is set, OpenStream waits for acknowledgment from the remote.
+func NewRpcStreamClient[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string, waitAck bool) srpc.Client {
+	openStream := NewRpcStreamOpenStream(rpcCaller, componentID, waitAck)
 	return srpc.NewClient(openStream)
 }
 
@@ -193,6 +201,10 @@ func (r *RpcStreamReadWriter) Read(p []byte) (n int, err error) {
 			pkt, err = r.stream.Recv()
 			if err != nil {
 				break
+			}
+
+			if errStr := pkt.GetAck().GetError(); errStr != "" {
+				return n, errors.New(errStr)
 			}
 
 			data := pkt.GetData()

@@ -227,7 +227,7 @@ func TestE2E_RpcStream(t *testing.T) {
 	RunE2E(t, func(client echo.SRPCEchoerClient) error {
 		openStreamFn := rpcstream.NewRpcStreamOpenStream(func(ctx context.Context) (rpcstream.RpcStream, error) {
 			return client.RpcStream(ctx)
-		}, "test")
+		}, "test", false)
 		proxiedClient := srpc.NewClient(openStreamFn)
 		proxiedSvc := echo.NewSRPCEchoerClient(proxiedClient)
 
