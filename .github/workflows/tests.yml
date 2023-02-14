@@ -27,6 +27,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: 'yarn'
+      # Cache go build cache, used to speedup go test
+      # https://markphelps.me/posts/speed-up-your-go-builds-with-actions-cache/
+      - id: go-cache-paths
+        run: |
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       - name: Go Build Cache
         uses: actions/cache@v3
         with:
@@ -48,12 +54,6 @@ jobs:
         run: yarn run lint:js
       - name: Test Js
         run: yarn test:js
-      # Cache go build cache, used to speedup go test
-      # https://markphelps.me/posts/speed-up-your-go-builds-with-actions-cache/
-      - id: go-cache-paths
-        run: |
-          echo "::set-output name=go-build::$(go env GOCACHE)"
-          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
       - name: Lint Go
         run: yarn run lint:go
       - name: Test Go
