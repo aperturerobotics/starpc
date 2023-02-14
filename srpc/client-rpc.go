@@ -58,7 +58,7 @@ func (r *ClientRPC) HandlePacketData(data []byte) error {
 	return r.HandlePacket(pkt)
 }
 
-// HandleStreamClose handles the incoming stream closing w/ optional error.
+// HandleStreamClose handles the stream closing optionally w/ an error.
 func (r *ClientRPC) HandleStreamClose(closeErr error) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
