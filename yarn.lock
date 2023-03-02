@@ -123,25 +123,10 @@
   resolved "https://registry.yarnpkg.com/@chainsafe/is-ip/-/is-ip-2.0.1.tgz#62cb285669d91f88fd9fa285048dde3882f0993b"
   integrity sha512-nqSJ8u2a1Rv9FYbyI8qpDhTYujaKEyLknNrTejLYoSWmdeg+2WB7R6BZqPZYfrJzDxVi3rl6ZQuoaEvpKRZWgQ==
 
-"@chainsafe/libp2p-yamux@^3.0.5":
-  version "3.0.5"
-  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-yamux/-/libp2p-yamux-3.0.5.tgz#203148c08dcfc02197a9c67dccd4a8838f1ff84e"
-  integrity sha512-7glE71hJ+QnlB7ADcevQSufCOofeVx1ZHp5xPUagjWBfJ+nLLfjwQmI+yAAKemmkw4BN767zH2nW5O/PJpJ2EA==
-  dependencies:
-    "@libp2p/interface-connection" "^3.0.1"
-    "@libp2p/interface-stream-muxer" "^3.0.0"
-    "@libp2p/interfaces" "^3.2.0"
-    "@libp2p/logger" "^2.0.1"
-    abortable-iterator "^4.0.2"
-    any-signal "^3.0.1"
-    it-pipe "^2.0.4"
-    it-pushable "^3.1.0"
-    uint8arraylist "^2.3.2"
-
-"@chainsafe/libp2p-yamux@^3.0.6":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-yamux/-/libp2p-yamux-3.0.6.tgz#84af56211237d5e0506c5fe5bb563adb2d00ab66"
-  integrity sha512-9RFSx1XSvFkt0Q5WZRTyg8AEoHAHSK4XSIJ/dakKNSz/SM1+c0OziSsw10sewzi3KVzGiOvLXW4kl555N46LyA==
+"@chainsafe/libp2p-yamux@^3.0.5", "@chainsafe/libp2p-yamux@^3.0.6":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-yamux/-/libp2p-yamux-3.0.7.tgz#345d620097c6ac07fcbeb5910da18b3ed974337c"
+  integrity sha512-fp59/7Xzws+4Nz4TUS+5Z/lkwk+9IW6GsU6wPJVaGInxf5tl4qQ5S8TLql23CEGbuvbToqMEdNLVAtE+M2Lvng==
   dependencies:
     "@libp2p/interface-connection" "^3.0.1"
     "@libp2p/interface-stream-muxer" "^3.0.0"
