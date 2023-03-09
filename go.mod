@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/pkg/errors v0.9.1 // latest
-	google.golang.org/protobuf v1.28.1 // latest
+	google.golang.org/protobuf v1.29.0 // latest
 	nhooyr.io/websocket v1.8.8-0.20221213223501-14fb98eba64e // master
 )
 
