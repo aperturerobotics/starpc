@@ -320,9 +320,9 @@
     "@jridgewell/sourcemap-codec" "1.4.14"
 
 "@libp2p/interface-connection@^3.0.0", "@libp2p/interface-connection@^3.0.1", "@libp2p/interface-connection@^3.0.7":
-  version "3.0.8"
-  resolved "https://registry.yarnpkg.com/@libp2p/interface-connection/-/interface-connection-3.0.8.tgz#2c17bcdc53c6951d96a8430bb7dad1cb064cf184"
-  integrity sha512-JiI9xVPkiSgW9hkvHWA4e599OLPNSACrpgtx6UffHG9N+Jpt0IOmM4iLic8bSIYkZJBOQFG1Sv/gVNB98Uq0Nw==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@libp2p/interface-connection/-/interface-connection-3.1.0.tgz#ba7523842a0a66480a74ac6edcb462618d59cc5d"
+  integrity sha512-UfluPclTyJp5nBVKQVJ7Xrwp45fFYeIPuyfCpZfTKOfT/srSntA5l+094H6f1bGSj6SbwZ4V7BxCxviJQM5PBg==
   dependencies:
     "@libp2p/interface-peer-id" "^2.0.0"
     "@libp2p/interfaces" "^3.0.0"
