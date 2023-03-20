@@ -332,13 +332,13 @@
     "@jridgewell/sourcemap-codec" "1.4.14"
 
 "@libp2p/interface-connection@^3.0.0", "@libp2p/interface-connection@^3.0.1", "@libp2p/interface-connection@^3.0.7":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@libp2p/interface-connection/-/interface-connection-3.1.0.tgz#ba7523842a0a66480a74ac6edcb462618d59cc5d"
-  integrity sha512-UfluPclTyJp5nBVKQVJ7Xrwp45fFYeIPuyfCpZfTKOfT/srSntA5l+094H6f1bGSj6SbwZ4V7BxCxviJQM5PBg==
+  version "3.1.1"
+  resolved "https://registry.yarnpkg.com/@libp2p/interface-connection/-/interface-connection-3.1.1.tgz#f43180e64de118c29f311ee7111f8bbe50e252bf"
+  integrity sha512-+hxfYLv4jf+MruQEJiJeIyo/wI33/53wRL0XJTkxwQQPAkLHfZWCUY4kY9sXALd3+ASjXAENvJj9VvzZTlkRDQ==
   dependencies:
     "@libp2p/interface-peer-id" "^2.0.0"
     "@libp2p/interfaces" "^3.0.0"
-    "@multiformats/multiaddr" "^11.0.0"
+    "@multiformats/multiaddr" "^12.0.0"
     it-stream-types "^1.0.4"
     uint8arraylist "^2.1.2"
 
@@ -373,10 +373,10 @@
     interface-datastore "^7.0.0"
     multiformats "^11.0.0"
 
-"@multiformats/multiaddr@^11.0.0":
-  version "11.1.5"
-  resolved "https://registry.yarnpkg.com/@multiformats/multiaddr/-/multiaddr-11.1.5.tgz#114da9318a0b130bd84613696eea6be1bf2302b1"
-  integrity sha512-sFppiscvhExFbSUdYl/4wBBOb5IjhYVpuRMBb6RgVjq7qTVHQDQeX3CEjQGdyy7+8A/cixL+fQez4RI+hltkLQ==
+"@multiformats/multiaddr@^12.0.0":
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/@multiformats/multiaddr/-/multiaddr-12.0.0.tgz#9bdb5ed92f47b743a22197062d0ab7a85ac0bb3b"
+  integrity sha512-qqrRN3d7xb4iFzdF11Nni7rsUwdxdWx9F/txyQc6y+eLPRc9NhZ1TSFOk3hArI0RAWAfogEMYmkiXtqfX6RRpw==
   dependencies:
     "@chainsafe/is-ip" "^2.0.1"
     dns-over-http-resolver "^2.1.0"
