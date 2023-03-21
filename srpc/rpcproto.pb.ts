@@ -60,47 +60,66 @@ export const Packet = {
     message: Packet,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.body?.$case === 'callStart') {
-      CallStart.encode(
-        message.body.callStart,
-        writer.uint32(10).fork()
-      ).ldelim()
-    }
-    if (message.body?.$case === 'callData') {
-      CallData.encode(message.body.callData, writer.uint32(18).fork()).ldelim()
-    }
-    if (message.body?.$case === 'callCancel') {
-      writer.uint32(24).bool(message.body.callCancel)
+    switch (message.body?.$case) {
+      case 'callStart':
+        CallStart.encode(
+          message.body.callStart,
+          writer.uint32(10).fork()
+        ).ldelim()
+        break
+      case 'callData':
+        CallData.encode(
+          message.body.callData,
+          writer.uint32(18).fork()
+        ).ldelim()
+        break
+      case 'callCancel':
+        writer.uint32(24).bool(message.body.callCancel)
+        break
     }
     return writer
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): Packet {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBasePacket()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.body = {
             $case: 'callStart',
             callStart: CallStart.decode(reader, reader.uint32()),
           }
-          break
+          continue
         case 2:
+          if (tag != 18) {
+            break
+          }
+
           message.body = {
             $case: 'callData',
             callData: CallData.decode(reader, reader.uint32()),
           }
-          break
+          continue
         case 3:
+          if (tag != 24) {
+            break
+          }
+
           message.body = { $case: 'callCancel', callCancel: reader.bool() }
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },
@@ -236,28 +255,46 @@ export const CallStart = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CallStart {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBaseCallStart()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.rpcService = reader.string()
-          break
+          continue
         case 2:
+          if (tag != 18) {
+            break
+          }
+
           message.rpcMethod = reader.string()
-          break
+          continue
         case 3:
+          if (tag != 26) {
+            break
+          }
+
           message.data = reader.bytes()
-          break
+          continue
         case 4:
+          if (tag != 32) {
+            break
+          }
+
           message.dataIsZero = reader.bool()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },
@@ -367,28 +404,46 @@ export const CallData = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): CallData {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBaseCallData()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.data = reader.bytes()
-          break
+          continue
         case 2:
+          if (tag != 16) {
+            break
+          }
+
           message.dataIsZero = reader.bool()
-          break
+          continue
         case 3:
+          if (tag != 24) {
+            break
+          }
+
           message.complete = reader.bool()
-          break
+          continue
         case 4:
+          if (tag != 34) {
+            break
+          }
+
           message.error = reader.string()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },

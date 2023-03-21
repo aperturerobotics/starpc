@@ -33,44 +33,63 @@ export const RpcStreamPacket = {
     message: RpcStreamPacket,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
-    if (message.body?.$case === 'init') {
-      RpcStreamInit.encode(message.body.init, writer.uint32(10).fork()).ldelim()
-    }
-    if (message.body?.$case === 'ack') {
-      RpcAck.encode(message.body.ack, writer.uint32(18).fork()).ldelim()
-    }
-    if (message.body?.$case === 'data') {
-      writer.uint32(26).bytes(message.body.data)
+    switch (message.body?.$case) {
+      case 'init':
+        RpcStreamInit.encode(
+          message.body.init,
+          writer.uint32(10).fork()
+        ).ldelim()
+        break
+      case 'ack':
+        RpcAck.encode(message.body.ack, writer.uint32(18).fork()).ldelim()
+        break
+      case 'data':
+        writer.uint32(26).bytes(message.body.data)
+        break
     }
     return writer
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): RpcStreamPacket {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBaseRpcStreamPacket()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.body = {
             $case: 'init',
             init: RpcStreamInit.decode(reader, reader.uint32()),
           }
-          break
+          continue
         case 2:
+          if (tag != 18) {
+            break
+          }
+
           message.body = {
             $case: 'ack',
             ack: RpcAck.decode(reader, reader.uint32()),
           }
-          break
+          continue
         case 3:
+          if (tag != 26) {
+            break
+          }
+
           message.body = { $case: 'data', data: reader.bytes() }
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },
@@ -195,19 +214,25 @@ export const RpcStreamInit = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): RpcStreamInit {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBaseRpcStreamInit()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.componentId = reader.string()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },
@@ -291,19 +316,25 @@ export const RpcAck = {
   },
 
   decode(input: _m0.Reader | Uint8Array, length?: number): RpcAck {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    const reader =
+      input instanceof _m0.Reader ? input : _m0.Reader.create(input)
     let end = length === undefined ? reader.len : reader.pos + length
     const message = createBaseRpcAck()
     while (reader.pos < end) {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
+          if (tag != 10) {
+            break
+          }
+
           message.error = reader.string()
-          break
-        default:
-          reader.skipType(tag & 7)
-          break
+          continue
       }
+      if ((tag & 7) == 4 || tag == 0) {
+        break
+      }
+      reader.skipType(tag & 7)
     }
     return message
   },

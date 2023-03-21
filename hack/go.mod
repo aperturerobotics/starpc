@@ -4,13 +4,13 @@ go 1.18
 
 replace github.com/aperturerobotics/starpc => ../
 
-replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.28.2-0.20230110194655-55a09796292e // aperture
+replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.30.1-0.20230321052045-f39bd7370e10 // aperture
 
 require (
 	github.com/golangci/golangci-lint v1.51.2 // latest
 	github.com/planetscale/vtprotobuf v0.4.0 // main
 	github.com/psampaz/go-mod-outdated v0.9.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.30.0
 )
 
 require (
@@ -32,7 +32,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/aperturerobotics/util v1.0.5 // indirect
+	github.com/aperturerobotics/util v1.0.6-0.20230313071030-6260e05b62e5 // indirect
 	github.com/ashanbrown/forbidigo v1.4.0 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/ldez/tagliatelle v0.4.0 // indirect
 	github.com/leonklingele/grouper v1.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/libp2p/go-libp2p v0.26.1 // indirect
+	github.com/libp2p/go-libp2p v0.26.3 // indirect
 	github.com/libp2p/go-yamux/v4 v4.0.1-0.20220919134236-1c09f2ab3ec1 // indirect
 	github.com/lufeee/execinquery v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect

@@ -60,28 +60,28 @@
     "singleQuote": true
   },
   "devDependencies": {
-    "@aperturerobotics/ts-common": "^0.3.1",
-    "@typescript-eslint/eslint-plugin": "^5.54.0",
-    "@typescript-eslint/parser": "^5.54.0",
+    "@aperturerobotics/ts-common": "^0.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.56.0",
+    "@typescript-eslint/parser": "^5.56.0",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.3",
-    "esbuild": "^0.17.1",
-    "eslint": "^8.35.0",
-    "eslint-config-prettier": "^8.6.0",
-    "prettier": "^2.8.3",
-    "rimraf": "^4.1.0",
-    "ts-proto": "^1.138.0",
+    "esbuild": "^0.17.12",
+    "eslint": "^8.36.0",
+    "eslint-config-prettier": "^8.8.0",
+    "prettier": "^2.8.5",
+    "rimraf": "^4.4.0",
+    "ts-proto": "^1.143.0",
     "typescript": "^5.0.2",
     "utf-8-validate": "^6.0.3"
   },
   "dependencies": {
-    "@chainsafe/libp2p-yamux": "^3.0.6",
-    "@libp2p/interface-connection": "^3.0.7",
+    "@chainsafe/libp2p-yamux": "^3.0.7",
+    "@libp2p/interface-connection": "^3.1.1",
     "@libp2p/interface-stream-muxer": "^3.0.4",
     "event-iterator": "^2.0.0",
     "is-promise": "^4.0.0",
     "isomorphic-ws": "^5.0.0",
-    "it-first": "^2.0.0",
+    "it-first": "^2.0.1",
     "it-length-prefixed": "^8.0.4",
     "it-pipe": "^2.0.5",
     "it-pushable": "^3.1.2",
@@ -92,6 +92,6 @@
     "patch-package": "^6.5.1",
     "protobufjs": "^7.1.2",
     "uint8arraylist": "^2.4.3",
-    "ws": "^8.12.0"
+    "ws": "^8.13.0"
   }
 }
