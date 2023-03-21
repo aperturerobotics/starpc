@@ -9,8 +9,8 @@ require (
 )
 
 require (
-	github.com/aperturerobotics/util v1.0.6-0.20230313071030-6260e05b62e5 // latest
-	github.com/libp2p/go-libp2p v0.26.3 // latest
+	github.com/aperturerobotics/util v1.0.6-0.20230321071259-3f530eb27b68 // latest
+	github.com/libp2p/go-libp2p v0.26.1-0.20230320233358-9e208249b588 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.1-0.20220919134236-1c09f2ab3ec1 // master
 	github.com/sirupsen/logrus v1.9.0 // latest
 )
