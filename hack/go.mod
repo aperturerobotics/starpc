@@ -7,7 +7,7 @@ replace github.com/aperturerobotics/starpc => ../
 replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.30.1-0.20230321052045-f39bd7370e10 // aperture
 
 require (
-	github.com/golangci/golangci-lint v1.52.0 // latest
+	github.com/golangci/golangci-lint v1.52.1 // latest
 	github.com/planetscale/vtprotobuf v0.4.0 // main
 	github.com/psampaz/go-mod-outdated v0.9.0
 	google.golang.org/protobuf v1.30.0
@@ -15,7 +15,7 @@ require (
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.0 // master
-	github.com/aperturerobotics/starpc v0.18.1 // latest
+	github.com/aperturerobotics/starpc v0.18.3 // latest
 	github.com/evanw/esbuild v0.17.12 // latest
 )
 
@@ -32,7 +32,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/aperturerobotics/util v1.0.6-0.20230321071259-3f530eb27b68 // indirect
+	github.com/aperturerobotics/util v1.0.6-0.20230323062226-da54b4635cd6 // indirect
 	github.com/ashanbrown/forbidigo v1.5.1 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
