@@ -1,6 +1,7 @@
 import * as pbjs from 'protobufjs/minimal'
 import type { Source } from 'it-stream-types'
 import memoize from 'memoize-one'
+import { isAsyncIterable, isIterable } from 'it-stream-types'
 
 // MessageDefinition represents a ts-proto message definition.
 export interface MessageDefinition<T> {
@@ -32,7 +33,7 @@ export function memoProtoDecode<T>(
 
 // DecodeMessageTransform decodes messages to objects.
 export type DecodeMessageTransform<T> = (
-  source: Source<Uint8Array | Uint8Array[]>
+  source: Uint8Array | Uint8Array[] | Source<Uint8Array | Uint8Array[]>
 ) => AsyncIterable<T>
 
 // buildDecodeMessageTransform builds a source of decoded messages.
@@ -44,25 +45,45 @@ export function buildDecodeMessageTransform<T>(
 ): DecodeMessageTransform<T> {
   const decode = memoize ? memoProtoDecode(def) : def.decode.bind(def)
 
-  // decodeMessageSource unmarshals and async yields encoded Messages.
-  return async function* decodeMessageSource(
-    source: Source<Uint8Array | Uint8Array[]>
+  return function buildDecodeMessageSource(
+    source: Uint8Array | Uint8Array[] | Source<Uint8Array | Uint8Array[]>
   ): AsyncIterable<T> {
-    for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
-          yield* [decode(p)]
-        }
-      } else {
-        yield* [decode(pkt)]
+    // decodeMessageSource unmarshals and async yields encoded Messages.
+    return (async function* decodeMessageSource(): AsyncIterable<T> {
+      if (source instanceof Uint8Array) {
+        yield* [decode(source)]
+        return
       }
-    }
+      if (Array.isArray(source) || isIterable(source)) {
+        for (const src of source) {
+          if (Array.isArray(src)) {
+            for (const pkt of src) {
+              yield* [decode(pkt)]
+            }
+          } else {
+            yield* [decode(src)]
+          }
+        }
+        return
+      }
+      if (isAsyncIterable(source)) {
+        for await (const src of source) {
+          if (Array.isArray(src)) {
+            for (const pkt of src) {
+              yield* [decode(pkt)]
+            }
+          } else {
+            yield* [decode(src)]
+          }
+        }
+      }
+    })()
   }
 }
 
 // EncodeMessageTransform is a transformer that encodes messages.
 export type EncodeMessageTransform<T> = (
-  source: Source<T | T[]>
+  source: T | T[] | Source<T | T[]>
 ) => AsyncIterable<Uint8Array>
 
 // buildEncodeMessageTransform builds a source of decoded messages.
@@ -77,18 +98,36 @@ export function buildEncodeMessageTransform<T>(
         return def.encode(msg).finish()
       }
 
-  // encodeMessageSource encodes messages to byte arrays.
-  return async function* encodeMessageSource(
-    source: Source<T | T[]>
+  return function buildDecodeMessageSource(
+    source: T | T[] | Source<T | T[]>
   ): AsyncIterable<Uint8Array> {
-    for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
-          yield* [encode(p)]
+    // encodeMessageSource encodes messages to byte arrays.
+    return (async function* encodeMessageSource(): AsyncIterable<Uint8Array> {
+      if (Array.isArray(source) || isIterable(source)) {
+        for (const src of source) {
+          if (Array.isArray(src)) {
+            for (const pkt of src) {
+              yield* [encode(pkt)]
+            }
+          } else {
+            yield* [encode(src)]
+          }
         }
-      } else {
-        yield* [encode(pkt)]
+        return
       }
-    }
+      if (isAsyncIterable(source)) {
+        for await (const src of source) {
+          if (Array.isArray(src)) {
+            for (const pkt of src) {
+              yield* [encode(pkt)]
+            }
+          } else {
+            yield* [encode(src)]
+          }
+        }
+        return
+      }
+      yield* [encode(source)]
+    })()
   }
 }

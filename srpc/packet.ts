@@ -9,7 +9,7 @@ import {
   buildEncodeMessageTransform,
 } from './message.js'
 import { Uint8ArrayList } from 'uint8arraylist'
-import { Transform } from 'it-pipe'
+import type { Transform } from 'it-stream-types'
 
 // decodePacketSource decodes packets from a binary data stream.
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
@@ -41,7 +41,8 @@ export function prependLengthPrefixTransform(): Transform<
   Uint8Array | Uint8ArrayList,
   Uint8Array
 > {
-  return lengthPrefixEncode({ lengthEncoder: uint32LEEncode })
+  return (source) =>
+    lengthPrefixEncode(source, { lengthEncoder: uint32LEEncode })
 }
 
 // parseLengthPrefixTransform parses the length prefix from a message source.
@@ -50,7 +51,8 @@ export function parseLengthPrefixTransform(): Transform<
   Uint8Array | Uint8ArrayList,
   Uint8ArrayList
 > {
-  return lengthPrefixDecode({ lengthDecoder: uint32LEDecode })
+  return (source) =>
+    lengthPrefixDecode(source, { lengthDecoder: uint32LEDecode })
 }
 
 // encodeUint32Le encodes the number as a uint32 with little endian.

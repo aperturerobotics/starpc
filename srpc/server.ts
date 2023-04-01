@@ -1,4 +1,4 @@
-import { Duplex } from 'it-stream-types'
+import type { Duplex, Source } from 'it-stream-types'
 import { pipe } from 'it-pipe'
 
 import { LookupMethod } from './mux.js'
@@ -42,7 +42,7 @@ export class Server implements StreamHandler {
   }
 
   // handleDuplex handles an incoming message duplex.
-  public handleDuplex(stream: Duplex<Uint8Array, Uint8Array>): ServerRPC {
+  public handleDuplex(stream: Duplex<Uint8Array | Source<Uint8Array>>): ServerRPC {
     const rpc = this.startRpc()
     pipe(
       stream,
@@ -60,14 +60,14 @@ export class Server implements StreamHandler {
 
   // handlePacketDuplex handles an incoming Uint8Array duplex.
   // skips the packet length prefix transform.
-  public handlePacketDuplex(stream: Duplex<Uint8Array>): ServerRPC {
+  public handlePacketDuplex(stream: Duplex<Uint8Array | Source<Uint8Array>>): ServerRPC {
     const rpc = this.startRpc()
     pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
     return rpc
   }
 
   // handlePacketStream handles an incoming Packet duplex.
-  public handlePacketStream(stream: Duplex<Packet>): ServerRPC {
+  public handlePacketStream(stream: Duplex<Packet | Source<Packet>>): ServerRPC {
     const rpc = this.startRpc()
     pipe(stream, rpc, stream)
     return rpc

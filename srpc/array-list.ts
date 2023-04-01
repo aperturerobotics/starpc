@@ -1,6 +1,5 @@
-import type { Source } from 'it-stream-types'
+import type { Source, Transform } from 'it-stream-types'
 import { isUint8ArrayList, Uint8ArrayList } from 'uint8arraylist'
-import type { Transform } from 'it-stream-types'
 
 // combineUint8ArrayListTransform combines a Uint8ArrayList into a Uint8Array.
 export function combineUint8ArrayListTransform(): Transform<

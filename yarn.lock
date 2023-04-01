@@ -1533,18 +1533,34 @@ isomorphic-ws@^5.0.0:
   resolved "https://registry.yarnpkg.com/isomorphic-ws/-/isomorphic-ws-5.0.0.tgz#e5529148912ecb9b451b46ed44d53dae1ce04bbf"
   integrity sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==
 
-it-first@^2.0.0, it-first@^2.0.1:
+it-first@^2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/it-first/-/it-first-2.0.1.tgz#75d66b254c385ae3a1906def060a69006a437cef"
   integrity sha512-noC1oEQcWZZMUwq7VWxHNLML43dM+5bviZpfmkxkXlvBe60z7AFRqpZSga9uQBo792jKv9otnn1IjA4zwgNARw==
 
-it-length-prefixed@^8.0.0, it-length-prefixed@^8.0.4:
+it-first@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/it-first/-/it-first-3.0.1.tgz#3f70681277cb7badd5d19867fdf593bc9e0e43ec"
+  integrity sha512-gEKSelg0HdApXCQ93m/vlJ1eqOXMlZ02kk/vOeDDOJcaSovo3enYbelUMKoDXljt4NUkeaqI4/WGtslF9nZEng==
+
+it-length-prefixed@^8.0.4:
   version "8.0.4"
   resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-8.0.4.tgz#80bd356d93d77a8989a71200f8ca0860db040404"
   integrity sha512-5OJ1lxH+IaqJB7lxe8IAIwt9UfSfsmjKJoAI/RO9djYoBDt1Jfy9PeVHUmOfqhqyu/4kJvWBFAJUaG1HhLQ12A==
   dependencies:
     err-code "^3.0.1"
     it-stream-types "^1.0.4"
+    uint8-varint "^1.0.1"
+    uint8arraylist "^2.0.0"
+    uint8arrays "^4.0.2"
+
+it-length-prefixed@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-9.0.0.tgz#df308a31b535251231c62043bf70819a1a9db28f"
+  integrity sha512-LCne3R3wxxLv94GTA8ywIeopdyA+2oKXiWWo7g58sQHiD7d1A6WMuWCrwP+xv4i7CmSuR3aeHo66SJUgArLOyA==
+  dependencies:
+    err-code "^3.0.1"
+    it-stream-types "^1.0.5"
     uint8-varint "^1.0.1"
     uint8arraylist "^2.0.0"
     uint8arrays "^4.0.2"
@@ -1556,7 +1572,14 @@ it-merge@^2.0.0:
   dependencies:
     it-pushable "^3.1.0"
 
-it-pipe@^2.0.0, it-pipe@^2.0.4, it-pipe@^2.0.5:
+it-merge@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/it-merge/-/it-merge-3.0.0.tgz#d820749ecbf647867e16fa81335a46ac2b79e91f"
+  integrity sha512-sM7t9wPDvCJnAlnvTvzvx82j89GR4mmYs1F8e4tSZ6yChlrnymb1v3b8tXZ6lhZpTye2Nm5nN7zmlhfU5bv4qA==
+  dependencies:
+    it-pushable "^3.1.0"
+
+it-pipe@^2.0.4, it-pipe@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/it-pipe/-/it-pipe-2.0.5.tgz#9caf7993dcbbc3824bc6ef64ee8b94574f65afa7"
   integrity sha512-y85nW1N6zoiTnkidr2EAyC+ZVzc7Mwt2p+xt2a2ooG1ThFakSpNw1Kxm+7F13Aivru96brJhjQVRQNU+w0yozw==
@@ -1564,6 +1587,15 @@ it-pipe@^2.0.0, it-pipe@^2.0.4, it-pipe@^2.0.5:
     it-merge "^2.0.0"
     it-pushable "^3.1.0"
     it-stream-types "^1.0.3"
+
+it-pipe@^3.0.0:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/it-pipe/-/it-pipe-3.0.1.tgz#b25720df82f4c558a8532602b5fbc37bbe4e7ba5"
+  integrity sha512-sIoNrQl1qSRg2seYSBH/3QxWhJFn9PKYvOf/bHdtCBF0bnghey44VyASsWzn5dAx0DCDDABq1hZIuzKmtBZmKA==
+  dependencies:
+    it-merge "^3.0.0"
+    it-pushable "^3.1.2"
+    it-stream-types "^2.0.1"
 
 it-pushable@^3.1.0, it-pushable@^3.1.2:
   version "3.1.2"
@@ -1574,6 +1606,11 @@ it-stream-types@^1.0.2, it-stream-types@^1.0.3, it-stream-types@^1.0.4, it-strea
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/it-stream-types/-/it-stream-types-1.0.5.tgz#9c72e6adefdea9dac69d0a28fbea783deebd508d"
   integrity sha512-I88Ka1nHgfX62e5mi5LLL+oueqz7Ltg0bUdtsUKDe9SoUqbQPf2Mp5kxDTe9pNhHQGs4pvYPAINwuZ1HAt42TA==
+
+it-stream-types@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/it-stream-types/-/it-stream-types-2.0.1.tgz#69cb4d7e79e707b8257a8997e02751ccb6c3af32"
+  integrity sha512-6DmOs5r7ERDbvS4q8yLKENcj6Yecr7QQTqWApbZdfAUTEC947d+PEha7PCqhm//9oxaLYL7TWRekwhoXl2s6fg==
 
 it-ws@^5.0.6:
   version "5.0.6"
@@ -2033,7 +2070,7 @@ protobufjs@^7.1.2:
     "@types/node" ">=13.7.0"
     long "^5.0.0"
 
-protobufjs@^7.2.0:
+protobufjs@^7.2.3:
   version "7.2.3"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.2.3.tgz#01af019e40d9c6133c49acbb3ff9e30f4f0f70b2"
   integrity sha512-TtpvOqwB5Gdz/PQmOjgsrGH1nHjAQVCN7JG4A6r1sXRWESL5rNMAiRcBQlCAdKxZcAbstExQePYG8xof/JVRgg==
