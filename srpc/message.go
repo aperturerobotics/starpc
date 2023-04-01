@@ -7,6 +7,8 @@ type Message interface {
 }
 
 // RawMessage is a raw protobuf message container.
+//
+// The empty value is valid with copy=false.
 type RawMessage struct {
 	data []byte
 	copy bool
@@ -39,6 +41,16 @@ func (m *RawMessage) SetData(data []byte) {
 	} else {
 		m.data = data
 	}
+}
+
+// Clear sets the length of the data buffer to 0 without releasing it.
+func (m *RawMessage) Clear() {
+	m.data = m.data[:0]
+}
+
+// Reset releases the data buffer.
+func (m *RawMessage) Reset() {
+	m.data = nil
 }
 
 func (m *RawMessage) MarshalVT() ([]byte, error) {

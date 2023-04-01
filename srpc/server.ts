@@ -25,8 +25,9 @@ export class Server implements StreamHandler {
   }
 
   // rpcStreamHandler implements the RpcStreamHandler interface.
+  // uses handlePacketDuplex (expects 1 buf = 1 Packet)
   public get rpcStreamHandler(): RpcStreamHandler {
-    return this.handleStream.bind(this)
+    return this.handlePacketStream.bind(this)
   }
 
   // startRpc starts a new server-side RPC.
@@ -35,13 +36,10 @@ export class Server implements StreamHandler {
     return new ServerRPC(this.lookupMethod)
   }
 
-  // handleStream handles an incoming Uint8Array message duplex.
-  public handleStream(stream: Stream): ServerRPC {
-    return this.handleDuplex(stream)
-  }
-
-  // handleDuplex handles an incoming message duplex.
-  public handleDuplex(stream: Duplex<Uint8Array, Uint8Array>): ServerRPC {
+  // handleFragmentStream handles an incoming stream.
+  // assumes that stream does not maintain packet framing.
+  // uses length-prefixed packets for packet framing.
+  public handleFragmentStream(stream: Stream): ServerRPC {
     const rpc = this.startRpc()
     pipe(
       stream,
@@ -57,16 +55,16 @@ export class Server implements StreamHandler {
     return rpc
   }
 
-  // handlePacketDuplex handles an incoming Uint8Array duplex.
-  // skips the packet length prefix transform.
-  public handlePacketDuplex(stream: Duplex<Uint8Array>): ServerRPC {
+  // handlePacketStream handles an incoming Uint8Array duplex.
+  // the stream has one Uint8Array per packet w/o length prefix.
+  public handlePacketStream(stream: Stream): ServerRPC {
     const rpc = this.startRpc()
     pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
     return rpc
   }
 
-  // handlePacketStream handles an incoming Packet duplex.
-  public handlePacketStream(stream: Duplex<Packet>): ServerRPC {
+  // handlePacketDuplex handles an incoming Packet duplex.
+  public handlePacketDuplex(stream: Duplex<Packet>): ServerRPC {
     const rpc = this.startRpc()
     pipe(stream, rpc, stream)
     return rpc

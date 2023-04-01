@@ -113,7 +113,7 @@ export class CommonRPC {
         asError = new Error('error handling packet')
       }
       this.close(asError)
-      throw asError
+      // throw asError
     }
   }
 

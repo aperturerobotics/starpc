@@ -17,4 +17,6 @@ var (
 	ErrEmptyMethodID = errors.New("method id empty")
 	// ErrEmptyServiceID is returned if the service id was empty.
 	ErrEmptyServiceID = errors.New("service id empty")
+	// ErrNoAvailableClients is returned if no clients were available.
+	ErrNoAvailableClients = errors.New("no available rpc clients")
 )

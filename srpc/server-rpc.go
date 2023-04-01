@@ -22,6 +22,15 @@ func NewServerRPC(ctx context.Context, invoker Invoker, writer Writer) *ServerRP
 	return rpc
 }
 
+// HandlePacketData handles an incoming unparsed message packet.
+func (r *ServerRPC) HandlePacketData(data []byte) error {
+	msg := &Packet{}
+	if err := msg.UnmarshalVT(data); err != nil {
+		return err
+	}
+	return r.HandlePacket(msg)
+}
+
 // HandlePacket handles an incoming parsed message packet.
 func (r *ServerRPC) HandlePacket(msg *Packet) error {
 	if msg == nil {

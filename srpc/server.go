@@ -26,12 +26,13 @@ func (s *Server) GetInvoker() Invoker {
 }
 
 // HandleStream handles an incoming stream and runs the read loop.
+// Uses length-prefixed packets.
 func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
 	subCtx, subCtxCancel := context.WithCancel(ctx)
 	defer subCtxCancel()
 	prw := NewPacketReadWriter(rwc)
 	serverRPC := NewServerRPC(subCtx, s.invoker, prw)
-	prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
+	prw.ReadPump(serverRPC.HandlePacketData, serverRPC.HandleStreamClose)
 }
 
 // AcceptMuxedConn runs a loop which calls Accept on a muxer to handle streams.
