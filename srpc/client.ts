@@ -9,10 +9,7 @@ import { writeToPushable } from './pushable.js'
 import {
   decodePacketSource,
   encodePacketSource,
-  parseLengthPrefixTransform,
-  prependLengthPrefixTransform,
 } from './packet.js'
-import { combineUint8ArrayListTransform } from './array-list.js'
 import { OpenStreamCtr } from './open-stream-ctr.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
@@ -117,20 +114,17 @@ export class Client implements TsProtoRpc {
       throw new Error(ERR_RPC_ABORT)
     }
     const openStreamFn = await this.openStreamCtr.wait()
-    const conn = await openStreamFn()
+    const stream = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     abortSignal?.addEventListener('abort', () => {
       call.close(new Error(ERR_RPC_ABORT))
     })
     pipe(
-      conn,
-      parseLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
+      stream,
       decodePacketSource,
       call,
       encodePacketSource,
-      prependLengthPrefixTransform(),
-      conn
+      stream
     )
     await call.writeCallStart(data || undefined)
     return call

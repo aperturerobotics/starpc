@@ -49,7 +49,7 @@ export async function openRpcStream(
   }
 
   // build & return the data stream
-  return new RpcStream(packetSink, packetIt) // packetSource)
+  return new RpcStream(packetSink, packetIt)
 }
 
 // buildRpcStreamOpenStream builds a OpenStream func with a RpcStream.
