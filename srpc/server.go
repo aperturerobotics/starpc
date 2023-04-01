@@ -31,7 +31,7 @@ func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
 	defer subCtxCancel()
 	prw := NewPacketReadWriter(rwc)
 	serverRPC := NewServerRPC(subCtx, s.invoker, prw)
-	prw.ReadPump(serverRPC.HandlePacket, serverRPC.HandleStreamClose)
+	prw.ReadPump(serverRPC.HandlePacketData, serverRPC.HandleStreamClose)
 }
 
 // AcceptMuxedConn runs a loop which calls Accept on a muxer to handle streams.

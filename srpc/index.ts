@@ -25,6 +25,13 @@ export {
   memoProto,
   memoProtoDecode,
 } from './message.js'
+export {
+  parseLengthPrefixTransform,
+  prependLengthPrefixTransform,
+  decodePacketSource,
+  encodePacketSource,
+} from './packet.js'
+export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
 export { writeToPushable } from './pushable'

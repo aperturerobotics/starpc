@@ -14,13 +14,18 @@ type Client interface {
 	// NewStream starts a streaming RPC with the remote & returns the stream.
 	// firstMsg is optional.
 	NewStream(ctx context.Context, service, method string, firstMsg Message) (Stream, error)
+
+	// NewRawStream opens a new raw stream with the remote.
+	// Implements OpenStreamFunc.
+	// msgHandler must not be called concurrently.
+	NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (Writer, error)
 }
 
 // OpenStreamFunc opens a stream with a remote.
 // msgHandler must not be called concurrently.
 type OpenStreamFunc = func(
 	ctx context.Context,
-	msgHandler PacketHandler,
+	msgHandler PacketDataHandler,
 	closeHandler CloseHandler,
 ) (Writer, error)
 
@@ -47,7 +52,7 @@ func (c *client) ExecCall(ctx context.Context, service, method string, in, out M
 	clientRPC := NewClientRPC(ctx, service, method)
 	defer clientRPC.Close()
 
-	writer, err := c.openStream(ctx, clientRPC.HandlePacket, clientRPC.HandleStreamClose)
+	writer, err := c.openStream(ctx, clientRPC.HandlePacketData, clientRPC.HandleStreamClose)
 	if err != nil {
 		return err
 	}
@@ -79,7 +84,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	}
 
 	clientRPC := NewClientRPC(ctx, service, method)
-	writer, err := c.openStream(ctx, clientRPC.HandlePacket, clientRPC.HandleStreamClose)
+	writer, err := c.openStream(ctx, clientRPC.HandlePacketData, clientRPC.HandleStreamClose)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +93,17 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	}
 
 	return NewMsgStream(ctx, clientRPC, clientRPC.ctxCancel), nil
+}
+
+// NewRawStream opens a new raw stream with the remote.
+// Implements OpenStreamFunc.
+// msgHandler must not be called concurrently.
+func (c *client) NewRawStream(
+	ctx context.Context,
+	msgHandler PacketDataHandler,
+	closeHandler CloseHandler,
+) (Writer, error) {
+	return c.openStream(ctx, msgHandler, closeHandler)
 }
 
 // _ is a type assertion

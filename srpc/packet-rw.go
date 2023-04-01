@@ -13,9 +13,9 @@ import (
 // maxMessageSize is the max message size in bytes
 var maxMessageSize = 1e7
 
-// PacketReaderWriter reads and writes packets from a io.ReadWriter.
+// PacketReadWriter reads and writes packets from a io.ReadWriter.
 // Uses a LittleEndian uint32 length prefix.
-type PacketReaderWriter struct {
+type PacketReadWriter struct {
 	// rw is the io.ReadWriterCloser
 	rw io.ReadWriteCloser
 	// buf is the buffered data
@@ -25,12 +25,19 @@ type PacketReaderWriter struct {
 }
 
 // NewPacketReadWriter constructs a new read/writer.
-func NewPacketReadWriter(rw io.ReadWriteCloser) *PacketReaderWriter {
-	return &PacketReaderWriter{rw: rw}
+func NewPacketReadWriter(rw io.ReadWriteCloser) *PacketReadWriter {
+	return &PacketReadWriter{rw: rw}
+}
+
+// Write writes raw data to the remote.
+func (r *PacketReadWriter) Write(p []byte) (n int, err error) {
+	r.writeMtx.Lock()
+	defer r.writeMtx.Unlock()
+	return r.rw.Write(p)
 }
 
 // WritePacket writes a packet to the writer.
-func (r *PacketReaderWriter) WritePacket(p *Packet) error {
+func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	r.writeMtx.Lock()
 	defer r.writeMtx.Unlock()
 
@@ -55,7 +62,7 @@ func (r *PacketReaderWriter) WritePacket(p *Packet) error {
 // ReadPump executes the read pump in a goroutine.
 //
 // calls the handler when closed or returning an error
-func (r *PacketReaderWriter) ReadPump(cb PacketHandler, closed CloseHandler) {
+func (r *PacketReadWriter) ReadPump(cb PacketDataHandler, closed CloseHandler) {
 	err := r.ReadToHandler(cb)
 	// signal that the stream is now closed.
 	if closed != nil {
@@ -65,7 +72,7 @@ func (r *PacketReaderWriter) ReadPump(cb PacketHandler, closed CloseHandler) {
 
 // ReadToHandler reads data to the given handler.
 // Does not handle closing the stream, use ReadPump instead.
-func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
+func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 	var currLen uint32
 	buf := make([]byte, 2048)
 	isOpen := true
@@ -107,11 +114,7 @@ func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 		if currLen != 0 && bufLen >= int(currLen)+4 {
 			pkt := r.buf.Next(int(currLen + 4))[4:]
 			currLen = 0
-			npkt := &Packet{}
-			if err := npkt.UnmarshalVT(pkt); err != nil {
-				return err
-			}
-			if err := cb(npkt); err != nil {
+			if err := cb(pkt); err != nil {
 				return err
 			}
 		}
@@ -122,12 +125,12 @@ func (r *PacketReaderWriter) ReadToHandler(cb PacketHandler) error {
 }
 
 // Close closes the packet rw.
-func (r *PacketReaderWriter) Close() error {
+func (r *PacketReadWriter) Close() error {
 	return r.rw.Close()
 }
 
 // readLengthPrefix reads the length prefix.
-func (r *PacketReaderWriter) readLengthPrefix(b []byte) uint32 {
+func (r *PacketReadWriter) readLengthPrefix(b []byte) uint32 {
 	if len(b) < 4 {
 		return 0
 	}
@@ -135,4 +138,4 @@ func (r *PacketReaderWriter) readLengthPrefix(b []byte) uint32 {
 }
 
 // _ is a type assertion
-var _ Writer = (*PacketReaderWriter)(nil)
+var _ Writer = (*PacketReadWriter)(nil)
