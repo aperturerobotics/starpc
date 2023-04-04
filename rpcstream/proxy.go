@@ -94,38 +94,39 @@ func HandleProxyRpcStream[T RpcStream](stream RpcStream, getter RpcProxyGetter[T
 }
 
 // copies s1 to s2
-func copyRpcStreamTo(s1, s2 RpcStream, errCh chan error) (rerr error) {
-	defer func() {
-		s1Err := s1.Close()
-		if rerr == nil && s1Err != nil {
-			rerr = s1Err
-		}
-		if rerr != nil {
-			if errCh != nil {
-				errCh <- rerr
+func copyRpcStreamTo(s1, s2 RpcStream, errCh chan error) {
+	rerr := func() error {
+		pkt := srpc.NewRawMessage(nil, true)
+		for {
+			err := s1.MsgRecv(pkt)
+			if err != nil {
+				return err
 			}
-			_ = s2.Close()
-			return
+			if len(pkt.GetData()) == 0 {
+				continue
+			}
+			err = s2.MsgSend(pkt)
+			pkt.Clear()
+			if err != nil {
+				return err
+			}
 		}
+	}()
 
-		rerr = s2.CloseSend()
+	s1Err := s1.Close()
+	if rerr == nil && s1Err != nil {
+		rerr = s1Err
+	}
+	if rerr != nil {
 		if errCh != nil {
 			errCh <- rerr
 		}
-	}()
-	pkt := srpc.NewRawMessage(nil, true)
-	for {
-		rerr = s1.MsgRecv(pkt)
-		if rerr != nil {
-			return
-		}
-		if len(pkt.GetData()) == 0 {
-			continue
-		}
-		rerr = s2.MsgSend(pkt)
-		pkt.Clear()
-		if rerr != nil {
-			return
-		}
+		_ = s2.Close()
+		return
+	}
+
+	rerr = s2.CloseSend()
+	if errCh != nil {
+		errCh <- rerr
 	}
 }
