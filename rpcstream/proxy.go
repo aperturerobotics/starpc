@@ -101,9 +101,10 @@ func copyRpcStreamTo(s1, s2 RpcStream, errCh chan error) (rerr error) {
 			rerr = s1Err
 		}
 
-		s2Err := s2.CloseSend()
-		if rerr == nil && s2Err != nil {
-			rerr = s2Err
+		if rerr != nil {
+			_ = s2.Close()
+		} else {
+			rerr = s2.CloseSend()
 		}
 
 		if errCh != nil {
