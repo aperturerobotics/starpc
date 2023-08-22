@@ -105,13 +105,10 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	if !ok || initInner.Init == nil {
 		return ErrUnexpectedPacket
 	}
-	componentID := initInner.Init.GetComponentId()
-	if componentID == "" {
-		return ErrEmptyComponentID
-	}
 
 	// lookup the server for this component id
 	ctx := stream.Context()
+	componentID := initInner.Init.GetComponentId()
 	mux, muxRel, err := getter(ctx, componentID)
 	if err == nil && mux == nil {
 		err = ErrNoServerForComponent

@@ -22,13 +22,10 @@ func HandleRawRpcStream(stream RpcStream, getter RpcRawGetter) error {
 	if !ok || initInner.Init == nil {
 		return ErrUnexpectedPacket
 	}
-	componentID := initInner.Init.GetComponentId()
-	if componentID == "" {
-		return ErrEmptyComponentID
-	}
 
 	// lookup the server for this component id
 	ctx := stream.Context()
+	componentID := initInner.Init.GetComponentId()
 	remoteRwc, remoteRwcRel, err := getter(ctx, componentID)
 	if err == nil && remoteRwc == nil {
 		err = ErrNoServerForComponent

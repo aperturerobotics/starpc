@@ -31,13 +31,10 @@ func HandleProxyRpcStream[T RpcStream](stream RpcStream, getter RpcProxyGetter[T
 	if !ok || initInner.Init == nil {
 		return ErrUnexpectedPacket
 	}
-	componentID := initInner.Init.GetComponentId()
-	if componentID == "" {
-		return ErrEmptyComponentID
-	}
 
 	// lookup the caller for this component id
 	ctx := stream.Context()
+	componentID := initInner.Init.GetComponentId()
 	remoteCaller, remoteComponentID, remoteCallerRel, err := getter(ctx, componentID)
 	if remoteCallerRel != nil {
 		defer remoteCallerRel()
