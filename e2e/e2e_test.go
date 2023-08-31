@@ -12,6 +12,7 @@ import (
 	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 const bodyTxt = "hello world via starpc e2e test"
@@ -224,11 +225,18 @@ func TestE2E_BidiStream(t *testing.T) {
 
 func TestE2E_RpcStream(t *testing.T) {
 	ctx := context.Background()
+	log := logrus.New()
+	log.SetLevel(logrus.DebugLevel)
+	le := logrus.NewEntry(log)
+
 	RunE2E(t, func(client echo.SRPCEchoerClient) error {
 		openStreamFn := rpcstream.NewRpcStreamOpenStream(func(ctx context.Context) (rpcstream.RpcStream, error) {
 			return client.RpcStream(ctx)
 		}, "test", false)
 		proxiedClient := srpc.NewClient(openStreamFn)
+		verboseClient := srpc.NewVClient(proxiedClient, le)
+		proxiedClient = verboseClient
+
 		proxiedSvc := echo.NewSRPCEchoerClient(proxiedClient)
 
 		// run a RPC proxied over another RPC
