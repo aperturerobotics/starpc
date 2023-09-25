@@ -1,6 +1,6 @@
 import { duplex } from 'it-ws'
 import { pipe } from 'it-pipe'
-import { Direction } from '@libp2p/interface-connection'
+import { Direction } from '@libp2p/interface/connection'
 import type WebSocket from 'isomorphic-ws'
 
 import { Conn } from './conn.js'
