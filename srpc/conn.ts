@@ -78,7 +78,7 @@ export class Conn
     if (server) {
       this.server = server
     }
-    let muxerFactory = connParams?.muxerFactory ?? yamux()()
+    const muxerFactory = connParams?.muxerFactory ?? yamux()()
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
       direction: connParams?.direction || 'outbound',

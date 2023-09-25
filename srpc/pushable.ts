@@ -1,6 +1,5 @@
 import { Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
-import { castToError } from './errors.js'
 
 // writeToPushable writes the incoming server data to the pushable.
 export async function writeToPushable<T>(

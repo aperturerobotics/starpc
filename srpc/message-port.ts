@@ -1,4 +1,4 @@
-import type { Sink, Source } from 'it-stream-types'
+import type { Source } from 'it-stream-types'
 import { EventIterator } from 'event-iterator'
 
 import { ConnParams } from './conn.js'
