@@ -17,11 +17,7 @@ export async function writeToPushable<T>(
   }
 }
 
-export function buildPushableSink<T extends Iterable<any> | AsyncIterable<any>>(
-  target: Pushable<T>,
-): Sink<Source<T>, Promise<void>>
-
-export function buildPushableSink<T extends Iterable<any> | AsyncIterable<any>>(
+export function buildPushableSink<T>(
   target: Pushable<T>,
 ): Sink<Source<T>, Promise<void>> {
   return async (source: Source<T>): Promise<void> => {
