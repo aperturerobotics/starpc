@@ -17,7 +17,7 @@ function createBaseEchoMsg(): EchoMsg {
 export const EchoMsg = {
   encode(
     message: EchoMsg,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.body !== '') {
       writer.uint32(10).string(message.body)
@@ -52,7 +52,7 @@ export const EchoMsg = {
   // encodeTransform encodes a source of message objects.
   // Transform<EchoMsg, Uint8Array>
   async *encodeTransform(
-    source: AsyncIterable<EchoMsg | EchoMsg[]> | Iterable<EchoMsg | EchoMsg[]>
+    source: AsyncIterable<EchoMsg | EchoMsg[]> | Iterable<EchoMsg | EchoMsg[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -70,7 +70,7 @@ export const EchoMsg = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<EchoMsg> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -111,22 +111,22 @@ export interface Echoer {
   /** EchoServerStream is an example of a server -> client one-way stream. */
   EchoServerStream(
     request: EchoMsg,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<EchoMsg>
   /** EchoClientStream is an example of client->server one-way stream. */
   EchoClientStream(
     request: AsyncIterable<EchoMsg>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<EchoMsg>
   /** EchoBidiStream is an example of a two-way stream. */
   EchoBidiStream(
     request: AsyncIterable<EchoMsg>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<EchoMsg>
   /** RpcStream opens a nested rpc call stream. */
   RpcStream(
     request: AsyncIterable<RpcStreamPacket>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<RpcStreamPacket>
 }
 
@@ -148,63 +148,63 @@ export class EchoerClientImpl implements Echoer {
       this.service,
       'Echo',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return promise.then((data) => EchoMsg.decode(_m0.Reader.create(data)))
   }
 
   EchoServerStream(
     request: EchoMsg,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<EchoMsg> {
     const data = EchoMsg.encode(request).finish()
     const result = this.rpc.serverStreamingRequest(
       this.service,
       'EchoServerStream',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return EchoMsg.decodeTransform(result)
   }
 
   EchoClientStream(
     request: AsyncIterable<EchoMsg>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<EchoMsg> {
     const data = EchoMsg.encodeTransform(request)
     const promise = this.rpc.clientStreamingRequest(
       this.service,
       'EchoClientStream',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return promise.then((data) => EchoMsg.decode(_m0.Reader.create(data)))
   }
 
   EchoBidiStream(
     request: AsyncIterable<EchoMsg>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<EchoMsg> {
     const data = EchoMsg.encodeTransform(request)
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       'EchoBidiStream',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return EchoMsg.decodeTransform(result)
   }
 
   RpcStream(
     request: AsyncIterable<RpcStreamPacket>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<RpcStreamPacket> {
     const data = RpcStreamPacket.encodeTransform(request)
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       'RpcStream',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return RpcStreamPacket.decodeTransform(result)
   }
@@ -269,25 +269,25 @@ interface Rpc {
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array>
   clientStreamingRequest(
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array>
   serverStreamingRequest(
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array>
   bidirectionalStreamingRequest(
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array>
 }
 

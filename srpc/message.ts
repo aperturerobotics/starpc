@@ -14,7 +14,7 @@ export interface MessageDefinition<T> {
 
 // memoProto returns a function that encodes the message and caches the result.
 export function memoProto<T>(
-  def: MessageDefinition<T>
+  def: MessageDefinition<T>,
 ): (msg: Partial<T>) => Uint8Array {
   return memoize((msg: Partial<T>): Uint8Array => {
     return def.encode(def.create(msg)).finish()
@@ -23,7 +23,7 @@ export function memoProto<T>(
 
 // memoProtoDecode returns a function that decodes the message and caches the result.
 export function memoProtoDecode<T>(
-  def: MessageDefinition<T>
+  def: MessageDefinition<T>,
 ): (msg: Uint8Array) => T {
   return memoize((msg: Uint8Array): T => {
     return def.decode(msg)
@@ -32,7 +32,7 @@ export function memoProtoDecode<T>(
 
 // DecodeMessageTransform decodes messages to objects.
 export type DecodeMessageTransform<T> = (
-  source: Source<Uint8Array | Uint8Array[]>
+  source: Source<Uint8Array | Uint8Array[]>,
 ) => AsyncIterable<T>
 
 // buildDecodeMessageTransform builds a source of decoded messages.
@@ -40,13 +40,13 @@ export type DecodeMessageTransform<T> = (
 // set memoize if you expect to repeatedly see the same message.
 export function buildDecodeMessageTransform<T>(
   def: MessageDefinition<T>,
-  memoize?: boolean
+  memoize?: boolean,
 ): DecodeMessageTransform<T> {
   const decode = memoize ? memoProtoDecode(def) : def.decode.bind(def)
 
   // decodeMessageSource unmarshals and async yields encoded Messages.
   return async function* decodeMessageSource(
-    source: Source<Uint8Array | Uint8Array[]>
+    source: Source<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<T> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -62,14 +62,14 @@ export function buildDecodeMessageTransform<T>(
 
 // EncodeMessageTransform is a transformer that encodes messages.
 export type EncodeMessageTransform<T> = (
-  source: Source<T | T[]>
+  source: Source<T | T[]>,
 ) => AsyncIterable<Uint8Array>
 
 // buildEncodeMessageTransform builds a source of decoded messages.
 // set memoize if you expect to repeatedly encode the same message.
 export function buildEncodeMessageTransform<T>(
   def: MessageDefinition<T>,
-  memoize?: boolean
+  memoize?: boolean,
 ): EncodeMessageTransform<T> {
   const encode = memoize
     ? memoProto(def)
@@ -79,7 +79,7 @@ export function buildEncodeMessageTransform<T>(
 
   // encodeMessageSource encodes messages to byte arrays.
   return async function* encodeMessageSource(
-    source: Source<T | T[]>
+    source: Source<T | T[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {

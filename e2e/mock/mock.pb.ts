@@ -16,7 +16,7 @@ function createBaseMockMsg(): MockMsg {
 export const MockMsg = {
   encode(
     message: MockMsg,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.body !== '') {
       writer.uint32(10).string(message.body)
@@ -51,7 +51,7 @@ export const MockMsg = {
   // encodeTransform encodes a source of message objects.
   // Transform<MockMsg, Uint8Array>
   async *encodeTransform(
-    source: AsyncIterable<MockMsg | MockMsg[]> | Iterable<MockMsg | MockMsg[]>
+    source: AsyncIterable<MockMsg | MockMsg[]> | Iterable<MockMsg | MockMsg[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -69,7 +69,7 @@ export const MockMsg = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<MockMsg> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -123,7 +123,7 @@ export class MockClientImpl implements Mock {
       this.service,
       'MockRequest',
       data,
-      abortSignal || undefined
+      abortSignal || undefined,
     )
     return promise.then((data) => MockMsg.decode(_m0.Reader.create(data)))
   }
@@ -152,7 +152,7 @@ interface Rpc {
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array>
 }
 

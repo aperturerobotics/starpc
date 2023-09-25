@@ -33,7 +33,7 @@ export class ClientRPC extends CommonRPC {
   public override async handleCallStart(packet: Partial<CallStart>) {
     // we do not implement server -> client RPCs.
     throw new Error(
-      `unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`
+      `unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`,
     )
   }
 }

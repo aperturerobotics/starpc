@@ -5,27 +5,27 @@ export interface TsProtoRpc {
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array>
   // clientStreamingRequest fires a one-way client->server streaming request.
   clientStreamingRequest(
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array>
   // serverStreamingRequest fires a one-way server->client streaming request.
   serverStreamingRequest(
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array>
   // bidirectionalStreamingRequest implements a two-way streaming request.
   bidirectionalStreamingRequest(
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array>
 }

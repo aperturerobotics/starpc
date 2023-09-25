@@ -1,10 +1,10 @@
-import type { Direction, Stream } from '@libp2p/interface-connection'
+import type { Direction, Stream } from '@libp2p/interface/connection'
 import type {
   StreamMuxer,
   StreamMuxerFactory,
-} from '@libp2p/interface-stream-muxer'
+} from '@libp2p/interface/stream-muxer'
 import { pipe } from 'it-pipe'
-import type { Duplex } from 'it-stream-types'
+import type { Duplex, Source } from 'it-stream-types'
 import { yamux } from '@chainsafe/libp2p-yamux'
 import { Uint8ArrayList } from 'uint8arraylist'
 import isPromise from 'is-promise'
@@ -13,7 +13,10 @@ import { pushable, Pushable } from 'it-pushable'
 import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
 import { Client } from './client.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
-import { parseLengthPrefixTransform, prependLengthPrefixTransform } from './packet.js'
+import {
+  parseLengthPrefixTransform,
+  prependLengthPrefixTransform,
+} from './packet.js'
 import { buildPushableSink } from './pushable.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
@@ -36,7 +39,11 @@ export interface StreamHandler {
 // streamToSRPCStream converts a Stream to a SRPCStream.
 // uses length-prefix for packet framing
 export function streamToSRPCStream(
-  stream: Duplex<Uint8ArrayList, Uint8ArrayList | Uint8Array>
+  stream: Duplex<
+    AsyncIterable<Uint8ArrayList>,
+    Source<Uint8ArrayList | Uint8Array>,
+    Promise<void>
+  >,
 ): SRPCStream {
   const pushSink: Pushable<Uint8Array> = pushable({ objectMode: true })
   pipe(pushSink, prependLengthPrefixTransform(), stream.sink)
@@ -54,7 +61,14 @@ export function streamToSRPCStream(
 // Implements the client by opening streams with the remote.
 // Implements the server by handling incoming streams.
 // If the server is unset, rejects any incoming streams.
-export class Conn implements Duplex<Uint8Array> {
+export class Conn
+  implements
+    Duplex<
+      AsyncGenerator<Uint8Array>,
+      Source<Uint8ArrayList | Uint8Array>,
+      Promise<void>
+    >
+{
   // muxer is the stream muxer.
   private muxer: StreamMuxer
   // server is the server side, if set.
@@ -64,10 +78,7 @@ export class Conn implements Duplex<Uint8Array> {
     if (server) {
       this.server = server
     }
-    let muxerFactory = connParams?.muxerFactory
-    if (!muxerFactory) {
-      muxerFactory = yamux()()
-    }
+    let muxerFactory = connParams?.muxerFactory ?? yamux()()
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
       direction: connParams?.direction || 'outbound',

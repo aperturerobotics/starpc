@@ -27,7 +27,7 @@ export class EchoerServer implements Echoer {
   }
 
   public async EchoClientStream(
-    request: AsyncIterable<EchoMsg>
+    request: AsyncIterable<EchoMsg>,
   ): Promise<EchoMsg> {
     // return the first message sent by the client.
     const message = await first(request)
@@ -38,7 +38,7 @@ export class EchoerServer implements Echoer {
   }
 
   public EchoBidiStream(
-    request: AsyncIterable<EchoMsg>
+    request: AsyncIterable<EchoMsg>,
   ): AsyncIterable<EchoMsg> {
     // build result observable
     const result: Pushable<EchoMsg> = pushable({ objectMode: true })
@@ -48,7 +48,7 @@ export class EchoerServer implements Echoer {
   }
 
   public RpcStream(
-    request: AsyncIterable<RpcStreamPacket>
+    request: AsyncIterable<RpcStreamPacket>,
   ): AsyncIterable<RpcStreamPacket> {
     return handleRpcStream(
       request[Symbol.asyncIterator](),
@@ -57,7 +57,7 @@ export class EchoerServer implements Echoer {
           throw new Error('rpc stream proxy server not set')
         }
         return this.proxyServer.rpcStreamHandler
-      }
+      },
     )
   }
 }

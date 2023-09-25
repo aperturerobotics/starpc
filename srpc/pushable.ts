@@ -5,7 +5,7 @@ import { castToError } from './errors.js'
 // writeToPushable writes the incoming server data to the pushable.
 export async function writeToPushable<T>(
   dataSource: AsyncIterable<T>,
-  out: Pushable<T>
+  out: Pushable<T>,
 ) {
   try {
     for await (const data of dataSource) {
@@ -18,23 +18,34 @@ export async function writeToPushable<T>(
   }
 }
 
-// buildPushableSink builds a Sink from a Pushable.
-export function buildPushableSink<T>(target: Pushable<T>): Sink<T> {
-  return async function pushableSink(source: Source<T>): Promise<void> {
-    try {
-      for await (const pkt of source) {
-        if (Array.isArray(pkt)) {
-          for (const p of pkt) {
-            target.push(p)
-          }
-        } else {
-          target.push(pkt)
-        }
+export function buildPushableSink<T extends Iterable<any> | AsyncIterable<any>>(
+  target: Pushable<T>,
+): Sink<Source<T>, Promise<void>>
+
+export function buildPushableSink<T extends Iterable<any> | AsyncIterable<any>>(
+  target: Pushable<T>,
+): Sink<Source<T>, Promise<void>> {
+  return async (source: Source<T>): Promise<void> => {
+    if (Symbol.asyncIterator in source) {
+      // Handle AsyncIterable
+      for await (const pkt of source as AsyncIterable<any>) {
+        processPacket(pkt, target)
       }
-      target.end()
-    } catch (err) {
-      const error = castToError(err)
-      target.end(error)
+    } else {
+      // Handle Iterable
+      for (const pkt of source as Iterable<any>) {
+        processPacket(pkt, target)
+      }
     }
+  }
+}
+
+function processPacket<T>(pkt: T, target: Pushable<T>): void {
+  if (Array.isArray(pkt)) {
+    for (const p of pkt) {
+      target.push(p)
+    }
+  } else {
+    target.push(pkt)
   }
 }

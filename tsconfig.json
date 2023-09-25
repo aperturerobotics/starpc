@@ -16,14 +16,7 @@
     "esModuleInterop": true,
     "noImplicitOverride": true
   },
-  "include": [
-    "echo",
-    "srpc",
-    "e2e",
-    "integration",
-    "rpcstream",
-    "index.ts"
-  ],
+  "include": ["echo", "srpc", "e2e", "integration", "rpcstream", "index.ts"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": true

@@ -44,7 +44,7 @@ export async function runAbortControllerTest(client: Client) {
   try {
     await demoServiceClient.EchoClientStream(
       clientNoopStream,
-      clientAbort.signal
+      clientAbort.signal,
     )
   } catch (err) {
     const errMsg = (err as Error).message
@@ -64,7 +64,7 @@ export async function runRpcStreamTest(client: Client) {
   const service = new EchoerClientImpl(client)
   const openStreamFn = buildRpcStreamOpenStream(
     'test',
-    service.RpcStream.bind(service)
+    service.RpcStream.bind(service),
   )
   const proxiedClient = new Client(openStreamFn)
   const proxiedService = new EchoerClientImpl(proxiedClient)

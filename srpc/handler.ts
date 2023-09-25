@@ -12,7 +12,7 @@ import { writeToPushable } from './pushable.js'
 // InvokeFn describes an SRPC call method invoke function.
 export type InvokeFn = (
   dataSource: Source<Uint8Array>,
-  dataSink: Sink<Uint8Array>
+  dataSink: Sink<Source<Uint8Array>>,
 ) => Promise<void>
 
 // Handler describes a SRPC call handler implementation.
@@ -55,7 +55,7 @@ export class StaticHandler implements Handler {
   // returns null if not found.
   public async lookupMethod(
     serviceID: string,
-    methodID: string
+    methodID: string,
   ): Promise<InvokeFn | null> {
     if (serviceID && serviceID !== this.service) {
       return null
@@ -74,10 +74,13 @@ type MethodProto<R, O> =
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn<R, O>(
   methodInfo: MethodDefinition<R, O>,
-  methodProto: MethodProto<R, O>
+  methodProto: MethodProto<R, O>,
 ): InvokeFn {
   const requestDecode = buildDecodeMessageTransform<R>(methodInfo.requestType)
-  return async (dataSource: Source<Uint8Array>, dataSink: Sink<Uint8Array>) => {
+  return async (
+    dataSource: Source<Uint8Array>,
+    dataSink: Sink<Source<Uint8Array>>,
+  ) => {
     // responseSink is a Sink for response messages.
     const responseSink = pushable<O>({
       objectMode: true,
@@ -87,7 +90,7 @@ export function createInvokeFn<R, O>(
     pipe(
       responseSink,
       buildEncodeMessageTransform(methodInfo.responseType),
-      dataSink
+      dataSink,
     )
 
     // requestSource is a Source of decoded request messages.
@@ -149,7 +152,7 @@ export function createInvokeFn<R, O>(
 export function createHandler(
   definition: Definition,
   impl: any,
-  serviceID?: string
+  serviceID?: string,
 ): Handler {
   // serviceID defaults to the full name of the service from Protobuf.
   serviceID = serviceID || definition.fullName

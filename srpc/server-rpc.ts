@@ -1,4 +1,4 @@
-import type { Sink } from 'it-stream-types'
+import type { Sink, Source } from 'it-stream-types'
 
 import type { CallData, CallStart } from './rpcproto.pb.js'
 import { CommonRPC } from './common-rpc.js'
@@ -55,7 +55,7 @@ export class ServerRPC extends CommonRPC {
   }
 
   // _createDataSink creates a sink for outgoing data packets.
-  private _createDataSink(): Sink<Uint8Array> {
+  private _createDataSink(): Sink<Source<Uint8Array>> {
     return async (source) => {
       try {
         for await (const msg of source) {

@@ -6,10 +6,7 @@ import type { TsProtoRpc } from './ts-proto-rpc.js'
 import type { OpenStreamFunc } from './stream.js'
 import { ClientRPC } from './client-rpc.js'
 import { writeToPushable } from './pushable.js'
-import {
-  decodePacketSource,
-  encodePacketSource,
-} from './packet.js'
+import { decodePacketSource, encodePacketSource } from './packet.js'
 import { OpenStreamCtr } from './open-stream-ctr.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
@@ -31,7 +28,7 @@ export class Client implements TsProtoRpc {
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array> {
     const call = await this.startRpc(service, method, data, abortSignal)
     for await (const data of call.rpcDataSource) {
@@ -48,7 +45,7 @@ export class Client implements TsProtoRpc {
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<Uint8Array> {
     const call = await this.startRpc(service, method, null, abortSignal)
     call.writeCallDataFromSource(data)
@@ -66,7 +63,7 @@ export class Client implements TsProtoRpc {
     service: string,
     method: string,
     data: Uint8Array,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array> {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, data, abortSignal)
@@ -82,7 +79,7 @@ export class Client implements TsProtoRpc {
     service: string,
     method: string,
     data: AsyncIterable<Uint8Array>,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): AsyncIterable<Uint8Array> {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, null, abortSignal)
@@ -108,7 +105,7 @@ export class Client implements TsProtoRpc {
     rpcService: string,
     rpcMethod: string,
     data: Uint8Array | null,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
   ): Promise<ClientRPC> {
     if (abortSignal?.aborted) {
       throw new Error(ERR_RPC_ABORT)
@@ -119,13 +116,7 @@ export class Client implements TsProtoRpc {
     abortSignal?.addEventListener('abort', () => {
       call.close(new Error(ERR_RPC_ABORT))
     })
-    pipe(
-      stream,
-      decodePacketSource,
-      call,
-      encodePacketSource,
-      stream
-    )
+    pipe(stream, decodePacketSource, call, encodePacketSource, stream)
     await call.writeCallStart(data || undefined)
     return call
   }

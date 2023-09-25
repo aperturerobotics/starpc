@@ -2,14 +2,14 @@ import {
   encode as lengthPrefixEncode,
   decode as lengthPrefixDecode,
 } from 'it-length-prefixed'
+import { Uint8ArrayList } from 'uint8arraylist'
 
 import { Packet } from './rpcproto.pb.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
 } from './message.js'
-import { Uint8ArrayList } from 'uint8arraylist'
-import { Transform } from 'it-pipe'
+import { Source, Transform } from 'it-stream-types'
 
 // decodePacketSource decodes packets from a binary data stream.
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
@@ -38,19 +38,25 @@ uint32LEEncode.bytes = 4
 // prependLengthPrefixTransform adds a length prefix to a message source.
 // little-endian uint32
 export function prependLengthPrefixTransform(): Transform<
-  Uint8Array | Uint8ArrayList,
-  Uint8Array
+  Source<Uint8Array | Uint8ArrayList>,
+  | AsyncGenerator<Uint8Array, void, undefined>
+  | Generator<Uint8Array, void, undefined>
 > {
-  return lengthPrefixEncode({ lengthEncoder: uint32LEEncode })
+  return (source: Source<Uint8Array | Uint8ArrayList>) => {
+    return lengthPrefixEncode(source, { lengthEncoder: uint32LEEncode })
+  }
 }
 
 // parseLengthPrefixTransform parses the length prefix from a message source.
 // little-endian uint32
 export function parseLengthPrefixTransform(): Transform<
-  Uint8Array | Uint8ArrayList,
-  Uint8ArrayList
+  Source<Uint8Array | Uint8ArrayList>, // Allow both AsyncIterable and Iterable
+  | AsyncGenerator<Uint8ArrayList, void, unknown>
+  | Generator<Uint8ArrayList, void, unknown>
 > {
-  return lengthPrefixDecode({ lengthDecoder: uint32LEDecode })
+  return (source: Source<Uint8Array | Uint8ArrayList>) => {
+    return lengthPrefixDecode(source, { lengthDecoder: uint32LEDecode })
+  }
 }
 
 // encodeUint32Le encodes the number as a uint32 with little endian.

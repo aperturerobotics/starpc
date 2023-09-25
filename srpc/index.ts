@@ -12,8 +12,8 @@ export {
   BroadcastChannelConn,
 } from './broadcast-channel.js'
 export {
-  MessagePortIterable,
-  newMessagePortIterable,
+  MessagePortDuplex,
+  newMessagePortDuplex,
   MessagePortConn,
 } from './message-port.js'
 export {

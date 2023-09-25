@@ -1,4 +1,4 @@
-import type { Sink } from 'it-stream-types'
+import type { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 
 import type { CallData, CallStart } from './rpcproto.pb.js'
@@ -7,21 +7,21 @@ import { Packet } from './rpcproto.pb.js'
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
   // sink is the data sink for incoming messages.
-  public sink: Sink<Packet>
+  public sink: Sink<Source<Packet>>
   // source is the packet source for outgoing Packets.
   public source: AsyncIterable<Packet>
-  // _source is used to write to the source.
-  private readonly _source: {
-    push: (val: Packet) => void
-    end: (err?: Error) => void
-  }
-  // rpcDataSource emits incoming client RPC messages to the caller.
+  // rpcDataSource is the source for rpc packets.
   public readonly rpcDataSource: AsyncIterable<Uint8Array>
+
+  // _source is used to write to the source.
+  private readonly _source = pushable<Packet>({
+    objectMode: true,
+  })
+
   // _rpcDataSource is used to write to the rpc message source.
-  private readonly _rpcDataSource: {
-    push: (val: Uint8Array) => void
-    end: (err?: Error) => void
-  }
+  private readonly _rpcDataSource = pushable<Uint8Array>({
+    objectMode: true,
+  })
 
   // service is the rpc service
   protected service?: string
@@ -30,21 +30,15 @@ export class CommonRPC {
 
   constructor() {
     this.sink = this._createSink()
-
-    const sourcev = this._createSource()
-    this.source = sourcev
-    this._source = sourcev
-
-    const rpcDataSource = this._createRpcDataSource()
-    this.rpcDataSource = rpcDataSource
-    this._rpcDataSource = rpcDataSource
+    this.source = this._source
+    this.rpcDataSource = this._rpcDataSource
   }
 
   // writeCallData writes the call data packet.
   public async writeCallData(
     data?: Uint8Array,
     complete?: boolean,
-    error?: string
+    error?: string,
   ) {
     const callData: CallData = {
       data: data || new Uint8Array(0),
@@ -121,14 +115,14 @@ export class CommonRPC {
   public async handleCallStart(packet: Partial<CallStart>) {
     // no-op
     throw new Error(
-      `unexpected call start: ${packet.rpcService}/${packet.rpcMethod}`
+      `unexpected call start: ${packet.rpcService}/${packet.rpcMethod}`,
     )
   }
 
   // pushRpcData pushes incoming rpc data to the rpc data source.
   protected pushRpcData(
     data: Uint8Array | undefined,
-    dataIsZero: boolean | undefined
+    dataIsZero: boolean | undefined,
   ) {
     if (dataIsZero) {
       if (!data || data.length !== 0) {
@@ -166,11 +160,19 @@ export class CommonRPC {
   }
 
   // _createSink returns a value for the sink field.
-  private _createSink(): Sink<Packet> {
-    return async (source) => {
+  private _createSink(): Sink<Source<Packet>> {
+    return async (source: Source<Packet>) => {
       try {
-        for await (const msg of source) {
-          await this.handlePacket(msg)
+        if (Symbol.asyncIterator in source) {
+          // Handle async source
+          for await (const msg of source) {
+            await this.handlePacket(msg)
+          }
+        } else {
+          // Handle sync source
+          for (const msg of source) {
+            await this.handlePacket(msg)
+          }
         }
       } catch (err) {
         const anyErr = err as any
@@ -183,19 +185,5 @@ export class CommonRPC {
       }
       this._rpcDataSource.end()
     }
-  }
-
-  // _createSource returns a value for the source field.
-  private _createSource() {
-    return pushable<Packet>({
-      objectMode: true,
-    })
-  }
-
-  // _createRpcDataSource returns a value for the rpc data source field.
-  private _createRpcDataSource() {
-    return pushable<Uint8Array>({
-      objectMode: true,
-    })
   }
 }

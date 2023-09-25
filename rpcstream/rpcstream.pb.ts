@@ -31,13 +31,13 @@ function createBaseRpcStreamPacket(): RpcStreamPacket {
 export const RpcStreamPacket = {
   encode(
     message: RpcStreamPacket,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     switch (message.body?.$case) {
       case 'init':
         RpcStreamInit.encode(
           message.body.init,
-          writer.uint32(10).fork()
+          writer.uint32(10).fork(),
         ).ldelim()
         break
       case 'ack':
@@ -99,7 +99,7 @@ export const RpcStreamPacket = {
   async *encodeTransform(
     source:
       | AsyncIterable<RpcStreamPacket | RpcStreamPacket[]>
-      | Iterable<RpcStreamPacket | RpcStreamPacket[]>
+      | Iterable<RpcStreamPacket | RpcStreamPacket[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -117,7 +117,7 @@ export const RpcStreamPacket = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcStreamPacket> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -161,13 +161,13 @@ export const RpcStreamPacket = {
   },
 
   create<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
-    base?: I
+    base?: I,
   ): RpcStreamPacket {
     return RpcStreamPacket.fromPartial(base ?? {})
   },
 
   fromPartial<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
-    object: I
+    object: I,
   ): RpcStreamPacket {
     const message = createBaseRpcStreamPacket()
     if (
@@ -205,7 +205,7 @@ function createBaseRpcStreamInit(): RpcStreamInit {
 export const RpcStreamInit = {
   encode(
     message: RpcStreamInit,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.componentId !== '') {
       writer.uint32(10).string(message.componentId)
@@ -242,7 +242,7 @@ export const RpcStreamInit = {
   async *encodeTransform(
     source:
       | AsyncIterable<RpcStreamInit | RpcStreamInit[]>
-      | Iterable<RpcStreamInit | RpcStreamInit[]>
+      | Iterable<RpcStreamInit | RpcStreamInit[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -260,7 +260,7 @@ export const RpcStreamInit = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcStreamInit> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -286,13 +286,13 @@ export const RpcStreamInit = {
   },
 
   create<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
-    base?: I
+    base?: I,
   ): RpcStreamInit {
     return RpcStreamInit.fromPartial(base ?? {})
   },
 
   fromPartial<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
-    object: I
+    object: I,
   ): RpcStreamInit {
     const message = createBaseRpcStreamInit()
     message.componentId = object.componentId ?? ''
@@ -307,7 +307,7 @@ function createBaseRpcAck(): RpcAck {
 export const RpcAck = {
   encode(
     message: RpcAck,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.error !== '') {
       writer.uint32(10).string(message.error)
@@ -342,7 +342,7 @@ export const RpcAck = {
   // encodeTransform encodes a source of message objects.
   // Transform<RpcAck, Uint8Array>
   async *encodeTransform(
-    source: AsyncIterable<RpcAck | RpcAck[]> | Iterable<RpcAck | RpcAck[]>
+    source: AsyncIterable<RpcAck | RpcAck[]> | Iterable<RpcAck | RpcAck[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -360,7 +360,7 @@ export const RpcAck = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcAck> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {

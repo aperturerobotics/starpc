@@ -58,19 +58,19 @@ function createBasePacket(): Packet {
 export const Packet = {
   encode(
     message: Packet,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     switch (message.body?.$case) {
       case 'callStart':
         CallStart.encode(
           message.body.callStart,
-          writer.uint32(10).fork()
+          writer.uint32(10).fork(),
         ).ldelim()
         break
       case 'callData':
         CallData.encode(
           message.body.callData,
-          writer.uint32(18).fork()
+          writer.uint32(18).fork(),
         ).ldelim()
         break
       case 'callCancel':
@@ -127,7 +127,7 @@ export const Packet = {
   // encodeTransform encodes a source of message objects.
   // Transform<Packet, Uint8Array>
   async *encodeTransform(
-    source: AsyncIterable<Packet | Packet[]> | Iterable<Packet | Packet[]>
+    source: AsyncIterable<Packet | Packet[]> | Iterable<Packet | Packet[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -145,7 +145,7 @@ export const Packet = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<Packet> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -237,7 +237,7 @@ function createBaseCallStart(): CallStart {
 export const CallStart = {
   encode(
     message: CallStart,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.rpcService !== '') {
       writer.uint32(10).string(message.rpcService)
@@ -304,7 +304,7 @@ export const CallStart = {
   async *encodeTransform(
     source:
       | AsyncIterable<CallStart | CallStart[]>
-      | Iterable<CallStart | CallStart[]>
+      | Iterable<CallStart | CallStart[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -322,7 +322,7 @@ export const CallStart = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<CallStart> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -352,7 +352,7 @@ export const CallStart = {
     message.rpcMethod !== undefined && (obj.rpcMethod = message.rpcMethod)
     message.data !== undefined &&
       (obj.data = base64FromBytes(
-        message.data !== undefined ? message.data : new Uint8Array()
+        message.data !== undefined ? message.data : new Uint8Array(),
       ))
     message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
     return obj
@@ -363,7 +363,7 @@ export const CallStart = {
   },
 
   fromPartial<I extends Exact<DeepPartial<CallStart>, I>>(
-    object: I
+    object: I,
   ): CallStart {
     const message = createBaseCallStart()
     message.rpcService = object.rpcService ?? ''
@@ -386,7 +386,7 @@ function createBaseCallData(): CallData {
 export const CallData = {
   encode(
     message: CallData,
-    writer: _m0.Writer = _m0.Writer.create()
+    writer: _m0.Writer = _m0.Writer.create(),
   ): _m0.Writer {
     if (message.data.length !== 0) {
       writer.uint32(10).bytes(message.data)
@@ -453,7 +453,7 @@ export const CallData = {
   async *encodeTransform(
     source:
       | AsyncIterable<CallData | CallData[]>
-      | Iterable<CallData | CallData[]>
+      | Iterable<CallData | CallData[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -471,7 +471,7 @@ export const CallData = {
   async *decodeTransform(
     source:
       | AsyncIterable<Uint8Array | Uint8Array[]>
-      | Iterable<Uint8Array | Uint8Array[]>
+      | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<CallData> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
@@ -499,7 +499,7 @@ export const CallData = {
     const obj: any = {}
     message.data !== undefined &&
       (obj.data = base64FromBytes(
-        message.data !== undefined ? message.data : new Uint8Array()
+        message.data !== undefined ? message.data : new Uint8Array(),
       ))
     message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
     message.complete !== undefined && (obj.complete = message.complete)

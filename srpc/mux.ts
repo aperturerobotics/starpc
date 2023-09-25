@@ -3,7 +3,7 @@ import { InvokeFn, Handler } from './handler'
 // LookupMethod is a function to lookup a RPC method.
 export type LookupMethod = (
   serviceID: string,
-  methodID: string
+  methodID: string,
 ) => Promise<InvokeFn | null>
 
 // Mux contains a set of <service, method> handlers.
@@ -55,7 +55,7 @@ export class StaticMux implements Mux {
 
   public async lookupMethod(
     serviceID: string,
-    methodID: string
+    methodID: string,
   ): Promise<InvokeFn | null> {
     if (serviceID) {
       const invokeFn = await this.lookupViaMap(serviceID, methodID)
@@ -70,7 +70,7 @@ export class StaticMux implements Mux {
   // lookupViaMap looks up the method via the services map.
   private async lookupViaMap(
     serviceID: string,
-    methodID: string
+    methodID: string,
   ): Promise<InvokeFn | null> {
     const serviceMethods = this.services[serviceID]
     if (!serviceMethods) {
@@ -86,7 +86,7 @@ export class StaticMux implements Mux {
   // lookupViaLookups looks up the method via the lookup funcs.
   private async lookupViaLookups(
     serviceID: string,
-    methodID: string
+    methodID: string,
   ): Promise<InvokeFn | null> {
     for (const lookupMethod of this.lookups) {
       const invokeFn = await lookupMethod(serviceID, methodID)
