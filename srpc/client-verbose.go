@@ -51,11 +51,10 @@ func (c *VClient) NewStream(ctx context.Context, service, method string, firstMs
 	t1 := time.Now()
 	defer func() {
 		c.le.Debugf(
-			"NewStream(service(%s), method(%s)) => dur(%v) stream(%v) err(%v)",
+			"NewStream(service(%s), method(%s)) => dur(%v) err(%v)",
 			service,
 			method,
 			time.Since(t1).String(),
-			stream,
 			err,
 		)
 	}()
