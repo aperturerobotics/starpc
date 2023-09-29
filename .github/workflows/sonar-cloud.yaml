@@ -1,3 +1,4 @@
+# https://sonarcloud.io/project/issues?resolved=false&id=aperturerobotics_starpc
 name: SonarCloud
 on:
   push:
@@ -5,6 +6,7 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+
 jobs:
   sonarcloud:
     name: SonarCloud
