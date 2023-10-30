@@ -71,6 +71,7 @@
     "prettier": "^3.0.3",
     "rimraf": "^5.0.1",
     "ts-proto": "^1.158.0",
+    "ts-poet": "6.6.0",
     "typescript": "^5.2.2",
     "utf-8-validate": "^6.0.3"
   },
