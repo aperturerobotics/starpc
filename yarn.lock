@@ -126,13 +126,13 @@
   integrity sha512-ndGqEMG1W5WkGagaqOZHpPU172AGdxr+LD15sv3WIUvT5oCFUrG1Y0CW/v2Egwj4JXEvSibaIIIqImsm98y1nA==
 
 "@chainsafe/libp2p-yamux@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-yamux/-/libp2p-yamux-5.0.0.tgz#c1016fc839870139b5c097daff9408b91c58f2a7"
-  integrity sha512-aWTnBPR2hJt0A2y579sMtZVB6IqgSSHlZ6Eg+WDxNZQ0zcexafuruZQDj+z3FUTNPz+E8IeuyCi7tjI4IEehjw==
+  version "5.0.2"
+  resolved "https://registry.yarnpkg.com/@chainsafe/libp2p-yamux/-/libp2p-yamux-5.0.2.tgz#620d3f89a3ba9e1a032f03228c5ed621cf3ae11e"
+  integrity sha512-0W+cA6F6IBY6guctEmm2ZSxFCtJTTPlXjFP3NBDVnkaP8mLQgSDeXABhj6oqZIFT0hdu3iao3ByMi8QxIO3Euw==
   dependencies:
     "@libp2p/interface" "^0.1.0"
     "@libp2p/logger" "^3.0.0"
-    abortable-iterator "^5.0.1"
+    get-iterator "^2.0.1"
     it-foreach "^2.0.3"
     it-pipe "^3.0.1"
     it-pushable "^3.2.0"
@@ -350,7 +350,7 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@libp2p/interface@^0.1.0", "@libp2p/interface@^0.1.1", "@libp2p/interface@^0.1.2":
+"@libp2p/interface@^0.1.0", "@libp2p/interface@^0.1.1", "@libp2p/interface@^0.1.2", "@libp2p/interface@^0.1.6":
   version "0.1.6"
   resolved "https://registry.yarnpkg.com/@libp2p/interface/-/interface-0.1.6.tgz#1328cf6086f02c499183489ccb143fe9c159e871"
   integrity sha512-Lzc5cS/hXuoXhuAbVIxJIHLCYmfPcbU0vVgrpMoiP1Qb2Q3ETU4A46GB8s8mWXgSU6tr9RcqerUqzFYD6+OAag==
@@ -365,11 +365,11 @@
     uint8arraylist "^2.4.3"
 
 "@libp2p/logger@^3.0.0":
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@libp2p/logger/-/logger-3.0.2.tgz#aa507db233c6905692ffaf9f4daba1e6326992c4"
-  integrity sha512-2JtRGBXiGfm1t5XneUIXQ2JusW7QwyYmxsW7hSAYS5J73RQJUicpt5le5obVRt7+OM39ei+nWEuC6Xvm1ugHkw==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@libp2p/logger/-/logger-3.1.0.tgz#ac9adb08f344934e191d7049ce876ac0111449ce"
+  integrity sha512-qJbJBAhxHVsRBtQSOIkSLi0lskUSFjzE+zm0QvoyxzZKSz+mX41mZLbnofPIVOVauoDQ40dXpe7WDUOq8AbiQQ==
   dependencies:
-    "@libp2p/interface" "^0.1.2"
+    "@libp2p/interface" "^0.1.6"
     "@multiformats/multiaddr" "^12.1.5"
     debug "^4.3.4"
     interface-datastore "^8.2.0"
@@ -483,9 +483,9 @@
   integrity sha512-2qGq5LAOTh9izcc0+F+dToFigBWiK1phKPt7rNhOqJSr35y8rlIBjDwGtFSgAI6MGIhjwOVNSQZVdJsZJ2uR1w==
 
 "@types/node@>=13.7.0":
-  version "20.8.10"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.8.10.tgz#a5448b895c753ae929c26ce85cab557c6d4a365e"
-  integrity sha512-TlgT8JntpcbmKUFzjhsyhGfP2fsiz1Mv56im6enJ905xG1DAYesxJaeSbGqQmAw8OWPdhyJGhGSQGKRNJ45u9w==
+  version "20.9.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.9.0.tgz#bfcdc230583aeb891cf51e73cfdaacdd8deae298"
+  integrity sha512-nekiGu2NDb1BcVofVcEKMIwzlx4NjHlcjhoxxKBNLtz15Y1z7MYf549DFvkHSId02Ax6kGwWntIBPC3l/JZcmw==
   dependencies:
     undici-types "~5.26.4"
 
@@ -1268,7 +1268,7 @@ get-caller-file@^2.0.5:
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
-get-iterator@^2.0.0:
+get-iterator@^2.0.0, get-iterator@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/get-iterator/-/get-iterator-2.0.1.tgz#a904829f61bace789e0d64bd1a504c511a015c3f"
   integrity sha512-7HuY/hebu4gryTDT7O/XY/fvY9wRByEGdK6QOa4of8npTcv0+NS6frFKABcf6S9EBAsveTuKTsZQQBFMMNILIg==
@@ -1518,9 +1518,9 @@ it-first@^3.0.3:
   integrity sha512-RC8tplctsDpoBUljwsp1viiyaR5fPvMe+FgbbcU0sFjKkJa7iwbB4CCPhHtVYSdjsrREfr0QEotfQrBoGyt7Dw==
 
 it-foreach@^2.0.3:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/it-foreach/-/it-foreach-2.0.4.tgz#d723b3525f0f4bc11678e799dcea2a5fe49333a7"
-  integrity sha512-txxcoc09g+KdLyOapxAuB12H9zUb2FuZC/TqSXRT+YR0T5fHnvcDIhspgvx/e/HiPKlKjOR8onA0qtuiAtcXqg==
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/it-foreach/-/it-foreach-2.0.5.tgz#c4ef2db231edb176c2ae53b3c5879e2391148f91"
+  integrity sha512-o9xw5DjUaMzANU/dlTIS8Har8IOkJMMjSbDIOx21NVO/MeGRPrwGov92uKC/iWw1WXokOLuan/bNLULdbV6aZw==
   dependencies:
     it-peekable "^3.0.0"
 
@@ -1558,9 +1558,9 @@ it-pipe@^3.0.1:
     it-stream-types "^2.0.1"
 
 it-pushable@^3.1.2, it-pushable@^3.2.0, it-pushable@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/it-pushable/-/it-pushable-3.2.1.tgz#72d7ccf7e7c0ccecf8cbaf74064f7be56e775c59"
-  integrity sha512-sLFz2Q0oyDCJpTciZog7ipP4vSftfPy3e6JnH6YyztRa1XqkpGQaafK3Jw/JlfEBtCXfnX9uVfcpu3xpSAqCVQ==
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/it-pushable/-/it-pushable-3.2.2.tgz#e041e07abc27ee0a97492a6c3640843bf79b471c"
+  integrity sha512-eGY2lKZxa4hNNRPNuL4r7Eluk//j6jL4zEmQUzAHYKG912sY/RzzEpfJedZcnEdf6zB7b8NdHOf0chCm2sL/xw==
   dependencies:
     p-defer "^4.0.0"
 
@@ -1991,9 +1991,9 @@ prelude-ls@^1.2.1:
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
 prettier@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.0.3.tgz#432a51f7ba422d1469096c0fdc28e235db8f9643"
-  integrity sha512-L/4pUDMxcNa8R/EthV08Zt42WBO4h1rarVtK0K+QJG0X187OLo7l699jWw0GKuwzkPQ//jMFA/8Xm6Fh3J/DAg==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.1.0.tgz#c6d16474a5f764ea1a4a373c593b779697744d5e"
+  integrity sha512-TQLvXjq5IAibjh8EpBIkNKxO749UEWABoiIZehEPiY4GNpVdhaFKqSTu+QrlU6D2dPAfubRmtJTi4K4YkQ5eXw==
 
 protobufjs@^7.2.4, protobufjs@^7.2.5:
   version "7.2.5"
@@ -2285,9 +2285,9 @@ ts-proto-descriptors@1.15.0:
     protobufjs "^7.2.4"
 
 ts-proto@^1.158.0:
-  version "1.163.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.163.0.tgz#d64a64e6a5f8dd78a32a9b374f92b87c28c8dbbc"
-  integrity sha512-jpC4oA86NkN015R2YHGj9bhOJEYOuop4JddmADixRxBcBBcfCgkh7mhxA10BWrmk3/oyczI3T//UNK4x3P9/Sw==
+  version "1.164.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.164.0.tgz#a60c1c5afa4164043496edaae4d4c4e6884085c2"
+  integrity sha512-yIyMucjcozS7Vxtyy5mH6C8ltbY4gEBVNW4ymZ0kWiKlyMxsvhyUZ63CbxcF7dCKQVjHR+fLJ3SiorfgyhQ+AQ==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
