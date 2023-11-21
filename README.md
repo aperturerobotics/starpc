@@ -23,6 +23,9 @@ Supports **client-to-server and bidirectional streaming** in the web browser.
 
 [rpcstream]: ./rpcstream
 
+The library leverages libp2p streams with `@chainsafe/libp2p-yamux` to
+coordinate balancing many ongoing RPCs over a single connection.
+
 ## Usage
 
 Start with the [protobuf-project] template repository on the "starpc" branch.
@@ -112,54 +115,9 @@ example of TypeScript <-> TypeScript interop, see the [e2e] test.
 
 Supports any AsyncIterable communication channel.
 
-This example demonstrates both the server and client:
+#### WebSocket Example
 
-```typescript
-import { pipe } from 'it-pipe'
-import { createHandler, createMux, Server, Client, Conn } from 'srpc'
-import { EchoerDefinition, EchoerServer, runClientTest } from 'srpc/echo'
-import { pushable } from 'it-pushable'
-
-const mux = createMux()
-const echoer = new EchoerServer()
-mux.register(createHandler(EchoerDefinition, echoer))
-const server = new Server(mux.lookupMethodFunc)
-
-const clientConn = new Conn()
-const serverConn = new Conn(server)
-pipe(clientConn, serverConn, clientConn)
-const client = new Client(clientConn.buildOpenStreamFunc())
-
-// call the unary rpc
-console.log('Calling Echo: unary call...')
-let result = await demoServiceClient.Echo({
-  body: 'Hello world!',
-})
-console.log('success: output', result.body)
-
-// create a client -> server stream
-const clientRequestStream = pushable<EchoMsg>({objectMode: true})
-clientRequestStream.push({body: 'Hello world from streaming request.'})
-clientRequestStream.end()
-
-// call the client -> server streaming rpc
-console.log('Calling EchoClientStream: client -> server...')
-result = await demoServiceClient.EchoClientStream(clientRequestStream)
-console.log('success: output', result.body)
-
-// call the server -> client streaming rpc
-console.log('Calling EchoServerStream: server -> client...')
-const serverStream = demoServiceClient.EchoServerStream({
-  body: 'Hello world from server to client streaming request.',
-})
-for await (const msg of serverStream) {
-  console.log('server: output', msg.body)
-}
-```
-
-### WebSocket
-
-One way to integrate Go and TypeScript is over a WebSocket:
+This examples demonstrates connecting to a WebSocket server:
 
 ```typescript
 import { WebSocketConn } from 'srpc'
@@ -174,6 +132,55 @@ const result = await demoServiceClient.Echo({
   body: "Hello world!"
 })
 console.log('output', result.body)
+```
+
+#### In-memory Demo with TypeScript Server and Client
+
+This example demonstrates both the server and client with an in-memory pipe:
+
+```typescript
+import { pipe } from 'it-pipe'
+import { createHandler, createMux, Server, Client, Conn } from 'srpc'
+import { EchoerDefinition, EchoerServer, runClientTest } from 'srpc/echo'
+import { pushable } from 'it-pushable'
+
+// Create the server and register the handlers.
+const mux = createMux()
+const echoer = new EchoerServer()
+mux.register(createHandler(EchoerDefinition, echoer))
+const server = new Server(mux.lookupMethodFunc)
+
+// Create the client connection to the server with an in-memory pipe.
+const clientConn = new Conn()
+const serverConn = new Conn(server)
+pipe(clientConn, serverConn, clientConn)
+const client = new Client(clientConn.buildOpenStreamFunc())
+
+// Examples of different types of RPC calls:
+
+// One-shot request/response (unary):
+console.log('Calling Echo: unary call...')
+let result = await demoServiceClient.Echo({
+  body: 'Hello world!',
+})
+console.log('success: output', result.body)
+
+// Streaming from client->server with a single server response:
+const clientRequestStream = pushable<EchoMsg>({objectMode: true})
+clientRequestStream.push({body: 'Hello world from streaming request.'})
+clientRequestStream.end()
+console.log('Calling EchoClientStream: client -> server...')
+result = await demoServiceClient.EchoClientStream(clientRequestStream)
+console.log('success: output', result.body)
+
+// Streaming from server -> client with a single client message.
+console.log('Calling EchoServerStream: server -> client...')
+const serverStream = demoServiceClient.EchoServerStream({
+  body: 'Hello world from server to client streaming request.',
+})
+for await (const msg of serverStream) {
+  console.log('server: output', msg.body)
+}
 ```
 
 ## Attribution
