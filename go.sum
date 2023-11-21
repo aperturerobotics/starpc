@@ -1,5 +1,3 @@
-github.com/aperturerobotics/util v1.7.7 h1:KlUOUPl0ZJA58HrOngc24D+M9wellEjMQXJhL3McDrM=
-github.com/aperturerobotics/util v1.7.7/go.mod h1:idhGuFuAatygqticAnPcSZhef8yV7TYufLUw1Qfj4Cg=
 github.com/aperturerobotics/util v1.7.8 h1:mHGhEvrka5+l5aB44p4FtuejknbkNtR2si86tPokXao=
 github.com/aperturerobotics/util v1.7.8/go.mod h1:idhGuFuAatygqticAnPcSZhef8yV7TYufLUw1Qfj4Cg=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -17,8 +15,6 @@ github.com/klauspost/cpuid/v2 v2.2.5 h1:0E5MSMDEoAulmXNFquVs//DdoomxaoTY1kUhbc/q
 github.com/klauspost/cpuid/v2 v2.2.5/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
 github.com/libp2p/go-buffer-pool v0.1.0 h1:oK4mSFcQz7cTQIfqbe4MIj9gLW+mnanjyFtc6cdF0Y8=
 github.com/libp2p/go-buffer-pool v0.1.0/go.mod h1:N+vh8gMqimBzdKkSMVuydVDq+UV5QTWy5HSiZacSbPg=
-github.com/libp2p/go-libp2p v0.32.0 h1:86I4B7nBUPIyTgw3+5Ibq6K7DdKRCuZw8URCfPc1hQM=
-github.com/libp2p/go-libp2p v0.32.0/go.mod h1:hXXC3kXPlBZ1eu8Q2hptGrMB4mZ3048JUoS4EKaHW5c=
 github.com/libp2p/go-libp2p v0.32.1 h1:wy1J4kZIZxOaej6NveTWCZmHiJ/kY7GoAqXgqNCnPps=
 github.com/libp2p/go-libp2p v0.32.1/go.mod h1:hXXC3kXPlBZ1eu8Q2hptGrMB4mZ3048JUoS4EKaHW5c=
 github.com/libp2p/go-libp2p-testing v0.12.0 h1:EPvBb4kKMWO29qP4mZGyhVzUyR25dvfUIK5WDu6iPUA=
