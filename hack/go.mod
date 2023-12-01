@@ -8,7 +8,7 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 
 require (
 	github.com/golangci/golangci-lint v1.55.2 // latest
-	github.com/planetscale/vtprotobuf v0.6.0 // main
+	github.com/planetscale/vtprotobuf v0.6.0 // latest
 	github.com/psampaz/go-mod-outdated v0.9.0
 	google.golang.org/protobuf v1.32.0
 )

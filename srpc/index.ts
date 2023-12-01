@@ -32,6 +32,13 @@ export {
   prependLengthPrefixTransform,
   decodePacketSource,
   encodePacketSource,
+  uint32LEDecode,
+  uint32LEEncode,
+  decodeUint32Le,
+  encodeUint32Le,
+  lengthPrefixDecode,
+  lengthPrefixEncode,
+  prependPacketLen,
 } from './packet.js'
 export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
