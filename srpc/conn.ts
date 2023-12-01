@@ -18,7 +18,6 @@ import {
   prependLengthPrefixTransform,
 } from './packet.js'
 import { buildPushableSink } from './pushable.js'
-import { createDisabledComponentLogger } from './log.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
 export interface ConnParams {
@@ -74,12 +73,7 @@ export class Conn
     if (server) {
       this.server = server
     }
-    const muxerFactory =
-      connParams?.muxerFactory ??
-      yamux()({
-        // https://github.com/ChainSafe/js-libp2p-yamux/issues/69
-        logger: createDisabledComponentLogger(),
-      })
+    const muxerFactory = connParams?.muxerFactory ?? yamux()()
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
       direction: connParams?.direction || 'outbound',

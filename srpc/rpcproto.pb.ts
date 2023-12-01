@@ -13,6 +13,7 @@ export interface Packet {
         $case: 'callCancel'
         callCancel: boolean
       }
+    | undefined
 }
 
 /** CallStart requests starting a new RPC call. */
@@ -89,7 +90,7 @@ export const Packet = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
@@ -99,7 +100,7 @@ export const Packet = {
           }
           continue
         case 2:
-          if (tag != 18) {
+          if (tag !== 18) {
             break
           }
 
@@ -109,14 +110,14 @@ export const Packet = {
           }
           continue
         case 3:
-          if (tag != 24) {
+          if (tag !== 24) {
             break
           }
 
           message.body = { $case: 'callCancel', callCancel: reader.bool() }
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -130,12 +131,12 @@ export const Packet = {
     source: AsyncIterable<Packet | Packet[]> | Iterable<Packet | Packet[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [Packet.encode(p).finish()]
         }
       } else {
-        yield* [Packet.encode(pkt).finish()]
+        yield* [Packet.encode(pkt as any).finish()]
       }
     }
   },
@@ -148,12 +149,12 @@ export const Packet = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<Packet> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [Packet.decode(p)]
         }
       } else {
-        yield* [Packet.decode(pkt)]
+        yield* [Packet.decode(pkt as any)]
       }
     }
   },
@@ -168,30 +169,31 @@ export const Packet = {
         : isSet(object.callData)
           ? { $case: 'callData', callData: CallData.fromJSON(object.callData) }
           : isSet(object.callCancel)
-            ? { $case: 'callCancel', callCancel: Boolean(object.callCancel) }
+            ? {
+                $case: 'callCancel',
+                callCancel: globalThis.Boolean(object.callCancel),
+              }
             : undefined,
     }
   },
 
   toJSON(message: Packet): unknown {
     const obj: any = {}
-    message.body?.$case === 'callStart' &&
-      (obj.callStart = message.body?.callStart
-        ? CallStart.toJSON(message.body?.callStart)
-        : undefined)
-    message.body?.$case === 'callData' &&
-      (obj.callData = message.body?.callData
-        ? CallData.toJSON(message.body?.callData)
-        : undefined)
-    message.body?.$case === 'callCancel' &&
-      (obj.callCancel = message.body?.callCancel)
+    if (message.body?.$case === 'callStart') {
+      obj.callStart = CallStart.toJSON(message.body.callStart)
+    }
+    if (message.body?.$case === 'callData') {
+      obj.callData = CallData.toJSON(message.body.callData)
+    }
+    if (message.body?.$case === 'callCancel') {
+      obj.callCancel = message.body.callCancel
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<Packet>, I>>(base?: I): Packet {
-    return Packet.fromPartial(base ?? {})
+    return Packet.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<Packet>, I>>(object: I): Packet {
     const message = createBasePacket()
     if (
@@ -229,7 +231,7 @@ function createBaseCallStart(): CallStart {
   return {
     rpcService: '',
     rpcMethod: '',
-    data: new Uint8Array(),
+    data: new Uint8Array(0),
     dataIsZero: false,
   }
 }
@@ -263,35 +265,35 @@ export const CallStart = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.rpcService = reader.string()
           continue
         case 2:
-          if (tag != 18) {
+          if (tag !== 18) {
             break
           }
 
           message.rpcMethod = reader.string()
           continue
         case 3:
-          if (tag != 26) {
+          if (tag !== 26) {
             break
           }
 
           message.data = reader.bytes()
           continue
         case 4:
-          if (tag != 32) {
+          if (tag !== 32) {
             break
           }
 
           message.dataIsZero = reader.bool()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -307,12 +309,12 @@ export const CallStart = {
       | Iterable<CallStart | CallStart[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [CallStart.encode(p).finish()]
         }
       } else {
-        yield* [CallStart.encode(pkt).finish()]
+        yield* [CallStart.encode(pkt as any).finish()]
       }
     }
   },
@@ -325,50 +327,60 @@ export const CallStart = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<CallStart> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [CallStart.decode(p)]
         }
       } else {
-        yield* [CallStart.decode(pkt)]
+        yield* [CallStart.decode(pkt as any)]
       }
     }
   },
 
   fromJSON(object: any): CallStart {
     return {
-      rpcService: isSet(object.rpcService) ? String(object.rpcService) : '',
-      rpcMethod: isSet(object.rpcMethod) ? String(object.rpcMethod) : '',
+      rpcService: isSet(object.rpcService)
+        ? globalThis.String(object.rpcService)
+        : '',
+      rpcMethod: isSet(object.rpcMethod)
+        ? globalThis.String(object.rpcMethod)
+        : '',
       data: isSet(object.data)
         ? bytesFromBase64(object.data)
-        : new Uint8Array(),
-      dataIsZero: isSet(object.dataIsZero) ? Boolean(object.dataIsZero) : false,
+        : new Uint8Array(0),
+      dataIsZero: isSet(object.dataIsZero)
+        ? globalThis.Boolean(object.dataIsZero)
+        : false,
     }
   },
 
   toJSON(message: CallStart): unknown {
     const obj: any = {}
-    message.rpcService !== undefined && (obj.rpcService = message.rpcService)
-    message.rpcMethod !== undefined && (obj.rpcMethod = message.rpcMethod)
-    message.data !== undefined &&
-      (obj.data = base64FromBytes(
-        message.data !== undefined ? message.data : new Uint8Array(),
-      ))
-    message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
+    if (message.rpcService !== '') {
+      obj.rpcService = message.rpcService
+    }
+    if (message.rpcMethod !== '') {
+      obj.rpcMethod = message.rpcMethod
+    }
+    if (message.data.length !== 0) {
+      obj.data = base64FromBytes(message.data)
+    }
+    if (message.dataIsZero === true) {
+      obj.dataIsZero = message.dataIsZero
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<CallStart>, I>>(base?: I): CallStart {
-    return CallStart.fromPartial(base ?? {})
+    return CallStart.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<CallStart>, I>>(
     object: I,
   ): CallStart {
     const message = createBaseCallStart()
     message.rpcService = object.rpcService ?? ''
     message.rpcMethod = object.rpcMethod ?? ''
-    message.data = object.data ?? new Uint8Array()
+    message.data = object.data ?? new Uint8Array(0)
     message.dataIsZero = object.dataIsZero ?? false
     return message
   },
@@ -376,7 +388,7 @@ export const CallStart = {
 
 function createBaseCallData(): CallData {
   return {
-    data: new Uint8Array(),
+    data: new Uint8Array(0),
     dataIsZero: false,
     complete: false,
     error: '',
@@ -412,35 +424,35 @@ export const CallData = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.data = reader.bytes()
           continue
         case 2:
-          if (tag != 16) {
+          if (tag !== 16) {
             break
           }
 
           message.dataIsZero = reader.bool()
           continue
         case 3:
-          if (tag != 24) {
+          if (tag !== 24) {
             break
           }
 
           message.complete = reader.bool()
           continue
         case 4:
-          if (tag != 34) {
+          if (tag !== 34) {
             break
           }
 
           message.error = reader.string()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -456,12 +468,12 @@ export const CallData = {
       | Iterable<CallData | CallData[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [CallData.encode(p).finish()]
         }
       } else {
-        yield* [CallData.encode(pkt).finish()]
+        yield* [CallData.encode(pkt as any).finish()]
       }
     }
   },
@@ -474,12 +486,12 @@ export const CallData = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<CallData> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [CallData.decode(p)]
         }
       } else {
-        yield* [CallData.decode(pkt)]
+        yield* [CallData.decode(pkt as any)]
       }
     }
   },
@@ -488,32 +500,40 @@ export const CallData = {
     return {
       data: isSet(object.data)
         ? bytesFromBase64(object.data)
-        : new Uint8Array(),
-      dataIsZero: isSet(object.dataIsZero) ? Boolean(object.dataIsZero) : false,
-      complete: isSet(object.complete) ? Boolean(object.complete) : false,
-      error: isSet(object.error) ? String(object.error) : '',
+        : new Uint8Array(0),
+      dataIsZero: isSet(object.dataIsZero)
+        ? globalThis.Boolean(object.dataIsZero)
+        : false,
+      complete: isSet(object.complete)
+        ? globalThis.Boolean(object.complete)
+        : false,
+      error: isSet(object.error) ? globalThis.String(object.error) : '',
     }
   },
 
   toJSON(message: CallData): unknown {
     const obj: any = {}
-    message.data !== undefined &&
-      (obj.data = base64FromBytes(
-        message.data !== undefined ? message.data : new Uint8Array(),
-      ))
-    message.dataIsZero !== undefined && (obj.dataIsZero = message.dataIsZero)
-    message.complete !== undefined && (obj.complete = message.complete)
-    message.error !== undefined && (obj.error = message.error)
+    if (message.data.length !== 0) {
+      obj.data = base64FromBytes(message.data)
+    }
+    if (message.dataIsZero === true) {
+      obj.dataIsZero = message.dataIsZero
+    }
+    if (message.complete === true) {
+      obj.complete = message.complete
+    }
+    if (message.error !== '') {
+      obj.error = message.error
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<CallData>, I>>(base?: I): CallData {
-    return CallData.fromPartial(base ?? {})
+    return CallData.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<CallData>, I>>(object: I): CallData {
     const message = createBaseCallData()
-    message.data = object.data ?? new Uint8Array()
+    message.data = object.data ?? new Uint8Array(0)
     message.dataIsZero = object.dataIsZero ?? false
     message.complete = object.complete ?? false
     message.error = object.error ?? ''
@@ -521,30 +541,11 @@ export const CallData = {
   },
 }
 
-declare var self: any | undefined
-declare var window: any | undefined
-declare var global: any | undefined
-var tsProtoGlobalThis: any = (() => {
-  if (typeof globalThis !== 'undefined') {
-    return globalThis
-  }
-  if (typeof self !== 'undefined') {
-    return self
-  }
-  if (typeof window !== 'undefined') {
-    return window
-  }
-  if (typeof global !== 'undefined') {
-    return global
-  }
-  throw 'Unable to locate global object'
-})()
-
 function bytesFromBase64(b64: string): Uint8Array {
-  if (tsProtoGlobalThis.Buffer) {
-    return Uint8Array.from(tsProtoGlobalThis.Buffer.from(b64, 'base64'))
+  if (globalThis.Buffer) {
+    return Uint8Array.from(globalThis.Buffer.from(b64, 'base64'))
   } else {
-    const bin = tsProtoGlobalThis.atob(b64)
+    const bin = globalThis.atob(b64)
     const arr = new Uint8Array(bin.length)
     for (let i = 0; i < bin.length; ++i) {
       arr[i] = bin.charCodeAt(i)
@@ -554,14 +555,14 @@ function bytesFromBase64(b64: string): Uint8Array {
 }
 
 function base64FromBytes(arr: Uint8Array): string {
-  if (tsProtoGlobalThis.Buffer) {
-    return tsProtoGlobalThis.Buffer.from(arr).toString('base64')
+  if (globalThis.Buffer) {
+    return globalThis.Buffer.from(arr).toString('base64')
   } else {
     const bin: string[] = []
     arr.forEach((byte) => {
-      bin.push(String.fromCharCode(byte))
+      bin.push(globalThis.String.fromCharCode(byte))
     })
-    return tsProtoGlobalThis.btoa(bin.join(''))
+    return globalThis.btoa(bin.join(''))
   }
 }
 
@@ -578,8 +579,8 @@ export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Long
     ? string | number | Long
-    : T extends Array<infer U>
-      ? Array<DeepPartial<U>>
+    : T extends globalThis.Array<infer U>
+      ? globalThis.Array<DeepPartial<U>>
       : T extends ReadonlyArray<infer U>
         ? ReadonlyArray<DeepPartial<U>>
         : T extends { $case: string }

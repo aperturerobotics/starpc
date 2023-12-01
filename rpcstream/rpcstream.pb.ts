@@ -10,6 +10,7 @@ export interface RpcStreamPacket {
     | { $case: 'init'; init: RpcStreamInit }
     | { $case: 'ack'; ack: RpcAck }
     | { $case: 'data'; data: Uint8Array }
+    | undefined
 }
 
 /** RpcStreamInit is the first message in a RPC stream. */
@@ -59,7 +60,7 @@ export const RpcStreamPacket = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
@@ -69,7 +70,7 @@ export const RpcStreamPacket = {
           }
           continue
         case 2:
-          if (tag != 18) {
+          if (tag !== 18) {
             break
           }
 
@@ -79,14 +80,14 @@ export const RpcStreamPacket = {
           }
           continue
         case 3:
-          if (tag != 26) {
+          if (tag !== 26) {
             break
           }
 
           message.body = { $case: 'data', data: reader.bytes() }
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -102,12 +103,12 @@ export const RpcStreamPacket = {
       | Iterable<RpcStreamPacket | RpcStreamPacket[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcStreamPacket.encode(p).finish()]
         }
       } else {
-        yield* [RpcStreamPacket.encode(pkt).finish()]
+        yield* [RpcStreamPacket.encode(pkt as any).finish()]
       }
     }
   },
@@ -120,12 +121,12 @@ export const RpcStreamPacket = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcStreamPacket> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcStreamPacket.decode(p)]
         }
       } else {
-        yield* [RpcStreamPacket.decode(pkt)]
+        yield* [RpcStreamPacket.decode(pkt as any)]
       }
     }
   },
@@ -144,28 +145,23 @@ export const RpcStreamPacket = {
 
   toJSON(message: RpcStreamPacket): unknown {
     const obj: any = {}
-    message.body?.$case === 'init' &&
-      (obj.init = message.body?.init
-        ? RpcStreamInit.toJSON(message.body?.init)
-        : undefined)
-    message.body?.$case === 'ack' &&
-      (obj.ack = message.body?.ack
-        ? RpcAck.toJSON(message.body?.ack)
-        : undefined)
-    message.body?.$case === 'data' &&
-      (obj.data =
-        message.body?.data !== undefined
-          ? base64FromBytes(message.body?.data)
-          : undefined)
+    if (message.body?.$case === 'init') {
+      obj.init = RpcStreamInit.toJSON(message.body.init)
+    }
+    if (message.body?.$case === 'ack') {
+      obj.ack = RpcAck.toJSON(message.body.ack)
+    }
+    if (message.body?.$case === 'data') {
+      obj.data = base64FromBytes(message.body.data)
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
     base?: I,
   ): RpcStreamPacket {
-    return RpcStreamPacket.fromPartial(base ?? {})
+    return RpcStreamPacket.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<RpcStreamPacket>, I>>(
     object: I,
   ): RpcStreamPacket {
@@ -222,14 +218,14 @@ export const RpcStreamInit = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.componentId = reader.string()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -245,12 +241,12 @@ export const RpcStreamInit = {
       | Iterable<RpcStreamInit | RpcStreamInit[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcStreamInit.encode(p).finish()]
         }
       } else {
-        yield* [RpcStreamInit.encode(pkt).finish()]
+        yield* [RpcStreamInit.encode(pkt as any).finish()]
       }
     }
   },
@@ -263,34 +259,37 @@ export const RpcStreamInit = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcStreamInit> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcStreamInit.decode(p)]
         }
       } else {
-        yield* [RpcStreamInit.decode(pkt)]
+        yield* [RpcStreamInit.decode(pkt as any)]
       }
     }
   },
 
   fromJSON(object: any): RpcStreamInit {
     return {
-      componentId: isSet(object.componentId) ? String(object.componentId) : '',
+      componentId: isSet(object.componentId)
+        ? globalThis.String(object.componentId)
+        : '',
     }
   },
 
   toJSON(message: RpcStreamInit): unknown {
     const obj: any = {}
-    message.componentId !== undefined && (obj.componentId = message.componentId)
+    if (message.componentId !== '') {
+      obj.componentId = message.componentId
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
     base?: I,
   ): RpcStreamInit {
-    return RpcStreamInit.fromPartial(base ?? {})
+    return RpcStreamInit.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<RpcStreamInit>, I>>(
     object: I,
   ): RpcStreamInit {
@@ -324,14 +323,14 @@ export const RpcAck = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.error = reader.string()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -345,12 +344,12 @@ export const RpcAck = {
     source: AsyncIterable<RpcAck | RpcAck[]> | Iterable<RpcAck | RpcAck[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcAck.encode(p).finish()]
         }
       } else {
-        yield* [RpcAck.encode(pkt).finish()]
+        yield* [RpcAck.encode(pkt as any).finish()]
       }
     }
   },
@@ -363,30 +362,31 @@ export const RpcAck = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<RpcAck> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [RpcAck.decode(p)]
         }
       } else {
-        yield* [RpcAck.decode(pkt)]
+        yield* [RpcAck.decode(pkt as any)]
       }
     }
   },
 
   fromJSON(object: any): RpcAck {
-    return { error: isSet(object.error) ? String(object.error) : '' }
+    return { error: isSet(object.error) ? globalThis.String(object.error) : '' }
   },
 
   toJSON(message: RpcAck): unknown {
     const obj: any = {}
-    message.error !== undefined && (obj.error = message.error)
+    if (message.error !== '') {
+      obj.error = message.error
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<RpcAck>, I>>(base?: I): RpcAck {
-    return RpcAck.fromPartial(base ?? {})
+    return RpcAck.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<RpcAck>, I>>(object: I): RpcAck {
     const message = createBaseRpcAck()
     message.error = object.error ?? ''
@@ -394,30 +394,11 @@ export const RpcAck = {
   },
 }
 
-declare var self: any | undefined
-declare var window: any | undefined
-declare var global: any | undefined
-var tsProtoGlobalThis: any = (() => {
-  if (typeof globalThis !== 'undefined') {
-    return globalThis
-  }
-  if (typeof self !== 'undefined') {
-    return self
-  }
-  if (typeof window !== 'undefined') {
-    return window
-  }
-  if (typeof global !== 'undefined') {
-    return global
-  }
-  throw 'Unable to locate global object'
-})()
-
 function bytesFromBase64(b64: string): Uint8Array {
-  if (tsProtoGlobalThis.Buffer) {
-    return Uint8Array.from(tsProtoGlobalThis.Buffer.from(b64, 'base64'))
+  if (globalThis.Buffer) {
+    return Uint8Array.from(globalThis.Buffer.from(b64, 'base64'))
   } else {
-    const bin = tsProtoGlobalThis.atob(b64)
+    const bin = globalThis.atob(b64)
     const arr = new Uint8Array(bin.length)
     for (let i = 0; i < bin.length; ++i) {
       arr[i] = bin.charCodeAt(i)
@@ -427,14 +408,14 @@ function bytesFromBase64(b64: string): Uint8Array {
 }
 
 function base64FromBytes(arr: Uint8Array): string {
-  if (tsProtoGlobalThis.Buffer) {
-    return tsProtoGlobalThis.Buffer.from(arr).toString('base64')
+  if (globalThis.Buffer) {
+    return globalThis.Buffer.from(arr).toString('base64')
   } else {
     const bin: string[] = []
     arr.forEach((byte) => {
-      bin.push(String.fromCharCode(byte))
+      bin.push(globalThis.String.fromCharCode(byte))
     })
-    return tsProtoGlobalThis.btoa(bin.join(''))
+    return globalThis.btoa(bin.join(''))
   }
 }
 
@@ -451,8 +432,8 @@ export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Long
     ? string | number | Long
-    : T extends Array<infer U>
-      ? Array<DeepPartial<U>>
+    : T extends globalThis.Array<infer U>
+      ? globalThis.Array<DeepPartial<U>>
       : T extends ReadonlyArray<infer U>
         ? ReadonlyArray<DeepPartial<U>>
         : T extends { $case: string }

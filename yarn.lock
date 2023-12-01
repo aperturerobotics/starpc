@@ -364,7 +364,7 @@
     race-signal "^1.0.0"
     uint8arraylist "^2.4.3"
 
-"@libp2p/interface@^1.0.0", "@libp2p/interface@^1.0.1":
+"@libp2p/interface@^1.0.0":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@libp2p/interface/-/interface-1.0.1.tgz#97d55b3920a938c245776728df5cd85ef1241b28"
   integrity sha512-TRo1YxJ+AVjt5ms+mTOp8xcoCis5HAUMzv0XfCvxtIw77Bog6TPR5VdkGutlEQOKUMzXtLP0lW88fTQBeiiOnA==

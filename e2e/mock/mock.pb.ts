@@ -33,14 +33,14 @@ export const MockMsg = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.body = reader.string()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -54,12 +54,12 @@ export const MockMsg = {
     source: AsyncIterable<MockMsg | MockMsg[]> | Iterable<MockMsg | MockMsg[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [MockMsg.encode(p).finish()]
         }
       } else {
-        yield* [MockMsg.encode(pkt).finish()]
+        yield* [MockMsg.encode(pkt as any).finish()]
       }
     }
   },
@@ -72,30 +72,31 @@ export const MockMsg = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<MockMsg> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [MockMsg.decode(p)]
         }
       } else {
-        yield* [MockMsg.decode(pkt)]
+        yield* [MockMsg.decode(pkt as any)]
       }
     }
   },
 
   fromJSON(object: any): MockMsg {
-    return { body: isSet(object.body) ? String(object.body) : '' }
+    return { body: isSet(object.body) ? globalThis.String(object.body) : '' }
   },
 
   toJSON(message: MockMsg): unknown {
     const obj: any = {}
-    message.body !== undefined && (obj.body = message.body)
+    if (message.body !== '') {
+      obj.body = message.body
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<MockMsg>, I>>(base?: I): MockMsg {
-    return MockMsg.fromPartial(base ?? {})
+    return MockMsg.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<MockMsg>, I>>(object: I): MockMsg {
     const message = createBaseMockMsg()
     message.body = object.body ?? ''
@@ -109,11 +110,12 @@ export interface Mock {
   MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>
 }
 
+export const MockServiceName = 'e2e.mock.Mock'
 export class MockClientImpl implements Mock {
   private readonly rpc: Rpc
   private readonly service: string
   constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || 'e2e.mock.Mock'
+    this.service = opts?.service || MockServiceName
     this.rpc = rpc
     this.MockRequest = this.MockRequest.bind(this)
   }
@@ -169,8 +171,8 @@ export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Long
     ? string | number | Long
-    : T extends Array<infer U>
-      ? Array<DeepPartial<U>>
+    : T extends globalThis.Array<infer U>
+      ? globalThis.Array<DeepPartial<U>>
       : T extends ReadonlyArray<infer U>
         ? ReadonlyArray<DeepPartial<U>>
         : T extends { $case: string }

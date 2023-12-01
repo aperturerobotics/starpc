@@ -34,14 +34,14 @@ export const EchoMsg = {
       const tag = reader.uint32()
       switch (tag >>> 3) {
         case 1:
-          if (tag != 10) {
+          if (tag !== 10) {
             break
           }
 
           message.body = reader.string()
           continue
       }
-      if ((tag & 7) == 4 || tag == 0) {
+      if ((tag & 7) === 4 || tag === 0) {
         break
       }
       reader.skipType(tag & 7)
@@ -55,12 +55,12 @@ export const EchoMsg = {
     source: AsyncIterable<EchoMsg | EchoMsg[]> | Iterable<EchoMsg | EchoMsg[]>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [EchoMsg.encode(p).finish()]
         }
       } else {
-        yield* [EchoMsg.encode(pkt).finish()]
+        yield* [EchoMsg.encode(pkt as any).finish()]
       }
     }
   },
@@ -73,30 +73,31 @@ export const EchoMsg = {
       | Iterable<Uint8Array | Uint8Array[]>,
   ): AsyncIterable<EchoMsg> {
     for await (const pkt of source) {
-      if (Array.isArray(pkt)) {
-        for (const p of pkt) {
+      if (globalThis.Array.isArray(pkt)) {
+        for (const p of pkt as any) {
           yield* [EchoMsg.decode(p)]
         }
       } else {
-        yield* [EchoMsg.decode(pkt)]
+        yield* [EchoMsg.decode(pkt as any)]
       }
     }
   },
 
   fromJSON(object: any): EchoMsg {
-    return { body: isSet(object.body) ? String(object.body) : '' }
+    return { body: isSet(object.body) ? globalThis.String(object.body) : '' }
   },
 
   toJSON(message: EchoMsg): unknown {
     const obj: any = {}
-    message.body !== undefined && (obj.body = message.body)
+    if (message.body !== '') {
+      obj.body = message.body
+    }
     return obj
   },
 
   create<I extends Exact<DeepPartial<EchoMsg>, I>>(base?: I): EchoMsg {
-    return EchoMsg.fromPartial(base ?? {})
+    return EchoMsg.fromPartial(base ?? ({} as any))
   },
-
   fromPartial<I extends Exact<DeepPartial<EchoMsg>, I>>(object: I): EchoMsg {
     const message = createBaseEchoMsg()
     message.body = object.body ?? ''
@@ -130,11 +131,12 @@ export interface Echoer {
   ): AsyncIterable<RpcStreamPacket>
 }
 
+export const EchoerServiceName = 'echo.Echoer'
 export class EchoerClientImpl implements Echoer {
   private readonly rpc: Rpc
   private readonly service: string
   constructor(rpc: Rpc, opts?: { service?: string }) {
-    this.service = opts?.service || 'echo.Echoer'
+    this.service = opts?.service || EchoerServiceName
     this.rpc = rpc
     this.Echo = this.Echo.bind(this)
     this.EchoServerStream = this.EchoServerStream.bind(this)
@@ -304,8 +306,8 @@ export type DeepPartial<T> = T extends Builtin
   ? T
   : T extends Long
     ? string | number | Long
-    : T extends Array<infer U>
-      ? Array<DeepPartial<U>>
+    : T extends globalThis.Array<infer U>
+      ? globalThis.Array<DeepPartial<U>>
       : T extends ReadonlyArray<infer U>
         ? ReadonlyArray<DeepPartial<U>>
         : T extends { $case: string }
