@@ -1,3 +1,4 @@
+import { yamux } from '@chainsafe/libp2p-yamux'
 import type { Direction, Stream } from '@libp2p/interface/connection'
 import type {
   StreamMuxer,
@@ -5,7 +6,6 @@ import type {
 } from '@libp2p/interface/stream-muxer'
 import { pipe } from 'it-pipe'
 import type { Duplex, Source } from 'it-stream-types'
-import { yamux } from '@chainsafe/libp2p-yamux'
 import { Uint8ArrayList } from 'uint8arraylist'
 import isPromise from 'is-promise'
 import { pushable, Pushable } from 'it-pushable'
@@ -18,6 +18,7 @@ import {
   prependLengthPrefixTransform,
 } from './packet.js'
 import { buildPushableSink } from './pushable.js'
+import { createDisabledComponentLogger } from './log.js'
 
 // ConnParams are parameters that can be passed to the Conn constructor.
 export interface ConnParams {
@@ -62,12 +63,7 @@ export function streamToSRPCStream(
 // Implements the server by handling incoming streams.
 // If the server is unset, rejects any incoming streams.
 export class Conn
-  implements
-    Duplex<
-      AsyncGenerator<Uint8Array>,
-      Source<Uint8ArrayList | Uint8Array>,
-      Promise<void>
-    >
+  implements Duplex<AsyncGenerator<Uint8Array | Uint8ArrayList>>
 {
   // muxer is the stream muxer.
   private muxer: StreamMuxer
@@ -78,7 +74,12 @@ export class Conn
     if (server) {
       this.server = server
     }
-    const muxerFactory = connParams?.muxerFactory ?? yamux()()
+    const muxerFactory =
+      connParams?.muxerFactory ??
+      yamux()({
+        // https://github.com/ChainSafe/js-libp2p-yamux/issues/69
+        logger: createDisabledComponentLogger(),
+      })
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
       direction: connParams?.direction || 'outbound',
