@@ -1,15 +1,11 @@
-import {
-  encode as lengthPrefixEncode,
-  decode as lengthPrefixDecode,
-} from 'it-length-prefixed'
 import { Uint8ArrayList } from 'uint8arraylist'
+import { Source, Transform } from 'it-stream-types'
 
 import { Packet } from './rpcproto.pb.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
 } from './message.js'
-import { Source, Transform } from 'it-stream-types'
 
 // decodePacketSource decodes packets from a binary data stream.
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
@@ -18,7 +14,7 @@ export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
 export const encodePacketSource = buildEncodeMessageTransform<Packet>(Packet)
 
 // uint32LEDecode removes the length prefix.
-const uint32LEDecode = (data: Uint8ArrayList) => {
+export const uint32LEDecode = (data: Uint8ArrayList) => {
   if (data.length < 4) {
     throw RangeError('Could not decode int32BE')
   }
@@ -28,34 +24,80 @@ const uint32LEDecode = (data: Uint8ArrayList) => {
 uint32LEDecode.bytes = 4
 
 // uint32LEEncode adds the length prefix.
-const uint32LEEncode = (value: number) => {
+export const uint32LEEncode = (value: number) => {
   const data = new Uint8ArrayList(new Uint8Array(4))
   data.setUint32(0, value, true)
   return data
 }
 uint32LEEncode.bytes = 4
 
+// lengthPrefixEncode transforms a source to a length-prefixed Uint8ArrayList stream.
+export async function* lengthPrefixEncode(
+  source: Source<Uint8Array | Uint8ArrayList>,
+  lengthEncoder: typeof uint32LEEncode,
+) {
+  for await (const chunk of source) {
+    // Encode the length of the chunk.
+    const length = chunk instanceof Uint8Array ? chunk.length : chunk.byteLength
+    const lengthEncoded = lengthEncoder(length)
+
+    // Concatenate the length prefix and the data.
+    yield new Uint8ArrayList(lengthEncoded, chunk)
+  }
+}
+
+// lengthPrefixDecode decodes a length-prefixed source to a Uint8ArrayList stream.
+export async function* lengthPrefixDecode(
+  source: Source<Uint8Array | Uint8ArrayList>,
+  lengthDecoder: typeof uint32LEDecode,
+) {
+  const buffer = new Uint8ArrayList()
+
+  for await (const chunk of source) {
+    buffer.append(chunk)
+
+    // Continue extracting messages while buffer contains enough data for decoding.
+    while (buffer.length >= lengthDecoder.bytes) {
+      const messageLength = lengthDecoder(buffer)
+      const totalLength = lengthDecoder.bytes + messageLength
+
+      if (buffer.length < totalLength) break // Wait for more data if the full message hasn't arrived.
+
+      // Extract the message excluding the length prefix.
+      const message = buffer.sublist(lengthDecoder.bytes, totalLength)
+      yield message
+
+      // Remove the processed message from the buffer.
+      buffer.consume(totalLength)
+    }
+  }
+}
+
 // prependLengthPrefixTransform adds a length prefix to a message source.
 // little-endian uint32
-export function prependLengthPrefixTransform(): Transform<
+export function prependLengthPrefixTransform(
+  lengthEncoder = uint32LEEncode,
+): Transform<
   Source<Uint8Array | Uint8ArrayList>,
-  | AsyncGenerator<Uint8Array, void, undefined>
-  | Generator<Uint8Array, void, undefined>
+  | AsyncGenerator<Uint8ArrayList, void, undefined>
+  | Generator<Uint8ArrayList, void, undefined>
 > {
   return (source: Source<Uint8Array | Uint8ArrayList>) => {
-    return lengthPrefixEncode(source, { lengthEncoder: uint32LEEncode })
+    return lengthPrefixEncode(source, lengthEncoder)
   }
 }
 
 // parseLengthPrefixTransform parses the length prefix from a message source.
 // little-endian uint32
-export function parseLengthPrefixTransform(): Transform<
-  Source<Uint8Array | Uint8ArrayList>, // Allow both AsyncIterable and Iterable
+export function parseLengthPrefixTransform(
+  lengthDecoder = uint32LEDecode,
+): Transform<
+  Source<Uint8Array | Uint8ArrayList>,
   | AsyncGenerator<Uint8ArrayList, void, unknown>
   | Generator<Uint8ArrayList, void, unknown>
 > {
   return (source: Source<Uint8Array | Uint8ArrayList>) => {
-    return lengthPrefixDecode(source, { lengthDecoder: uint32LEDecode })
+    return lengthPrefixDecode(source, lengthDecoder)
   }
 }
 

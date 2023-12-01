@@ -13,14 +13,14 @@ async function runRPC() {
   const channel = new WebSocketConn(ws, 'outbound')
   const client = channel.buildClient()
 
-  console.log('Running RpcStream test via WebSocket..')
-  await runRpcStreamTest(client)
-
   console.log('Running client test via WebSocket..')
   await runClientTest(client)
 
   console.log('Running abort controller test via WebSocket..')
   await runAbortControllerTest(client)
+
+  console.log('Running RpcStream test via WebSocket..')
+  await runRpcStreamTest(client)
 }
 
 process.on('unhandledRejection', (ev) => {

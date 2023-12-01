@@ -1,14 +1,16 @@
 import { yamux } from '@chainsafe/libp2p-yamux'
-import type { Direction, Stream } from '@libp2p/interface/connection'
 import type {
+  Direction,
+  Stream,
   StreamMuxer,
   StreamMuxerFactory,
-} from '@libp2p/interface/stream-muxer'
+} from '@libp2p/interface'
 import { pipe } from 'it-pipe'
 import type { Duplex, Source } from 'it-stream-types'
 import { Uint8ArrayList } from 'uint8arraylist'
 import isPromise from 'is-promise'
 import { pushable, Pushable } from 'it-pushable'
+import { defaultLogger } from '@libp2p/logger'
 
 import type { OpenStreamFunc, Stream as SRPCStream } from './stream.js'
 import { Client } from './client.js'
@@ -73,7 +75,11 @@ export class Conn
     if (server) {
       this.server = server
     }
-    const muxerFactory = connParams?.muxerFactory ?? yamux()()
+    const muxerFactory =
+      connParams?.muxerFactory ??
+      yamux({ enableKeepAlive: false })({
+        logger: defaultLogger(),
+      })
     this.muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),
       direction: connParams?.direction || 'outbound',

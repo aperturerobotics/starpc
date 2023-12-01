@@ -42,7 +42,7 @@ export function buildDecodeMessageTransform<T>(
   def: MessageDefinition<T>,
   memoize?: boolean,
 ): DecodeMessageTransform<T> {
-  const decode = memoize ? memoProtoDecode(def) : def.decode.bind(def)
+  const decode = !memoize ? def.decode.bind(def) : memoProtoDecode(def)
 
   // decodeMessageSource unmarshals and async yields encoded Messages.
   return async function* decodeMessageSource(
@@ -71,11 +71,11 @@ export function buildEncodeMessageTransform<T>(
   def: MessageDefinition<T>,
   memoize?: boolean,
 ): EncodeMessageTransform<T> {
-  const encode = memoize
-    ? memoProto(def)
-    : (msg: T): Uint8Array => {
+  const encode = !memoize
+    ? (msg: T): Uint8Array => {
         return def.encode(msg).finish()
       }
+    : memoProto(def)
 
   // encodeMessageSource encodes messages to byte arrays.
   return async function* encodeMessageSource(
