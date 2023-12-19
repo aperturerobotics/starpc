@@ -61,12 +61,12 @@
   },
   "devDependencies": {
     "@aperturerobotics/ts-common": "^0.6.6",
-    "@typescript-eslint/eslint-plugin": "^6.13.1",
-    "@typescript-eslint/parser": "^6.13.1",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
-    "esbuild": "^0.19.8",
-    "eslint": "^8.54.0",
+    "esbuild": "^0.19.10",
+    "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.1",
@@ -86,12 +86,12 @@
     "it-pipe": "^3.0.1",
     "it-pushable": "^3.2.3",
     "it-stream-types": "^2.0.1",
-    "it-ws": "^6.0.5",
+    "it-ws": "^6.1.1",
     "long": "^5.2.3",
     "memoize-one": "^6.0.0",
     "patch-package": "^8.0.0",
     "protobufjs": "^7.2.5",
     "uint8arraylist": "^2.4.7",
-    "ws": "^8.14.2"
+    "ws": "^8.15.1"
   }
 }
