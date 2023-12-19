@@ -17,6 +17,17 @@
     starpc "^0.21.2"
     utf-8-validate "^6.0.3"
 
+"@aptre/it-ws@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@aptre/it-ws/-/it-ws-1.0.0.tgz#dfcdbb654cc66fd8c8695ed8aa62aa9cc40db11c"
+  integrity sha512-QAqbfb2btw7FDTlCWimBDtUSu835S0+6FqG9lx6MfDbwKz6NXUAZTrMscIMgM7wF5ZpHmehvXqZl2KdANL6zSg==
+  dependencies:
+    "@types/ws" "^8.2.2"
+    event-iterator "^2.0.0"
+    it-stream-types "^2.0.1"
+    uint8arrays "^5.0.0"
+    ws "^8.4.0"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.22.13", "@babel/code-frame@^7.23.5":
   version "7.23.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.23.5.tgz#9009b69a8c602293476ad598ff53e4562e15c244"
@@ -1657,17 +1668,6 @@ it-ws@^6.0.5:
     event-iterator "^2.0.0"
     it-stream-types "^2.0.1"
     uint8arrays "^4.0.2"
-    ws "^8.4.0"
-
-it-ws@^6.1.1:
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/it-ws/-/it-ws-6.1.1.tgz#925d37955cc5bfa3e718ee5c98bf395a138daab9"
-  integrity sha512-oyk4eCeZto2lzWDnJOa3j1S2M+VOGKUh8isEf94ySoaL6IFlyie0T4P9E0ZUaIvX8LyJxYFHFKCt8Zk7Sm/XPQ==
-  dependencies:
-    "@types/ws" "^8.2.2"
-    event-iterator "^2.0.0"
-    it-stream-types "^2.0.1"
-    uint8arrays "^5.0.0"
     ws "^8.4.0"
 
 jackspeak@^2.3.5:

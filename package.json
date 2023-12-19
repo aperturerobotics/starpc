@@ -76,6 +76,7 @@
     "utf-8-validate": "^6.0.3"
   },
   "dependencies": {
+    "@aptre/it-ws": "^1.0.0",
     "@chainsafe/libp2p-yamux": "^5.0.0",
     "@libp2p/interface": "^0.1.2",
     "event-iterator": "^2.0.0",
@@ -86,7 +87,6 @@
     "it-pipe": "^3.0.1",
     "it-pushable": "^3.2.3",
     "it-stream-types": "^2.0.1",
-    "it-ws": "^6.1.1",
     "long": "^5.2.3",
     "memoize-one": "^6.0.0",
     "patch-package": "^8.0.0",
