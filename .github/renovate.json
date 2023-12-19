@@ -7,17 +7,15 @@
     "workarounds:all"
   ],
   "branchConcurrentLimit": 0,
-  "ignorePaths": [
-    "hack"
-  ],
+  "ignorePaths": ["hack"],
   "packageRules": [
     {
-      "matchManagers": [
-        "gomod"
-      ],
-      "matchDepTypes": [
-        "replace"
-      ],
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["replace"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["@chainsafe/libp2p-yamux", "@libp2p/interface"],
       "enabled": false
     }
   ]
