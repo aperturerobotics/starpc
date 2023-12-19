@@ -102,6 +102,9 @@ type srpcEchoer_EchoClientStreamClient struct {
 }
 
 func (x *srpcEchoer_EchoClientStreamClient) Send(m *EchoMsg) error {
+	if m == nil {
+		return nil
+	}
 	return x.MsgSend(m)
 }
 
@@ -144,6 +147,9 @@ type srpcEchoer_EchoBidiStreamClient struct {
 }
 
 func (x *srpcEchoer_EchoBidiStreamClient) Send(m *EchoMsg) error {
+	if m == nil {
+		return nil
+	}
 	return x.MsgSend(m)
 }
 
@@ -180,6 +186,9 @@ type srpcEchoer_RpcStreamClient struct {
 }
 
 func (x *srpcEchoer_RpcStreamClient) Send(m *rpcstream.RpcStreamPacket) error {
+	if m == nil {
+		return nil
+	}
 	return x.MsgSend(m)
 }
 
@@ -346,8 +355,10 @@ func (x *srpcEchoer_EchoServerStreamStream) Send(m *EchoMsg) error {
 }
 
 func (x *srpcEchoer_EchoServerStreamStream) SendAndClose(m *EchoMsg) error {
-	if err := x.MsgSend(m); err != nil {
-		return err
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
 	}
 	return x.CloseSend()
 }
@@ -389,8 +400,10 @@ func (x *srpcEchoer_EchoBidiStreamStream) Send(m *EchoMsg) error {
 }
 
 func (x *srpcEchoer_EchoBidiStreamStream) SendAndClose(m *EchoMsg) error {
-	if err := x.MsgSend(m); err != nil {
-		return err
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
 	}
 	return x.CloseSend()
 }
@@ -423,8 +436,10 @@ func (x *srpcEchoer_RpcStreamStream) Send(m *rpcstream.RpcStreamPacket) error {
 }
 
 func (x *srpcEchoer_RpcStreamStream) SendAndClose(m *rpcstream.RpcStreamPacket) error {
-	if err := x.MsgSend(m); err != nil {
-		return err
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
 	}
 	return x.CloseSend()
 }

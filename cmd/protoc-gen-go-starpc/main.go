@@ -382,6 +382,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 
 	if genSend {
 		s.P("func (x *", s.ClientStreamImpl(p), ") Send(m *", inType, ") error {")
+		s.P("if m == nil { return nil }")
 		s.P("return x.MsgSend(m)")
 		s.P("}")
 		s.P()
@@ -515,7 +516,7 @@ func (s *srpc) generateServerMethod(method *protogen.Method) {
 
 	if genSendAndClose {
 		s.P("func (x *", s.ServerStreamImpl(method), ") SendAndClose(m *", s.OutputType(method), ") error {")
-		s.P("if err := x.MsgSend(m); err != nil { return err }")
+		s.P("if m != nil { if err := x.MsgSend(m); err != nil { return err } }")
 		s.P("return x.CloseSend()")
 		s.P("}")
 		s.P()
