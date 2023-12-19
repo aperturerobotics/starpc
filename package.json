@@ -33,7 +33,8 @@
     "url": "git+ssh://git@github.com/aperturerobotics/starpc.git"
   },
   "scripts": {
-    "build": "rimraf ./dist && tsc --project tsconfig.build.json --outDir ./dist/",
+    "clean": "rimraf ./dist",
+    "build": "npm run clean && tsc --project tsconfig.build.json --outDir ./dist/",
     "check": "npm run typecheck",
     "typecheck": "tsc --noEmit",
     "deps": "depcheck --ignores 'bufferutil,utf-8-validate,ts-proto,rimraf,@aperturerobotics/ts-common'",
