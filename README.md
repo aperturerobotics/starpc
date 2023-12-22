@@ -213,7 +213,6 @@ export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
 ```
 
-
 ## Support
 
 Please file a [GitHub issue] and/or [Join Discord] with any questions.
