@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/pkg/errors v0.9.1 // latest
-	google.golang.org/protobuf v1.31.0 // latest
+	google.golang.org/protobuf v1.32.0 // latest
 	nhooyr.io/websocket v1.8.10 // master
 )
 
