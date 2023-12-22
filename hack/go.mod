@@ -10,7 +10,7 @@ require (
 	github.com/golangci/golangci-lint v1.52.2 // latest
 	github.com/planetscale/vtprotobuf v0.4.0 // main
 	github.com/psampaz/go-mod-outdated v0.9.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.32.0
 )
 
 require (
@@ -32,7 +32,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/aperturerobotics/util v1.8.1 // indirect
+	github.com/aperturerobotics/util v1.8.3 // indirect
 	github.com/ashanbrown/forbidigo v1.5.1 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
