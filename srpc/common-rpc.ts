@@ -157,10 +157,10 @@ export class CommonRPC {
       return
     }
     this.closed = true
+    this._rpcDataSource.end(err)
     try {
       await this.writeCallCancel()
     } finally {
-      this._rpcDataSource.end(err)
       // note: don't pass error to _source here.
       this._source.end()
     }

@@ -15,11 +15,11 @@ export async function openRpcStream(
   caller: RpcStreamCaller,
   waitAck?: boolean,
 ): Promise<Stream> {
-  const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
-  const packetSource = caller(packetSink)
+  const packetTx: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
+  const packetRx = caller(packetTx)
 
   // write the component id
-  packetSink.push({
+  packetTx.push({
     body: {
       $case: 'init',
       init: { componentId },
@@ -27,7 +27,7 @@ export async function openRpcStream(
   })
 
   // construct packet stream
-  const packetIt = packetSource[Symbol.asyncIterator]()
+  const packetIt = packetRx[Symbol.asyncIterator]()
 
   // wait for ack, if set.
   if (waitAck) {
@@ -48,7 +48,7 @@ export async function openRpcStream(
   }
 
   // build & return the data stream
-  return new RpcStream(packetSink, packetIt)
+  return new RpcStream(packetTx, packetIt)
 }
 
 // buildRpcStreamOpenStream builds a OpenStream func with a RpcStream.
@@ -73,11 +73,11 @@ export type RpcStreamGetter = (
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
 export async function* handleRpcStream(
-  packetStream: AsyncIterator<RpcStreamPacket>,
+  packetRx: AsyncIterator<RpcStreamPacket>,
   getter: RpcStreamGetter,
 ): AsyncIterable<RpcStreamPacket> {
   // read the component id
-  const initRpcStreamIt = await packetStream.next()
+  const initRpcStreamIt = await packetRx.next()
   if (initRpcStreamIt.done) {
     throw new Error('closed before init received')
   }
@@ -123,14 +123,14 @@ export async function* handleRpcStream(
   }
 
   // build the outgoing packet sink & the packet source
-  const packetSink: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
+  const packetTx: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
   // start the handler
-  const rpcStream = new RpcStream(packetSink, packetStream)
+  const rpcStream = new RpcStream(packetTx, packetRx)
   handler!(rpcStream)
 
   // process packets
-  for await (const packet of packetSink) {
+  for await (const packet of packetTx) {
     yield* [packet]
   }
 }
@@ -143,22 +143,22 @@ export class RpcStream implements Stream {
   // sink is the sink for outgoing Uint8Array packets.
   public readonly sink: Sink<Source<Uint8Array>, Promise<void>>
 
-  // _packetStream receives packets from the remote.
-  private readonly _packetStream: AsyncIterator<RpcStreamPacket>
-  // _packetSink writes packets to the remote.
-  private readonly _packetSink: {
+  // _packetRx receives packets from the remote.
+  private readonly _packetRx: AsyncIterator<RpcStreamPacket>
+  // _packetTx writes packets to the remote.
+  private readonly _packetTx: {
     push: (val: RpcStreamPacket) => void
     end: (err?: Error) => void
   }
 
-  // packetSink writes packets to the remote.
-  // packetSource receives packets from the remote.
+  // packetTx writes packets to the remote.
+  // packetRx receives packets from the remote.
   constructor(
-    packetSink: Pushable<RpcStreamPacket>,
-    packetStream: AsyncIterator<RpcStreamPacket>,
+    packetTx: Pushable<RpcStreamPacket>,
+    packetRx: AsyncIterator<RpcStreamPacket>,
   ) {
-    this._packetSink = packetSink
-    this._packetStream = packetStream
+    this._packetTx = packetTx
+    this._packetRx = packetRx
     this.sink = this._createSink()
     this.source = this._createSource()
   }
@@ -168,23 +168,22 @@ export class RpcStream implements Stream {
     return async (source: Source<Uint8Array>) => {
       try {
         for await (const arr of source) {
-          this._packetSink.push({
+          this._packetTx.push({
             body: { $case: 'data', data: arr },
           })
         }
-        this._packetSink.end()
+        this._packetTx.end()
       } catch (err) {
-        this._packetSink.end(err as Error)
+        this._packetTx.end(err as Error)
       }
     }
   }
 
   // _createSource initializes the source field.
   private _createSource(): AsyncGenerator<Uint8Array> {
-    const packetSource = this._packetStream
-    return (async function* () {
+    return (async function* (packetRx: AsyncIterator<RpcStreamPacket>) {
       while (true) {
-        const msgIt = await packetSource.next()
+        const msgIt = await packetRx.next()
         if (msgIt.done) {
           return
         }
@@ -204,6 +203,6 @@ export class RpcStream implements Stream {
             break
         }
       }
-    })()
+    })(this._packetRx)
   }
 }
