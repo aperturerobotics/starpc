@@ -28,6 +28,9 @@ export class CommonRPC {
   // method is the rpc method
   protected method?: string
 
+  // closed indicates this rpc has been closed already.
+  private closed?: boolean
+
   constructor() {
     this.sink = this._createSink()
     this.source = this._source
@@ -150,6 +153,10 @@ export class CommonRPC {
 
   // close closes the call, optionally with an error.
   public async close(err?: Error) {
+    if (this.closed) {
+      return
+    }
+    this.closed = true
     try {
       await this.writeCallCancel()
     } finally {
@@ -174,16 +181,10 @@ export class CommonRPC {
             await this.handlePacket(msg)
           }
         }
+        this._rpcDataSource.end()
       } catch (err) {
-        const anyErr = err as any
-        if (
-          anyErr?.code !== 'ERR_STREAM_RESET' &&
-          anyErr?.code !== 'ERR_STREAM_ABORT'
-        ) {
-          this.close(err as Error)
-        }
+        this.close(err as Error)
       }
-      this._rpcDataSource.end()
     }
   }
 }
