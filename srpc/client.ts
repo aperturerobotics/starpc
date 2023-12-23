@@ -70,7 +70,7 @@ export class Client implements TsProtoRpc {
       .then(async (call) => {
         return writeToPushable(call.rpcDataSource, serverData)
       })
-      .catch(serverData.throw.bind(serverData))
+      .catch(err => serverData.end(err))
     return serverData
   }
 
@@ -89,12 +89,12 @@ export class Client implements TsProtoRpc {
           for await (const message of call.rpcDataSource) {
             serverData.push(message)
           }
+          serverData.end()
         } catch (err) {
-          serverData.throw(err as Error)
+          serverData.end(err as Error)
         }
-        serverData.end()
       })
-      .catch(serverData.throw.bind(serverData))
+      .catch(err => serverData.end(err))
     return serverData
   }
 
