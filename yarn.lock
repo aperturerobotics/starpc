@@ -2404,9 +2404,9 @@ ts-proto-descriptors@1.15.0:
     protobufjs "^7.2.4"
 
 ts-proto@^1.165.0:
-  version "1.165.2"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.165.2.tgz#5394c4416eeba5f35fbf8111039875f3e288de44"
-  integrity sha512-Jhg3ZKelxhQ3zoBlKiVDfius2H7XLmdC0B+w5iCKUSyZqMIGQXC5iervR6CUIxaoLkSl7Pcw0XwCluR5TLf5NQ==
+  version "1.165.3"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.165.3.tgz#e5d5af42a4745674bce05a0c0a4131b9cb03a8cf"
+  integrity sha512-7qFH8gqCbBfkAp6xAvCboP0lWM3ObY7eofZyin2dAIWG/0a139gns1BOrpmH8NAghPjVeBHdI/BADFY1V4pK+w==
   dependencies:
     case-anything "^2.1.13"
     protobufjs "^7.2.4"
@@ -2521,9 +2521,9 @@ wrappy@1:
   integrity sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
 
 ws@^8.15.1:
-  version "8.15.1"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.15.1.tgz#271ba33a45ca0cc477940f7f200cd7fba7ee1997"
-  integrity sha512-W5OZiCjXEmk0yZ66ZN82beM5Sz7l7coYxpRkzS+p9PP+ToQry8szKh+61eNktr7EA9DOwvFGhfC605jDHbP6QQ==
+  version "8.16.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.16.0.tgz#d1cd774f36fbc07165066a60e40323eab6446fd4"
+  integrity sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==
 
 ws@^8.4.0:
   version "8.15.0"
