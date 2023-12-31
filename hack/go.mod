@@ -4,7 +4,7 @@ go 1.19
 
 replace github.com/aperturerobotics/starpc => ../
 
-replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.31.1-0.20231012212426-9cf9f0f94f47 // aperture
+replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.32.1-0.20231231025138-7d69d9b7299c // aperture
 
 require (
 	github.com/golangci/golangci-lint v1.52.2 // latest
@@ -32,7 +32,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/aperturerobotics/util v1.9.0 // indirect
+	github.com/aperturerobotics/util v1.11.0 // indirect
 	github.com/ashanbrown/forbidigo v1.5.1 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/leonklingele/grouper v1.1.1 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-libp2p v0.32.2 // indirect
-	github.com/libp2p/go-yamux/v4 v4.0.1 // indirect
+	github.com/libp2p/go-yamux/v4 v4.0.2-0.20231213140704-4c5812896512 // indirect
 	github.com/lufeee/execinquery v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/maratori/testableexamples v1.0.0 // indirect
@@ -212,5 +212,5 @@ require (
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 	mvdan.cc/unparam v0.0.0-20221223090309-7455f1af531d // indirect
-	nhooyr.io/websocket v1.8.10 // indirect
+	nhooyr.io/websocket v1.8.11-0.20231025130707-e3a2d32f704f // indirect
 )

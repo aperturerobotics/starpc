@@ -1,17 +1,17 @@
 module github.com/aperturerobotics/starpc
 
-go 1.19
+go 1.20
 
 require (
 	github.com/pkg/errors v0.9.1 // latest
 	google.golang.org/protobuf v1.32.0 // latest
-	nhooyr.io/websocket v1.8.10 // master
+	nhooyr.io/websocket v1.8.10 // latest
 )
 
 require (
 	github.com/aperturerobotics/util v1.11.0 // latest
 	github.com/libp2p/go-libp2p v0.32.2 // latest
-	github.com/libp2p/go-yamux/v4 v4.0.1 // master
+	github.com/libp2p/go-yamux/v4 v4.0.2-0.20231213140704-4c5812896512 // master
 	github.com/sirupsen/logrus v1.9.3 // latest
 )
 

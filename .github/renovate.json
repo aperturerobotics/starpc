@@ -15,7 +15,7 @@
       "enabled": false
     },
     {
-      "matchPackageNames": ["@chainsafe/libp2p-yamux", "@libp2p/interface"],
+      "matchPackageNames": ["@chainsafe/libp2p-yamux", "@libp2p/interface", "uint8arraylist"],
       "enabled": false
     }
   ]
