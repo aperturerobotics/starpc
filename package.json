@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.22.4",
+  "version": "0.22.5",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -62,13 +62,9 @@
   },
   "devDependencies": {
     "@aperturerobotics/ts-common": "^0.8.2",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.19.11",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.1",
     "ts-poet": "6.6.0",
