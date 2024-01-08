@@ -45,10 +45,8 @@ func (r *MsgStream) Context() context.Context {
 
 // MsgSend sends the message to the remote.
 func (r *MsgStream) MsgSend(msg Message) error {
-	select {
-	case <-r.ctx.Done():
+	if err := r.ctx.Err(); err != nil {
 		return context.Canceled
-	default:
 	}
 
 	msgData, err := msg.MarshalVT()

@@ -41,13 +41,12 @@ func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
 // Returns context.Canceled or io.EOF when the loop is complete / closed.
 func (s *Server) AcceptMuxedConn(ctx context.Context, mc network.MuxedConn) error {
 	for {
-		select {
-		case <-ctx.Done():
+		if err := ctx.Err(); err != nil {
 			return context.Canceled
-		default:
-			if mc.IsClosed() {
-				return io.EOF
-			}
+		}
+
+		if mc.IsClosed() {
+			return io.EOF
 		}
 
 		muxedStream, err := mc.AcceptStream()
