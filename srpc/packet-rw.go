@@ -44,7 +44,7 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	msgSize := p.SizeVT()
 	data := make([]byte, 4+msgSize)
 	binary.LittleEndian.PutUint32(data, uint32(msgSize))
-	_, err := p.MarshalToVT(data[4:])
+	_, err := p.MarshalToSizedBufferVT(data[4:])
 	if err != nil {
 		return err
 	}
