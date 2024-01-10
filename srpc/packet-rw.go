@@ -48,6 +48,7 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	if err != nil {
 		return err
 	}
+
 	var written, n int
 	for written < len(data) {
 		n, err = r.rw.Write(data)
@@ -56,6 +57,7 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 		}
 		written += n
 	}
+
 	return nil
 }
 
@@ -76,6 +78,7 @@ func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 	var currLen uint32
 	buf := make([]byte, 2048)
 	isOpen := true
+
 	for isOpen {
 		// read some data into the buffer
 		n, err := r.rw.Read(buf)
@@ -92,6 +95,8 @@ func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 		if err != nil {
 			return err
 		}
+
+	EmitIfEnough:
 
 		// check if we have enough data for a length prefix
 		bufLen := r.buf.Len()
@@ -117,6 +122,9 @@ func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 			if err := cb(pkt); err != nil {
 				return err
 			}
+
+			// check if there's still enough in the buffer
+			goto EmitIfEnough
 		}
 	}
 
