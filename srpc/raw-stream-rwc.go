@@ -72,21 +72,28 @@ func (r *RawStreamRwc) Read(p []byte) (n int, err error) {
 		r.mtx.Lock()
 		if len(r.readQueue) != 0 {
 			nrq := r.readQueue[0]
-			rn = len(readBuf)
-			if nrLen := len(nrq); nrLen < rn {
-				rn = nrLen
-			}
+			// rn = amount of data to read
+			// minimum of len(readBuf) (length of space remaining in p) and len(nrq) (size of next pkt in read queue)
+			rn = min(len(readBuf), len(nrq))
+			// read the contents of nrq up to rn bytes
 			read = nrq[:rn]
+			// get the remainder of the packet that we won't read this time
 			nrq = nrq[rn:]
+			// if there is no more to read drop the pkt from the queue
 			if len(nrq) == 0 {
 				r.readQueue[0] = nil
 				r.readQueue = r.readQueue[1:]
 			} else {
+				// otherwise update the queued packet to be just the remainder
 				r.readQueue[0] = nrq
 			}
 		}
+
+		// check if the stream is closed
 		closed, closedErr := r.closed, r.closeErr
 		var wait <-chan struct{}
+
+		// if we didn't read anything and !closed, wait till something changes.
 		if rn == 0 && !closed {
 			wait = r.bcast.GetWaitCh()
 		}
@@ -94,9 +101,10 @@ func (r *RawStreamRwc) Read(p []byte) (n int, err error) {
 
 		// if we read data, copy it to the output buf
 		if rn != 0 {
-			// advance readBuf by rn
+			// copy data to output buf
 			copy(readBuf, read)
 			n += rn
+			// advance readBuf by rn
 			readBuf = readBuf[rn:]
 			continue
 		}

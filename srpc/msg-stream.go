@@ -10,6 +10,7 @@ type MsgStreamRw interface {
 	//
 	// returns io.EOF if the stream ended.
 	ReadOne() ([]byte, error)
+
 	// WriteCallData writes a call data packet.
 	WriteCallData(data []byte, complete bool, err error) error
 }
@@ -53,6 +54,7 @@ func (r *MsgStream) MsgSend(msg Message) error {
 	if err != nil {
 		return err
 	}
+
 	return r.rw.WriteCallData(msgData, false, nil)
 }
 
