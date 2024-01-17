@@ -65,7 +65,7 @@
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.19.11",
-    "prettier": "^3.0.3",
+    "prettier": "^3.2.4",
     "rimraf": "^5.0.1",
     "ts-poet": "6.6.0",
     "ts-proto": "^1.166.1",
@@ -87,7 +87,7 @@
     "long": "^5.2.3",
     "memoize-one": "^6.0.0",
     "patch-package": "^8.0.0",
-    "protobufjs": "^7.2.5",
+    "protobufjs": "^7.2.6",
     "uint8arraylist": "^2.4.7",
     "ws": "^8.15.1"
   }
