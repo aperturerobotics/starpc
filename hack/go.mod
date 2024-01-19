@@ -1,10 +1,12 @@
 module hack
 
-go 1.19
+go 1.21
+
+toolchain go1.21.4
 
 replace github.com/aperturerobotics/starpc => ../
 
-replace google.golang.org/protobuf => github.com/paralin/protobuf-go v1.32.1-0.20231231025138-7d69d9b7299c // aperture
+replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1.32.1-0.20240118233629-6aeee82c476f // aperture
 
 require (
 	github.com/golangci/golangci-lint v1.52.2 // latest
@@ -32,7 +34,7 @@ require (
 	github.com/OpenPeeDeeP/depguard v1.1.1 // indirect
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
-	github.com/aperturerobotics/util v1.11.0 // indirect
+	github.com/aperturerobotics/util v1.12.0 // indirect
 	github.com/ashanbrown/forbidigo v1.5.1 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

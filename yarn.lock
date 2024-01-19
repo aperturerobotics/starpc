@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/@aashutoshrathi/word-wrap/-/word-wrap-1.2.6.tgz#bd9154aec9983f77b3a034ecaa015c2e4201f6cf"
   integrity sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==
 
-"@aperturerobotics/ts-common@^0.8.2":
-  version "0.8.2"
-  resolved "https://registry.yarnpkg.com/@aperturerobotics/ts-common/-/ts-common-0.8.2.tgz#58c0767e0efee5c4635494090e100df12e476424"
-  integrity sha512-lLb3aPPZvxSNNMvtWSrWQHtArFfKU8tMxfhzcoO0k4c86HDv1dp92l8dy3f5xGUThyrT/3J7QJaZMswaafraFQ==
+"@aperturerobotics/ts-common@^0.8.3":
+  version "0.8.3"
+  resolved "https://registry.yarnpkg.com/@aperturerobotics/ts-common/-/ts-common-0.8.3.tgz#ea229b6bbacce977fc8f80d3855d04014f3c7d18"
+  integrity sha512-csd6iYskZ1vWhny7VEiJuzdQnt27o6eydLbxlz5qE6DVypJW89m2FdwyKEtPWDHyLaslBHZVujfz5mfclvdQ/A==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^6.16.0"
     "@typescript-eslint/parser" "^6.16.0"
@@ -20,7 +20,7 @@
     eslint-plugin-react-hooks "^4.6.0"
     eslint-plugin-unused-imports "^3.0.0"
     long "^5.2.3"
-    starpc "^0.22.4"
+    starpc "^0.22.7"
     utf-8-validate "^6.0.3"
 
 "@aptre/it-ws@^1.0.0":
@@ -1637,18 +1637,6 @@ it-foreach@^2.0.3:
   dependencies:
     it-peekable "^3.0.0"
 
-it-length-prefixed@^9.0.3:
-  version "9.0.3"
-  resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-9.0.3.tgz#73af16f786cab60a0a9bfc2997e88eb26d3a72ca"
-  integrity sha512-YAu424ceYpXctxtjcLOqn7vJq082CaoP8J646ZusYISfQc3bpzQErgTUqMFj81V262KG2W9/YMBHsy6A/4yvmg==
-  dependencies:
-    err-code "^3.0.1"
-    it-reader "^6.0.1"
-    it-stream-types "^2.0.1"
-    uint8-varint "^2.0.1"
-    uint8arraylist "^2.0.0"
-    uint8arrays "^4.0.2"
-
 it-length-prefixed@^9.0.4:
   version "9.0.4"
   resolved "https://registry.yarnpkg.com/it-length-prefixed/-/it-length-prefixed-9.0.4.tgz#8096c3270420fe8abaa920c7b4d5e5895144008e"
@@ -2139,24 +2127,6 @@ protobufjs@^7.2.4, protobufjs@^7.2.6:
     "@types/node" ">=13.7.0"
     long "^5.0.0"
 
-protobufjs@^7.2.5:
-  version "7.2.5"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.2.5.tgz#45d5c57387a6d29a17aab6846dcc283f9b8e7f2d"
-  integrity sha512-gGXRSXvxQ7UiPgfw8gevrfRWcTlSbOFg+p/N+JVJEK5VhueL2miT6qTymqAmjr1Q5WbOCyJbyrk6JfWKwlFn6A==
-  dependencies:
-    "@protobufjs/aspromise" "^1.1.2"
-    "@protobufjs/base64" "^1.1.2"
-    "@protobufjs/codegen" "^2.0.4"
-    "@protobufjs/eventemitter" "^1.1.0"
-    "@protobufjs/fetch" "^1.1.0"
-    "@protobufjs/float" "^1.0.2"
-    "@protobufjs/inquire" "^1.1.0"
-    "@protobufjs/path" "^1.1.2"
-    "@protobufjs/pool" "^1.1.0"
-    "@protobufjs/utf8" "^1.1.0"
-    "@types/node" ">=13.7.0"
-    long "^5.0.0"
-
 punycode@^2.1.0:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.1.tgz#027422e2faec0b25e1549c3e1bd8309b9133b6e5"
@@ -2315,10 +2285,10 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==
 
-starpc@^0.22.4:
-  version "0.22.4"
-  resolved "https://registry.yarnpkg.com/starpc/-/starpc-0.22.4.tgz#920d2ae6277a333cb039f5ab14fd8208ac3f4eac"
-  integrity sha512-bbxS4UrToSewU0m2KVvL1lpyhTHUcJPkjn5Z2oexnyEr0q1KuXnOM0A/GVqd4F5fRa124cZ8FLanhYPotpigfg==
+starpc@^0.22.7:
+  version "0.22.7"
+  resolved "https://registry.yarnpkg.com/starpc/-/starpc-0.22.7.tgz#a087a90911d81c12bfeb4fd58d18cacd7846060e"
+  integrity sha512-tRxPOs3Qx+IK6944YlD/XMTErVOoFgcAMTlEPdQ0eJLZWo7ycGZSK1aeR01LVBdbbmvzRwGt27ambUxUa1+z0w==
   dependencies:
     "@aptre/it-ws" "^1.0.0"
     "@chainsafe/libp2p-yamux" "^5.0.0"
@@ -2327,14 +2297,14 @@ starpc@^0.22.4:
     is-promise "^4.0.0"
     isomorphic-ws "^5.0.0"
     it-first "^3.0.3"
-    it-length-prefixed "^9.0.3"
+    it-length-prefixed "^9.0.4"
     it-pipe "^3.0.1"
     it-pushable "^3.2.3"
     it-stream-types "^2.0.1"
     long "^5.2.3"
     memoize-one "^6.0.0"
     patch-package "^8.0.0"
-    protobufjs "^7.2.5"
+    protobufjs "^7.2.6"
     uint8arraylist "^2.4.7"
     ws "^8.15.1"
 
