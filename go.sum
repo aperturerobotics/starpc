@@ -29,6 +29,8 @@ github.com/libp2p/go-yamux/v4 v4.0.2-0.20231213140704-4c5812896512 h1:QvLt0Hr2Qm
 github.com/libp2p/go-yamux/v4 v4.0.2-0.20231213140704-4c5812896512/go.mod h1:OsNeDpmxccy93bUsruLEdsqIuO1VbBOFsQ4c4GfwenE=
 github.com/libp2p/go-yamux/v4 v4.0.2-0.20240131165134-13916cc02642 h1:+KpFl81BF1lZenNHU86iGD/V5UjChMxZDztGoO+O3Ck=
 github.com/libp2p/go-yamux/v4 v4.0.2-0.20240131165134-13916cc02642/go.mod h1:OsNeDpmxccy93bUsruLEdsqIuO1VbBOFsQ4c4GfwenE=
+github.com/libp2p/go-yamux/v4 v4.0.2-0.20240206065824-7222fbc3459d h1:Lag2VlBLRAiYKMnbIJGSDFmfSIoaeQRZ3wJXt91ZWV8=
+github.com/libp2p/go-yamux/v4 v4.0.2-0.20240206065824-7222fbc3459d/go.mod h1:OsNeDpmxccy93bUsruLEdsqIuO1VbBOFsQ4c4GfwenE=
 github.com/minio/sha256-simd v1.0.1 h1:6kaan5IFmwTNynnKKpDHe6FWHohJOHhCPchzK49dzMM=
 github.com/minio/sha256-simd v1.0.1/go.mod h1:Pz6AKMiUdngCLpeTL/RJY1M9rUuPMYujV5xJjtbRSN8=
 github.com/mr-tron/base58 v1.2.0 h1:T/HDJBh4ZCPbU39/+c3rRvE0uKBQlU27+QI8LJ4t64o=
