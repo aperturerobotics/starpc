@@ -15,6 +15,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // latest
 )
 
+require github.com/planetscale/vtprotobuf v0.6.0
+
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
