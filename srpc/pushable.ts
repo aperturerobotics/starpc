@@ -21,16 +21,21 @@ export function buildPushableSink<T>(
   target: Pushable<T>,
 ): Sink<Source<T>, Promise<void>> {
   return async (source: Source<T>): Promise<void> => {
-    if (Symbol.asyncIterator in source) {
-      // Handle AsyncIterable
-      for await (const pkt of source as AsyncIterable<any>) {
-        processPacket(pkt, target)
+    try {
+      if (Symbol.asyncIterator in source) {
+        // Handle AsyncIterable
+        for await (const pkt of source as AsyncIterable<any>) {
+          processPacket(pkt, target)
+        }
+      } else {
+        // Handle Iterable
+        for (const pkt of source as Iterable<any>) {
+          processPacket(pkt, target)
+        }
       }
-    } else {
-      // Handle Iterable
-      for (const pkt of source as Iterable<any>) {
-        processPacket(pkt, target)
-      }
+      target.end()
+    } catch (err) {
+      target.end(err as Error)
     }
   }
 }
