@@ -4,12 +4,12 @@ import { Direction } from '@libp2p/interface'
 import duplex from '@aptre/it-ws/duplex'
 import type WebSocket from '@aptre/it-ws/web-socket'
 
-import { Conn } from './conn.js'
+import { StreamConn } from './conn.js'
 import { Server } from './server.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
 
 // WebSocketConn implements a connection with a WebSocket and optional Server.
-export class WebSocketConn extends Conn {
+export class WebSocketConn extends StreamConn {
   // socket is the web socket
   private socket: WebSocket
 

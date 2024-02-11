@@ -1,62 +1,86 @@
-import type { Source } from 'it-stream-types'
+import type { Duplex, Source } from 'it-stream-types'
 import { EventIterator } from 'event-iterator'
 
-import { ConnParams } from './conn.js'
+import { StreamConn, StreamConnParams } from './conn.js'
 import { Server } from './server.js'
-import { StreamConn } from './conn-stream.js'
-import { Stream } from './stream.js'
+import { combineUint8ArrayListTransform } from './array-list.js'
+import { pipe } from 'it-pipe'
 
 // BroadcastChannelDuplex is a AsyncIterable wrapper for BroadcastChannel.
-export class BroadcastChannelDuplex<T> implements Stream<T> {
-  // readChannel is the incoming broadcast channel
-  public readonly readChannel: BroadcastChannel
-  // writeChannel is the outgoing broadcast channel
-  public readonly writeChannel: BroadcastChannel
+//
+// When the sink is closed, the broadcast channel also be closed.
+// Note: there is no way to know when a BroadcastChannel is closed!
+// You will need an additional keep-alive on top of BroadcastChannelDuplex.
+export class BroadcastChannelDuplex<T>
+  implements Duplex<AsyncGenerator<T>, Source<T>, Promise<void>>
+{
+  // read is the read channel
+  public readonly read: BroadcastChannel
+  // write is the write channel
+  public readonly write: BroadcastChannel
   // sink is the sink for incoming messages.
   public sink: (source: Source<T>) => Promise<void>
   // source is the source for outgoing messages.
   public source: AsyncGenerator<T>
 
-  constructor(readChannel: BroadcastChannel, writeChannel: BroadcastChannel) {
-    this.readChannel = readChannel
-    this.writeChannel = writeChannel
+  constructor(read: BroadcastChannel, write: BroadcastChannel) {
+    this.read = read
+    this.write = write
     this.sink = this._createSink()
     this.source = this._createSource()
   }
 
-  // close closes the broadcast channels.
+  // close closes the message port.
   public close() {
-    this.readChannel.close()
-    this.writeChannel.close()
+    this.write.postMessage(null)
+    this.write.close()
+    this.read.close()
   }
 
   // _createSink initializes the sink field.
   private _createSink(): (source: Source<T>) => Promise<void> {
     return async (source) => {
-      for await (const msg of source) {
-        this.writeChannel.postMessage(msg)
+      try {
+        for await (const msg of source) {
+          this.write.postMessage(msg)
+        }
+      } catch (err: unknown) {
+        this.close()
+        throw err
       }
+
+      this.close()
     }
   }
 
   // _createSource initializes the source field.
   private async *_createSource(): AsyncGenerator<T> {
     const iterator = new EventIterator<T>((queue) => {
-      const messageListener = (ev: MessageEvent<T>) => {
-        if (ev.data) {
-          queue.push(ev.data)
+      const messageListener = (ev: MessageEvent<T | null>) => {
+        const data = ev.data
+        if (data !== null) {
+          queue.push(data)
+        } else {
+          queue.stop()
         }
       }
 
-      this.readChannel.addEventListener('message', messageListener)
+      this.read.addEventListener('message', messageListener)
       return () => {
-        this.readChannel.removeEventListener('message', messageListener)
+        this.read.removeEventListener('message', messageListener)
       }
     })
 
-    for await (const value of iterator) {
-      yield value
+    try {
+      for await (const value of iterator) {
+        yield value
+      }
+    } catch (err) {
+      this.close()
+      throw err
     }
+
+    this.close()
   }
 }
 
@@ -74,36 +98,43 @@ export function newBroadcastChannelDuplex<T>(
 // BroadcastChannelConn implements a connection with a BroadcastChannel.
 //
 // expects Uint8Array objects over the BroadcastChannel.
+// uses Yamux to mux streams over the port.
 export class BroadcastChannelConn extends StreamConn {
-  // broadcastChannel is the broadcast channel iterable
-  private broadcastChannel: BroadcastChannelDuplex<Uint8Array>
+  // duplex is the broadcast channel duplex.
+  public readonly duplex: BroadcastChannelDuplex<Uint8Array>
 
   constructor(
-    readChannel: BroadcastChannel,
-    writeChannel: BroadcastChannel,
+    duplex: BroadcastChannelDuplex<Uint8Array>,
     server?: Server,
-    connParams?: ConnParams,
+    connParams?: StreamConnParams,
   ) {
-    const broadcastChannel = new BroadcastChannelDuplex<Uint8Array>(
-      readChannel,
-      writeChannel,
+    super(server, {
+      ...connParams,
+      yamuxParams: {
+        // There is no way to tell when a BroadcastChannel is closed.
+        // We will send an undefined object through the BroadcastChannel to indicate closed.
+        // We still need a way to detect when the connection is not cleanly terminated.
+        // Enable keep-alive to detect this on the other end.
+        enableKeepAlive: true,
+        keepAliveInterval: 1500,
+        ...connParams?.yamuxParams,
+      },
+    })
+    this.duplex = duplex
+    pipe(
+      duplex,
+      this,
+      // Uint8ArrayList usually cannot be sent over BroadcastChannel, so we combine to a Uint8Array as part of the pipe.
+      combineUint8ArrayListTransform(),
+      duplex,
     )
-    super(broadcastChannel, server, connParams)
-    this.broadcastChannel = broadcastChannel
+      .catch((err) => this.close(err))
+      .then(() => this.close())
   }
 
-  // getReadChannel returns the read BroadcastChannel.
-  public getReadChannel(): BroadcastChannel {
-    return this.broadcastChannel.readChannel
-  }
-
-  // getWriteChannel returns the write BroadcastChannel.
-  public getWriteChannel(): BroadcastChannel {
-    return this.broadcastChannel.writeChannel
-  }
-
-  // close closes the read and write channels.
-  public close() {
-    this.broadcastChannel.close()
+  // close closes the message port.
+  public override close(err?: Error) {
+    super.close(err)
+    this.duplex.close()
   }
 }

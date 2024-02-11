@@ -131,16 +131,7 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 
 // HandleCallCancel handles the call cancel packet.
 func (c *commonRPC) HandleCallCancel() error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	if c.remoteErr != nil {
-		c.remoteErr = context.Canceled
-	}
-	c.dataClosed = true
-	if c.writer != nil {
-		_ = c.writer.Close()
-	}
-	c.bcast.Broadcast()
+	c.HandleStreamClose(context.Canceled)
 	return nil
 }
 

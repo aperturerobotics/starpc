@@ -68,7 +68,9 @@ export class Client implements TsProtoRpc {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, data, abortSignal)
       .then(async (call) => {
-        return writeToPushable(call.rpcDataSource, serverData)
+        const result = writeToPushable(call.rpcDataSource, serverData)
+        result.finally(() => call.close())
+        return result
       })
       .catch((err) => serverData.end(err))
     return serverData
@@ -84,14 +86,16 @@ export class Client implements TsProtoRpc {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, null, abortSignal)
       .then(async (call) => {
-        call.writeCallDataFromSource(data)
+        call.writeCallDataFromSource(data).catch((err) => call.close(err))
         try {
           for await (const message of call.rpcDataSource) {
             serverData.push(message)
           }
           serverData.end()
+          call.close()
         } catch (err) {
-          serverData.end(err as Error)
+          call.close(err as Error)
+          throw err
         }
       })
       .catch((err) => serverData.end(err))
@@ -114,9 +118,12 @@ export class Client implements TsProtoRpc {
     const stream = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     abortSignal?.addEventListener('abort', () => {
+      call.writeCallCancel()
       call.close(new Error(ERR_RPC_ABORT))
     })
     pipe(stream, decodePacketSource, call, encodePacketSource, stream)
+      .then(() => call.close())
+      .catch((err) => call.close(err))
     await call.writeCallStart(data || undefined)
     return call
   }
