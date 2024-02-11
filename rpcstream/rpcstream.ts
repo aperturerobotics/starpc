@@ -1,7 +1,7 @@
-import { RpcStreamPacket } from './rpcstream.pb.js'
-import { OpenStreamFunc, Stream } from '../srpc/stream.js'
 import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
+import { RpcStreamPacket } from './rpcstream.pb.js'
+import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
@@ -14,7 +14,7 @@ export async function openRpcStream(
   componentId: string,
   caller: RpcStreamCaller,
   waitAck?: boolean,
-): Promise<Stream> {
+): Promise<PacketStream> {
   const packetTx: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
   const packetRx = caller(packetTx)
 
@@ -56,14 +56,14 @@ export function buildRpcStreamOpenStream(
   componentId: string,
   caller: RpcStreamCaller,
 ): OpenStreamFunc {
-  return async (): Promise<Stream> => {
+  return async (): Promise<PacketStream> => {
     return openRpcStream(componentId, caller)
   }
 }
 
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
-export type RpcStreamHandler = (stream: Stream) => void
+export type RpcStreamHandler = (stream: PacketStream) => void
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
@@ -135,9 +135,9 @@ export async function* handleRpcStream(
   }
 }
 
-// RpcStream implements the Stream on top of a RPC call.
+// RpcStream implements the PacketStream on top of a RPC call.
 // Note: expects the stream to already have been negotiated.
-export class RpcStream implements Stream {
+export class RpcStream implements PacketStream {
   // source is the source for incoming Uint8Array packets.
   public readonly source: AsyncGenerator<Uint8Array>
   // sink is the sink for outgoing Uint8Array packets.

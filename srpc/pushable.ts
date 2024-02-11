@@ -1,5 +1,5 @@
 import { Pushable } from 'it-pushable'
-import { Source, Sink } from 'it-stream-types'
+import { Sink, Source } from 'it-stream-types'
 
 // writeToPushable writes the incoming server data to the pushable.
 export async function writeToPushable<T>(
@@ -23,29 +23,17 @@ export function buildPushableSink<T>(
   return async (source: Source<T>): Promise<void> => {
     try {
       if (Symbol.asyncIterator in source) {
-        // Handle AsyncIterable
-        for await (const pkt of source as AsyncIterable<any>) {
-          processPacket(pkt, target)
+        for await (const pkt of source) {
+          target.push(pkt)
         }
       } else {
-        // Handle Iterable
-        for (const pkt of source as Iterable<any>) {
-          processPacket(pkt, target)
+        for (const pkt of source) {
+          target.push(pkt)
         }
       }
       target.end()
     } catch (err) {
       target.end(err as Error)
     }
-  }
-}
-
-function processPacket<T>(pkt: T, target: Pushable<T>): void {
-  if (Array.isArray(pkt)) {
-    for (const p of pkt) {
-      target.push(p)
-    }
-  } else {
-    target.push(pkt)
   }
 }

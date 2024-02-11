@@ -62,6 +62,7 @@ export class ServerRPC extends CommonRPC {
           await this.writeCallData(msg)
         }
         await this.writeCallData(undefined, true)
+        this.close()
       } catch (err) {
         this.close(err as Error)
       }

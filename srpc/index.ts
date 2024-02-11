@@ -1,22 +1,33 @@
 export { ERR_RPC_ABORT, isAbortError, castToError } from './errors.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
-export { Conn, ConnParams } from './conn.js'
+export { StreamConn, StreamConnParams, StreamHandler } from './conn.js'
 export { WebSocketConn } from './websocket.js'
-export { StreamConn } from './conn-stream.js'
-export type { PacketHandler, Stream, OpenStreamFunc } from './stream.js'
-export { Handler, InvokeFn, createHandler, createInvokeFn } from './handler.js'
+export type {
+  PacketHandler,
+  OpenStreamFunc,
+  PacketStream,
+  streamToPacketStream,
+} from './stream.js'
+export {
+  Handler,
+  InvokeFn,
+  MethodMap,
+  StaticHandler,
+  createHandler,
+} from './handler.js'
+export { MethodProto, createInvokeFn } from './invoker.js'
 export { Packet, CallStart, CallData } from './rpcproto.pb.js'
-export { Mux, StaticMux, createMux } from './mux.js'
+export { Mux, StaticMux, LookupMethod, createMux } from './mux.js'
 export {
   BroadcastChannelDuplex,
-  newBroadcastChannelDuplex,
   BroadcastChannelConn,
+  newBroadcastChannelDuplex,
 } from './broadcast-channel.js'
 export {
   MessagePortDuplex,
-  newMessagePortDuplex,
   MessagePortConn,
+  newMessagePortDuplex,
 } from './message-port.js'
 export {
   MessageDefinition,

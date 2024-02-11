@@ -3,13 +3,14 @@ import { pushable } from 'it-pushable'
 
 import type { CallData, CallStart } from './rpcproto.pb.js'
 import { Packet } from './rpcproto.pb.js'
+import { ERR_RPC_ABORT } from './errors.js'
 
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
   // sink is the data sink for incoming messages.
-  public sink: Sink<Source<Packet>>
+  public readonly sink: Sink<Source<Packet>>
   // source is the packet source for outgoing Packets.
-  public source: AsyncIterable<Packet>
+  public readonly source: AsyncIterable<Packet>
   // rpcDataSource is the source for rpc packets.
   public readonly rpcDataSource: AsyncIterable<Uint8Array>
 
@@ -95,6 +96,7 @@ export class CommonRPC {
   //
   // note: closes the stream if any error is thrown.
   public async handlePacket(packet: Partial<Packet>) {
+    // console.log('handlePacket', packet)
     try {
       switch (packet?.body?.$case) {
         case 'callStart':
@@ -102,6 +104,11 @@ export class CommonRPC {
           break
         case 'callData':
           await this.handleCallData(packet.body.callData)
+          break
+        case 'callCancel':
+          if (packet.body.callCancel) {
+            await this.handleCallCancel()
+          }
           break
       }
     } catch (err) {
@@ -151,19 +158,28 @@ export class CommonRPC {
     }
   }
 
+  // handleCallCancel handles a CallCancel packet.
+  public async handleCallCancel() {
+    this.close(new Error(ERR_RPC_ABORT))
+  }
+
   // close closes the call, optionally with an error.
   public async close(err?: Error) {
     if (this.closed) {
       return
     }
     this.closed = true
-    this._rpcDataSource.end(err)
-    try {
+    // note: don't pass error to _source here.
+    if (err) {
       await this.writeCallCancel()
-    } finally {
-      // note: don't pass error to _source here.
-      this._source.end()
     }
+    this._source.end()
+    this._rpcDataSource.end(err)
+  }
+
+  // closeWrite closes the call for writing.
+  public closeWrite() {
+    this._source.end()
   }
 
   // _createSink returns a value for the sink field.
@@ -181,7 +197,6 @@ export class CommonRPC {
             await this.handlePacket(msg)
           }
         }
-        this._rpcDataSource.end()
       } catch (err) {
         this.close(err as Error)
       }
