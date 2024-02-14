@@ -49,6 +49,7 @@ export class Client implements TsProtoRpc {
   ): Promise<Uint8Array> {
     const call = await this.startRpc(service, method, null, abortSignal)
     call.writeCallDataFromSource(data)
+      .catch(err => call.close(err))
     for await (const data of call.rpcDataSource) {
       call.close()
       return data
@@ -69,7 +70,8 @@ export class Client implements TsProtoRpc {
     this.startRpc(service, method, data, abortSignal)
       .then(async (call) => {
         const result = writeToPushable(call.rpcDataSource, serverData)
-        result.finally(() => call.close())
+        result.catch((err) => call.close(err))
+        result.then(() => call.close())
         return result
       })
       .catch((err) => serverData.end(err))
@@ -86,7 +88,11 @@ export class Client implements TsProtoRpc {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, null, abortSignal)
       .then(async (call) => {
-        call.writeCallDataFromSource(data).catch((err) => call.close(err))
+        const handleErr = (err: Error) => {
+          serverData.end(err)
+          call.close(err)
+        }
+        call.writeCallDataFromSource(data).catch(handleErr)
         try {
           for await (const message of call.rpcDataSource) {
             serverData.push(message)
@@ -94,8 +100,7 @@ export class Client implements TsProtoRpc {
           serverData.end()
           call.close()
         } catch (err) {
-          call.close(err as Error)
-          throw err
+          handleErr(err as Error)
         }
       })
       .catch((err) => serverData.end(err))
