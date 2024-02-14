@@ -20,6 +20,12 @@ export { MethodProto, createInvokeFn } from './invoker.js'
 export { Packet, CallStart, CallData } from './rpcproto.pb.js'
 export { Mux, StaticMux, LookupMethod, createMux } from './mux.js'
 export {
+  ChannelStreamMessage,
+  ChannelPort,
+  ChannelStream,
+  newBroadcastChannelStream,
+} from './channel.js'
+export {
   BroadcastChannelDuplex,
   BroadcastChannelConn,
   newBroadcastChannelDuplex,
