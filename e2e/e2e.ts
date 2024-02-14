@@ -1,5 +1,5 @@
 import { pipe } from 'it-pipe'
-import { createHandler, createMux, Server, Client, StreamConn } from '../srpc'
+import { createHandler, createMux, Server, Client, StreamConn, ChannelStream, combineUint8ArrayListTransform } from '../srpc'
 import { EchoerDefinition, EchoerServer, runClientTest } from '../echo'
 import { runAbortControllerTest, runRpcStreamTest } from '../echo/client-test'
 
@@ -9,16 +9,37 @@ async function runRPC() {
   const echoer = new EchoerServer(server)
   mux.register(createHandler(EchoerDefinition, echoer))
 
+  // StreamConn is unnecessary since ChannelStream has packet framing.
+  // Use it here to include yamux in this e2e test.
   const clientConn = new StreamConn()
   const serverConn = new StreamConn(server, { direction: 'inbound' })
 
-  pipe(clientConn, serverConn, clientConn)
+  // pipe clientConn -> messageStream -> serverConn -> messageStream -> clientConn
+  const {port1: clientPort, port2: serverPort} = new MessageChannel()
+  const clientChannelStream = new ChannelStream('client', clientPort)
+  const serverChannelStream = new ChannelStream('server', serverPort)
 
+  // Pipe the client traffic via the client end of the MessageChannel.
+  pipe(clientChannelStream, clientConn, combineUint8ArrayListTransform(), clientChannelStream)
+    .catch((err: Error) => clientConn.close(err))
+    .then(() => clientConn.close())
+
+  // Pipe the server traffic via the server end of the MessageChannel.
+  pipe(serverChannelStream, serverConn, combineUint8ArrayListTransform(), serverChannelStream)
+    .catch((err: Error) => serverConn.close(err))
+    .then(() => serverConn.close())
+
+  // Build the client
   const client = new Client(clientConn.buildOpenStreamFunc())
 
+  // Run the tests
   await runClientTest(client)
   await runAbortControllerTest(client)
   await runRpcStreamTest(client)
+
+  // Close cleanly
+  clientConn.close()
+  serverConn.close()
 }
 
 runRPC()
