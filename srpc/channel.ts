@@ -20,8 +20,17 @@ export interface ChannelStreamMessage<T> {
   data?: T
 }
 
-// Channel represents a channel we can open a stream over.
-export type ChannelPort = MessagePort | { tx: BroadcastChannel; rx: BroadcastChannel }
+// ChannelPort represents a channel we can open a stream over.
+export type ChannelPort =
+  | MessagePort
+  | { tx: BroadcastChannel; rx: BroadcastChannel }
+
+// ChannelStreamOpts are options for ChannelStream.
+export interface ChannelStreamOpts {
+  // remoteOpen indicates that the remote already knows the channel is open.
+  // this skips sending and waiting for the open+ack messages.
+  remoteOpen?: boolean
+}
 
 // ChannelStream implements a Stream over a BroadcastChannel duplex or MessagePort.
 //
@@ -69,16 +78,16 @@ export class ChannelStream<T>
     return this.remoteOpen ?? false
   }
 
-  // remoteOpen indicates if we know the remote has already opened the stream.
-  constructor(localId: string, channel: ChannelPort, remoteOpen: boolean) {
+  // remoteOpen indicates that we know the remote has already opened the stream.
+  constructor(localId: string, channel: ChannelPort, opts?: ChannelStreamOpts) {
     this.localId = localId
     this.channel = channel
     this.sink = this._createSink()
 
     this.localOpen = false
-    this.remoteAck = remoteOpen
-    this.remoteOpen = remoteOpen
-    if (remoteOpen) {
+    this.remoteOpen = opts?.remoteOpen ?? false
+    this.remoteAck = this.remoteOpen
+    if (this.remoteOpen) {
       this.waitRemoteOpen = Promise.resolve()
       this.waitRemoteAck = Promise.resolve()
     } else {
@@ -223,11 +232,11 @@ export function newBroadcastChannelStream<T>(
   id: string,
   readName: string,
   writeName: string,
-  remoteOpen: boolean,
+  opts?: ChannelStreamOpts,
 ): ChannelStream<T> {
   return new ChannelStream<T>(
     id,
     { tx: new BroadcastChannel(writeName), rx: new BroadcastChannel(readName) },
-    remoteOpen,
+    opts,
   )
 }
