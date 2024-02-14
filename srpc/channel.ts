@@ -42,6 +42,7 @@ export interface ChannelStreamOpts {
 // NOTE: there is no way to tell if a BroadcastChannel or MessagePort is closed.
 // This implementation sends a "closed" message when close() is called.
 // However: if the remote is removed w/o closing cleanly, the stream will be left open!
+// Enable keepAliveMs and idleTimeoutMs to mitigate this issue with keep-alive messages.
 export class ChannelStream<T = Uint8Array>
   implements Duplex<AsyncGenerator<T>, Source<T>, Promise<void>>
 {
