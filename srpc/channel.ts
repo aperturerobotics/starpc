@@ -5,12 +5,15 @@ import { pushable, Pushable } from 'it-pushable'
 export interface ChannelStreamMessage<T> {
   // from indicates who sent the message.
   from: string
-  // ack indicates a remote joined the stream.
-  ack?: boolean
+  // ack indicates a remote acked establishing the stream.
+  ack?: true
   // opened indicates the remote has opened the stream.
-  opened?: boolean
+  opened?: true
+  // alive indicates this is a keep-alive packet.
+  // not set unless keep-alives are enabled.
+  alive?: true
   // closed indicates the stream is closed.
-  closed?: boolean
+  closed?: true
   // error indicates the stream has an error.
   error?: Error
   // data is any message data.
@@ -58,12 +61,12 @@ export class ChannelStream<T>
 
   // isAcked checks if the stream is acknowledged by the remote.
   public get isAcked() {
-    return this.remoteAck || false
+    return this.remoteAck ?? false
   }
 
   // isOpen checks if the stream is opened by the remote.
   public get isOpen() {
-    return this.remoteOpen || false
+    return this.remoteOpen ?? false
   }
 
   // remoteOpen indicates if we know the remote has already opened the stream.
