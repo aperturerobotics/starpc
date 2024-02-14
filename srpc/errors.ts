@@ -10,6 +10,18 @@ export function isAbortError(err: unknown): boolean {
   return message === ERR_RPC_ABORT
 }
 
+// ERR_STREAM_IDLE is returned if the stream idle timeout was exceeded.
+export const ERR_STREAM_IDLE = 'ERR_STREAM_IDLE'
+
+// isStreamIdleError checks if the error object is ERR_STREAM_IDLE.
+export function isStreamIdleError(err: unknown): boolean {
+  if (typeof err !== 'object') {
+    return false
+  }
+  const message = (err as Error).message
+  return message === ERR_STREAM_IDLE
+}
+
 // castToError casts an object to an Error.
 // if err is a string, uses it as the message.
 // if err is undefined, returns new Error(defaultMsg)

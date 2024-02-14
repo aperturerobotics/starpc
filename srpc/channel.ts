@@ -1,5 +1,7 @@
 import type { Sink, Source, Duplex } from 'it-stream-types'
 import { pushable, Pushable } from 'it-pushable'
+import { Watchdog } from './watchdog.js'
+import { ERR_STREAM_IDLE } from './errors.js'
 
 // ChannelStreamMessage is a message sent over the stream.
 export interface ChannelStreamMessage<T> {
@@ -9,9 +11,6 @@ export interface ChannelStreamMessage<T> {
   ack?: true
   // opened indicates the remote has opened the stream.
   opened?: true
-  // alive indicates this is a keep-alive packet.
-  // not set unless keep-alives are enabled.
-  alive?: true
   // closed indicates the stream is closed.
   closed?: true
   // error indicates the stream has an error.
@@ -30,6 +29,12 @@ export interface ChannelStreamOpts {
   // remoteOpen indicates that the remote already knows the channel is open.
   // this skips sending and waiting for the open+ack messages.
   remoteOpen?: boolean
+  // keepAliveMs is the maximum time between sending before we send a keep-alive.
+  // if idleTimeoutMs is set on the remote end, this should be less by some margin.
+  keepAliveMs?: number
+  // idleTimeoutMs is the maximum time between receiving before we close the stream.
+  // if keepAliveMs is set on the remote end, this should be more by some margin.
+  idleTimeoutMs?: number
 }
 
 // ChannelStream implements a Stream over a BroadcastChannel duplex or MessagePort.
@@ -67,6 +72,10 @@ export class ChannelStream<T = Uint8Array>
   public readonly waitRemoteAck: Promise<void>
   // _remoteAck fulfills the waitRemoteAck promise.
   private _remoteAck?: (err?: Error) => void
+  // keepAliveWatchdog is the transmission timeout watchdog.
+  private keepAlive?: Watchdog
+  // idleWatchdog is the receive timeout watchdog.
+  private idleWatchdog?: Watchdog
 
   // isAcked checks if the stream is acknowledged by the remote.
   public get isAcked() {
@@ -80,13 +89,14 @@ export class ChannelStream<T = Uint8Array>
 
   // remoteOpen indicates that we know the remote has already opened the stream.
   constructor(localId: string, channel: ChannelPort, opts?: ChannelStreamOpts) {
+    // initial state
     this.localId = localId
     this.channel = channel
-    this.sink = this._createSink()
-
     this.localOpen = false
     this.remoteOpen = opts?.remoteOpen ?? false
     this.remoteAck = this.remoteOpen
+
+    // wire up the promises for remote ack and remote open
     if (this.remoteOpen) {
       this.waitRemoteOpen = Promise.resolve()
       this.waitRemoteAck = Promise.resolve()
@@ -113,10 +123,15 @@ export class ChannelStream<T = Uint8Array>
       this.waitRemoteAck.catch(() => {})
     }
 
+    // create the sink
+    this.sink = this._createSink()
+
+    // create the pushable source
     const source: Pushable<T> = pushable({ objectMode: true })
     this.source = source
     this._source = source
 
+    // wire up the message handlers
     const onMessage = this.onMessage.bind(this)
     if (channel instanceof MessagePort) {
       // MessagePort
@@ -126,6 +141,20 @@ export class ChannelStream<T = Uint8Array>
       // BroadcastChannel
       channel.rx.onmessage = onMessage
     }
+
+    // handle the keep alive or idle timeout opts
+    if (opts?.idleTimeoutMs != null) {
+      this.idleWatchdog = new Watchdog(opts.idleTimeoutMs, () =>
+        this.idleElapsed(),
+      )
+    }
+    if (opts?.keepAliveMs != null) {
+      this.keepAlive = new Watchdog(opts.keepAliveMs, () =>
+        this.keepAliveElapsed(),
+      )
+    }
+
+    // broadcast ack to start the stream
     this.postMessage({ ack: true })
   }
 
@@ -136,6 +165,25 @@ export class ChannelStream<T = Uint8Array>
       this.channel.postMessage(msg)
     } else {
       this.channel.tx.postMessage(msg)
+    }
+    if (!msg.closed) {
+      this.keepAlive?.feed()
+    }
+  }
+
+  // idleElapsed is called if the idle timeout was elapsed.
+  private idleElapsed() {
+    if (this.idleWatchdog) {
+      delete this.idleWatchdog
+      this.close(new Error(ERR_STREAM_IDLE))
+    }
+  }
+
+  // keepAliveElapsed is called if the keep alive timeout was elapsed.
+  private keepAliveElapsed() {
+    if (this.keepAlive) {
+      // send a keep-alive message
+      this.postMessage({})
     }
   }
 
@@ -156,6 +204,15 @@ export class ChannelStream<T = Uint8Array>
     if (!this.remoteAck && this._remoteAck) {
       this._remoteAck(error || new Error('closed'))
     }
+    if (this.idleWatchdog) {
+      this.idleWatchdog.clear()
+      delete this.idleWatchdog
+    }
+    if (this.keepAlive) {
+      this.keepAlive.clear()
+      delete this.keepAlive
+    }
+    this._source.end(error)
   }
 
   // onLocalOpened indicates the local side has opened the read stream.
@@ -209,6 +266,7 @@ export class ChannelStream<T = Uint8Array>
     if (!msg || msg.from === this.localId || !msg.from) {
       return
     }
+    this.idleWatchdog?.feed()
     if (msg.ack || msg.opened) {
       this.onRemoteAcked()
     }

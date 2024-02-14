@@ -1,4 +1,10 @@
-export { ERR_RPC_ABORT, isAbortError, castToError } from './errors.js'
+export {
+  ERR_RPC_ABORT,
+  isAbortError,
+  ERR_STREAM_IDLE,
+  isStreamIdleError,
+  castToError,
+} from './errors.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
 export { StreamConn, StreamConnParams, StreamHandler } from './conn.js'
@@ -23,6 +29,7 @@ export {
   ChannelStreamMessage,
   ChannelPort,
   ChannelStream,
+  ChannelStreamOpts,
   newBroadcastChannelStream,
 } from './channel.js'
 export {
@@ -61,3 +68,4 @@ export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
 export { writeToPushable, buildPushableSink } from './pushable.js'
+export { Watchdog } from './watchdog.js'

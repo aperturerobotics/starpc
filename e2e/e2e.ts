@@ -1,5 +1,14 @@
 import { pipe } from 'it-pipe'
-import { createHandler, createMux, Server, Client, StreamConn, ChannelStream, combineUint8ArrayListTransform } from '../srpc'
+import {
+  createHandler,
+  createMux,
+  Server,
+  Client,
+  StreamConn,
+  ChannelStream,
+  combineUint8ArrayListTransform,
+  ChannelStreamOpts,
+} from '../srpc'
 import { EchoerDefinition, EchoerServer, runClientTest } from '../echo'
 import { runAbortControllerTest, runRpcStreamTest } from '../echo/client-test'
 
@@ -15,17 +24,28 @@ async function runRPC() {
   const serverConn = new StreamConn(server, { direction: 'inbound' })
 
   // pipe clientConn -> messageStream -> serverConn -> messageStream -> clientConn
-  const {port1: clientPort, port2: serverPort} = new MessageChannel()
-  const clientChannelStream = new ChannelStream('client', clientPort)
-  const serverChannelStream = new ChannelStream('server', serverPort)
+  const { port1: clientPort, port2: serverPort } = new MessageChannel()
+  const opts: ChannelStreamOpts = { idleTimeoutMs: 250, keepAliveMs: 100 }
+  const clientChannelStream = new ChannelStream('client', clientPort, opts)
+  const serverChannelStream = new ChannelStream('server', serverPort, opts)
 
   // Pipe the client traffic via the client end of the MessageChannel.
-  pipe(clientChannelStream, clientConn, combineUint8ArrayListTransform(), clientChannelStream)
+  pipe(
+    clientChannelStream,
+    clientConn,
+    combineUint8ArrayListTransform(),
+    clientChannelStream,
+  )
     .catch((err: Error) => clientConn.close(err))
     .then(() => clientConn.close())
 
   // Pipe the server traffic via the server end of the MessageChannel.
-  pipe(serverChannelStream, serverConn, combineUint8ArrayListTransform(), serverChannelStream)
+  pipe(
+    serverChannelStream,
+    serverConn,
+    combineUint8ArrayListTransform(),
+    serverChannelStream,
+  )
     .catch((err: Error) => serverConn.close(err))
     .then(() => serverConn.close())
 
