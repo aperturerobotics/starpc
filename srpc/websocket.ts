@@ -24,6 +24,8 @@ export class WebSocketConn extends StreamConn {
       combineUint8ArrayListTransform(),
       socketDuplex,
     )
+      .catch((err) => this.close(err))
+      .then(() => this.close())
   }
 
   // getSocket returns the websocket.

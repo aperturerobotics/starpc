@@ -122,8 +122,8 @@ export class Client implements TsProtoRpc {
       call.close(new Error(ERR_RPC_ABORT))
     })
     pipe(stream, decodePacketSource, call, encodePacketSource, stream)
-      .then(() => call.close())
       .catch((err) => call.close(err))
+      .then(() => call.close())
     await call.writeCallStart(data || undefined)
     return call
   }

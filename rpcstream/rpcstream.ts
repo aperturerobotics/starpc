@@ -63,7 +63,8 @@ export function buildRpcStreamOpenStream(
 
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
-export type RpcStreamHandler = (stream: PacketStream) => void
+// return the result of pipe()
+export type RpcStreamHandler = (stream: PacketStream) => Promise<void>
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"
@@ -128,6 +129,8 @@ export async function* handleRpcStream(
   // start the handler
   const rpcStream = new RpcStream(packetTx, packetRx)
   handler!(rpcStream)
+    .catch((err) => packetTx.end(err))
+    .then(() => packetTx.end())
 
   // process packets
   for await (const packet of packetTx) {

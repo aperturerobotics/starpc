@@ -19,7 +19,12 @@ export class Server implements StreamHandler {
   // rpcStreamHandler implements the RpcStreamHandler interface.
   // uses handlePacketDuplex (expects 1 buf = 1 Packet)
   public get rpcStreamHandler(): RpcStreamHandler {
-    return this.handlePacketStream.bind(this)
+    return async (stream: PacketStream) => {
+      const rpc = this.startRpc()
+      return pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
+        .catch((err: Error) => rpc.close(err))
+        .then(() => rpc.close())
+    }
   }
 
   // startRpc starts a new server-side RPC.
