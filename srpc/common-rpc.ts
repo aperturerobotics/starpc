@@ -177,11 +177,6 @@ export class CommonRPC {
     this._rpcDataSource.end(err)
   }
 
-  // closeWrite closes the call for writing.
-  public closeWrite() {
-    this._source.end()
-  }
-
   // _createSink returns a value for the sink field.
   private _createSink(): Sink<Source<Packet>> {
     return async (source: Source<Packet>) => {
