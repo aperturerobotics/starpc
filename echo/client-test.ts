@@ -63,13 +63,13 @@ export async function runAbortControllerTest(client: Client) {
 
   await testRpc(async (signal) => {
     const stream = demoServiceClient.EchoServerStream({ body: 'test' }, signal)
-    let gotMsgs = 0
+    const msgs = []
     try {
       for await (const msg of stream) {
-        gotMsgs++
+        msgs.push(msg)
       }
     } catch (err) {
-      if (gotMsgs < 3) {
+      if (msgs.length < 3) {
         throw new Error('expected at least three messages before error')
       }
       throw err

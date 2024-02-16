@@ -1,4 +1,5 @@
 // Watchdog must be fed every timeoutDuration or it will call the expired callback.
+// NOTE: Browsers will throttle setTimeout in background tabs.
 export class Watchdog {
   private timeoutDuration: number
   private expiredCallback: () => void
