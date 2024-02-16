@@ -25,7 +25,7 @@ async function runRPC() {
 
   // pipe clientConn -> messageStream -> serverConn -> messageStream -> clientConn
   const { port1: clientPort, port2: serverPort } = new MessageChannel()
-  const opts: ChannelStreamOpts = { idleTimeoutMs: 250, keepAliveMs: 100 }
+  const opts: ChannelStreamOpts = {} // { idleTimeoutMs: 250, keepAliveMs: 100 }
   const clientChannelStream = new ChannelStream('client', clientPort, opts)
   const serverChannelStream = new ChannelStream('server', serverPort, opts)
 
@@ -57,6 +57,11 @@ async function runRPC() {
   await runAbortControllerTest(client)
   await runRpcStreamTest(client)
 
+  // Make sure we have no uncaught promises
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 500)
+  })
+
   // Close cleanly
   clientConn.close()
   serverConn.close()
@@ -68,6 +73,6 @@ runRPC()
     process.exit(0)
   })
   .catch((err) => {
-    console.error(err)
+    console.error('e2e tests failed', err)
     process.exit(1)
   })

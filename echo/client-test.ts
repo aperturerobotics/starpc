@@ -36,26 +36,45 @@ export async function runAbortControllerTest(client: Client) {
 
   console.log('Testing EchoClientStream with AbortController...')
   let errorReturned = false
-  const clientAbort = new AbortController()
-  const clientNoopStream = pushable<EchoMsg>({ objectMode: true })
-  new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
-    clientAbort.abort()
-  })
-  try {
-    await demoServiceClient.EchoClientStream(
-      clientNoopStream,
-      clientAbort.signal,
-    )
-  } catch (err) {
-    const errMsg = (err as Error).message
-    errorReturned = true
-    if (errMsg !== ERR_RPC_ABORT) {
-      throw new Error('unexpected error: ' + errMsg)
+
+  const testRpc = async (rpc: (signal: AbortSignal) => Promise<void>) => {
+    const clientAbort = new AbortController()
+    new Promise((resolve) => setTimeout(resolve, 1000)).then(() => {
+      clientAbort.abort()
+    })
+    try {
+      await rpc(clientAbort.signal)
+    } catch (err) {
+      const errMsg = (err as Error).message
+      errorReturned = true
+      if (errMsg !== ERR_RPC_ABORT) {
+        throw new Error('unexpected error: ' + errMsg)
+      }
+    }
+    if (!errorReturned) {
+      throw new Error('expected aborted rpc to throw error')
     }
   }
-  if (!errorReturned) {
-    throw new Error('expected aborted rpc to throw error')
-  }
+
+  await testRpc(async (signal) => {
+    const clientNoopStream = pushable<EchoMsg>({ objectMode: true })
+    await demoServiceClient.EchoClientStream(clientNoopStream, signal)
+  })
+
+  await testRpc(async (signal) => {
+    const stream = demoServiceClient.EchoServerStream({ body: 'test' }, signal)
+    let gotMsgs = 0
+    try {
+      for await (const msg of stream) {
+        gotMsgs++
+      }
+    } catch (err) {
+      if (gotMsgs < 3) {
+        throw new Error('expected at least three messages before error')
+      }
+      throw err
+    }
+  })
 }
 
 // runRpcStreamTest tests a RPCStream.

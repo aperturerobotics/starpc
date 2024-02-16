@@ -2,6 +2,8 @@ import { Pushable } from 'it-pushable'
 import { Sink, Source } from 'it-stream-types'
 
 // writeToPushable writes the incoming server data to the pushable.
+//
+// this will not throw an error: it instead ends out w/ the error.
 export async function writeToPushable<T>(
   dataSource: AsyncIterable<T>,
   out: Pushable<T>,
@@ -13,7 +15,6 @@ export async function writeToPushable<T>(
     out.end()
   } catch (err) {
     out.end(err as Error)
-    throw err
   }
 }
 

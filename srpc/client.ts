@@ -48,8 +48,7 @@ export class Client implements TsProtoRpc {
     abortSignal?: AbortSignal,
   ): Promise<Uint8Array> {
     const call = await this.startRpc(service, method, null, abortSignal)
-    call.writeCallDataFromSource(data)
-      .catch(err => call.close(err))
+    call.writeCallDataFromSource(data).catch((err) => call.close(err))
     for await (const data of call.rpcDataSource) {
       call.close()
       return data
@@ -68,12 +67,7 @@ export class Client implements TsProtoRpc {
   ): AsyncIterable<Uint8Array> {
     const serverData: Pushable<Uint8Array> = pushable({ objectMode: true })
     this.startRpc(service, method, data, abortSignal)
-      .then(async (call) => {
-        const result = writeToPushable(call.rpcDataSource, serverData)
-        result.catch((err) => call.close(err))
-        result.then(() => call.close())
-        return result
-      })
+      .then(async (call) => writeToPushable(call.rpcDataSource, serverData))
       .catch((err) => serverData.end(err))
     return serverData
   }
@@ -129,7 +123,7 @@ export class Client implements TsProtoRpc {
     pipe(stream, decodePacketSource, call, encodePacketSource, stream)
       .catch((err) => call.close(err))
       .then(() => call.close())
-    await call.writeCallStart(data || undefined)
+    await call.writeCallStart(data ?? undefined)
     return call
   }
 }

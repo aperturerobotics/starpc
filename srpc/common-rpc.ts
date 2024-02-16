@@ -30,12 +30,17 @@ export class CommonRPC {
   protected method?: string
 
   // closed indicates this rpc has been closed already.
-  private closed?: boolean
+  private closed?: true | Error
 
   constructor() {
     this.sink = this._createSink()
     this.source = this._source
     this.rpcDataSource = this._rpcDataSource
+  }
+
+  // isClosed returns one of: true (closed w/o error), Error (closed w/ error), or false (not closed).
+  public get isClosed(): boolean | Error {
+    return this.closed ?? false
   }
 
   // writeCallData writes the call data packet.
@@ -168,11 +173,9 @@ export class CommonRPC {
     if (this.closed) {
       return
     }
-    this.closed = true
-    // note: don't pass error to _source here.
-    if (err) {
-      await this.writeCallCancel()
-    }
+    this.closed = err ?? true
+    // note: this does nothing if _source is already ended.
+    await this.writeCallCancel()
     this._source.end()
     this._rpcDataSource.end(err)
   }
