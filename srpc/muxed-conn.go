@@ -72,7 +72,7 @@ func NewClientWithMuxedConn(conn network.MuxedConn) Client {
 
 // NewOpenStreamWithMuxedConn constructs a OpenStream func with a MuxedConn.
 func NewOpenStreamWithMuxedConn(conn network.MuxedConn) OpenStreamFunc {
-	return func(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (Writer, error) {
+	return func(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error) {
 		mstrm, err := conn.OpenStream(ctx)
 		if err != nil {
 			return nil, err

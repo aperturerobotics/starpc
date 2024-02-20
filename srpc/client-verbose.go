@@ -65,7 +65,7 @@ func (c *VClient) NewStream(ctx context.Context, service, method string, firstMs
 // NewRawStream opens a new raw stream with the remote.
 // Implements OpenStreamFunc.
 // msgHandler must not be called concurrently.
-func (c *VClient) NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (writer Writer, err error) {
+func (c *VClient) NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (writer PacketWriter, err error) {
 	t1 := time.Now()
 
 	defer func() {

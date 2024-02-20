@@ -72,7 +72,7 @@ func OpenRpcStream[T RpcStream](ctx context.Context, rpcCaller RpcStreamCaller[T
 //
 // if waitAck is set, OpenStream waits for acknowledgment from the remote.
 func NewRpcStreamOpenStream[T RpcStream](rpcCaller RpcStreamCaller[T], componentID string, waitAck bool) srpc.OpenStreamFunc {
-	return func(ctx context.Context, msgHandler srpc.PacketDataHandler, closeHandler srpc.CloseHandler) (srpc.Writer, error) {
+	return func(ctx context.Context, msgHandler srpc.PacketDataHandler, closeHandler srpc.CloseHandler) (srpc.PacketWriter, error) {
 		// open the stream
 		rw, err := OpenRpcStream(ctx, rpcCaller, componentID, waitAck)
 		if err != nil {

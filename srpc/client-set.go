@@ -48,7 +48,7 @@ func (c *ClientSet) NewRawStream(
 	ctx context.Context,
 	msgHandler PacketDataHandler,
 	closeHandler CloseHandler,
-) (Writer, error) {
+) (PacketWriter, error) {
 	for _, client := range c.clients {
 		if client == nil {
 			continue

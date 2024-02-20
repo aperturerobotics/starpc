@@ -1,9 +1,7 @@
 package srpc
 
-// Writer is the interface used to write messages to the remote.
-type Writer interface {
-	// Write writes raw data to the remote.
-	Write(p []byte) (n int, err error)
+// PacketWriter is the interface used to write messages to a PacketStream.
+type PacketWriter interface {
 	// WritePacket writes a packet to the remote.
 	WritePacket(p *Packet) error
 	// Close closes the writer.

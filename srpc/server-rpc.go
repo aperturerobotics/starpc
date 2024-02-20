@@ -15,7 +15,7 @@ type ServerRPC struct {
 
 // NewServerRPC constructs a new ServerRPC session.
 // note: call SetWriter before handling any incoming messages.
-func NewServerRPC(ctx context.Context, invoker Invoker, writer Writer) *ServerRPC {
+func NewServerRPC(ctx context.Context, invoker Invoker, writer PacketWriter) *ServerRPC {
 	rpc := &ServerRPC{invoker: invoker}
 	initCommonRPC(ctx, &rpc.commonRPC)
 	rpc.writer = writer

@@ -1,6 +1,7 @@
 package srpc
 
-import "context"
+// CloseHandler handles the stream closing with an optional error.
+type CloseHandler = func(closeErr error)
 
 // PacketHandler handles a packet.
 //
@@ -10,12 +11,6 @@ type PacketHandler = func(pkt *Packet) error
 
 // PacketDataHandler handles a packet before it is parsed.
 type PacketDataHandler = func(data []byte) error
-
-// CloseHandler handles the stream closing with an optional error.
-type CloseHandler = func(closeErr error)
-
-// RawStreamCtor is a function that builds a raw stream.
-type RawStreamCtor func(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (Writer, error)
 
 // NewPacketDataHandler wraps a PacketHandler with a decoding step.
 func NewPacketDataHandler(handler PacketHandler) PacketDataHandler {

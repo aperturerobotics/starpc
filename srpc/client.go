@@ -18,7 +18,7 @@ type Client interface {
 	// NewRawStream opens a new raw stream with the remote.
 	// Implements OpenStreamFunc.
 	// msgHandler must not be called concurrently.
-	NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (Writer, error)
+	NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error)
 }
 
 // OpenStreamFunc opens a stream with a remote.
@@ -27,7 +27,7 @@ type OpenStreamFunc = func(
 	ctx context.Context,
 	msgHandler PacketDataHandler,
 	closeHandler CloseHandler,
-) (Writer, error)
+) (PacketWriter, error)
 
 // client implements Client with a transport.
 type client struct {
@@ -102,7 +102,7 @@ func (c *client) NewRawStream(
 	ctx context.Context,
 	msgHandler PacketDataHandler,
 	closeHandler CloseHandler,
-) (Writer, error) {
+) (PacketWriter, error) {
 	return c.openStream(ctx, msgHandler, closeHandler)
 }
 

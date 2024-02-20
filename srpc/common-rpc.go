@@ -24,7 +24,7 @@ type commonRPC struct {
 	// bcast broadcasts when below fields change
 	bcast broadcast.Broadcast
 	// writer is the writer to write messages to
-	writer Writer
+	writer PacketWriter
 	// dataQueue contains incoming data packets.
 	// note: packets may be len() == 0
 	dataQueue [][]byte

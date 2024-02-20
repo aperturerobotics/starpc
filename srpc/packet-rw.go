@@ -146,4 +146,4 @@ func (r *PacketReadWriter) readLengthPrefix(b []byte) uint32 {
 }
 
 // _ is a type assertion
-var _ Writer = (*PacketReadWriter)(nil)
+var _ PacketWriter = (*PacketReadWriter)(nil)

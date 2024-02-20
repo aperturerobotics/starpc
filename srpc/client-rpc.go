@@ -25,7 +25,7 @@ func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 
 // Start sets the writer and writes the MsgSend message.
 // must only be called once!
-func (r *ClientRPC) Start(writer Writer, writeFirstMsg bool, firstMsg []byte) error {
+func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []byte) error {
 	select {
 	case <-r.ctx.Done():
 		r.ctxCancel()

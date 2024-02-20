@@ -44,4 +44,4 @@ func (r *RpcStreamWriter) Close() error {
 }
 
 // _ is a type assertion
-var _ srpc.Writer = ((*RpcStreamWriter)(nil))
+var _ srpc.PacketWriter = ((*RpcStreamWriter)(nil))
