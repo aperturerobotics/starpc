@@ -63,6 +63,8 @@ export class MessagePortDuplex<T extends {}>
       }
 
       this.port.addEventListener('message', messageListener)
+      this.port.start()
+
       return () => {
         this.port.removeEventListener('message', messageListener)
       }
