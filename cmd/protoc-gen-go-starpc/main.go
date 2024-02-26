@@ -498,6 +498,7 @@ func (s *srpc) generateServerMethod(method *protogen.Method) {
 	}
 	if genRecv {
 		s.P("Recv() (*", s.InputType(method), ", error)")
+		s.P("RecvTo(*", s.InputType(method), ") error")
 	}
 	s.P("}")
 	s.P()

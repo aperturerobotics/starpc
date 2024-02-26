@@ -22,3 +22,28 @@ type Stream interface {
 	// Close closes the stream for reading and writing.
 	Close() error
 }
+
+// StreamRecv is a stream that can receive typed messages.
+//
+// T is the response type.
+type StreamRecv[T any] interface {
+	Stream
+	Recv() (*T, error)
+	RecvTo(*T) error
+}
+
+// StreamSend is a stream that can send typed messages.
+//
+// T is the outgoing type.
+type StreamSend[T any] interface {
+	Stream
+	Send(*T) error
+}
+
+// StreamSendAndClose is a stream that can send typed messages, closing after.
+//
+// T is the outgoing type.
+type StreamSendAndClose[T any] interface {
+	StreamSend[T]
+	SendAndClose(*T) error
+}

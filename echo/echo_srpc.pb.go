@@ -366,6 +366,7 @@ func (x *srpcEchoer_EchoServerStreamStream) SendAndClose(m *EchoMsg) error {
 type SRPCEchoer_EchoClientStreamStream interface {
 	srpc.Stream
 	Recv() (*EchoMsg, error)
+	RecvTo(*EchoMsg) error
 }
 
 type srpcEchoer_EchoClientStreamStream struct {
@@ -389,6 +390,7 @@ type SRPCEchoer_EchoBidiStreamStream interface {
 	Send(*EchoMsg) error
 	SendAndClose(*EchoMsg) error
 	Recv() (*EchoMsg, error)
+	RecvTo(*EchoMsg) error
 }
 
 type srpcEchoer_EchoBidiStreamStream struct {
@@ -425,6 +427,7 @@ type SRPCEchoer_RpcStreamStream interface {
 	Send(*rpcstream.RpcStreamPacket) error
 	SendAndClose(*rpcstream.RpcStreamPacket) error
 	Recv() (*rpcstream.RpcStreamPacket, error)
+	RecvTo(*rpcstream.RpcStreamPacket) error
 }
 
 type srpcEchoer_RpcStreamStream struct {
