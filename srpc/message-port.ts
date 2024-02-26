@@ -12,7 +12,7 @@ import { combineUint8ArrayListTransform } from './array-list.js'
 // null will be written through the channel to indicate closure when the sink is closed.
 // Note: there is no way to know for sure when a MessagePort is closed!
 // You will need an additional keep-alive on top of MessagePortDuplex.
-export class MessagePortDuplex<T extends {}>
+export class MessagePortDuplex<T extends NonNullable<unknown>>
   implements Duplex<AsyncGenerator<T>, Source<T>, Promise<void>>
 {
   // port is the message port
@@ -84,7 +84,7 @@ export class MessagePortDuplex<T extends {}>
 }
 
 // newMessagePortDuplex constructs a MessagePortDuplex with a channel name.
-export function newMessagePortDuplex<T extends {}>(
+export function newMessagePortDuplex<T extends NonNullable<unknown>>(
   port: MessagePort,
 ): MessagePortDuplex<T> {
   return new MessagePortDuplex<T>(port)
