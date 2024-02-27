@@ -28,8 +28,8 @@ type Stream interface {
 // T is the response type.
 type StreamRecv[T any] interface {
 	Stream
-	Recv() (*T, error)
-	RecvTo(*T) error
+	Recv() (T, error)
+	RecvTo(T) error
 }
 
 // StreamSend is a stream that can send typed messages.
@@ -37,7 +37,7 @@ type StreamRecv[T any] interface {
 // T is the outgoing type.
 type StreamSend[T any] interface {
 	Stream
-	Send(*T) error
+	Send(T) error
 }
 
 // StreamSendAndClose is a stream that can send typed messages, closing after.
@@ -45,5 +45,5 @@ type StreamSend[T any] interface {
 // T is the outgoing type.
 type StreamSendAndClose[T any] interface {
 	StreamSend[T]
-	SendAndClose(*T) error
+	SendAndClose(T) error
 }
