@@ -1,5 +1,7 @@
 github.com/aperturerobotics/util v1.14.2 h1:AghqzGgZoufsdQstY6cCssHHMB/uCv8+BjysAE55S98=
 github.com/aperturerobotics/util v1.14.2/go.mod h1:1+G2THhT7VCmR7xeRlqDnyEtRFvONWoPft19xTHvbyk=
+github.com/aperturerobotics/util v1.14.3 h1:tn8eET9vlFwnveFY+rt4VbbMertQW8dcd+V5fK7SyHo=
+github.com/aperturerobotics/util v1.14.3/go.mod h1:1+G2THhT7VCmR7xeRlqDnyEtRFvONWoPft19xTHvbyk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
