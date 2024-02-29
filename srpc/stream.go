@@ -47,3 +47,27 @@ type StreamSendAndClose[T any] interface {
 	StreamSend[T]
 	SendAndClose(T) error
 }
+
+// streamWithClose is a Stream with a wrapped Close function.
+type streamWithClose struct {
+	Stream
+	closeFn func() error
+}
+
+// NewStreamWithClose wraps a Stream with a close function to call when Close is called.
+func NewStreamWithClose(strm Stream, close func() error) Stream {
+	return &streamWithClose{Stream: strm, closeFn: close}
+}
+
+// Close closes the stream for reading and writing.
+func (s *streamWithClose) Close() error {
+	err := s.Stream.Close()
+	err2 := s.closeFn()
+	if err != nil {
+		return err
+	}
+	return err2
+}
+
+// _ is a type assertion
+var _ Stream = (*streamWithClose)(nil)
