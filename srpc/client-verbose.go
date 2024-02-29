@@ -61,21 +61,3 @@ func (c *VClient) NewStream(ctx context.Context, service, method string, firstMs
 	stream, err = c.client.NewStream(ctx, service, method, firstMsg)
 	return stream, err
 }
-
-// NewRawStream opens a new raw stream with the remote.
-// Implements OpenStreamFunc.
-// msgHandler must not be called concurrently.
-func (c *VClient) NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (writer PacketWriter, err error) {
-	t1 := time.Now()
-
-	defer func() {
-		c.le.Debugf(
-			"NewRawStream() => dur(%v) writer(%v) err(%v)",
-			time.Since(t1).String(),
-			writer,
-			err,
-		)
-	}()
-	writer, err = c.client.NewRawStream(ctx, msgHandler, closeHandler)
-	return writer, err
-}

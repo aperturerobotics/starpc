@@ -14,11 +14,6 @@ type Client interface {
 	// NewStream starts a streaming RPC with the remote & returns the stream.
 	// firstMsg is optional.
 	NewStream(ctx context.Context, service, method string, firstMsg Message) (Stream, error)
-
-	// NewRawStream opens a new raw stream with the remote.
-	// Implements OpenStreamFunc.
-	// msgHandler must not be called concurrently.
-	NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error)
 }
 
 // OpenStreamFunc opens a stream with a remote.
@@ -93,17 +88,6 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	}
 
 	return NewMsgStream(ctx, clientRPC, clientRPC.ctxCancel), nil
-}
-
-// NewRawStream opens a new raw stream with the remote.
-// Implements OpenStreamFunc.
-// msgHandler must not be called concurrently.
-func (c *client) NewRawStream(
-	ctx context.Context,
-	msgHandler PacketDataHandler,
-	closeHandler CloseHandler,
-) (PacketWriter, error) {
-	return c.openStream(ctx, msgHandler, closeHandler)
 }
 
 // _ is a type assertion

@@ -41,23 +41,6 @@ func (c *ClientSet) NewStream(
 	return strm, err
 }
 
-// NewRawStream opens a new raw stream with the remote.
-// Implements OpenStreamFunc.
-// msgHandler must not be called concurrently.
-func (c *ClientSet) NewRawStream(
-	ctx context.Context,
-	msgHandler PacketDataHandler,
-	closeHandler CloseHandler,
-) (PacketWriter, error) {
-	for _, client := range c.clients {
-		if client == nil {
-			continue
-		}
-		return client.NewRawStream(ctx, msgHandler, closeHandler)
-	}
-	return nil, ErrNoAvailableClients
-}
-
 // execCall executes the call conditionally retrying against subsequent client handles.
 func (c *ClientSet) execCall(ctx context.Context, doCall func(client Client) error) error {
 	var any bool

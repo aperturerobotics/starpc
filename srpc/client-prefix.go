@@ -54,12 +54,5 @@ func (i *PrefixClient) stripCheckServiceIDPrefix(service string) (string, error)
 	return service, nil
 }
 
-// NewRawStream opens a new raw stream with the remote.
-// Implements OpenStreamFunc.
-// msgHandler must not be called concurrently.
-func (i *PrefixClient) NewRawStream(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error) {
-	return i.client.NewRawStream(ctx, msgHandler, closeHandler)
-}
-
 // _ is a type assertion
 var _ Client = ((*PrefixClient)(nil))
