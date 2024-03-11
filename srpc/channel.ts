@@ -89,7 +89,6 @@ export class ChannelStream<T = Uint8Array>
     return this.remoteOpen ?? false
   }
 
-  // remoteOpen indicates that we know the remote has already opened the stream.
   constructor(localId: string, channel: ChannelPort, opts?: ChannelStreamOpts) {
     // initial state
     this.localId = localId
