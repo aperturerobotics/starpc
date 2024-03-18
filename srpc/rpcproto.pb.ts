@@ -250,7 +250,7 @@ export const CallStart = {
     if (message.data.length !== 0) {
       writer.uint32(26).bytes(message.data)
     }
-    if (message.dataIsZero === true) {
+    if (message.dataIsZero !== false) {
       writer.uint32(32).bool(message.dataIsZero)
     }
     return writer
@@ -365,7 +365,7 @@ export const CallStart = {
     if (message.data.length !== 0) {
       obj.data = base64FromBytes(message.data)
     }
-    if (message.dataIsZero === true) {
+    if (message.dataIsZero !== false) {
       obj.dataIsZero = message.dataIsZero
     }
     return obj
@@ -403,10 +403,10 @@ export const CallData = {
     if (message.data.length !== 0) {
       writer.uint32(10).bytes(message.data)
     }
-    if (message.dataIsZero === true) {
+    if (message.dataIsZero !== false) {
       writer.uint32(16).bool(message.dataIsZero)
     }
-    if (message.complete === true) {
+    if (message.complete !== false) {
       writer.uint32(24).bool(message.complete)
     }
     if (message.error !== '') {
@@ -516,10 +516,10 @@ export const CallData = {
     if (message.data.length !== 0) {
       obj.data = base64FromBytes(message.data)
     }
-    if (message.dataIsZero === true) {
+    if (message.dataIsZero !== false) {
       obj.dataIsZero = message.dataIsZero
     }
-    if (message.complete === true) {
+    if (message.complete !== false) {
       obj.complete = message.complete
     }
     if (message.error !== '') {
