@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
@@ -22,8 +23,13 @@ func main() {
 		logrus.Fatal(err.Error())
 	}
 
-	fmt.Print("listening on :5000\n")
-	if err := http.ListenAndServe(":5000", server); err != nil {
+	fmt.Print("listening on localhost:5000\n")
+	hserver := &http.Server{
+		Addr:              "localhost:5000",
+		Handler:           server,
+		ReadHeaderTimeout: time.Second * 10,
+	}
+	if err := hserver.ListenAndServe(); err != nil {
 		logrus.Fatal(err.Error())
 	}
 }
