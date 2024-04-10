@@ -63,13 +63,13 @@
     "singleQuote": true
   },
   "devDependencies": {
-    "@aperturerobotics/ts-common": "^0.8.6",
+    "@aperturerobotics/ts-common": "^0.9.0",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.20.0",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.1",
-    "ts-poet": "6.7.0",
+    "ts-poet": "6.8.0",
     "ts-proto": "^1.166.1",
     "typescript": "^5.3.2",
     "utf-8-validate": "^6.0.3"

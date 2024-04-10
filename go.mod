@@ -7,11 +7,11 @@ toolchain go1.22.1
 require (
 	github.com/pkg/errors v0.9.1 // latest
 	google.golang.org/protobuf v1.33.0 // latest
-	nhooyr.io/websocket v1.8.10 // latest
+	nhooyr.io/websocket v1.8.11 // latest
 )
 
 require (
-	github.com/aperturerobotics/util v1.16.1 // latest
+	github.com/aperturerobotics/util v1.16.5 // latest
 	github.com/libp2p/go-libp2p v0.33.2 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
 	github.com/sirupsen/logrus v1.9.3 // latest
@@ -36,7 +36,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 // indirect
+	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
