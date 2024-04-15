@@ -61,37 +61,11 @@ $(GO_MOD_OUTDATED):
 		-o ./bin/go-mod-outdated \
 		github.com/psampaz/go-mod-outdated
 
-.PHONY: gengo
-gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_STARPC)
-	shopt -s globstar; \
-	set -eo pipefail; \
-	export PROJECT=$$(go list -m); \
-	export PATH=$$(pwd)/hack/bin:$${PATH}; \
-	export PROTOBUF_GO_TYPES_PKG="github.com/aperturerobotics/protobuf-go-lite/types/"; \
-	mkdir -p $$(pwd)/vendor/$$(dirname $${PROJECT}); \
-	rm $$(pwd)/vendor/$${PROJECT} || true; \
-	ln -s $$(pwd) $$(pwd)/vendor/$${PROJECT} ; \
-	$(PROTOWRAP) \
-		-I $$(pwd)/vendor \
-		--go-lite_out=$$(pwd)/vendor \
-		--go-lite_opt=features=marshal+unmarshal+size+equal+clone \
-		--go-starpc_out=$$(pwd)/vendor \
-		--proto_path $$(pwd)/vendor \
-		--print_structure \
-		--only_specified_files \
-		$$(\
-			git \
-				ls-files "*.proto" |\
-				xargs printf -- \
-				"$$(pwd)/vendor/$${PROJECT}/%s "); \
-	rm $$(pwd)/vendor/$${PROJECT} || true
-	$(GOIMPORTS) -w ./
-
 node_modules:
 	yarn install
 
-.PHONY: gents
-gents: $(PROTOWRAP) node_modules
+.PHONY: genproto
+genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_STARPC)
 	shopt -s globstar; \
 	set -eo pipefail; \
 	export PROJECT=$$(go list -m); \
@@ -99,32 +73,36 @@ gents: $(PROTOWRAP) node_modules
 	mkdir -p $$(pwd)/vendor/$$(dirname $${PROJECT}); \
 	rm $$(pwd)/vendor/$${PROJECT} || true; \
 	ln -s $$(pwd) $$(pwd)/vendor/$${PROJECT} ; \
-	$(PROTOWRAP) \
-		-I $$(pwd)/vendor \
-		--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-		--ts_proto_out=$$(pwd)/vendor \
-		--ts_proto_opt=esModuleInterop=true \
-		--ts_proto_opt=fileSuffix=.pb \
-		--ts_proto_opt=importSuffix=.js \
-		--ts_proto_opt=forceLong=long \
-		--ts_proto_opt=oneof=unions \
-		--ts_proto_opt=outputServices=default,outputServices=generic-definitions \
-		--ts_proto_opt=useAbortSignal=true \
-		--ts_proto_opt=useAsyncIterable=true \
-		--ts_proto_opt=useDate=true \
-		--proto_path $$(pwd)/vendor \
-		--print_structure \
-		--only_specified_files \
-		$$(\
-			git \
-				ls-files "*.proto" |\
-				xargs printf -- \
-				"$$(pwd)/vendor/$${PROJECT}/%s "); \
+	protogen() { \
+		$(PROTOWRAP) \
+			-I $$(pwd)/vendor \
+			--plugin=./node_modules/.bin/protoc-gen-ts_proto \
+			--go-lite_out=$$(pwd)/vendor \
+			--go-lite_opt=features=marshal+unmarshal+size+equal+clone \
+			--go-starpc_out=$$(pwd)/vendor \
+			--ts_proto_out=$$(pwd)/vendor \
+			--ts_proto_opt=esModuleInterop=true \
+			--ts_proto_opt=fileSuffix=.pb \
+			--ts_proto_opt=importSuffix=.js \
+			--ts_proto_opt=forceLong=long \
+			--ts_proto_opt=oneof=unions \
+			--ts_proto_opt=outputServices=default,outputServices=generic-definitions \
+			--ts_proto_opt=useAbortSignal=true \
+			--ts_proto_opt=useAsyncIterable=true \
+			--ts_proto_opt=useDate=true \
+			--proto_path $$(pwd)/vendor \
+			--print_structure \
+			--only_specified_files \
+			$$(\
+				git \
+					ls-files "$$1" |\
+					xargs printf -- \
+					"$$(pwd)/vendor/$${PROJECT}/%s "); \
+	}; \
+	protogen "./*.proto"; \
 	rm $$(pwd)/vendor/$${PROJECT} || true
-	npm run format
-
-.PHONY: genproto
-genproto: gengo gents
+	$(GOIMPORTS) -w ./
+	npm run format:js
 
 .PHONY: gen
 gen: genproto
@@ -148,6 +126,11 @@ fix: $(GOLANGCI_LINT)
 .PHONY: test
 test:
 	go test -v ./...
+
+.PHONY: format
+format: $(GOFUMPT) $(GOIMPORTS)
+	$(GOIMPORTS) -w ./
+	$(GOFUMPT) -w ./
 
 .PHONY: integration
 integration: node_modules vendor
