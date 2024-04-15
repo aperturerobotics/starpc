@@ -1,36 +1,35 @@
 # https://github.com/aperturerobotics/protobuf-project
 
 SHELL:=bash
+ESBUILD=hack/bin/esbuild
 PROTOWRAP=hack/bin/protowrap
-PROTOC_GEN_GO=hack/bin/protoc-gen-go
+PROTOC_GEN_GO=hack/bin/protoc-gen-go-lite
 PROTOC_GEN_STARPC=hack/bin/protoc-gen-go-starpc
-PROTOC_GEN_VTPROTO=hack/bin/protoc-gen-go-vtproto
 GOIMPORTS=hack/bin/goimports
-GOFUMPT=hack/bin/gofumpt
 GOLANGCI_LINT=hack/bin/golangci-lint
 GO_MOD_OUTDATED=hack/bin/go-mod-outdated
 GOLIST=go list -f "{{ .Dir }}" -m
 
 export GO111MODULE=on
-undefine GOOS
 undefine GOARCH
+undefine GOOS
 
 all:
 
 vendor:
 	go mod vendor
 
+$(ESBUILD):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/esbuild \
+		github.com/evanw/esbuild/cmd/esbuild
+
 $(PROTOC_GEN_GO):
 	cd ./hack; \
 	go build -v \
-		-o ./bin/protoc-gen-go \
-		google.golang.org/protobuf/cmd/protoc-gen-go
-
-$(PROTOC_GEN_VTPROTO):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/protoc-gen-go-vtproto \
-		github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto
+		-o ./bin/protoc-gen-go-lite \
+		github.com/aperturerobotics/protobuf-go-lite/cmd/protoc-gen-go-lite
 
 $(PROTOC_GEN_STARPC):
 	cd ./hack; \
@@ -43,12 +42,6 @@ $(GOIMPORTS):
 	go build -v \
 		-o ./bin/goimports \
 		golang.org/x/tools/cmd/goimports
-
-$(GOFUMPT):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/gofumpt \
-		mvdan.cc/gofumpt
 
 $(PROTOWRAP):
 	cd ./hack; \
@@ -69,19 +62,19 @@ $(GO_MOD_OUTDATED):
 		github.com/psampaz/go-mod-outdated
 
 .PHONY: gengo
-gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_VTPROTO) $(PROTOC_GEN_STARPC)
+gengo: $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_STARPC)
 	shopt -s globstar; \
 	set -eo pipefail; \
 	export PROJECT=$$(go list -m); \
 	export PATH=$$(pwd)/hack/bin:$${PATH}; \
+	export PROTOBUF_GO_TYPES_PKG="github.com/aperturerobotics/protobuf-go-lite/types/"; \
 	mkdir -p $$(pwd)/vendor/$$(dirname $${PROJECT}); \
 	rm $$(pwd)/vendor/$${PROJECT} || true; \
 	ln -s $$(pwd) $$(pwd)/vendor/$${PROJECT} ; \
 	$(PROTOWRAP) \
 		-I $$(pwd)/vendor \
-		--go_out=$$(pwd)/vendor \
-		--go-vtproto_out=$$(pwd)/vendor \
-		--go-vtproto_opt=features=marshal+unmarshal+size+equal+clone \
+		--go-lite_out=$$(pwd)/vendor \
+		--go-lite_opt=features=marshal+unmarshal+size+equal+clone \
 		--go-starpc_out=$$(pwd)/vendor \
 		--proto_path $$(pwd)/vendor \
 		--print_structure \
@@ -128,7 +121,7 @@ gents: $(PROTOWRAP) node_modules
 				xargs printf -- \
 				"$$(pwd)/vendor/$${PROJECT}/%s "); \
 	rm $$(pwd)/vendor/$${PROJECT} || true
-	npm run format:js
+	npm run format
 
 .PHONY: genproto
 genproto: gengo gents
@@ -146,20 +139,15 @@ list: $(GO_MOD_OUTDATED)
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
-	$(GOLANGCI_LINT) run --timeout=10m
+	$(GOLANGCI_LINT) run
 
 .PHONY: fix
 fix: $(GOLANGCI_LINT)
-	$(GOLANGCI_LINT) run --fix --timeout=10m
-
-.PHONY: format
-format: $(GOFUMPT) $(GOIMPORTS)
-	$(GOIMPORTS) -w ./
-	$(GOFUMPT) -w ./
+	$(GOLANGCI_LINT) run --fix
 
 .PHONY: test
 test:
-	go test -timeout=30s -v ./...
+	go test -v ./...
 
 .PHONY: integration
 integration: node_modules vendor

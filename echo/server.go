@@ -8,7 +8,6 @@ import (
 
 	rpcstream "github.com/aperturerobotics/starpc/rpcstream"
 	srpc "github.com/aperturerobotics/starpc/srpc"
-	"google.golang.org/protobuf/proto"
 )
 
 // EchoServer implements the server side of Echo.
@@ -28,7 +27,7 @@ func (e *EchoServer) Register(mux srpc.Mux) error {
 
 // Echo implements echo.SRPCEchoerServer
 func (*EchoServer) Echo(ctx context.Context, msg *EchoMsg) (*EchoMsg, error) {
-	return proto.Clone(msg).(*EchoMsg), nil
+	return msg.CloneVT(), nil
 }
 
 // EchoServerStream implements SRPCEchoerServer

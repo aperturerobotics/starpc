@@ -1,10 +1,10 @@
 package srpc
 
+import protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
+
 // Message is the vtprotobuf message interface.
-type Message interface {
-	MarshalVT() ([]byte, error)
-	UnmarshalVT([]byte) error
-}
+// TODO use VTMessage interface
+type Message = protobuf_go_lite.Message
 
 // RawMessage is a raw protobuf message container.
 //
