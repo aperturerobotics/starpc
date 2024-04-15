@@ -78,8 +78,8 @@ github.com/aperturerobotics/goprotowrap v0.3.1 h1:nFCWZ4QNQEzpsgCN1mVWLDVTF/Jm0h
 github.com/aperturerobotics/goprotowrap v0.3.1/go.mod h1:5tRlYsb4VF0ySzx2/My3u9PtzTWNu5o2bqYHj0TRw+U=
 github.com/aperturerobotics/protobuf-go v1.32.1-0.20240322235918-b46c9358eab6 h1:jLqwJ89A0/peHeHka0qV6Ug5nkiAJ4YvCDB1huXPxBc=
 github.com/aperturerobotics/protobuf-go v1.32.1-0.20240322235918-b46c9358eab6/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
-github.com/aperturerobotics/protobuf-go-lite v0.2.3 h1:mSaflt8MZEbwuMiKPGuIobYGqWxp4LzXm/a3d+/+YEI=
-github.com/aperturerobotics/protobuf-go-lite v0.2.3/go.mod h1:uGsGl8o72hBjkAqBVz2kepXKeA7BZDiqCZPyHjw2yws=
+github.com/aperturerobotics/protobuf-go-lite v0.2.4 h1:BaEBcTP01WSatsarPb7O58ejm7Yx7VcRZkR1fPKtOD4=
+github.com/aperturerobotics/protobuf-go-lite v0.2.4/go.mod h1:uGsGl8o72hBjkAqBVz2kepXKeA7BZDiqCZPyHjw2yws=
 github.com/aperturerobotics/util v1.16.5 h1:zW6l07O1cCZMG+cbE08D5gv6p/tYfGipGRO5WaXpd1c=
 github.com/aperturerobotics/util v1.16.5/go.mod h1:UzxQN3nK8D+T7ruiBqvNiZOuEerkgsM1fN8eAvjsIMo=
 github.com/ashanbrown/forbidigo v1.6.0 h1:D3aewfM37Yb3pxHujIPSpTf6oQk9sc9WZi8gerOIVIY=

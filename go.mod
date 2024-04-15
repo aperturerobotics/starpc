@@ -2,22 +2,19 @@ module github.com/aperturerobotics/starpc
 
 go 1.22
 
-toolchain go1.22.1
+require (
+	github.com/aperturerobotics/protobuf-go-lite v0.2.4
+	github.com/aperturerobotics/util v1.16.5 // latest
+)
 
 require (
+	github.com/libp2p/go-libp2p v0.33.2 // latest
+	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
 	github.com/pkg/errors v0.9.1 // latest
+	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.33.0 // latest
 	nhooyr.io/websocket v1.8.11 // latest
 )
-
-require (
-	github.com/aperturerobotics/util v1.16.5 // latest
-	github.com/libp2p/go-libp2p v0.33.2 // latest
-	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
-	github.com/sirupsen/logrus v1.9.3 // latest
-)
-
-require github.com/aperturerobotics/protobuf-go-lite v0.2.3
 
 require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
