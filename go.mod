@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.2.4
-	github.com/aperturerobotics/util v1.16.5 // latest
+	github.com/aperturerobotics/util v1.16.6 // latest
 )
 
 require (
