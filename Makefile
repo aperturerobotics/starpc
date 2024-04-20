@@ -1,13 +1,14 @@
 # https://github.com/aperturerobotics/protobuf-project
 
 SHELL:=bash
-ESBUILD=hack/bin/esbuild
 PROTOWRAP=hack/bin/protowrap
 PROTOC_GEN_GO=hack/bin/protoc-gen-go-lite
 PROTOC_GEN_STARPC=hack/bin/protoc-gen-go-starpc
 GOIMPORTS=hack/bin/goimports
+GOFUMPT=hack/bin/gofumpt
 GOLANGCI_LINT=hack/bin/golangci-lint
 GO_MOD_OUTDATED=hack/bin/go-mod-outdated
+ESBUILD=hack/bin/esbuild
 GOLIST=go list -f "{{ .Dir }}" -m
 
 export GO111MODULE=on
@@ -19,29 +20,23 @@ all:
 vendor:
 	go mod vendor
 
-$(ESBUILD):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/esbuild \
-		github.com/evanw/esbuild/cmd/esbuild
-
 $(PROTOC_GEN_GO):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/protoc-gen-go-lite \
 		github.com/aperturerobotics/protobuf-go-lite/cmd/protoc-gen-go-lite
 
-$(PROTOC_GEN_STARPC):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/protoc-gen-go-starpc \
-		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
-
 $(GOIMPORTS):
 	cd ./hack; \
 	go build -v \
 		-o ./bin/goimports \
 		golang.org/x/tools/cmd/goimports
+
+$(GOFUMPT):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/gofumpt \
+		mvdan.cc/gofumpt
 
 $(PROTOWRAP):
 	cd ./hack; \
@@ -60,6 +55,18 @@ $(GO_MOD_OUTDATED):
 	go build -v \
 		-o ./bin/go-mod-outdated \
 		github.com/psampaz/go-mod-outdated
+
+$(PROTOC_GEN_STARPC):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/protoc-gen-go-starpc \
+		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
+
+$(ESBUILD):
+	cd ./hack; \
+	go build -v \
+		-o ./bin/esbuild \
+		github.com/evanw/esbuild/cmd/esbuild
 
 node_modules:
 	yarn install
