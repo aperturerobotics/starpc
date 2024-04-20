@@ -78,7 +78,7 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 			-I $$(pwd)/vendor \
 			--plugin=./node_modules/.bin/protoc-gen-ts_proto \
 			--go-lite_out=$$(pwd)/vendor \
-			--go-lite_opt=features=marshal+unmarshal+size+equal+clone \
+			--go-lite_opt=features=marshal+unmarshal+size+equal+json+clone \
 			--go-starpc_out=$$(pwd)/vendor \
 			--ts_proto_out=$$(pwd)/vendor \
 			--ts_proto_opt=esModuleInterop=true \
