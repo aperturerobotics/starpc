@@ -16,7 +16,7 @@
 import type { DescService } from "@bufbuild/protobuf";
 import { MethodIdempotency, MethodKind } from "@bufbuild/protobuf";
 import type { GeneratedFile, Schema } from "@bufbuild/protoplugin/ecmascript";
-import { localName } from "@bufbuild/protoplugin/ecmascript";
+import { createImportSymbol, localName } from "@bufbuild/protoplugin/ecmascript";
 
 export function generateTs(schema: Schema) {
   for (const protoFile of schema.files) {
@@ -108,7 +108,7 @@ function generateService(
 
   // Generate the client implementation
   f.print("export class ", localName(service), "ClientImpl implements ", localName(service), " {");
-  f.print("  private readonly rpc: ProtoRpc");
+  f.print("  private readonly rpc: ", createImportSymbol("ProtoRpc", "starpc"));
   f.print("  private readonly service: string");
   f.print("  constructor(rpc: ProtoRpc, opts?: { service?: string }) {");
   f.print("    this.service = opts?.service || ", localName(service), "ServiceName");

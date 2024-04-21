@@ -6,6 +6,7 @@
 import { EchoMsg } from './echo_pb.js'
 import { MethodKind } from '@bufbuild/protobuf'
 import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
+import { ProtoRpc } from 'starpc'
 
 /**
  * Echoer service returns the given message.

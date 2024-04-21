@@ -5,6 +5,7 @@
 
 import { MockMsg } from './mock_pb.js'
 import { MethodKind } from '@bufbuild/protobuf'
+import { ProtoRpc } from 'starpc'
 
 /**
  * Mock service mocks some RPCs for the e2e tests.
