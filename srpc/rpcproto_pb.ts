@@ -12,18 +12,13 @@ import type {
   PlainMessage,
 } from '@bufbuild/protobuf'
 import { Message, proto3 } from '@bufbuild/protobuf'
-import {
-  CallData as CallData$1,
-  CallStart as CallStart$1,
-  Packet as Packet$1,
-} from './rpcproto_pb.js'
 
 /**
  * Packet is a message sent over a srpc packet connection.
  *
  * @generated from message srpc.Packet
  */
-export class Packet extends Message<Packet$1> {
+export class Packet extends Message<Packet> {
   /**
    * Body is the packet body.
    *
@@ -36,7 +31,7 @@ export class Packet extends Message<Packet$1> {
          *
          * @generated from field: srpc.CallStart call_start = 1;
          */
-        value: CallStart$1
+        value: CallStart
         case: 'callStart'
       }
     | {
@@ -45,7 +40,7 @@ export class Packet extends Message<Packet$1> {
          *
          * @generated from field: srpc.CallData call_data = 2;
          */
-        value: CallData$1
+        value: CallData
         case: 'callData'
       }
     | {
@@ -59,7 +54,7 @@ export class Packet extends Message<Packet$1> {
       }
     | { case: undefined; value?: undefined } = { case: undefined }
 
-  constructor(data?: PartialMessage<Packet$1>) {
+  constructor(data?: PartialMessage<Packet>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -67,14 +62,8 @@ export class Packet extends Message<Packet$1> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'srpc.Packet'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {
-      no: 1,
-      name: 'call_start',
-      kind: 'message',
-      T: CallStart$1,
-      oneof: 'body',
-    },
-    { no: 2, name: 'call_data', kind: 'message', T: CallData$1, oneof: 'body' },
+    { no: 1, name: 'call_start', kind: 'message', T: CallStart, oneof: 'body' },
+    { no: 2, name: 'call_data', kind: 'message', T: CallData, oneof: 'body' },
     {
       no: 3,
       name: 'call_cancel',
@@ -87,29 +76,29 @@ export class Packet extends Message<Packet$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): Packet$1 {
-    return new Packet$1().fromBinary(bytes, options)
+  ): Packet {
+    return new Packet().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): Packet$1 {
-    return new Packet$1().fromJson(jsonValue, options)
+  ): Packet {
+    return new Packet().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): Packet$1 {
-    return new Packet$1().fromJsonString(jsonString, options)
+  ): Packet {
+    return new Packet().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: Packet$1 | PlainMessage<Packet$1> | undefined,
-    b: Packet$1 | PlainMessage<Packet$1> | undefined,
+    a: Packet | PlainMessage<Packet> | undefined,
+    b: Packet | PlainMessage<Packet> | undefined,
   ): boolean {
-    return proto3.util.equals(Packet$1, a, b)
+    return proto3.util.equals(Packet, a, b)
   }
 }
 
@@ -118,7 +107,7 @@ export class Packet extends Message<Packet$1> {
  *
  * @generated from message srpc.CallStart
  */
-export class CallStart extends Message<CallStart$1> {
+export class CallStart extends Message<CallStart> {
   /**
    * RpcService is the service to contact.
    * Must be set.
@@ -150,7 +139,7 @@ export class CallStart extends Message<CallStart$1> {
    */
   dataIsZero = false
 
-  constructor(data?: PartialMessage<CallStart$1>) {
+  constructor(data?: PartialMessage<CallStart>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -172,29 +161,29 @@ export class CallStart extends Message<CallStart$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): CallStart$1 {
-    return new CallStart$1().fromBinary(bytes, options)
+  ): CallStart {
+    return new CallStart().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): CallStart$1 {
-    return new CallStart$1().fromJson(jsonValue, options)
+  ): CallStart {
+    return new CallStart().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): CallStart$1 {
-    return new CallStart$1().fromJsonString(jsonString, options)
+  ): CallStart {
+    return new CallStart().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: CallStart$1 | PlainMessage<CallStart$1> | undefined,
-    b: CallStart$1 | PlainMessage<CallStart$1> | undefined,
+    a: CallStart | PlainMessage<CallStart> | undefined,
+    b: CallStart | PlainMessage<CallStart> | undefined,
   ): boolean {
-    return proto3.util.equals(CallStart$1, a, b)
+    return proto3.util.equals(CallStart, a, b)
   }
 }
 
@@ -203,7 +192,7 @@ export class CallStart extends Message<CallStart$1> {
  *
  * @generated from message srpc.CallData
  */
-export class CallData extends Message<CallData$1> {
+export class CallData extends Message<CallData> {
   /**
    * Data contains the packet in the sequence.
    *
@@ -233,7 +222,7 @@ export class CallData extends Message<CallData$1> {
    */
   error = ''
 
-  constructor(data?: PartialMessage<CallData$1>) {
+  constructor(data?: PartialMessage<CallData>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -250,28 +239,28 @@ export class CallData extends Message<CallData$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): CallData$1 {
-    return new CallData$1().fromBinary(bytes, options)
+  ): CallData {
+    return new CallData().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): CallData$1 {
-    return new CallData$1().fromJson(jsonValue, options)
+  ): CallData {
+    return new CallData().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): CallData$1 {
-    return new CallData$1().fromJsonString(jsonString, options)
+  ): CallData {
+    return new CallData().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: CallData$1 | PlainMessage<CallData$1> | undefined,
-    b: CallData$1 | PlainMessage<CallData$1> | undefined,
+    a: CallData | PlainMessage<CallData> | undefined,
+    b: CallData | PlainMessage<CallData> | undefined,
   ): boolean {
-    return proto3.util.equals(CallData$1, a, b)
+    return proto3.util.equals(CallData, a, b)
   }
 }

@@ -14,6 +14,6 @@
 // limitations under the License.
 
 import { runNodeJs } from "@bufbuild/protoplugin";
-import {protocGenEsStarpc} from "./plugin.js"
+import { protocGenEsStarpc } from "./plugin.js"
 
 runNodeJs(protocGenEsStarpc)

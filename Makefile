@@ -85,14 +85,14 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 		$(PROTOWRAP) \
 			-I $${OUT} \
 			--plugin=./node_modules/.bin/protoc-gen-es \
-			--plugin=./node_modules/.bin/protoc-gen-connect-es \
+			--plugin=./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc \
 			--go-lite_out=$${OUT} \
 			--go-lite_opt=features=marshal+unmarshal+size+equal+json+clone \
 			--go-starpc_out=$${OUT} \
 			--es_out=$${OUT} \
 			--es_opt target=ts \
-			--connect-es_out=$${OUT} \
-			--connect-es_opt target=ts \
+			--es-starpc_out=$${OUT} \
+			--es-starpc_opt target=ts \
 			--proto_path $${OUT} \
 			--print_structure \
 			--only_specified_files \

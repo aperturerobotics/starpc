@@ -12,18 +12,13 @@ import type {
   PlainMessage,
 } from '@bufbuild/protobuf'
 import { Message, proto3 } from '@bufbuild/protobuf'
-import {
-  RpcAck as RpcAck$1,
-  RpcStreamInit as RpcStreamInit$1,
-  RpcStreamPacket as RpcStreamPacket$1,
-} from './rpcstream_pb.js'
 
 /**
  * RpcStreamPacket is a packet encapsulating data for a RPC stream.
  *
  * @generated from message rpcstream.RpcStreamPacket
  */
-export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
+export class RpcStreamPacket extends Message<RpcStreamPacket> {
   /**
    * @generated from oneof rpcstream.RpcStreamPacket.body
    */
@@ -35,7 +30,7 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
          *
          * @generated from field: rpcstream.RpcStreamInit init = 1;
          */
-        value: RpcStreamInit$1
+        value: RpcStreamInit
         case: 'init'
       }
     | {
@@ -45,7 +40,7 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
          *
          * @generated from field: rpcstream.RpcAck ack = 2;
          */
-        value: RpcAck$1
+        value: RpcAck
         case: 'ack'
       }
     | {
@@ -59,7 +54,7 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
       }
     | { case: undefined; value?: undefined } = { case: undefined }
 
-  constructor(data?: PartialMessage<RpcStreamPacket$1>) {
+  constructor(data?: PartialMessage<RpcStreamPacket>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -67,8 +62,8 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'rpcstream.RpcStreamPacket'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: 'init', kind: 'message', T: RpcStreamInit$1, oneof: 'body' },
-    { no: 2, name: 'ack', kind: 'message', T: RpcAck$1, oneof: 'body' },
+    { no: 1, name: 'init', kind: 'message', T: RpcStreamInit, oneof: 'body' },
+    { no: 2, name: 'ack', kind: 'message', T: RpcAck, oneof: 'body' },
     {
       no: 3,
       name: 'data',
@@ -81,29 +76,29 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): RpcStreamPacket$1 {
-    return new RpcStreamPacket$1().fromBinary(bytes, options)
+  ): RpcStreamPacket {
+    return new RpcStreamPacket().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): RpcStreamPacket$1 {
-    return new RpcStreamPacket$1().fromJson(jsonValue, options)
+  ): RpcStreamPacket {
+    return new RpcStreamPacket().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): RpcStreamPacket$1 {
-    return new RpcStreamPacket$1().fromJsonString(jsonString, options)
+  ): RpcStreamPacket {
+    return new RpcStreamPacket().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: RpcStreamPacket$1 | PlainMessage<RpcStreamPacket$1> | undefined,
-    b: RpcStreamPacket$1 | PlainMessage<RpcStreamPacket$1> | undefined,
+    a: RpcStreamPacket | PlainMessage<RpcStreamPacket> | undefined,
+    b: RpcStreamPacket | PlainMessage<RpcStreamPacket> | undefined,
   ): boolean {
-    return proto3.util.equals(RpcStreamPacket$1, a, b)
+    return proto3.util.equals(RpcStreamPacket, a, b)
   }
 }
 
@@ -112,7 +107,7 @@ export class RpcStreamPacket extends Message<RpcStreamPacket$1> {
  *
  * @generated from message rpcstream.RpcStreamInit
  */
-export class RpcStreamInit extends Message<RpcStreamInit$1> {
+export class RpcStreamInit extends Message<RpcStreamInit> {
   /**
    * ComponentId is the identifier of the component making the request.
    *
@@ -120,7 +115,7 @@ export class RpcStreamInit extends Message<RpcStreamInit$1> {
    */
   componentId = ''
 
-  constructor(data?: PartialMessage<RpcStreamInit$1>) {
+  constructor(data?: PartialMessage<RpcStreamInit>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -139,29 +134,29 @@ export class RpcStreamInit extends Message<RpcStreamInit$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): RpcStreamInit$1 {
-    return new RpcStreamInit$1().fromBinary(bytes, options)
+  ): RpcStreamInit {
+    return new RpcStreamInit().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): RpcStreamInit$1 {
-    return new RpcStreamInit$1().fromJson(jsonValue, options)
+  ): RpcStreamInit {
+    return new RpcStreamInit().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): RpcStreamInit$1 {
-    return new RpcStreamInit$1().fromJsonString(jsonString, options)
+  ): RpcStreamInit {
+    return new RpcStreamInit().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: RpcStreamInit$1 | PlainMessage<RpcStreamInit$1> | undefined,
-    b: RpcStreamInit$1 | PlainMessage<RpcStreamInit$1> | undefined,
+    a: RpcStreamInit | PlainMessage<RpcStreamInit> | undefined,
+    b: RpcStreamInit | PlainMessage<RpcStreamInit> | undefined,
   ): boolean {
-    return proto3.util.equals(RpcStreamInit$1, a, b)
+    return proto3.util.equals(RpcStreamInit, a, b)
   }
 }
 
@@ -170,7 +165,7 @@ export class RpcStreamInit extends Message<RpcStreamInit$1> {
  *
  * @generated from message rpcstream.RpcAck
  */
-export class RpcAck extends Message<RpcAck$1> {
+export class RpcAck extends Message<RpcAck> {
   /**
    * Error indicates there was some error setting up the stream.
    *
@@ -178,7 +173,7 @@ export class RpcAck extends Message<RpcAck$1> {
    */
   error = ''
 
-  constructor(data?: PartialMessage<RpcAck$1>) {
+  constructor(data?: PartialMessage<RpcAck>) {
     super()
     proto3.util.initPartial(data, this)
   }
@@ -192,28 +187,28 @@ export class RpcAck extends Message<RpcAck$1> {
   static fromBinary(
     bytes: Uint8Array,
     options?: Partial<BinaryReadOptions>,
-  ): RpcAck$1 {
-    return new RpcAck$1().fromBinary(bytes, options)
+  ): RpcAck {
+    return new RpcAck().fromBinary(bytes, options)
   }
 
   static fromJson(
     jsonValue: JsonValue,
     options?: Partial<JsonReadOptions>,
-  ): RpcAck$1 {
-    return new RpcAck$1().fromJson(jsonValue, options)
+  ): RpcAck {
+    return new RpcAck().fromJson(jsonValue, options)
   }
 
   static fromJsonString(
     jsonString: string,
     options?: Partial<JsonReadOptions>,
-  ): RpcAck$1 {
-    return new RpcAck$1().fromJsonString(jsonString, options)
+  ): RpcAck {
+    return new RpcAck().fromJsonString(jsonString, options)
   }
 
   static equals(
-    a: RpcAck$1 | PlainMessage<RpcAck$1> | undefined,
-    b: RpcAck$1 | PlainMessage<RpcAck$1> | undefined,
+    a: RpcAck | PlainMessage<RpcAck> | undefined,
+    b: RpcAck | PlainMessage<RpcAck> | undefined,
   ): boolean {
-    return proto3.util.equals(RpcAck$1, a, b)
+    return proto3.util.equals(RpcAck, a, b)
   }
 }

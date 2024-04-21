@@ -72,5 +72,107 @@ function generateService(
   f.print();
 
 
-  // NOTE: This matches the proto rpc interface from ts-proto.
+   // Generate the service interface
+  f.print(f.jsDoc(service));
+  f.print("export interface ", localName(service), " {");
+  for (const method of service.methods) {
+    f.print(f.jsDoc(method, "  "));
+    f.print("  ", localName(method), "(");
+    if (method.methodKind === MethodKind.Unary) {
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.ServerStreaming) {
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.ClientStreaming) {
+      f.print("request: AsyncIterable<", method.input, ">, abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.BiDiStreaming) {
+      f.print("request: AsyncIterable<", method.input, ">, abortSignal?: AbortSignal");
+    }
+    f.print("): ");
+    if (method.methodKind === MethodKind.Unary) {
+      f.print("Promise<", method.output, ">");
+    } else if (method.methodKind === MethodKind.ServerStreaming) {
+      f.print("AsyncIterable<", method.output, ">");
+    } else if (method.methodKind === MethodKind.ClientStreaming) {
+      f.print("Promise<", method.output, ">");
+    } else if (method.methodKind === MethodKind.BiDiStreaming) {
+      f.print("AsyncIterable<", method.output, ">");
+    }
+    f.print();
+  }
+  f.print("}");
+  f.print();
+
+  // Generate the service name constant
+  f.print("export const ", localName(service), "ServiceName = ", f.string(service.typeName));
+  f.print();
+
+  // Generate the client implementation
+  f.print("export class ", localName(service), "ClientImpl implements ", localName(service), " {");
+  f.print("  private readonly rpc: ProtoRpc");
+  f.print("  private readonly service: string");
+  f.print("  constructor(rpc: ProtoRpc, opts?: { service?: string }) {");
+  f.print("    this.service = opts?.service || ", localName(service), "ServiceName");
+  f.print("    this.rpc = rpc");
+  for (const method of service.methods) {
+    f.print("    this.", localName(method), " = this.", localName(method), ".bind(this)");
+  }
+  f.print("  }");
+  for (const method of service.methods) {
+    f.print(f.jsDoc(method, "  "));
+    f.print("  ", method.methodKind === MethodKind.Unary ? "async " : "", localName(method), "(");
+    if (method.methodKind === MethodKind.Unary) {
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.ServerStreaming) {
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.ClientStreaming) {
+      f.print("request: AsyncIterable<", method.input, ">, abortSignal?: AbortSignal");
+    } else if (method.methodKind === MethodKind.BiDiStreaming) {
+      f.print("request: AsyncIterable<", method.input, ">, abortSignal?: AbortSignal");
+    }
+    f.print("): ");
+    if (method.methodKind === MethodKind.Unary) {
+      f.print("Promise<", method.output, "> {");
+      f.print("    const result = await this.rpc.request(");
+      f.print("      this.service,");
+      f.print("      ", localName(service), ".methods.", localName(method), ".name,");
+      f.print("      request.toBinary(),");
+      f.print("      abortSignal || undefined,");
+      f.print("    )");
+      f.print("    return ", method.output, ".fromBinary(result)");
+      f.print("  }");
+    } else if (method.methodKind === MethodKind.ServerStreaming) {
+      f.print("AsyncIterable<", method.output, "> {");
+      f.print("    const result = this.rpc.serverStreamingRequest(");
+      f.print("      this.service,");
+      f.print("      ", localName(service), ".methods.", localName(method), ".name,");
+      f.print("      request.toBinary(),");
+      f.print("      abortSignal || undefined,");
+      f.print("    )");
+      f.print("    return buildDecodeMessageTransform<", method.output, ">(", method.output, ")(result)");
+      f.print("  }");
+    } else if (method.methodKind === MethodKind.ClientStreaming) {
+      f.print("Promise<", method.output, "> {");
+      f.print("    const result = await this.rpc.clientStreamingRequest(");
+      f.print("      this.service,");
+      f.print("      ", localName(service), ".methods.", localName(method), ".name,");
+      f.print("      buildEncodeMessageTransform(request),");
+      f.print("      abortSignal || undefined,");
+      f.print("    )");
+      f.print("    return ", method.output, ".fromBinary(result)");
+      f.print("  }");
+    } else if (method.methodKind === MethodKind.BiDiStreaming) {
+      f.print("AsyncIterable<", method.output, "> {");
+      f.print("    const result = this.rpc.bidirectionalStreamingRequest(");
+      f.print("      this.service,");
+      f.print("      ", localName(service), ".methods.", localName(method), ".name,");
+      f.print("      buildEncodeMessageTransform(request),");
+      f.print("      abortSignal || undefined,");
+      f.print("    )");
+      f.print("    return buildDecodeMessageTransform<", method.output, ">(", method.output, ")(result)");
+      f.print("  }");
+    }
+    f.print();
+  }
+  f.print("}");
+  f.print(); // NOTE: This matches the proto rpc interface from ts-proto and starpc.
 }
