@@ -64,7 +64,7 @@
     "singleQuote": true
   },
   "devDependencies": {
-    "@aperturerobotics/ts-common": "^0.10.0",
+    "@aperturerobotics/ts-common": "^0.10.2",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.20.0",

@@ -7,20 +7,20 @@
   resolved "https://registry.yarnpkg.com/@aashutoshrathi/word-wrap/-/word-wrap-1.2.6.tgz#bd9154aec9983f77b3a034ecaa015c2e4201f6cf"
   integrity sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==
 
-"@aperturerobotics/ts-common@^0.10.0":
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/@aperturerobotics/ts-common/-/ts-common-0.10.0.tgz#bb5dfd2e2418ab9942bd6c7a63117f03bafcff35"
-  integrity sha512-RfFpxZNx8JbiUOQkZpbJwgU4sJHYiggYus/TH8zndvR5dODql3Pq69lcstL8TqmpkHTzfMWGs5zKupbieomjOw==
+"@aperturerobotics/ts-common@^0.10.2":
+  version "0.10.2"
+  resolved "https://registry.yarnpkg.com/@aperturerobotics/ts-common/-/ts-common-0.10.2.tgz#a38f8fad79c155eaf1db56b1631384e84568eb93"
+  integrity sha512-2fEBMooDom8cue5mcXQiUy7GXGGCVnVD1ryicaBUv2ECH6Bc5H4oY0aKUDAaXdMWYB33H3FnBTyEkew9QGW+lg==
   dependencies:
     "@typescript-eslint/eslint-plugin" "^7.7.0"
     "@typescript-eslint/parser" "^7.7.0"
     bufferutil "^4.0.7"
-    eslint "^9.0.0"
+    eslint "^9.1.0"
     eslint-config-prettier "^9.0.0"
     eslint-plugin-react-hooks "^4.6.0"
     eslint-plugin-unused-imports "^3.0.0"
     long "^5.2.3"
-    starpc "^0.28.1"
+    starpc "^0.30.0"
     utf-8-validate "^6.0.3"
 
 "@aptre/it-ws@^1.0.0":
@@ -305,15 +305,15 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@eslint/js@9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@eslint/js/-/js-9.0.0.tgz#1a9e4b4c96d8c7886e0110ed310a0135144a1691"
-  integrity sha512-RThY/MnKrhubF6+s1JflwUjPEsnCEmYCWwqa/aRISKWNXGZ9epUwft4bUMM35SdKF9xvBrLydAM1RDHd1Z//ZQ==
+"@eslint/js@9.1.1":
+  version "9.1.1"
+  resolved "https://registry.yarnpkg.com/@eslint/js/-/js-9.1.1.tgz#eb0f82461d12779bbafc1b5045cde3143d350a8a"
+  integrity sha512-5WoDz3Y19Bg2BnErkZTp0en+c/i9PvgFS7MBe1+m60HjFr0hrphlAGp4yzI7pxpt4xShln4ZyYp4neJm8hmOkQ==
 
-"@humanwhocodes/config-array@^0.12.3":
-  version "0.12.3"
-  resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.12.3.tgz#a6216d90f81a30bedd1d4b5d799b47241f318072"
-  integrity sha512-jsNnTBlMWuTpDkeE3on7+dWJi0D6fdDfeANj/w7MpS8ztROCoLvIO2nG0CcFj+E4k8j4QrSTh4Oryi3i2G669g==
+"@humanwhocodes/config-array@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.13.0.tgz#fb907624df3256d04b9aa2df50d7aa97ec648748"
+  integrity sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==
   dependencies:
     "@humanwhocodes/object-schema" "^2.0.3"
     debug "^4.3.1"
@@ -328,6 +328,11 @@
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-2.0.3.tgz#4a2868d75d6d6963e423bcf90b7fd1be343409d3"
   integrity sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==
+
+"@humanwhocodes/retry@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@humanwhocodes/retry/-/retry-0.2.3.tgz#c9aa036d1afa643f1250e83150f39efb3a15a631"
+  integrity sha512-X38nUbachlb01YMlvPFojKoiXq+LzZvuSce70KPMPdeM1Rj03k4dR7lDslhbqXn3Ang4EU3+EAmwEAsbrjHW3g==
 
 "@isaacs/cliui@^8.0.2":
   version "8.0.2"
@@ -1168,17 +1173,18 @@ eslint-visitor-keys@^4.0.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-4.0.0.tgz#e3adc021aa038a2a8e0b2f8b0ce8f66b9483b1fb"
   integrity sha512-OtIRv/2GyiF6o/d8K7MYKKbXrOUBIK6SfkIRM4Z0dY3w+LiQ0vy3F57m0Z71bjbyeiWFiHJ8brqnmE6H6/jEuw==
 
-eslint@^9.0.0:
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-9.0.0.tgz#6270548758e390343f78c8afd030566d86927d40"
-  integrity sha512-IMryZ5SudxzQvuod6rUdIUz29qFItWx281VhtFVc2Psy/ZhlCeD/5DT6lBIJ4H3G+iamGJoTln1v+QSuPw0p7Q==
+eslint@^9.1.0:
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-9.1.0.tgz#262625f6b0921f7550f128a0098d05ecaad989c6"
+  integrity sha512-1TCBecGFQtItia2o39P7Z4BK1X7ByNPxAiWJvwiyTGcOwYnTiiASgMpNA6a+beu8cFPhEDWvPf6mIlYUJv6sgA==
   dependencies:
     "@eslint-community/eslint-utils" "^4.2.0"
     "@eslint-community/regexpp" "^4.6.1"
     "@eslint/eslintrc" "^3.0.2"
-    "@eslint/js" "9.0.0"
-    "@humanwhocodes/config-array" "^0.12.3"
+    "@eslint/js" "9.1.1"
+    "@humanwhocodes/config-array" "^0.13.0"
     "@humanwhocodes/module-importer" "^1.0.1"
+    "@humanwhocodes/retry" "^0.2.3"
     "@nodelib/fs.walk" "^1.2.8"
     ajv "^6.12.4"
     chalk "^4.0.0"
@@ -1194,7 +1200,6 @@ eslint@^9.0.0:
     file-entry-cache "^8.0.0"
     find-up "^5.0.0"
     glob-parent "^6.0.2"
-    graphemer "^1.4.0"
     ignore "^5.2.0"
     imurmurhash "^0.1.4"
     is-glob "^4.0.0"
@@ -2320,10 +2325,10 @@ sprintf-js@~1.0.2:
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
   integrity sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==
 
-starpc@^0.28.1:
-  version "0.28.1"
-  resolved "https://registry.yarnpkg.com/starpc/-/starpc-0.28.1.tgz#60a4a58b18ecbbd42b483468df4aa2f9871e39d7"
-  integrity sha512-hBpMRK7XDhawrjruXOtZ+ch75fo4jV+fUcvcZngBb4j69zbUIHVLPWJQyVBaqlQOx/PJuUXT4q1Hykr28Pu2pQ==
+starpc@^0.30.0:
+  version "0.30.0"
+  resolved "https://registry.yarnpkg.com/starpc/-/starpc-0.30.0.tgz#f3683c442f2e16a3ff9535ebe2a5223004b9d5a4"
+  integrity sha512-KySAmSNGK8n7QjGyW8Dq2fwKMhC9cx5coMXLXZubNQ+PfdIWdY2ff8NmYK2JOj9T6y+7qxCQ2ejbzW6ogKEsjw==
   dependencies:
     "@aptre/it-ws" "^1.0.0"
     "@chainsafe/libp2p-yamux" "^6.0.2"
