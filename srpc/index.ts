@@ -23,7 +23,7 @@ export {
   createHandler,
 } from './handler.js'
 export { MethodProto, createInvokeFn } from './invoker.js'
-export { Packet, CallStart, CallData } from './rpcproto.pb.js'
+export { Packet, CallStart, CallData } from './rpcproto_pb.js'
 export { Mux, StaticMux, LookupMethod, createMux } from './mux.js'
 export {
   ChannelStreamMessage,
@@ -43,7 +43,7 @@ export {
   newMessagePortDuplex,
 } from './message-port.js'
 export {
-  MessageDefinition,
+  MessageStream,
   DecodeMessageTransform,
   buildDecodeMessageTransform,
   EncodeMessageTransform,
@@ -67,5 +67,10 @@ export {
 export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
-export { writeToPushable, buildPushableSink } from './pushable.js'
+export {
+  writeToPushable,
+  buildPushableSink,
+  messagePushable,
+} from './pushable.js'
 export { Watchdog } from './watchdog.js'
+export { ProtoRpc } from './proto-rpc.js'

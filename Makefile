@@ -77,27 +77,25 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 	set -eo pipefail; \
 	export PROJECT=$$(go list -m); \
 	export PATH=$$(pwd)/hack/bin:$${PATH}; \
-	mkdir -p $$(pwd)/vendor/$$(dirname $${PROJECT}); \
+	export OUT=$$(pwd)/vendor; \
+	mkdir -p $${OUT}/$$(dirname $${PROJECT}); \
 	rm $$(pwd)/vendor/$${PROJECT} || true; \
 	ln -s $$(pwd) $$(pwd)/vendor/$${PROJECT} ; \
 	protogen() { \
 		$(PROTOWRAP) \
-			-I $$(pwd)/vendor \
-			--plugin=./node_modules/.bin/protoc-gen-ts_proto \
-			--go-lite_out=$$(pwd)/vendor \
+			-I $${OUT} \
+			--plugin=./node_modules/.bin/protoc-gen-es \
+			--plugin=./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc \
+			--go-lite_out=$${OUT} \
 			--go-lite_opt=features=marshal+unmarshal+size+equal+json+clone \
-			--go-starpc_out=$$(pwd)/vendor \
-			--ts_proto_out=$$(pwd)/vendor \
-			--ts_proto_opt=esModuleInterop=true \
-			--ts_proto_opt=fileSuffix=.pb \
-			--ts_proto_opt=importSuffix=.js \
-			--ts_proto_opt=forceLong=long \
-			--ts_proto_opt=oneof=unions \
-			--ts_proto_opt=outputServices=default,outputServices=generic-definitions \
-			--ts_proto_opt=useAbortSignal=true \
-			--ts_proto_opt=useAsyncIterable=true \
-			--ts_proto_opt=useDate=true \
-			--proto_path $$(pwd)/vendor \
+			--go-starpc_out=$${OUT} \
+			--es_out=$${OUT} \
+			--es_opt target=ts \
+			--es_opt ts_nocheck=false \
+			--es-starpc_out=$${OUT} \
+			--es-starpc_opt target=ts \
+			--es-starpc_opt ts_nocheck=false \
+			--proto_path $${OUT} \
 			--print_structure \
 			--only_specified_files \
 			$$(\

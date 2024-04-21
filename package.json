@@ -17,6 +17,9 @@
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "protoc-gen-es-starpc": "./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc"
+  },
   "files": [
     "!**/*.tsbuildinfo",
     "Makefile",
@@ -26,8 +29,8 @@
     "go.mod",
     "go.sum",
     "integration",
-    "patches",
-    "srpc"
+    "srpc",
+    "cmd/protoc-gen-es-starpc"
   ],
   "repository": {
     "url": "git+ssh://git@github.com/aperturerobotics/starpc.git"
@@ -43,7 +46,7 @@
     "format": "npm run format:go && npm run format:js && npm run format:config",
     "format:config": "prettier --write tsconfig.json package.json",
     "format:go": "make format",
-    "format:js": "prettier --write './{srpc,echo,e2e,integration,rpcstream}/**/(*.ts|*.tsx|*.html|*.css)'",
+    "format:js": "prettier --write './{srpc,echo,e2e,integration,rpcstream,cmd}/**/(*.ts|*.tsx|*.html|*.css)'",
     "gen": "make genproto",
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",
@@ -55,8 +58,7 @@
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
     "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.js --ignore-pattern *.js --ignore-pattern *.d.ts ./",
-    "patch": "patch-package --use-yarn --patch-dir ./node_modules/@aperturerobotics/ts-common/patches",
-    "prepare": "npm run patch && go mod vendor",
+    "prepare": "go mod vendor",
     "precommit": "npm run format"
   },
   "prettier": {
@@ -65,18 +67,20 @@
   },
   "devDependencies": {
     "@aperturerobotics/ts-common": "^0.10.2",
+    "@bufbuild/protoc-gen-es": "^1.8.0",
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.20.0",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.1",
-    "ts-poet": "6.8.1",
-    "ts-proto": "^1.166.1",
+    "tsx": "^4.7.2",
     "typescript": "^5.3.2",
     "utf-8-validate": "^6.0.3"
   },
   "dependencies": {
     "@aptre/it-ws": "^1.0.0",
+    "@bufbuild/protobuf": "^1.8.0",
+    "@bufbuild/protoplugin": "^1.8.0",
     "@chainsafe/libp2p-yamux": "^6.0.2",
     "@libp2p/interface": "^1.1.3",
     "@libp2p/logger": "^4.0.6",

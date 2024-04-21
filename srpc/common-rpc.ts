@@ -1,21 +1,22 @@
 import type { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
+import { PartialMessage } from '@bufbuild/protobuf'
 
-import type { CallData, CallStart } from './rpcproto.pb.js'
-import { Packet } from './rpcproto.pb.js'
+import type { CallData, CallStart } from './rpcproto_pb.js'
+import { Packet } from './rpcproto_pb.js'
 import { ERR_RPC_ABORT } from './errors.js'
 
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
   // sink is the data sink for incoming messages.
-  public readonly sink: Sink<Source<Packet>>
+  public readonly sink: Sink<Source<PartialMessage<Packet>>>
   // source is the packet source for outgoing Packets.
-  public readonly source: AsyncIterable<Packet>
+  public readonly source: AsyncIterable<PartialMessage<Packet>>
   // rpcDataSource is the source for rpc packets.
   public readonly rpcDataSource: AsyncIterable<Uint8Array>
 
   // _source is used to write to the source.
-  private readonly _source = pushable<Packet>({
+  private readonly _source = pushable<PartialMessage<Packet>>({
     objectMode: true,
   })
 
@@ -49,7 +50,7 @@ export class CommonRPC {
     complete?: boolean,
     error?: string,
   ) {
-    const callData: CallData = {
+    const callData: PartialMessage<CallData> = {
       data: data || new Uint8Array(0),
       dataIsZero: !!data && data.length === 0,
       complete: complete || false,
@@ -57,8 +58,8 @@ export class CommonRPC {
     }
     await this.writePacket({
       body: {
-        $case: 'callData',
-        callData,
+        case: 'callData',
+        value: callData,
       },
     })
   }
@@ -67,8 +68,8 @@ export class CommonRPC {
   public async writeCallCancel() {
     await this.writePacket({
       body: {
-        $case: 'callCancel',
-        callCancel: true,
+        case: 'callCancel',
+        value: true,
       },
     })
   }
@@ -86,7 +87,7 @@ export class CommonRPC {
   }
 
   // writePacket writes a packet to the stream.
-  protected async writePacket(packet: Packet) {
+  protected async writePacket(packet: PartialMessage<Packet>) {
     this._source.push(packet)
   }
 
@@ -94,24 +95,24 @@ export class CommonRPC {
   //
   // note: closes the stream if any error is thrown.
   public async handleMessage(message: Uint8Array) {
-    return this.handlePacket(Packet.decode(message))
+    return this.handlePacket(Packet.fromBinary(message))
   }
 
   // handlePacket handles an incoming packet.
   //
   // note: closes the stream if any error is thrown.
-  public async handlePacket(packet: Partial<Packet>) {
+  public async handlePacket(packet: PartialMessage<Packet>) {
     // console.log('handlePacket', packet)
     try {
-      switch (packet?.body?.$case) {
+      switch (packet?.body?.case) {
         case 'callStart':
-          await this.handleCallStart(packet.body.callStart)
+          await this.handleCallStart(packet.body.value)
           break
         case 'callData':
-          await this.handleCallData(packet.body.callData)
+          await this.handleCallData(packet.body.value)
           break
         case 'callCancel':
-          if (packet.body.callCancel) {
+          if (packet.body.value) {
             await this.handleCallCancel()
           }
           break
@@ -181,8 +182,8 @@ export class CommonRPC {
   }
 
   // _createSink returns a value for the sink field.
-  private _createSink(): Sink<Source<Packet>> {
-    return async (source: Source<Packet>) => {
+  private _createSink(): Sink<Source<PartialMessage<Packet>>> {
+    return async (source: Source<PartialMessage<Packet>>) => {
       try {
         if (Symbol.asyncIterator in source) {
           // Handle async source

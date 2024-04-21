@@ -23,8 +23,12 @@ Supports **client-to-server and bidirectional streaming** in the web browser.
 
 [rpcstream]: ./rpcstream
 
-The library leverages libp2p streams with `@chainsafe/libp2p-yamux` to
+The library leverages libp2p streams with `@chainsafe/libp2p-yamux** to
 coordinate balancing many ongoing RPCs over a single connection.
+
+starpc uses [protobuf-go-lite] to generate reflection-free Go code.
+
+[protobuf-go-lite]: https://github.com/aperturerobotics/protobuf-go-lite
 
 ## Usage
 
@@ -121,12 +125,12 @@ This examples demonstrates connecting to a WebSocket server:
 
 ```typescript
 import { WebSocketConn } from 'srpc'
-import { EchoerClientImpl } from 'srpc/echo'
+import { EchoerClient } from 'srpc/echo'
 
 const ws = new WebSocket('ws://localhost:5000/demo')
 const channel = new WebSocketConn(ws)
 const client = channel.buildClient()
-const demoServiceClient = new EchoerClientImpl(client)
+const demoServiceClient = new EchoerClient(client)
 
 const result = await demoServiceClient.Echo({
   body: "Hello world!"
@@ -194,6 +198,12 @@ Be sure to check out [drpc] as well: it's compatible with grpc, twirp, and more.
 Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
 
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
+
+Uses [protobuf-es] to serialize Protobuf in TypeScript.
+
+[protobuf-es]: https://github.com/bufbuild/protobuf-es
+
+`protoc-gen-es-starpc` is a heavily modified version of `protoc-gen-connect-es`.
 
 ## Developing on MacOS
 
