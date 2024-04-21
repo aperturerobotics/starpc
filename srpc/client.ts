@@ -2,7 +2,7 @@ import { pipe } from 'it-pipe'
 import { pushable, Pushable } from 'it-pushable'
 
 import { ERR_RPC_ABORT } from './errors.js'
-import type { TsProtoRpc } from './ts-proto-rpc.js'
+import type { ProtoRpc } from './ts-proto-rpc.js'
 import type { OpenStreamFunc } from './stream.js'
 import { ClientRPC } from './client-rpc.js'
 import { writeToPushable } from './pushable.js'
@@ -10,7 +10,7 @@ import { decodePacketSource, encodePacketSource } from './packet.js'
 import { OpenStreamCtr } from './open-stream-ctr.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
-export class Client implements TsProtoRpc {
+export class Client implements ProtoRpc {
   // openStreamCtr contains the OpenStreamFunc.
   private openStreamCtr: OpenStreamCtr
 

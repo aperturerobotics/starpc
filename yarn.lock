@@ -138,6 +138,28 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
+"@bufbuild/protobuf@1.8.0", "@bufbuild/protobuf@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
+  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
+
+"@bufbuild/protoc-gen-es@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.8.0.tgz#b16cca884ccba23f1401104ca002028635a2b169"
+  integrity sha512-jnvBKwHq3o/iOgfKxaxn5Za7ay4oAs8KWgoHiDc9Fsb0g+/d1z+mHlHvmevOiCPcVZsnH6V3LImOJvGStPONpA==
+  dependencies:
+    "@bufbuild/protobuf" "^1.8.0"
+    "@bufbuild/protoplugin" "1.8.0"
+
+"@bufbuild/protoplugin@1.8.0", "@bufbuild/protoplugin@^1.8.0":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protoplugin/-/protoplugin-1.8.0.tgz#0e60a79d195ad79d014c263ae9c57f64063d23a5"
+  integrity sha512-Pb89cTshW+I577qh27VvxGYvZEvQ3zJ8La1OfzPCKugP9d4A4P65WStkAY+aSCiDHk68m1/+mtBb6elfiLPuFg==
+  dependencies:
+    "@bufbuild/protobuf" "1.8.0"
+    "@typescript/vfs" "^1.4.0"
+    typescript "4.5.2"
+
 "@chainsafe/is-ip@^2.0.1", "@chainsafe/is-ip@^2.0.2":
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/@chainsafe/is-ip/-/is-ip-2.0.2.tgz#7311e7403f11d8c5cfa48111f56fcecaac37c9f6"
@@ -668,6 +690,13 @@
     "@typescript-eslint/types" "7.7.0"
     eslint-visitor-keys "^3.4.3"
 
+"@typescript/vfs@^1.4.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@typescript/vfs/-/vfs-1.5.0.tgz#ed942922724f9ace8c07c80b006c47e5e3833218"
+  integrity sha512-AJS307bPgbsZZ9ggCT3wwpg3VbTKMFNHfaY/uF0ahSkYYrPF2dSSKDNIDIQAHm9qJqbLvCsSJH7yN4Vs/CsMMg==
+  dependencies:
+    debug "^4.1.1"
+
 "@vue/compiler-core@3.4.22":
   version "3.4.22"
   resolved "https://registry.yarnpkg.com/@vue/compiler-core/-/compiler-core-3.4.22.tgz#f34a1cc29fc84fe56935352b2617b1afa4b0e27b"
@@ -874,11 +903,6 @@ camelcase@^6.3.0:
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-6.3.0.tgz#5685b95eb209ac9c0c177467778c9c84df58ba9a"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
-case-anything@^2.1.13:
-  version "2.1.13"
-  resolved "https://registry.yarnpkg.com/case-anything/-/case-anything-2.1.13.tgz#0cdc16278cb29a7fcdeb072400da3f342ba329e9"
-  integrity sha512-zlOQ80VrQ2Ue+ymH5OuM/DlDq64mEm+B9UTdHULv5osUMD6HalNTblf2b1u/m6QecjsnOkBpqVZ+XPwIVsy7Ng==
-
 chalk@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.2.tgz#cd42541677a54333cf541a49108c1432b44c9424"
@@ -959,7 +983,7 @@ cross-spawn@^7.0.0, cross-spawn@^7.0.2, cross-spawn@^7.0.3:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-debug@^4.3.1, debug@^4.3.2, debug@^4.3.4:
+debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3.4:
   version "4.3.4"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.4.tgz#1319f6579357f2338d3337d2cdd4914bb5dcc865"
   integrity sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==
@@ -1024,11 +1048,6 @@ detect-file@^1.0.0:
   resolved "https://registry.yarnpkg.com/detect-file/-/detect-file-1.0.0.tgz#f0d66d03672a825cb1b73bdb3fe62310c8e552b7"
   integrity sha512-DtCOLG98P007x7wiiOmfI0fi3eIKyWiLTGJ2MDnVi/E04lWGbf+JzrRHMm0rgIIZJGtHpKpbVgLWHrv8xXpc3Q==
 
-detect-libc@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-1.0.3.tgz#fa137c4bd698edf55cd5cd02ac559f91a4c4ba9b"
-  integrity sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==
-
 dir-glob@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/dir-glob/-/dir-glob-3.0.1.tgz#56dbf73d992a4a93ba1584f4534063fd2e41717f"
@@ -1042,13 +1061,6 @@ dns-packet@^5.6.1:
   integrity sha512-l4gcSouhcgIKRvyy99RNVOgxXiicE+2jZoNmaNmZ6JXiGajBOJAesk1OBlJuM5k2c+eudGdLxDqXuPCKIj6kpw==
   dependencies:
     "@leichtgewicht/ip-codec" "^2.0.1"
-
-dprint-node@^1.0.8:
-  version "1.0.8"
-  resolved "https://registry.yarnpkg.com/dprint-node/-/dprint-node-1.0.8.tgz#a02470722d8208a7d7eb3704328afda1d6758625"
-  integrity sha512-iVKnUtYfGrYcW1ZAlfR/F59cUVL8QIhWoBJoSjkkdua/dkWIgjZfiLMeTjiB06X0ZLkQ0M2C1VbUj/CxkIf1zg==
-  dependencies:
-    detect-libc "^1.0.3"
 
 eastasianwidth@^0.2.0:
   version "0.2.0"
@@ -2156,7 +2168,7 @@ progress-events@^1.0.0:
   resolved "https://registry.yarnpkg.com/progress-events/-/progress-events-1.0.0.tgz#34f5e8fdb5dae3561837b22672d1e02277bb2109"
   integrity sha512-zIB6QDrSbPfRg+33FZalluFIowkbV5Xh1xSuetjG+rlC5he6u2dc6VQJ0TbMdlN3R1RHdpOqxEFMKTnQ+itUwA==
 
-protobufjs@^7.2.4, protobufjs@^7.2.6:
+protobufjs@^7.2.6:
   version "7.2.6"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.2.6.tgz#4a0ccd79eb292717aacf07530a07e0ed20278215"
   integrity sha512-dgJaEDDL6x8ASUZ1YqWciTRrdOuYNzoOf27oHNfdyvKqHr5i0FV7FSLU+aIeFjyFgVxrpTOtQUi0BLLBymZaBw==
@@ -2433,37 +2445,17 @@ ts-api-utils@^1.3.0:
   resolved "https://registry.yarnpkg.com/ts-api-utils/-/ts-api-utils-1.3.0.tgz#4b490e27129f1e8e686b45cc4ab63714dc60eea1"
   integrity sha512-UQMIo7pb8WRomKR1/+MFVLTroIvDVtMX3K6OUir8ynLyzB8Jeriont2bTAtmNPa1ekAgN7YPDyf6V+ygrdU+eQ==
 
-ts-poet@6.8.1, ts-poet@^6.7.0:
-  version "6.8.1"
-  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.8.1.tgz#7202e9fda7ad428ae7b42cfa19291e77e23cfc51"
-  integrity sha512-uqdjJGnQQjBwUeJggUi4o8VhRjUmEdRfo+uqEL+K8w7mKPfLUFAQ1dSURyhFfbA4T/cWPh8Xa7iBgO7jJNsc1A==
-  dependencies:
-    dprint-node "^1.0.8"
-
-ts-proto-descriptors@1.15.0:
-  version "1.15.0"
-  resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.15.0.tgz#e859e3a2887da2d954c552524719b80bdb6ee355"
-  integrity sha512-TYyJ7+H+7Jsqawdv+mfsEpZPTIj9siDHS6EMCzG/z3b/PZiphsX+mWtqFfFVe5/N0Th6V3elK9lQqjnrgTOfrg==
-  dependencies:
-    long "^5.2.3"
-    protobufjs "^7.2.4"
-
-ts-proto@^1.166.1:
-  version "1.172.0"
-  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.172.0.tgz#86bc94e452334f951a4ed5a6ded6a0354255dabf"
-  integrity sha512-+4myxp5H+qD4r3sQUwvewN3zpdKpApeuUI0+lxfdznvkd2TUFVaeOD0q6dHszEYKTzR7DHu96Z1pqpNSOXF8iQ==
-  dependencies:
-    case-anything "^2.1.13"
-    protobufjs "^7.2.4"
-    ts-poet "^6.7.0"
-    ts-proto-descriptors "1.15.0"
-
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/type-check/-/type-check-0.4.0.tgz#07b8203bfa7056c0657050e3ccd2c37730bab8f1"
   integrity sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==
   dependencies:
     prelude-ls "^1.2.1"
+
+typescript@4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.2.tgz#8ac1fba9f52256fdb06fb89e4122fa6a346c2998"
+  integrity sha512-5BlMof9H1yGt0P8/WF+wPNw6GfctgGjXp5hkblpyT+8rkASSmkUKMXrxR0Xg8ThVCi/JnHQiKXeBaEwCeQwMFw==
 
 typescript@^5.3.2:
   version "5.4.5"

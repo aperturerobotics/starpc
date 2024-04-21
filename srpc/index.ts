@@ -43,7 +43,6 @@ export {
   newMessagePortDuplex,
 } from './message-port.js'
 export {
-  MessageDefinition,
   DecodeMessageTransform,
   buildDecodeMessageTransform,
   EncodeMessageTransform,
@@ -69,3 +68,4 @@ export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
 export { writeToPushable, buildPushableSink } from './pushable.js'
 export { Watchdog } from './watchdog.js'
+export { ProtoRpc } from './proto-rpc.js'

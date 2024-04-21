@@ -1,0 +1,39 @@
+diff --git a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/declaration.js b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/declaration.js
+index f904172..d06dddf 100644
+--- a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/declaration.js
++++ b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/declaration.js
+@@ -19,7 +19,7 @@ const editions_js_1 = require("./editions.js");
+ const util_js_1 = require("./util.js");
+ function generateDts(schema) {
+     for (const file of schema.files) {
+-        const f = schema.generateFile(file.name + "_pb.d.ts");
++        const f = schema.generateFile(file.name + ".pb.d.ts");
+         f.preamble(file);
+         for (const enumeration of file.enums) {
+             generateEnum(schema, f, enumeration);
+diff --git a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/javascript.js b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/javascript.js
+index 3a3734c..a79538d 100644
+--- a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/javascript.js
++++ b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/javascript.js
+@@ -21,7 +21,7 @@ const editions_js_1 = require("./editions.js");
+ const util_js_1 = require("./util.js");
+ function generateJs(schema) {
+     for (const file of schema.files) {
+-        const f = schema.generateFile(file.name + "_pb.js");
++        const f = schema.generateFile(file.name + ".pb.js");
+         f.preamble(file);
+         for (const enumeration of file.enums) {
+             generateEnum(schema, f, enumeration);
+diff --git a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/typescript.js b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/typescript.js
+index a556bc3..53f78e3 100644
+--- a/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/typescript.js
++++ b/node_modules/@bufbuild/protoc-gen-es/dist/cjs/src/typescript.js
+@@ -21,7 +21,7 @@ const editions_js_1 = require("./editions.js");
+ const util_js_1 = require("./util.js");
+ function generateTs(schema) {
+     for (const file of schema.files) {
+-        const f = schema.generateFile(file.name + "_pb.ts");
++        const f = schema.generateFile(file.name + ".pb.ts");
+         f.preamble(file);
+         for (const enumeration of file.enums) {
+             generateEnum(schema, f, enumeration);
