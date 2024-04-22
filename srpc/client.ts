@@ -2,7 +2,7 @@ import { pipe } from 'it-pipe'
 import { pushable, Pushable } from 'it-pushable'
 
 import { ERR_RPC_ABORT } from './errors.js'
-import type { ProtoRpc } from './ts-proto-rpc.js'
+import type { ProtoRpc } from './proto-rpc.js'
 import type { OpenStreamFunc } from './stream.js'
 import { ClientRPC } from './client-rpc.js'
 import { writeToPushable } from './pushable.js'
