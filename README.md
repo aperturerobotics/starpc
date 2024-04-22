@@ -23,7 +23,7 @@ Supports **client-to-server and bidirectional streaming** in the web browser.
 
 [rpcstream]: ./rpcstream
 
-The library leverages libp2p streams with `@chainsafe/libp2p-yamux** to
+The library leverages libp2p streams with `@chainsafe/libp2p-yamux` to
 coordinate balancing many ongoing RPCs over a single connection.
 
 starpc uses [protobuf-go-lite] to generate reflection-free Go code.
