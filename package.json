@@ -17,6 +17,9 @@
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "protoc-gen-es-starpc": "./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc"
+  },
   "files": [
     "!**/*.tsbuildinfo",
     "Makefile",
@@ -26,7 +29,8 @@
     "go.mod",
     "go.sum",
     "integration",
-    "srpc"
+    "srpc",
+    "cmd/protoc-gen-es-starpc"
   ],
   "repository": {
     "url": "git+ssh://git@github.com/aperturerobotics/starpc.git"
