@@ -1,11 +1,12 @@
 import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
-import { RpcStreamPacket } from './rpcstream_pb.js'
+import { RpcAck, RpcStreamPacket } from './rpcstream_pb.js'
 import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
+import { PartialMessage } from '@bufbuild/protobuf'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
-  request: AsyncIterable<RpcStreamPacket>,
+  request: AsyncIterable<PartialMessage<RpcStreamPacket>>,
 ) => AsyncIterable<RpcStreamPacket>
 
 // openRpcStream attempts to open a stream over a RPC call.
@@ -15,14 +16,16 @@ export async function openRpcStream(
   caller: RpcStreamCaller,
   waitAck?: boolean,
 ): Promise<PacketStream> {
-  const packetTx: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
+  const packetTx = pushable<PartialMessage<RpcStreamPacket>>({
+    objectMode: true,
+  })
   const packetRx = caller(packetTx)
 
   // write the component id
   packetTx.push({
     body: {
-      $case: 'init',
-      init: { componentId },
+      case: 'init',
+      value: { componentId },
     },
   })
 
@@ -37,11 +40,11 @@ export async function openRpcStream(
     }
     const ackPacket = ackPacketIt.value
     const ackBody = ackPacket?.body
-    if (!ackBody || ackBody.$case !== 'ack') {
-      const msgType = ackBody?.$case || 'none'
+    if (!ackBody || ackBody.case !== 'ack') {
+      const msgType = ackBody?.case || 'none'
       throw new Error(`rpcstream: expected ack packet but got ${msgType}`)
     }
-    const errStr = ackBody.ack?.error
+    const errStr = ackBody.value?.error
     if (errStr) {
       throw new Error(`rpcstream: remote: ${errStr}`)
     }
@@ -76,7 +79,7 @@ export type RpcStreamGetter = (
 export async function* handleRpcStream(
   packetRx: AsyncIterator<RpcStreamPacket>,
   getter: RpcStreamGetter,
-): AsyncIterable<RpcStreamPacket> {
+): AsyncIterable<PartialMessage<RpcStreamPacket>> {
   // read the component id
   const initRpcStreamIt = await packetRx.next()
   if (initRpcStreamIt.done) {
@@ -86,7 +89,7 @@ export async function* handleRpcStream(
   const initRpcStreamPacket = initRpcStreamIt.value
 
   // ensure we received an init packet
-  if (initRpcStreamPacket?.body?.$case !== 'init') {
+  if (initRpcStreamPacket?.body?.case !== 'init') {
     throw new Error('expected init packet')
   }
 
@@ -94,7 +97,7 @@ export async function* handleRpcStream(
   let handler: RpcStreamHandler | null = null
   let err: Error | undefined
   try {
-    handler = await getter(initRpcStreamPacket.body.init.componentId)
+    handler = await getter(initRpcStreamPacket.body.value.componentId)
   } catch (errAny) {
     err = errAny as Error
     if (!err) {
@@ -109,10 +112,10 @@ export async function* handleRpcStream(
   }
 
   yield* [
-    <RpcStreamPacket>{
+    {
       body: {
-        $case: 'ack',
-        ack: {
+        case: 'ack' as const,
+        value: {
           error: err?.message || '',
         },
       },
@@ -150,14 +153,14 @@ export class RpcStream implements PacketStream {
   private readonly _packetRx: AsyncIterator<RpcStreamPacket>
   // _packetTx writes packets to the remote.
   private readonly _packetTx: {
-    push: (val: RpcStreamPacket) => void
+    push: (val: PartialMessage<RpcStreamPacket>) => void
     end: (err?: Error) => void
   }
 
   // packetTx writes packets to the remote.
   // packetRx receives packets from the remote.
   constructor(
-    packetTx: Pushable<RpcStreamPacket>,
+    packetTx: Pushable<PartialMessage<RpcStreamPacket>>,
     packetRx: AsyncIterator<RpcStreamPacket>,
   ) {
     this._packetTx = packetTx
@@ -172,7 +175,7 @@ export class RpcStream implements PacketStream {
       try {
         for await (const arr of source) {
           this._packetTx.push({
-            body: { $case: 'data', data: arr },
+            body: { case: 'data', value: arr },
           })
         }
         this._packetTx.end()
@@ -195,14 +198,14 @@ export class RpcStream implements PacketStream {
         if (!body) {
           continue
         }
-        switch (body.$case) {
+        switch (body.case) {
           case 'ack':
-            if (body.ack?.error?.length) {
-              throw new Error(body.ack.error)
+            if (body.value.error?.length) {
+              throw new Error(body.value.error)
             }
             break
           case 'data':
-            yield body.data
+            yield body.value
             break
         }
       }

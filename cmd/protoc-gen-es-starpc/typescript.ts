@@ -159,7 +159,7 @@ function generateService(
       f.print("    const result = await this.rpc.clientStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
-      f.print("      ", buildEncodeMessageTransformSymbol, "(request, ", method.input, "),");
+      f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", method.output, ".fromBinary(result)");
@@ -169,7 +169,7 @@ function generateService(
       f.print("    const result = this.rpc.bidirectionalStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
-      f.print("      ", buildEncodeMessageTransformSymbol, "(request, ", method.input, "),");
+      f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");

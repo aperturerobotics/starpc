@@ -54,19 +54,22 @@ export type EncodeMessageTransform<T extends Message<T>> = (
   source: Source<PartialMessage<T> | Array<PartialMessage<T>>>,
 ) => AsyncIterable<Uint8Array>
 
-export async function* buildEncodeMessageTransform<T extends Message<T>>(
-  source:
-    | AsyncIterable<PartialMessage<T> | Array<PartialMessage<T>>>
-    | Iterable<PartialMessage<T> | Array<PartialMessage<T>>>,
+// buildEncodeMessageTransform builds a transformer that encodes messages.
+export function buildEncodeMessageTransform<T extends Message<T>>(
   def: MessageType<T>,
-): AsyncIterable<Uint8Array> {
-  for await (const pkt of source) {
-    if (Array.isArray(pkt)) {
-      for (const p of pkt) {
-        yield new def(p).toBinary()
+): EncodeMessageTransform<T> {
+  // encodeMessageSource marshals and async yields Messages.
+  return async function* encodeMessageSource(
+    source: Source<PartialMessage<T> | Array<PartialMessage<T>>>,
+  ): AsyncIterable<Uint8Array> {
+    for await (const pkt of source) {
+      if (Array.isArray(pkt)) {
+        for (const p of pkt) {
+          yield new def(p).toBinary()
+        }
+      } else {
+        yield new def(pkt).toBinary()
       }
-    } else {
-      yield new def(pkt).toBinary()
     }
   }
 }

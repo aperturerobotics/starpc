@@ -200,7 +200,7 @@ export class EchoerClient implements Echoer {
     const result = await this.rpc.clientStreamingRequest(
       this.service,
       EchoerDefinition.methods.echoClientStream.name,
-      buildEncodeMessageTransform(request, EchoMsg),
+      buildEncodeMessageTransform(EchoMsg)(request),
       abortSignal || undefined,
     )
     return EchoMsg.fromBinary(result)
@@ -218,7 +218,7 @@ export class EchoerClient implements Echoer {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.echoBidiStream.name,
-      buildEncodeMessageTransform(request, EchoMsg),
+      buildEncodeMessageTransform(EchoMsg)(request),
       abortSignal || undefined,
     )
     return buildDecodeMessageTransform(EchoMsg)(result)
@@ -236,7 +236,7 @@ export class EchoerClient implements Echoer {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.rpcStream.name,
-      buildEncodeMessageTransform(request, RpcStreamPacket),
+      buildEncodeMessageTransform(RpcStreamPacket)(request),
       abortSignal || undefined,
     )
     return buildDecodeMessageTransform(RpcStreamPacket)(result)
