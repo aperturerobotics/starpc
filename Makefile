@@ -85,7 +85,7 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 		$(PROTOWRAP) \
 			-I $${OUT} \
 			--plugin=./node_modules/.bin/protoc-gen-es \
-			--plugin=./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc \
+			--plugin=./cmd/protoc-gen-es-starpc/dev/protoc-gen-es-starpc \
 			--go-lite_out=$${OUT} \
 			--go-lite_opt=features=marshal+unmarshal+size+equal+json+clone \
 			--go-starpc_out=$${OUT} \

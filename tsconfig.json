@@ -18,7 +18,15 @@
     "esModuleInterop": true,
     "noImplicitOverride": true
   },
-  "include": ["echo", "srpc", "e2e", "integration", "rpcstream", "index.ts", "cmd/protoc-gen-es-starpc"],
+  "include": [
+    "echo",
+    "srpc",
+    "e2e",
+    "integration",
+    "rpcstream",
+    "index.ts",
+    "cmd/protoc-gen-es-starpc"
+  ],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": true

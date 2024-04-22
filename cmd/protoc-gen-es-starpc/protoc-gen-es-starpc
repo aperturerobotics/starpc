@@ -1,2 +1,6 @@
-#!/usr/bin/env bash
-exec tsx "./cmd/protoc-gen-es-starpc/protoc-gen-es-starpc.ts" "$@"
+#!/usr/bin/env node
+
+import { runNodeJs } from "@bufbuild/protoplugin";
+import { protocGenEsStarpc } from "../../dist/cmd/protoc-gen-es-starpc/plugin.js";
+
+runNodeJs(protocGenEsStarpc)

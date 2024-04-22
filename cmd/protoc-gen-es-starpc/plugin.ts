@@ -15,10 +15,9 @@
 
 import { createEcmaScriptPlugin } from '@bufbuild/protoplugin'
 import { generateTs } from './typescript.js'
-import { version } from '../../package.json'
 
 export const protocGenEsStarpc = createEcmaScriptPlugin({
   name: 'protoc-gen-es-starpc',
-  version: `v${String(version)}`,
+  version: `none`,
   generateTs,
 })
