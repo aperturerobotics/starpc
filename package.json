@@ -43,7 +43,7 @@
     "format": "npm run format:go && npm run format:js && npm run format:config",
     "format:config": "prettier --write tsconfig.json package.json",
     "format:go": "make format",
-    "format:js": "prettier --write './{srpc,echo,e2e,integration,rpcstream}/**/(*.ts|*.tsx|*.html|*.css)'",
+    "format:js": "prettier --write './{srpc,echo,e2e,integration,rpcstream,cmd}/**/(*.ts|*.tsx|*.html|*.css)'",
     "gen": "make genproto",
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",

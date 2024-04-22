@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEcmaScriptPlugin } from "@bufbuild/protoplugin";
-import { generateTs } from "./typescript.js";
-import { version } from "../../package.json";
+import { createEcmaScriptPlugin } from '@bufbuild/protoplugin'
+import { generateTs } from './typescript.js'
+import { version } from '../../package.json'
 
 export const protocGenEsStarpc = createEcmaScriptPlugin({
-  name: "protoc-gen-es-starpc",
+  name: 'protoc-gen-es-starpc',
   version: `v${String(version)}`,
   generateTs,
-});
+})
