@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import { EchoMsg } from './echo_pb.js'
-import { MethodKind } from '@bufbuild/protobuf'
+import { MethodKind, PartialMessage } from '@bufbuild/protobuf'
 import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
 import { ProtoRpc } from 'starpc'
 
@@ -147,11 +147,12 @@ export class EchoerClientImpl implements Echoer {
    *
    * @generated from rpc echo.Echoer.Echo
    */
-  async echo(request: EchoMsg, abortSignal?: AbortSignal): Promise<EchoMsg> {
+  async Echo(request: EchoMsg | PartialMessage<EchoMsg>, abortSignal?: AbortSignal): Promise<EchoMsg> {
+    const requestMsg = typeof request.toBinary === "function" ? request : new EchoMsg(request)
     const result = await this.rpc.request(
       this.service,
       Echoer.methods.echo.name,
-      request.toBinary(),
+      requestMsg.toBinary(),
       abortSignal || undefined,
     )
     return EchoMsg.fromBinary(result)

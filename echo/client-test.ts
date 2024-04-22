@@ -1,5 +1,6 @@
 import { Client, ERR_RPC_ABORT } from '../srpc/index.js'
-import { EchoerClientImpl, EchoMsg } from './echo_pb.js'
+import { EchoMsg } from './echo_pb.js'
+import { EchoerClientImpl } from './echo_srpc.pb.js'
 import { pushable } from 'it-pushable'
 import { buildRpcStreamOpenStream } from '../rpcstream/rpcstream.js'
 
@@ -7,7 +8,7 @@ export async function runClientTest(client: Client) {
   const demoServiceClient = new EchoerClientImpl(client)
 
   console.log('Calling Echo: unary call...')
-  let result = await demoServiceClient.Echo({
+  let result = await demoServiceClient.echo({
     body: 'Hello world!',
   })
   console.log('success: output', result.body)
