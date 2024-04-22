@@ -45,7 +45,7 @@ function generateService(
   f.print("  methods: {");
   for (const method of service.methods) {
     f.print(f.jsDoc(method, "    "));
-    f.print("    ", localName(method), ": {");
+    f.print("    ", method.name, ": {");
     f.print(`      name: `, f.string(method.name), `,`);
     f.print("      I: ", method.input, ",");
     f.print("      O: ", method.output, ",");
@@ -77,7 +77,7 @@ function generateService(
   f.print("export interface ", localName(service), " {");
   for (const method of service.methods) {
     f.print(f.jsDoc(method, "  "));
-    f.print("  ", localName(method), "(");
+    f.print("  ", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
       f.print("request: ", PartialMessage, "<", method.input, ">, abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
@@ -115,7 +115,7 @@ function generateService(
   f.print("    this.service = opts?.service || ", localName(service), "ServiceName");
   f.print("    this.rpc = rpc");
   for (const method of service.methods) {
-    f.print("    this.", localName(method), " = this.", localName(method), ".bind(this)");
+    f.print("    this.", method.name, " = this.", method.name, ".bind(this)");
   }
   f.print("  }");
 
@@ -123,7 +123,7 @@ function generateService(
   const buildEncodeMessageTransformSymbol = createImportSymbol("buildEncodeMessageTransform", "starpc")
   for (const method of service.methods) {
     f.print(f.jsDoc(method, "  "));
-    f.print("  ", method.methodKind === MethodKind.Unary || method.methodKind === MethodKind.ClientStreaming ? "async " : "", localName(method), "(");
+    f.print("  ", method.methodKind === MethodKind.Unary || method.methodKind === MethodKind.ClientStreaming ? "async " : "", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
       f.print("request: ", PartialMessage, "<", method.input, ">, abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
@@ -139,7 +139,7 @@ function generateService(
       f.print("    const requestMsg = new ", method.input, "(request)");
       f.print("    const result = await this.rpc.request(");
       f.print("      this.service,");
-      f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
+      f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
       f.print("      requestMsg.toBinary(),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
@@ -150,7 +150,7 @@ function generateService(
       f.print("    const requestMsg = new ", method.input, "(request)");
       f.print("    const result = this.rpc.serverStreamingRequest(");
       f.print("      this.service,");
-      f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
+      f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
       f.print("      requestMsg.toBinary(),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
@@ -160,7 +160,7 @@ function generateService(
       f.print("Promise<", PartialMessage, "<", method.output, ">> {");
       f.print("    const result = await this.rpc.clientStreamingRequest(");
       f.print("      this.service,");
-      f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
+      f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
       f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
@@ -170,7 +170,7 @@ function generateService(
       f.print(MessageStream, "<", method.output, "> {");
       f.print("    const result = this.rpc.bidirectionalStreamingRequest(");
       f.print("      this.service,");
-      f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
+      f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
       f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");

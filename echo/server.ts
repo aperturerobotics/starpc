@@ -17,18 +17,18 @@ export class EchoerServer implements Echoer {
     this.proxyServer = proxyServer
   }
 
-  public async echo(request: EchoMsg): Promise<PartialMessage<EchoMsg>> {
+  public async Echo(request: EchoMsg): Promise<PartialMessage<EchoMsg>> {
     return request
   }
 
-  public async *echoServerStream(request: EchoMsg): MessageStream<EchoMsg> {
+  public async *EchoServerStream(request: EchoMsg): MessageStream<EchoMsg> {
     for (let i = 0; i < 5; i++) {
       yield request
       await new Promise((resolve) => setTimeout(resolve, 200))
     }
   }
 
-  public async echoClientStream(
+  public async EchoClientStream(
     request: MessageStream<EchoMsg>,
   ): Promise<PartialMessage<EchoMsg>> {
     // return the first message sent by the client.
@@ -39,7 +39,7 @@ export class EchoerServer implements Echoer {
     return message
   }
 
-  public echoBidiStream(
+  public EchoBidiStream(
     request: MessageStream<EchoMsg>,
   ): MessageStream<EchoMsg> {
     // build result observable
@@ -49,7 +49,7 @@ export class EchoerServer implements Echoer {
     return result
   }
 
-  public rpcStream(
+  public RpcStream(
     request: MessageStream<RpcStreamPacket>,
   ): MessageStream<RpcStreamPacket> {
     return handleRpcStream(

@@ -52,7 +52,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
     // build the request argument.
     let requestArg: any
     if (
-      methodInfo.kind === MethodKind.ServerStreaming ||
+      methodInfo.kind === MethodKind.ClientStreaming ||
       methodInfo.kind === MethodKind.BiDiStreaming
     ) {
       // use the request source as the argument.
@@ -76,7 +76,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
         throw new Error('return value was undefined')
       }
       if (
-        methodInfo.kind === MethodKind.ClientStreaming ||
+        methodInfo.kind === MethodKind.ServerStreaming ||
         methodInfo.kind === MethodKind.BiDiStreaming
       ) {
         const response = responseObj as AsyncIterable<O>

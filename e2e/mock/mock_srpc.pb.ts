@@ -20,7 +20,7 @@ export const MockDefinition = {
      *
      * @generated from rpc e2e.mock.Mock.MockRequest
      */
-    mockRequest: {
+    MockRequest: {
       name: 'MockRequest',
       I: MockMsg,
       O: MockMsg,
@@ -40,7 +40,7 @@ export interface Mock {
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  mockRequest(
+  MockRequest(
     request: PartialMessage<MockMsg>,
     abortSignal?: AbortSignal,
   ): Promise<PartialMessage<MockMsg>>
@@ -54,21 +54,21 @@ export class MockClient implements Mock {
   constructor(rpc: ProtoRpc, opts?: { service?: string }) {
     this.service = opts?.service || MockServiceName
     this.rpc = rpc
-    this.mockRequest = this.mockRequest.bind(this)
+    this.MockRequest = this.MockRequest.bind(this)
   }
   /**
    * MockRequest runs a mock unary request.
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  async mockRequest(
+  async MockRequest(
     request: PartialMessage<MockMsg>,
     abortSignal?: AbortSignal,
   ): Promise<PartialMessage<MockMsg>> {
     const requestMsg = new MockMsg(request)
     const result = await this.rpc.request(
       this.service,
-      MockDefinition.methods.mockRequest.name,
+      MockDefinition.methods.MockRequest.name,
       requestMsg.toBinary(),
       abortSignal || undefined,
     )
