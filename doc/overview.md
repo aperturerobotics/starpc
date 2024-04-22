@@ -22,7 +22,7 @@ export interface DemoService {
   BidiStreaming(request: AsyncIterable<TestMessage>): AsyncIterable<TestMsg>
 }
 
-export class DemoServiceClientImpl implements DemoService {
+export class DemoServiceClient implements DemoService {
   private readonly rpc: Rpc
   constructor(rpc: Rpc) {
     this.rpc = rpc

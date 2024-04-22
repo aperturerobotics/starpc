@@ -1,12 +1,12 @@
 import { Client, ERR_RPC_ABORT } from '../srpc/index.js'
 import { EchoMsg } from './echo_pb.js'
-import { EchoerClientImpl } from './echo_srpc.pb.js'
+import { EchoerClient } from './echo_srpc.pb.js'
 import { pushable } from 'it-pushable'
 import { buildRpcStreamOpenStream } from '../rpcstream/rpcstream.js'
 import { PartialMessage } from '@bufbuild/protobuf'
 
 export async function runClientTest(client: Client) {
-  const demoServiceClient = new EchoerClientImpl(client)
+  const demoServiceClient = new EchoerClient(client)
 
   console.log('Calling Echo: unary call...')
   let result = await demoServiceClient.echo({
@@ -36,7 +36,7 @@ export async function runClientTest(client: Client) {
 
 // runAbortControllerTest tests aborting a RPC call.
 export async function runAbortControllerTest(client: Client) {
-  const demoServiceClient = new EchoerClientImpl(client)
+  const demoServiceClient = new EchoerClient(client)
 
   console.log('Testing EchoClientStream with AbortController...')
   let errorReturned = false
@@ -84,13 +84,13 @@ export async function runAbortControllerTest(client: Client) {
 // runRpcStreamTest tests a RPCStream.
 export async function runRpcStreamTest(client: Client) {
   console.log('Calling RpcStream to open a RPC stream client...')
-  const service = new EchoerClientImpl(client)
+  const service = new EchoerClient(client)
   const openStreamFn = buildRpcStreamOpenStream(
     'test',
     service.rpcStream.bind(service),
   )
   const proxiedClient = new Client(openStreamFn)
-  const proxiedService = new EchoerClientImpl(proxiedClient)
+  const proxiedService = new EchoerClient(proxiedClient)
 
   console.log('Calling Echo via RPC stream...')
   const resp = await proxiedService.echo({ body: 'hello world via proxy' })
