@@ -1,5 +1,5 @@
-github.com/aperturerobotics/protobuf-go-lite v0.4.1 h1:jd+DhFlf/f+L5gJPDCFrezBcaydCaxt5Keg0IJzJvOU=
-github.com/aperturerobotics/protobuf-go-lite v0.4.1/go.mod h1:wRZn4YydbTn8Bdx4NB6ms0doF19llgim+0SNBvQ7M9c=
+github.com/aperturerobotics/protobuf-go-lite v0.4.3 h1:QDoO0ytzO71UWSPbaPi4XF5LfKYDJYxIBlimjYOh5nY=
+github.com/aperturerobotics/protobuf-go-lite v0.4.3/go.mod h1:wRZn4YydbTn8Bdx4NB6ms0doF19llgim+0SNBvQ7M9c=
 github.com/aperturerobotics/util v1.17.1 h1:7qG1Am+vNAelbXCdYOYfnMaZKM28QBWVCi+zvkjo+d4=
 github.com/aperturerobotics/util v1.17.1/go.mod h1:NdGzI+NyJvqEwt+RkKPxOlKl9zUSWJMgKicNci7ZFMU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

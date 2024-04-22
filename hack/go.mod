@@ -8,7 +8,7 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.1
-	github.com/aperturerobotics/protobuf-go-lite v0.4.1
+	github.com/aperturerobotics/protobuf-go-lite v0.4.3
 	github.com/aperturerobotics/starpc v0.28.1
 )
 
