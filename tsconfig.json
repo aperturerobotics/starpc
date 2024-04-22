@@ -5,7 +5,9 @@
     "moduleResolution": "node",
     "jsx": "preserve",
     "baseUrl": "./",
-    "paths": {},
+    "paths": {
+      "starpc": ["./"]
+    },
     "noEmit": true,
     "strict": true,
     "skipLibCheck": true,

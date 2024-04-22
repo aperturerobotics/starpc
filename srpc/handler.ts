@@ -1,6 +1,6 @@
 import type { Sink, Source } from 'it-stream-types'
 import { ServiceDefinition, ServiceMethodDefinitions } from './definition.js'
-import { MethodProto, createInvokeFn } from './invoker.js'
+import { createInvokeFn } from './invoker.js'
 
 // InvokeFn describes an SRPC call method invoke function.
 export type InvokeFn = (
@@ -69,7 +69,7 @@ export function createHandler<
   const methodMap: MethodMap = {}
   for (const methodInfo of Object.values(definition.methods)) {
     const methodName = methodInfo.name
-    let methodProto: MethodProto<unknown, unknown> = impl[methodName]
+    let methodProto = impl[methodName]
     if (!methodProto) {
       continue
     }

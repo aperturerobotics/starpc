@@ -2,6 +2,11 @@ import type { Source } from 'it-stream-types'
 import { Message, PartialMessage, MessageType } from '@bufbuild/protobuf'
 import memoize from 'memoize-one'
 
+// MessageStream is an async iterable of partial messages.
+export type MessageStream<T extends Message<T>> = AsyncIterable<
+  PartialMessage<T>
+>
+
 // memoProto returns a function that encodes the message and caches the result.
 export function memoProto<T extends Message<T>>(
   def: MessageType<T>,
@@ -73,6 +78,3 @@ export function buildEncodeMessageTransform<T extends Message<T>>(
     }
   }
 }
-import type { PartialMessage } from '@bufbuild/protobuf'
-
-export type MessageStream<T extends Message<T>> = AsyncIterable<PartialMessage<T>>

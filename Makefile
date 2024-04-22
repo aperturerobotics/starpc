@@ -91,8 +91,10 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 			--go-starpc_out=$${OUT} \
 			--es_out=$${OUT} \
 			--es_opt target=ts \
+			--es_opt ts_nocheck=false \
 			--es-starpc_out=$${OUT} \
 			--es-starpc_opt target=ts \
+			--es-starpc_opt ts_nocheck=false \
 			--proto_path $${OUT} \
 			--print_structure \
 			--only_specified_files \

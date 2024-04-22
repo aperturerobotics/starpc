@@ -1,13 +1,15 @@
 import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
+import { PartialMessage } from '@bufbuild/protobuf'
+
 import { RpcStreamPacket } from './rpcstream_pb.js'
 import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { MessageStream } from '../srpc/message.js'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
-  request: AsyncIterable<PartialMessage<RpcStreamPacket>>,
-) => AsyncIterable<RpcStreamPacket>
+  request: MessageStream<RpcStreamPacket>,
+) => MessageStream<RpcStreamPacket>
 
 // openRpcStream attempts to open a stream over a RPC call.
 // if waitAck is set, waits for the remote to ack the stream before returning.
@@ -97,7 +99,7 @@ export async function* handleRpcStream(
   let handler: RpcStreamHandler | null = null
   let err: Error | undefined
   try {
-    handler = await getter(initRpcStreamPacket.body.value.componentId ?? "")
+    handler = await getter(initRpcStreamPacket.body.value.componentId ?? '')
   } catch (errAny) {
     err = errAny as Error
     if (!err) {
@@ -187,7 +189,9 @@ export class RpcStream implements PacketStream {
 
   // _createSource initializes the source field.
   private _createSource(): AsyncGenerator<Uint8Array> {
-    return (async function* (packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>) {
+    return (async function* (
+      packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>,
+    ) {
       while (true) {
         const msgIt = await packetRx.next()
         if (msgIt.done) {

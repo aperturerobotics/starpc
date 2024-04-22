@@ -43,13 +43,13 @@ export {
   newMessagePortDuplex,
 } from './message-port.js'
 export {
+  MessageStream,
   DecodeMessageTransform,
   buildDecodeMessageTransform,
   EncodeMessageTransform,
   buildEncodeMessageTransform,
   memoProto,
   memoProtoDecode,
-  MessageStream,
 } from './message.js'
 export {
   parseLengthPrefixTransform,
