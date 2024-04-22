@@ -72,6 +72,7 @@
     "bufferutil": "^4.0.7",
     "depcheck": "^1.4.6",
     "esbuild": "^0.20.0",
+    "eslint": "^9.1.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.1",
