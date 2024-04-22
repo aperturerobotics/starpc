@@ -58,7 +58,7 @@
     "integration": "npm run test:integration",
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
-    "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.js --ignore-pattern *.js --ignore-pattern *.d.ts ./",
+    "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.cjs --ignore-pattern *.js --ignore-pattern *.d.ts ./",
     "prepare": "go mod vendor",
     "precommit": "npm run format"
   },
