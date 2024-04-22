@@ -3,6 +3,6 @@ export {
   Echoer,
   EchoerClientImpl,
   EchoerDefinition,
-} from './echo.pb.js'
+} from './echo_pb.js'
 export { EchoerServer } from './server.js'
 export { runClientTest } from './client-test.js'

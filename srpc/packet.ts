@@ -1,7 +1,7 @@
 import { Uint8ArrayList } from 'uint8arraylist'
 import { Source, Transform } from 'it-stream-types'
 
-import { Packet } from './rpcproto.pb.js'
+import { Packet } from './rpcproto_pb.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,

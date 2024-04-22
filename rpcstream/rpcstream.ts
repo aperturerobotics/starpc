@@ -1,6 +1,6 @@
 import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
-import { RpcStreamPacket } from './rpcstream.pb.js'
+import { RpcStreamPacket } from './rpcstream_pb.js'
 import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.

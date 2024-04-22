@@ -1,9 +1,9 @@
-import { Echoer, EchoMsg } from './echo.pb.js'
+import { Echoer, EchoMsg } from './echo_pb.js'
 import { pushable, Pushable } from 'it-pushable'
 import first from 'it-first'
 import { Server } from '../srpc/server.js'
 import { writeToPushable } from '../srpc/pushable.js'
-import { RpcStreamPacket } from '../rpcstream/rpcstream.pb.js'
+import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
 import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
 
 // EchoServer implements the Echoer server.
