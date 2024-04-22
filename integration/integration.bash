@@ -5,8 +5,7 @@ unset GOOS
 unset GOARCH
 
 echo "Compiling ts..."
-# ../node_modules/.bin/tsc --out integration.js --project tsconfig.json
-../node_modules/.bin/esbuild integration.ts --bundle --sourcemap --platform=node --outfile=integration.js
+../node_modules/.bin/esbuild integration.ts --bundle --sourcemap --platform=node --format=esm --outfile=integration.mjs
 
 echo "Compiling go..."
 go build -o integration -v ./
@@ -24,5 +23,5 @@ sleep 1
 
 pushd ../
 echo "Starting client..."
-node ./integration/integration.js
+node ./integration/integration.mjs
 popd
