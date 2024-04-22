@@ -49,6 +49,7 @@ export {
   buildEncodeMessageTransform,
   memoProto,
   memoProtoDecode,
+  MessageStream,
 } from './message.js'
 export {
   parseLengthPrefixTransform,
@@ -66,6 +67,10 @@ export {
 export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
-export { writeToPushable, buildPushableSink } from './pushable.js'
+export {
+  writeToPushable,
+  buildPushableSink,
+  messagePushable,
+} from './pushable.js'
 export { Watchdog } from './watchdog.js'
 export { ProtoRpc } from './proto-rpc.js'

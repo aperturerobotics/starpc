@@ -87,13 +87,13 @@ function generateService(
     }
     f.print("): ");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", method.output, ">");
+      f.print("Promise<", PartialMessage, "<", method.output, ">>");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("AsyncIterable<", method.output, ">");
+      f.print("AsyncIterable<", PartialMessage, "<", method.output, ">>");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", method.output, ">");
+      f.print("Promise<", PartialMessage, "<", method.output, ">>");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print("AsyncIterable<", method.output, ">");
+      f.print("AsyncIterable<", PartialMessage, "<", method.output, ">>");
     }
     f.print();
   }
@@ -133,7 +133,7 @@ function generateService(
     }
     f.print("): ");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", method.output, "> {");
+      f.print("Promise<", PartialMessage, "<", method.output, ">> {");
       f.print("    const requestMsg = new ", method.input, "(request)");
       f.print("    const result = await this.rpc.request(");
       f.print("      this.service,");
@@ -141,10 +141,10 @@ function generateService(
       f.print("      requestMsg.toBinary(),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
-      f.print("    return ", method.output, ".fromBinary(result)");
+      f.print("    return new ", method.output, "(", method.output, ".fromBinary(result))");
       f.print("  }");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("AsyncIterable<", method.output, "> {");
+      f.print("AsyncIterable<", PartialMessage, "<", method.output, ">> {");
       f.print("    const requestMsg = new ", method.input, "(request)");
       f.print("    const result = this.rpc.serverStreamingRequest(");
       f.print("      this.service,");
@@ -152,27 +152,27 @@ function generateService(
       f.print("      requestMsg.toBinary(),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
-      f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");
+      f.print("    return ", buildDecodeMessageTransformSymbol, "(msg => new ", method.output, "(msg))(result)");
       f.print("  }");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", method.output, "> {");
+      f.print("Promise<", PartialMessage, "<", method.output, ">> {");
       f.print("    const result = await this.rpc.clientStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
       f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
-      f.print("    return ", method.output, ".fromBinary(result)");
+      f.print("    return new ", method.output, "(", method.output, ".fromBinary(result))");
       f.print("  }");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print("AsyncIterable<", method.output, "> {");
+      f.print("AsyncIterable<", PartialMessage, "<", method.output, ">> {");
       f.print("    const result = this.rpc.bidirectionalStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", localName(method), ".name,");
       f.print("      ", buildEncodeMessageTransformSymbol, "(", method.input, ")(request),");
       f.print("      abortSignal || undefined,");
       f.print("    )");
-      f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");
+      f.print("    return ", buildDecodeMessageTransformSymbol, "(msg => new ", method.output, "(msg))(result)");
       f.print("  }");
     }
     f.print();

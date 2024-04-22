@@ -1,11 +1,12 @@
-import { EchoMsg } from './echo_pb.js'
-import { pushable, Pushable } from 'it-pushable'
 import first from 'it-first'
+import { EchoMsg } from './echo_pb.js'
 import { Server } from '../srpc/server.js'
-import { writeToPushable } from '../srpc/pushable.js'
+import { messagePushable, writeToPushable } from '../srpc/pushable.js'
 import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
+import { MessageStream } from '../srpc/message.js'
 import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
 import { Echoer } from './echo_srpc.pb.js'
+import { PartialMessage } from '@bufbuild/protobuf'
 
 // EchoServer implements the Echoer server.
 export class EchoerServer implements Echoer {
@@ -16,11 +17,11 @@ export class EchoerServer implements Echoer {
     this.proxyServer = proxyServer
   }
 
-  public async echo(request: EchoMsg): Promise<EchoMsg> {
+  public async echo(request: EchoMsg): Promise<PartialMessage<EchoMsg>> {
     return request
   }
 
-  public async *echoServerStream(request: EchoMsg): AsyncIterable<EchoMsg> {
+  public async *echoServerStream(request: EchoMsg): MessageStream<EchoMsg> {
     for (let i = 0; i < 5; i++) {
       yield request
       await new Promise((resolve) => setTimeout(resolve, 200))
@@ -28,8 +29,8 @@ export class EchoerServer implements Echoer {
   }
 
   public async echoClientStream(
-    request: AsyncIterable<EchoMsg>,
-  ): Promise<EchoMsg> {
+    request: MessageStream<EchoMsg>,
+  ): Promise<PartialMessage<EchoMsg>> {
     // return the first message sent by the client.
     const message = await first(request)
     if (!message) {
@@ -39,18 +40,18 @@ export class EchoerServer implements Echoer {
   }
 
   public echoBidiStream(
-    request: AsyncIterable<EchoMsg>,
-  ): AsyncIterable<EchoMsg> {
+    request: MessageStream<EchoMsg>,
+  ): MessageStream<EchoMsg> {
     // build result observable
-    const result: Pushable<EchoMsg> = pushable({ objectMode: true })
+    const result = messagePushable<EchoMsg>()
     result.push({ body: 'hello from server' })
     writeToPushable(request, result)
     return result
   }
 
   public rpcStream(
-    request: AsyncIterable<RpcStreamPacket>,
-  ): AsyncIterable<RpcStreamPacket> {
+    request: MessageStream<RpcStreamPacket>,
+  ): MessageStream<RpcStreamPacket> {
     return handleRpcStream(
       request[Symbol.asyncIterator](),
       async (): Promise<RpcStreamHandler> => {

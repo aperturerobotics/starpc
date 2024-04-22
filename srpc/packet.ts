@@ -11,7 +11,7 @@ import {
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
 
 // encodePacketSource encodes packets from a packet object stream.
-export const encodePacketSource = buildEncodeMessageTransform<Packet>(Packet)
+export const encodePacketSource = buildEncodeMessageTransform<Packet>()
 
 // uint32LEDecode removes the length prefix.
 export const uint32LEDecode = (data: Uint8ArrayList) => {

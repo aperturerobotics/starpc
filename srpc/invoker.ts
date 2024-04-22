@@ -1,49 +1,60 @@
 import { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 import { pipe } from 'it-pipe'
-import { MethodDefinition } from './definition.js'
+import type { MethodDefinition } from './definition.js'
 import { InvokeFn } from './handler.js'
 import {
   buildDecodeMessageTransform,
   buildEncodeMessageTransform,
 } from './message.js'
 import { writeToPushable } from './pushable.js'
+import {
+  Message,
+  MessageType,
+  MethodIdempotency,
+  MethodKind,
+  PartialMessage,
+} from '@bufbuild/protobuf'
 
 // MethodProto is a function which matches one of the RPC signatures.
-export type MethodProto<R, O> =
+export type MethodProto<R extends Message<R>, O extends Message<O>> =
   | ((request: R) => Promise<O>)
   | ((request: R) => AsyncIterable<O>)
-  | ((request: AsyncIterable<R>) => Promise<O>)
-  | ((request: AsyncIterable<R>) => AsyncIterable<O>)
+  | ((request: AsyncIterable<PartialMessage<R>>) => Promise<O>)
+  | ((request: AsyncIterable<PartialMessage<R>>) => AsyncIterable<O>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
-export function createInvokeFn<R, O>(
-  methodInfo: MethodDefinition<R, O>,
+export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
+  methodInfo: MethodDefinition<
+    MessageType<R>,
+    MessageType<O>,
+    MethodKind,
+    MethodIdempotency | undefined
+  >,
   methodProto: MethodProto<R, O>,
 ): InvokeFn {
-  const requestDecode = buildDecodeMessageTransform<R>(methodInfo.requestType)
+  const requestDecode = buildDecodeMessageTransform<R>(methodInfo.I)
   return async (
     dataSource: Source<Uint8Array>,
     dataSink: Sink<Source<Uint8Array>>,
   ) => {
     // responseSink is a Sink for response messages.
-    const responseSink = pushable<O>({
+    const responseSink = pushable<PartialMessage<O>>({
       objectMode: true,
     })
 
     // pipe responseSink to dataSink.
-    pipe(
-      responseSink,
-      buildEncodeMessageTransform(methodInfo.responseType),
-      dataSink,
-    )
+    pipe(responseSink, buildEncodeMessageTransform(methodInfo.O), dataSink)
 
     // requestSource is a Source of decoded request messages.
     const requestSource = pipe(dataSource, requestDecode)
 
     // build the request argument.
     let requestArg: any
-    if (methodInfo.requestStream) {
+    if (
+      methodInfo.kind === MethodKind.ServerStreaming ||
+      methodInfo.kind === MethodKind.BiDiStreaming
+    ) {
       // use the request source as the argument.
       requestArg = requestSource
     } else {
@@ -64,11 +75,17 @@ export function createInvokeFn<R, O>(
       if (!responseObj) {
         throw new Error('return value was undefined')
       }
-      if (methodInfo.responseStream) {
+      if (
+        methodInfo.kind === MethodKind.ClientStreaming ||
+        methodInfo.kind === MethodKind.BiDiStreaming
+      ) {
         const response = responseObj as AsyncIterable<O>
-        return writeToPushable(response, responseSink)
+        return writeToPushable(
+          response as AsyncIterable<PartialMessage<O>>,
+          responseSink,
+        )
       } else {
-        const responsePromise = responseObj as Promise<O>
+        const responsePromise = responseObj as Promise<PartialMessage<O>>
         if (!responsePromise.then) {
           throw new Error('expected return value to be a Promise')
         }

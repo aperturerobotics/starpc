@@ -44,7 +44,7 @@ export interface Mock {
   mockRequest(
     request: PartialMessage<MockMsg>,
     abortSignal?: AbortSignal,
-  ): Promise<MockMsg>
+  ): Promise<PartialMessage<MockMsg>>
 }
 
 export const MockServiceName = MockDefinition.typeName
@@ -65,7 +65,7 @@ export class MockClient implements Mock {
   async mockRequest(
     request: PartialMessage<MockMsg>,
     abortSignal?: AbortSignal,
-  ): Promise<MockMsg> {
+  ): Promise<PartialMessage<MockMsg>> {
     const requestMsg = new MockMsg(request)
     const result = await this.rpc.request(
       this.service,
@@ -73,6 +73,6 @@ export class MockClient implements Mock {
       requestMsg.toBinary(),
       abortSignal || undefined,
     )
-    return MockMsg.fromBinary(result)
+    return new MockMsg(MockMsg.fromBinary(result))
   }
 }

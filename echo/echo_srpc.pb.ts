@@ -93,7 +93,7 @@ export interface Echoer {
   echo(
     request: PartialMessage<EchoMsg>,
     abortSignal?: AbortSignal,
-  ): Promise<EchoMsg>
+  ): Promise<PartialMessage<EchoMsg>>
 
   /**
    * EchoServerStream is an example of a server -> client one-way stream.
@@ -103,7 +103,7 @@ export interface Echoer {
   echoServerStream(
     request: PartialMessage<EchoMsg>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<EchoMsg>
+  ): AsyncIterable<PartialMessage<EchoMsg>>
 
   /**
    * EchoClientStream is an example of client->server one-way stream.
@@ -113,7 +113,7 @@ export interface Echoer {
   echoClientStream(
     request: AsyncIterable<PartialMessage<EchoMsg>>,
     abortSignal?: AbortSignal,
-  ): Promise<EchoMsg>
+  ): Promise<PartialMessage<EchoMsg>>
 
   /**
    * EchoBidiStream is an example of a two-way stream.
@@ -123,7 +123,7 @@ export interface Echoer {
   echoBidiStream(
     request: AsyncIterable<PartialMessage<EchoMsg>>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<EchoMsg>
+  ): AsyncIterable<PartialMessage<EchoMsg>>
 
   /**
    * RpcStream opens a nested rpc call stream.
@@ -133,7 +133,7 @@ export interface Echoer {
   rpcStream(
     request: AsyncIterable<PartialMessage<RpcStreamPacket>>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<RpcStreamPacket>
+  ): AsyncIterable<PartialMessage<RpcStreamPacket>>
 }
 
 export const EchoerServiceName = EchoerDefinition.typeName
@@ -158,7 +158,7 @@ export class EchoerClient implements Echoer {
   async echo(
     request: PartialMessage<EchoMsg>,
     abortSignal?: AbortSignal,
-  ): Promise<EchoMsg> {
+  ): Promise<PartialMessage<EchoMsg>> {
     const requestMsg = new EchoMsg(request)
     const result = await this.rpc.request(
       this.service,
@@ -166,7 +166,7 @@ export class EchoerClient implements Echoer {
       requestMsg.toBinary(),
       abortSignal || undefined,
     )
-    return EchoMsg.fromBinary(result)
+    return new EchoMsg(EchoMsg.fromBinary(result))
   }
 
   /**
@@ -177,7 +177,7 @@ export class EchoerClient implements Echoer {
   echoServerStream(
     request: PartialMessage<EchoMsg>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<EchoMsg> {
+  ): AsyncIterable<PartialMessage<EchoMsg>> {
     const requestMsg = new EchoMsg(request)
     const result = this.rpc.serverStreamingRequest(
       this.service,
@@ -185,7 +185,7 @@ export class EchoerClient implements Echoer {
       requestMsg.toBinary(),
       abortSignal || undefined,
     )
-    return buildDecodeMessageTransform(EchoMsg)(result)
+    return buildDecodeMessageTransform((msg) => new EchoMsg(msg))(result)
   }
 
   /**
@@ -196,14 +196,14 @@ export class EchoerClient implements Echoer {
   echoClientStream(
     request: AsyncIterable<PartialMessage<EchoMsg>>,
     abortSignal?: AbortSignal,
-  ): Promise<EchoMsg> {
+  ): Promise<PartialMessage<EchoMsg>> {
     const result = await this.rpc.clientStreamingRequest(
       this.service,
       EchoerDefinition.methods.echoClientStream.name,
       buildEncodeMessageTransform(EchoMsg)(request),
       abortSignal || undefined,
     )
-    return EchoMsg.fromBinary(result)
+    return new EchoMsg(EchoMsg.fromBinary(result))
   }
 
   /**
@@ -214,14 +214,14 @@ export class EchoerClient implements Echoer {
   echoBidiStream(
     request: AsyncIterable<PartialMessage<EchoMsg>>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<EchoMsg> {
+  ): AsyncIterable<PartialMessage<EchoMsg>> {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.echoBidiStream.name,
       buildEncodeMessageTransform(EchoMsg)(request),
       abortSignal || undefined,
     )
-    return buildDecodeMessageTransform(EchoMsg)(result)
+    return buildDecodeMessageTransform((msg) => new EchoMsg(msg))(result)
   }
 
   /**
@@ -232,13 +232,15 @@ export class EchoerClient implements Echoer {
   rpcStream(
     request: AsyncIterable<PartialMessage<RpcStreamPacket>>,
     abortSignal?: AbortSignal,
-  ): AsyncIterable<RpcStreamPacket> {
+  ): AsyncIterable<PartialMessage<RpcStreamPacket>> {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.rpcStream.name,
       buildEncodeMessageTransform(RpcStreamPacket)(request),
       abortSignal || undefined,
     )
-    return buildDecodeMessageTransform(RpcStreamPacket)(result)
+    return buildDecodeMessageTransform((msg) => new RpcStreamPacket(msg))(
+      result,
+    )
   }
 }

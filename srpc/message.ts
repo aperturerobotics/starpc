@@ -73,3 +73,6 @@ export function buildEncodeMessageTransform<T extends Message<T>>(
     }
   }
 }
+import type { PartialMessage } from '@bufbuild/protobuf'
+
+export type MessageStream<T extends Message<T>> = AsyncIterable<PartialMessage<T>>
