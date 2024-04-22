@@ -33,7 +33,6 @@ export function buildDecodeMessageTransform<T extends Message<T>>(
   memoize?: boolean,
 ): DecodeMessageTransform<T> {
   const decode = !memoize ? def.fromBinary.bind(def) : memoProtoDecode(def)
-
   // decodeMessageSource unmarshals and async yields encoded Messages.
   return async function* decodeMessageSource(
     source: Source<Uint8Array | Uint8Array[]>,
@@ -51,20 +50,23 @@ export function buildDecodeMessageTransform<T extends Message<T>>(
 }
 
 // EncodeMessageTransform is a transformer that encodes messages.
-export type EncodeMessageTransform<T extends Message> = (
-  source: Source<T | T[]>,
+export type EncodeMessageTransform<T extends Message<T>> = (
+  source: Source<PartialMessage<T> | Array<PartialMessage<T>>>,
 ) => AsyncIterable<Uint8Array>
 
-export async function* buildEncodeMessageTransform<T extends Message>(
-  source: AsyncIterable<T | T[]> | Iterable<T | T[]>,
+export async function* buildEncodeMessageTransform<T extends Message<T>>(
+  source:
+    | AsyncIterable<PartialMessage<T> | Array<PartialMessage<T>>>
+    | Iterable<PartialMessage<T> | Array<PartialMessage<T>>>,
+  def: MessageType<T>,
 ): AsyncIterable<Uint8Array> {
   for await (const pkt of source) {
     if (Array.isArray(pkt)) {
       for (const p of pkt) {
-        yield p.toBinary()
+        yield new def(p).toBinary()
       }
     } else {
-      yield pkt.toBinary()
+      yield new def(pkt).toBinary()
     }
   }
 }

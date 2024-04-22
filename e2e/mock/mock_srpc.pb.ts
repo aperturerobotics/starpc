@@ -4,6 +4,7 @@
 // @ts-nocheck
 
 import { MockMsg } from './mock_pb.js'
+import type { PartialMessage } from '@bufbuild/protobuf'
 import { MethodKind } from '@bufbuild/protobuf'
 import { ProtoRpc } from 'starpc'
 
@@ -12,7 +13,7 @@ import { ProtoRpc } from 'starpc'
  *
  * @generated from service e2e.mock.Mock
  */
-export const Mock = {
+export const MockDefinition = {
   typeName: 'e2e.mock.Mock',
   methods: {
     /**
@@ -40,12 +41,15 @@ export interface Mock {
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  mockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>
+  mockRequest(
+    request: MockMsg | PartialMessage<MockMsg>,
+    abortSignal?: AbortSignal,
+  ): Promise<MockMsg>
 }
 
-export const MockServiceName = 'e2e.mock.Mock'
+export const MockServiceName = MockDefinition.typeName
 
-export class MockClientImpl implements Mock {
+export class MockClient implements Mock {
   private readonly rpc: ProtoRpc
   private readonly service: string
   constructor(rpc: ProtoRpc, opts?: { service?: string }) {
@@ -59,13 +63,15 @@ export class MockClientImpl implements Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   async mockRequest(
-    request: MockMsg,
+    request: MockMsg | PartialMessage<MockMsg>,
     abortSignal?: AbortSignal,
   ): Promise<MockMsg> {
+    const requestMsg =
+      typeof request.toBinary === 'function' ? request : new MockMsg(request)
     const result = await this.rpc.request(
       this.service,
       Mock.methods.mockRequest.name,
-      request.toBinary(),
+      requestMsg.toBinary(),
       abortSignal || undefined,
     )
     return MockMsg.fromBinary(result)

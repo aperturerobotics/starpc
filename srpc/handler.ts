@@ -1,5 +1,5 @@
 import type { Sink, Source } from 'it-stream-types'
-import { Definition } from './definition.js'
+import { ServiceDefinition, ServiceMethodDefinitions } from './definition.js'
 import { MethodProto, createInvokeFn } from './invoker.js'
 
 // InvokeFn describes an SRPC call method invoke function.
@@ -59,13 +59,11 @@ export class StaticHandler implements Handler {
 
 // createHandler creates a handler from a definition and an implementation.
 // if serviceID is not set, uses the fullName of the service as the identifier.
-export function createHandler(
-  definition: Definition,
-  impl: any,
-  serviceID?: string,
-): Handler {
+export function createHandler<
+  T extends ServiceMethodDefinitions = ServiceMethodDefinitions,
+>(definition: ServiceDefinition<T>, impl: any, serviceID?: string): Handler {
   // serviceID defaults to the full name of the service from Protobuf.
-  serviceID = serviceID || definition.fullName
+  serviceID = serviceID || definition.typeName
 
   // build map of method ID -> method prototype.
   const methodMap: MethodMap = {}

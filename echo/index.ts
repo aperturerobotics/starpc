@@ -1,8 +1,9 @@
+export { EchoMsg } from './echo_pb.js'
 export {
-  EchoMsg,
   Echoer,
-  EchoerClientImpl,
+  EchoerClient,
   EchoerDefinition,
-} from './echo_pb.js'
+  EchoerServiceName,
+} from './echo_srpc.pb.js'
 export { EchoerServer } from './server.js'
 export { runClientTest } from './client-test.js'
