@@ -1,10 +1,11 @@
-import { Echoer, EchoMsg } from './echo_pb.js'
+import { EchoMsg } from './echo_pb.js'
 import { pushable, Pushable } from 'it-pushable'
 import first from 'it-first'
 import { Server } from '../srpc/server.js'
 import { writeToPushable } from '../srpc/pushable.js'
 import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
 import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
+import { Echoer } from './echo_srpc.pb.js'
 
 // EchoServer implements the Echoer server.
 export class EchoerServer implements Echoer {
@@ -15,18 +16,18 @@ export class EchoerServer implements Echoer {
     this.proxyServer = proxyServer
   }
 
-  public async Echo(request: EchoMsg): Promise<EchoMsg> {
+  public async echo(request: EchoMsg): Promise<EchoMsg> {
     return request
   }
 
-  public async *EchoServerStream(request: EchoMsg): AsyncIterable<EchoMsg> {
+  public async *echoServerStream(request: EchoMsg): AsyncIterable<EchoMsg> {
     for (let i = 0; i < 5; i++) {
       yield request
       await new Promise((resolve) => setTimeout(resolve, 200))
     }
   }
 
-  public async EchoClientStream(
+  public async echoClientStream(
     request: AsyncIterable<EchoMsg>,
   ): Promise<EchoMsg> {
     // return the first message sent by the client.
@@ -37,7 +38,7 @@ export class EchoerServer implements Echoer {
     return message
   }
 
-  public EchoBidiStream(
+  public echoBidiStream(
     request: AsyncIterable<EchoMsg>,
   ): AsyncIterable<EchoMsg> {
     // build result observable
@@ -47,7 +48,7 @@ export class EchoerServer implements Echoer {
     return result
   }
 
-  public RpcStream(
+  public rpcStream(
     request: AsyncIterable<RpcStreamPacket>,
   ): AsyncIterable<RpcStreamPacket> {
     return handleRpcStream(
