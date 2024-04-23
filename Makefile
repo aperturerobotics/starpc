@@ -1,4 +1,4 @@
-# https://github.com/aperturerobotics/protobuf-project
+# https://github.com/aperturerobotics/template
 
 SHELL:=bash
 PROTOWRAP=hack/bin/protowrap
@@ -8,7 +8,6 @@ GOIMPORTS=hack/bin/goimports
 GOFUMPT=hack/bin/gofumpt
 GOLANGCI_LINT=hack/bin/golangci-lint
 GO_MOD_OUTDATED=hack/bin/go-mod-outdated
-ESBUILD=hack/bin/esbuild
 GOLIST=go list -f "{{ .Dir }}" -m
 
 export GO111MODULE=on
@@ -62,12 +61,6 @@ $(PROTOC_GEN_STARPC):
 		-o ./bin/protoc-gen-go-starpc \
 		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
 
-$(ESBUILD):
-	cd ./hack; \
-	go build -v \
-		-o ./bin/esbuild \
-		github.com/evanw/esbuild/cmd/esbuild
-
 node_modules:
 	yarn install
 
@@ -77,11 +70,12 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 	set -eo pipefail; \
 	export PROJECT=$$(go list -m); \
 	export PATH=$$(pwd)/hack/bin:$${PATH}; \
-	export OUT=$$(pwd)/vendor; \
+	export OUT=./vendor; \
 	mkdir -p $${OUT}/$$(dirname $${PROJECT}); \
-	rm $$(pwd)/vendor/$${PROJECT} || true; \
-	ln -s $$(pwd) $$(pwd)/vendor/$${PROJECT} ; \
+	rm ./vendor/$${PROJECT} || true; \
+	ln -s $$(pwd) ./vendor/$${PROJECT} ; \
 	protogen() { \
+		PROTO_FILES=$$(git ls-files "$$1"); \
 		$(PROTOWRAP) \
 			-I $${OUT} \
 			--plugin=./node_modules/.bin/protoc-gen-es \
@@ -98,16 +92,33 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 			--proto_path $${OUT} \
 			--print_structure \
 			--only_specified_files \
-			$$(\
-				git \
-					ls-files "$$1" |\
-					xargs printf -- \
-					"$$(pwd)/vendor/$${PROJECT}/%s "); \
+			$$(echo "$$PROTO_FILES" | xargs printf -- "./vendor/$${PROJECT}/%s "); \
+		for proto_file in $${PROTO_FILES}; do \
+			proto_dir=$$(dirname $$proto_file); \
+			proto_name=$${proto_file%".proto"}; \
+			TS_FILES=$$(git ls-files ":(glob)$${proto_dir}/${proto_name}*_pb.ts"); \
+			if [ -z "$$TS_FILES" ]; then continue; fi; \
+			for ts_file in $${TS_FILES}; do \
+				prettier -w $$ts_file; \
+				ts_file_dir=$$(dirname $$ts_file); \
+				relative_path=$${ts_file_dir#"./"}; \
+				depth=$$(echo $$relative_path | awk -F/ '{print NF+1}'); \
+				prefix=$$(printf '../%0.s' $$(seq 1 $$depth)); \
+				istmts=$$(grep -oE "from\s+\"$$prefix[^\"]+\"" $$ts_file) || continue; \
+				if [ -z "$$istmts" ]; then continue; fi; \
+				ipaths=$$(echo "$$istmts" | awk -F'"' '{print $$2}'); \
+				for import_path in $$ipaths; do \
+					rel_import_path=$$(realpath -s --relative-to=./vendor \
+						"./vendor/$${PROJECT}/$${ts_file_dir}/$${import_path}"); \
+					go_import_path=$$(echo $$rel_import_path | sed -e "s|^|@go/|"); \
+					sed -i -e "s|$$import_path|$$go_import_path|g" $$ts_file; \
+				done; \
+			done; \
+		done; \
 	}; \
 	protogen "./*.proto"; \
-	rm $$(pwd)/vendor/$${PROJECT} || true
+	rm -f ./vendor/$${PROJECT}
 	$(GOIMPORTS) -w ./
-	npm run format:js
 
 .PHONY: gen
 gen: genproto
@@ -136,7 +147,3 @@ test:
 format: $(GOFUMPT) $(GOIMPORTS)
 	$(GOIMPORTS) -w ./
 	$(GOFUMPT) -w ./
-
-.PHONY: integration
-integration: node_modules vendor
-	cd ./integration && bash ./integration.bash
