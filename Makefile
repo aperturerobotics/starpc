@@ -147,3 +147,7 @@ test:
 format: $(GOFUMPT) $(GOIMPORTS)
 	$(GOIMPORTS) -w ./
 	$(GOFUMPT) -w ./
+
+.PHONY: integration
+integration: node_modules vendor
+	cd ./integration && bash ./integration.bash

@@ -1,6 +1,6 @@
 package rpcstream
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
 	// ErrNoServerForComponent is returned if the getter returns nil.

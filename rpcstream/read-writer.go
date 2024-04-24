@@ -2,10 +2,10 @@ package rpcstream
 
 import (
 	"bytes"
+	"errors"
 	"io"
 
 	"github.com/aperturerobotics/starpc/srpc"
-	"github.com/pkg/errors"
 )
 
 // RpcStreamReadWriter reads and writes a buffered RpcStream.
