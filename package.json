@@ -59,8 +59,20 @@
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
     "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.cjs --ignore-pattern *.js --ignore-pattern *.d.ts ./",
+    "release:version": "npm version patch -m \"release: v%s\" --no-git-tag-version",
+    "release:commit": "git reset && git add package.json && git commit -s -m \"release: v$npm_package_version\" && git tag v$npm_package_version",
+    "release:publish": "git push && git push --tags && npm run build && npm publish",
+    "release": "npm run release:version && npm run release:commit",
     "prepare": "go mod vendor",
-    "precommit": "npm run format"
+    "precommit": "lint-staged"
+  },
+  "preferUnplugged": true,
+  "pre-commit": [
+    "precommit"
+  ],
+  "lint-staged": {
+    "package.json": "prettier --write",
+    "./{srpc,echo,e2e,integration,rpcstream,cmd}/**/(*.ts|*.tsx|*.html|*.css)": "prettier --write"
   },
   "prettier": {
     "semi": false,
@@ -73,6 +85,8 @@
     "esbuild": "^0.20.0",
     "eslint": "^9.1.1",
     "eslint-config-prettier": "^9.1.0",
+    "lint-staged": "^15.2.2",
+    "pre-commit": "^1.2.2",
     "prettier": "^3.2.4",
     "rimraf": "^5.0.1",
     "tsx": "^4.7.3",
@@ -96,7 +110,7 @@
     "ws": "^8.15.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "1.9.0",
-    "@aptre/protobuf-es-lite": "0.2.3"
+    "@aptre/protobuf-es-lite": "0.2.3",
+    "@bufbuild/protobuf": "1.9.0"
   }
 }
