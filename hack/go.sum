@@ -82,8 +82,8 @@ github.com/aperturerobotics/protobuf-go v1.33.1-0.20240411062030-e36f75e0a3b8 h1
 github.com/aperturerobotics/protobuf-go v1.33.1-0.20240411062030-e36f75e0a3b8/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
 github.com/aperturerobotics/protobuf-go-lite v0.6.0 h1:EE168e2oov6wmDv8AdSAlz2G1nHbf0HlYG917CgJ+ug=
 github.com/aperturerobotics/protobuf-go-lite v0.6.0/go.mod h1:6Bp+C+fI1uh0NmIKpxlxyHMkKtCP9Kb3PHkhOzxG4B8=
-github.com/aperturerobotics/util v1.18.1 h1:Iu8toMYRKs3d0TH8JkAMwfEYY8bEekDaTEvLOVVqh44=
-github.com/aperturerobotics/util v1.18.1/go.mod h1:Oz7Rmq5sKS1UgTRJkDWYfyf1LiA2rIRbnO341Xd91bU=
+github.com/aperturerobotics/util v1.20.1 h1:A4lcyULNtpID2pykIBLr7putGXFjjGi5EX0BpaVcdtY=
+github.com/aperturerobotics/util v1.20.1/go.mod h1:m6rsllH5ubGZvwFmdY3Tvm6LMgBtghqxPTynimEevl0=
 github.com/ashanbrown/forbidigo v1.6.0 h1:D3aewfM37Yb3pxHujIPSpTf6oQk9sc9WZi8gerOIVIY=
 github.com/ashanbrown/forbidigo v1.6.0/go.mod h1:Y8j9jy9ZYAEHXdu723cUlraTqbzjKF1MUyfOKL+AjcU=
 github.com/ashanbrown/makezero v1.1.1 h1:iCQ87C0V0vSyO+M9E/FZYbu65auqH0lnsOkf5FcB28s=
@@ -444,6 +444,10 @@ github.com/pelletier/go-toml v1.9.5 h1:4yBQzkHv+7BHq2PQUZF3Mx0IYxG7LsP222s7Agd3v
 github.com/pelletier/go-toml v1.9.5/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pelletier/go-toml/v2 v2.2.0 h1:QLgLl2yMN7N+ruc31VynXs1vhMZa7CeHHejIeBAsoHo=
 github.com/pelletier/go-toml/v2 v2.2.0/go.mod h1:1t835xjRzz80PqgE6HHgN2JOsmgYu/h4qDAS4n929Rs=
+github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/polyfloyd/go-errorlint v1.4.8 h1:jiEjKDH33ouFktyez7sckv6pHWif9B7SuS8cutDXFHw=

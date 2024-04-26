@@ -3,7 +3,7 @@ import { EchoMsg } from './echo_pb.js'
 import { EchoerClient } from './echo_srpc.pb.js'
 import { pushable } from 'it-pushable'
 import { buildRpcStreamOpenStream } from '../rpcstream/rpcstream.js'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { Message } from '@aptre/protobuf-es-lite'
 
 export async function runClientTest(client: Client) {
   const demoServiceClient = new EchoerClient(client)
@@ -15,7 +15,7 @@ export async function runClientTest(client: Client) {
   console.log('success: output', result.body)
 
   // observable for client requests
-  const clientRequestStream = pushable<PartialMessage<EchoMsg>>({
+  const clientRequestStream = pushable<Message<EchoMsg>>({
     objectMode: true,
   })
   clientRequestStream.push({ body: 'Hello world from streaming request.' })

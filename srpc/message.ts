@@ -1,18 +1,16 @@
+import { MessageType, Message } from '@aptre/protobuf-es-lite'
 import type { Source } from 'it-stream-types'
-import { Message, PartialMessage, MessageType } from '@bufbuild/protobuf'
 import memoize from 'memoize-one'
 
 // MessageStream is an async iterable of partial messages.
-export type MessageStream<T extends Message<T>> = AsyncIterable<
-  PartialMessage<T>
->
+export type MessageStream<T extends Message<T>> = AsyncIterable<Message<T>>
 
 // memoProto returns a function that encodes the message and caches the result.
 export function memoProto<T extends Message<T>>(
   def: MessageType<T>,
-): (msg: PartialMessage<T>) => Uint8Array {
-  return memoize((msg: PartialMessage<T>): Uint8Array => {
-    return new def(msg).toBinary()
+): (msg: Message<T>) => Uint8Array {
+  return memoize((msg: Message<T>): Uint8Array => {
+    return def.toBinary(def.create(msg))
   })
 }
 
@@ -56,7 +54,7 @@ export function buildDecodeMessageTransform<T extends Message<T>>(
 
 // EncodeMessageTransform is a transformer that encodes messages.
 export type EncodeMessageTransform<T extends Message<T>> = (
-  source: Source<PartialMessage<T> | Array<PartialMessage<T>>>,
+  source: Source<Message<T> | Array<Message<T>>>,
 ) => AsyncIterable<Uint8Array>
 
 // buildEncodeMessageTransform builds a transformer that encodes messages.
@@ -65,15 +63,15 @@ export function buildEncodeMessageTransform<T extends Message<T>>(
 ): EncodeMessageTransform<T> {
   // encodeMessageSource marshals and async yields Messages.
   return async function* encodeMessageSource(
-    source: Source<PartialMessage<T> | Array<PartialMessage<T>>>,
+    source: Source<Message<T> | Array<Message<T>>>,
   ): AsyncIterable<Uint8Array> {
     for await (const pkt of source) {
       if (Array.isArray(pkt)) {
         for (const p of pkt) {
-          yield new def(p).toBinary()
+          yield def.toBinary(def.create(p))
         }
       } else {
-        yield new def(pkt).toBinary()
+        yield def.toBinary(def.create(pkt))
       }
     }
   }

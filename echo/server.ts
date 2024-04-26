@@ -1,4 +1,5 @@
 import first from 'it-first'
+import { Message } from '@aptre/protobuf-es-lite'
 import { EchoMsg } from './echo_pb.js'
 import { Server } from '../srpc/server.js'
 import { messagePushable, writeToPushable } from '../srpc/pushable.js'
@@ -6,7 +7,6 @@ import { RpcStreamPacket } from '../rpcstream/rpcstream_pb.js'
 import { MessageStream } from '../srpc/message.js'
 import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
 import { Echoer } from './echo_srpc.pb.js'
-import { PartialMessage } from '@bufbuild/protobuf'
 
 // EchoServer implements the Echoer server.
 export class EchoerServer implements Echoer {
@@ -17,7 +17,7 @@ export class EchoerServer implements Echoer {
     this.proxyServer = proxyServer
   }
 
-  public async Echo(request: EchoMsg): Promise<PartialMessage<EchoMsg>> {
+  public async Echo(request: EchoMsg): Promise<Message<EchoMsg>> {
     return request
   }
 
@@ -30,7 +30,7 @@ export class EchoerServer implements Echoer {
 
   public async EchoClientStream(
     request: MessageStream<EchoMsg>,
-  ): Promise<PartialMessage<EchoMsg>> {
+  ): Promise<Message<EchoMsg>> {
     // return the first message sent by the client.
     const message = await first(request)
     if (!message) {

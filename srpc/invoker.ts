@@ -8,20 +8,15 @@ import {
   buildEncodeMessageTransform,
 } from './message.js'
 import { writeToPushable } from './pushable.js'
-import {
-  Message,
-  MessageType,
-  MethodIdempotency,
-  MethodKind,
-  PartialMessage,
-} from '@bufbuild/protobuf'
+import type { MessageType, Message } from '@aptre/protobuf-es-lite'
+import { MethodIdempotency, MethodKind } from '@bufbuild/protobuf'
 
 // MethodProto is a function which matches one of the RPC signatures.
 export type MethodProto<R extends Message<R>, O extends Message<O>> =
   | ((request: R) => Promise<O>)
   | ((request: R) => AsyncIterable<O>)
-  | ((request: AsyncIterable<PartialMessage<R>>) => Promise<O>)
-  | ((request: AsyncIterable<PartialMessage<R>>) => AsyncIterable<O>)
+  | ((request: AsyncIterable<Message<R>>) => Promise<O>)
+  | ((request: AsyncIterable<Message<R>>) => AsyncIterable<O>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
@@ -39,7 +34,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
     dataSink: Sink<Source<Uint8Array>>,
   ) => {
     // responseSink is a Sink for response messages.
-    const responseSink = pushable<PartialMessage<O>>({
+    const responseSink = pushable<Message<O>>({
       objectMode: true,
     })
 
@@ -81,11 +76,11 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
       ) {
         const response = responseObj as AsyncIterable<O>
         return writeToPushable(
-          response as AsyncIterable<PartialMessage<O>>,
+          response as AsyncIterable<Message<O>>,
           responseSink,
         )
       } else {
-        const responsePromise = responseObj as Promise<PartialMessage<O>>
+        const responsePromise = responseObj as Promise<Message<O>>
         if (!responsePromise.then) {
           throw new Error('expected return value to be a Promise')
         }

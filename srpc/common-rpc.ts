@@ -1,6 +1,6 @@
 import type { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
 import type { CallData, CallStart } from './rpcproto_pb.js'
 import { Packet } from './rpcproto_pb.js'
@@ -9,14 +9,14 @@ import { ERR_RPC_ABORT } from './errors.js'
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
   // sink is the data sink for incoming messages.
-  public readonly sink: Sink<Source<PartialMessage<Packet>>>
+  public readonly sink: Sink<Source<Packet>>
   // source is the packet source for outgoing Packets.
-  public readonly source: AsyncIterable<PartialMessage<Packet>>
+  public readonly source: AsyncIterable<Packet>
   // rpcDataSource is the source for rpc packets.
   public readonly rpcDataSource: AsyncIterable<Uint8Array>
 
   // _source is used to write to the source.
-  private readonly _source = pushable<PartialMessage<Packet>>({
+  private readonly _source = pushable<Packet>({
     objectMode: true,
   })
 
@@ -50,7 +50,7 @@ export class CommonRPC {
     complete?: boolean,
     error?: string,
   ) {
-    const callData: PartialMessage<CallData> = {
+    const callData: CompleteMessage<CallData> = {
       data: data || new Uint8Array(0),
       dataIsZero: !!data && data.length === 0,
       complete: complete || false,
@@ -87,7 +87,7 @@ export class CommonRPC {
   }
 
   // writePacket writes a packet to the stream.
-  protected async writePacket(packet: PartialMessage<Packet>) {
+  protected async writePacket(packet: Packet) {
     this._source.push(packet)
   }
 
@@ -101,7 +101,7 @@ export class CommonRPC {
   // handlePacket handles an incoming packet.
   //
   // note: closes the stream if any error is thrown.
-  public async handlePacket(packet: PartialMessage<Packet>) {
+  public async handlePacket(packet: Packet) {
     // console.log('handlePacket', packet)
     try {
       switch (packet?.body?.case) {
@@ -182,8 +182,8 @@ export class CommonRPC {
   }
 
   // _createSink returns a value for the sink field.
-  private _createSink(): Sink<Source<PartialMessage<Packet>>> {
-    return async (source: Source<PartialMessage<Packet>>) => {
+  private _createSink(): Sink<Source<Packet>> {
+    return async (source: Source<Packet>) => {
       try {
         if (Symbol.asyncIterator in source) {
           // Handle async source

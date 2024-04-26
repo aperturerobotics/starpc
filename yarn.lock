@@ -18,6 +18,14 @@
     uint8arrays "^5.0.0"
     ws "^8.4.0"
 
+"@aptre/protobuf-es-lite@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@aptre/protobuf-es-lite/-/protobuf-es-lite-0.2.3.tgz#f3347985cad9861819fd3642afa28d408c7bf9b7"
+  integrity sha512-pJnQDAPO2UdQgezm8wukxIMvxq5ZD8hqnZh5sHDKKDfFHgqT8IsNmDaUxprNzuQee7ayPmtPcm1pO99XwJP8hg==
+  dependencies:
+    "@bufbuild/protobuf" "^1.9.0"
+    "@bufbuild/protoplugin" "1.9.0"
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.23.5", "@babel/code-frame@^7.24.1":
   version "7.24.2"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.24.2.tgz#718b4b19841809a58b29b68cde80bc5e1aa6d9ae"
@@ -126,14 +134,6 @@
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.9.0.tgz#fffac3183059a41ceef5311e07e3724d426a95c4"
   integrity sha512-W7gp8Q/v1NlCZLsv8pQ3Y0uCu/SHgXOVFK+eUluUKWXmsb6VHkpNx0apdOWWcDbB9sJoKeP8uPrjmehJz6xETQ==
-
-"@bufbuild/protoc-gen-es@^1.9.0":
-  version "1.9.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protoc-gen-es/-/protoc-gen-es-1.9.0.tgz#221b677c65e7cad4b11e35818e80bf366bf826cf"
-  integrity sha512-LJy1nC3Jsfdhs9v48P7qF6YXIqh+usFhXSVzJDTmw0yKjxQ3CKBNISRtaMql/g9hb1MLRU6unHCcFfdz4HSO/Q==
-  dependencies:
-    "@bufbuild/protobuf" "^1.9.0"
-    "@bufbuild/protoplugin" "1.9.0"
 
 "@bufbuild/protoplugin@1.9.0", "@bufbuild/protoplugin@^1.9.0":
   version "1.9.0"
@@ -516,12 +516,35 @@
     progress-events "^1.0.0"
     uint8arraylist "^2.4.8"
 
-"@libp2p/logger@^4.0.10", "@libp2p/logger@^4.0.6":
+"@libp2p/interface@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@libp2p/interface/-/interface-1.3.0.tgz#c4fcee2878aa8d37357974b6c7395cb2a645eb50"
+  integrity sha512-K72Km0Co1Z+pXpggWuoAvUUbvwZYvjCcywrHj2Ym3jt2anTE3hzL4rlZrrkzA0YhNTRFRiZ04dnu6WMXT5/4+A==
+  dependencies:
+    "@multiformats/multiaddr" "^12.2.1"
+    it-pushable "^3.2.3"
+    it-stream-types "^2.0.1"
+    multiformats "^13.1.0"
+    progress-events "^1.0.0"
+    uint8arraylist "^2.4.8"
+
+"@libp2p/logger@^4.0.10":
   version "4.0.10"
   resolved "https://registry.yarnpkg.com/@libp2p/logger/-/logger-4.0.10.tgz#d59db10d74b20e78be37f8ec53c1139174c0afda"
   integrity sha512-JiRfJHO/D9Jlh2rJ6STnONoeQevBAdAZaGUxrtvBf4RFfucldSFEMOtdkFO8xFGuiA90Q2kj4BE2douG6fB3Lw==
   dependencies:
     "@libp2p/interface" "^1.2.0"
+    "@multiformats/multiaddr" "^12.2.1"
+    debug "^4.3.4"
+    interface-datastore "^8.2.11"
+    multiformats "^13.1.0"
+
+"@libp2p/logger@^4.0.11":
+  version "4.0.11"
+  resolved "https://registry.yarnpkg.com/@libp2p/logger/-/logger-4.0.11.tgz#671692a0cceee73a0c0bf9b5f05ea14fde05f5e5"
+  integrity sha512-WsZBup1Q+ec4C7i2YiCx0elFrejqJea3Fmkzy3t4fAek7Ofyh4GQonk3A4R7XsG5yq8+Hu1fpsGhIK8EVQsqZQ==
+  dependencies:
+    "@libp2p/interface" "^1.3.0"
     "@multiformats/multiaddr" "^12.2.1"
     debug "^4.3.4"
     interface-datastore "^8.2.11"
@@ -1603,10 +1626,10 @@ isomorphic-ws@^5.0.0:
   resolved "https://registry.yarnpkg.com/isomorphic-ws/-/isomorphic-ws-5.0.0.tgz#e5529148912ecb9b451b46ed44d53dae1ce04bbf"
   integrity sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==
 
-it-first@^3.0.3:
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/it-first/-/it-first-3.0.4.tgz#d68c8ae646ea402cd5e650c352da69988a310342"
-  integrity sha512-FtQl84iTNxN5EItP/JgL28V2rzNMkCzTUlNoj41eVdfix2z1DBuLnBqZ0hzYhGGa1rMpbQf0M7CQSA2adlrLJg==
+it-first@^3.0.6:
+  version "3.0.6"
+  resolved "https://registry.yarnpkg.com/it-first/-/it-first-3.0.6.tgz#f532f0f36fe9bf0c291e0162b9d3375d59fe8f05"
+  integrity sha512-ExIewyK9kXKNAplg2GMeWfgjUcfC1FnUXz/RPfAvIXby+w7U4b3//5Lic0NV03gXT8O/isj5Nmp6KiY0d45pIQ==
 
 it-foreach@^2.0.6:
   version "2.0.6"
@@ -2188,10 +2211,10 @@ ts-api-utils@^1.3.0:
   resolved "https://registry.yarnpkg.com/ts-api-utils/-/ts-api-utils-1.3.0.tgz#4b490e27129f1e8e686b45cc4ab63714dc60eea1"
   integrity sha512-UQMIo7pb8WRomKR1/+MFVLTroIvDVtMX3K6OUir8ynLyzB8Jeriont2bTAtmNPa1ekAgN7YPDyf6V+ygrdU+eQ==
 
-tsx@^4.7.2:
-  version "4.7.2"
-  resolved "https://registry.yarnpkg.com/tsx/-/tsx-4.7.2.tgz#a108b1a6e16876cd4c9a4b4ba263f2a07f9cf562"
-  integrity sha512-BCNd4kz6fz12fyrgCTEdZHGJ9fWTGeUzXmQysh0RVocDY3h4frk05ZNCXSy4kIenF7y/QnrdiVpTsyNRn6vlAw==
+tsx@^4.7.3:
+  version "4.7.3"
+  resolved "https://registry.yarnpkg.com/tsx/-/tsx-4.7.3.tgz#c32f3f5cb928708a5c6becf617e432b395999242"
+  integrity sha512-+fQnMqIp/jxZEXLcj6WzYy9FhcS5/Dfk8y4AtzJ6ejKcKqmfTF8Gso/jtrzDggCF2zTU20gJa6n8XqPYwDAUYQ==
   dependencies:
     esbuild "~0.19.10"
     get-tsconfig "^4.7.2"

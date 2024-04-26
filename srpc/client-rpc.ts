@@ -1,6 +1,6 @@
+import type { CompleteMessage } from '@aptre/protobuf-es-lite'
 import type { CallStart } from './rpcproto_pb.js'
 import { CommonRPC } from './common-rpc.js'
-import type { PartialMessage } from '@bufbuild/protobuf'
 
 // ClientRPC is an ongoing RPC from the client side.
 export class ClientRPC extends CommonRPC {
@@ -16,7 +16,7 @@ export class ClientRPC extends CommonRPC {
     if (!this.service || !this.method) {
       throw new Error('service and method must be set')
     }
-    const callStart: PartialMessage<CallStart> = {
+    const callStart: CompleteMessage<CallStart> = {
       rpcService: this.service,
       rpcMethod: this.method,
       data: data || new Uint8Array(0),
@@ -31,10 +31,10 @@ export class ClientRPC extends CommonRPC {
   }
 
   // handleCallStart handles a CallStart packet.
-  public override async handleCallStart(packet: Partial<CallStart>) {
+  public override async handleCallStart(packet: CallStart) {
     // we do not implement server -> client RPCs.
     throw new Error(
-      `unexpected server to client rpc: ${packet.rpcService}/${packet.rpcMethod}`,
+      `unexpected server to client rpc: ${packet.rpcService || '<empty>'}/${packet.rpcMethod || '<empty>'}`,
     )
   }
 }

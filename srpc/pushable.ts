@@ -1,12 +1,10 @@
+import { Message } from '@aptre/protobuf-es-lite'
 import { Pushable, pushable } from 'it-pushable'
 import { Sink, Source } from 'it-stream-types'
-import { Message, PartialMessage } from '@bufbuild/protobuf'
 
-// messagePushable is a shortcut to build a pushable for partial messages.
-export function messagePushable<T extends Message<T>>(): Pushable<
-  PartialMessage<T>
-> {
-  return pushable<PartialMessage<T>>({ objectMode: true })
+// messagePushable is a shortcut to build a pushable for messages.
+export function messagePushable<T extends Message<T>>(): Pushable<T> {
+  return pushable<T>({ objectMode: true })
 }
 
 // writeToPushable writes the incoming server data to the pushable.

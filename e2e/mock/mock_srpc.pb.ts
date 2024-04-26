@@ -3,8 +3,8 @@
 /* eslint-disable */
 
 import { MockMsg } from "./mock_pb.js";
-import type { PartialMessage } from "@bufbuild/protobuf";
 import { MethodKind } from "@bufbuild/protobuf";
+import { Message } from "@aptre/protobuf-es-lite";
 import { ProtoRpc } from "starpc";
 
 /**
@@ -41,9 +41,9 @@ export interface Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   MockRequest(
-request: PartialMessage<MockMsg>, abortSignal?: AbortSignal
+request: Message<MockMsg>, abortSignal?: AbortSignal
 ): 
-Promise<PartialMessage<MockMsg>>
+Promise<Message<MockMsg>>
 
 }
 
@@ -63,14 +63,14 @@ export class MockClient implements Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   async MockRequest(
-request: PartialMessage<MockMsg>, abortSignal?: AbortSignal
+request: Message<MockMsg>, abortSignal?: AbortSignal
 ): 
-Promise<PartialMessage<MockMsg>> {
-    const requestMsg = new MockMsg(request)
+Promise<Message<MockMsg>> {
+    const requestMsg = MockMsg.create(request)
     const result = await this.rpc.request(
       this.service,
       MockDefinition.methods.MockRequest.name,
-      requestMsg.toBinary(),
+      MockMsg.toBinary(requestMsg),
       abortSignal || undefined,
     )
     return MockMsg.fromBinary(result)

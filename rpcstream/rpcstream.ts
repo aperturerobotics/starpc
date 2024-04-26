@@ -1,6 +1,6 @@
 import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { Message } from '@aptre/protobuf-es-lite'
 
 import { RpcStreamPacket } from './rpcstream_pb.js'
 import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
@@ -18,7 +18,7 @@ export async function openRpcStream(
   caller: RpcStreamCaller,
   waitAck?: boolean,
 ): Promise<PacketStream> {
-  const packetTx = pushable<PartialMessage<RpcStreamPacket>>({
+  const packetTx = pushable<Message<RpcStreamPacket>>({
     objectMode: true,
   })
   const packetRx = caller(packetTx)
@@ -79,9 +79,9 @@ export type RpcStreamGetter = (
 
 // handleRpcStream handles an incoming RPC stream (remote is the initiator).
 export async function* handleRpcStream(
-  packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>,
+  packetRx: AsyncIterator<Message<RpcStreamPacket>>,
   getter: RpcStreamGetter,
-): AsyncIterable<PartialMessage<RpcStreamPacket>> {
+): AsyncIterable<Message<RpcStreamPacket>> {
   // read the component id
   const initRpcStreamIt = await packetRx.next()
   if (initRpcStreamIt.done) {
@@ -152,18 +152,18 @@ export class RpcStream implements PacketStream {
   public readonly sink: Sink<Source<Uint8Array>, Promise<void>>
 
   // _packetRx receives packets from the remote.
-  private readonly _packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>
+  private readonly _packetRx: AsyncIterator<Message<RpcStreamPacket>>
   // _packetTx writes packets to the remote.
   private readonly _packetTx: {
-    push: (val: PartialMessage<RpcStreamPacket>) => void
+    push: (val: Message<RpcStreamPacket>) => void
     end: (err?: Error) => void
   }
 
   // packetTx writes packets to the remote.
   // packetRx receives packets from the remote.
   constructor(
-    packetTx: Pushable<PartialMessage<RpcStreamPacket>>,
-    packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>,
+    packetTx: Pushable<Message<RpcStreamPacket>>,
+    packetRx: AsyncIterator<Message<RpcStreamPacket>>,
   ) {
     this._packetTx = packetTx
     this._packetRx = packetRx
@@ -190,7 +190,7 @@ export class RpcStream implements PacketStream {
   // _createSource initializes the source field.
   private _createSource(): AsyncGenerator<Uint8Array> {
     return (async function* (
-      packetRx: AsyncIterator<PartialMessage<RpcStreamPacket>>,
+      packetRx: AsyncIterator<Message<RpcStreamPacket>>,
     ) {
       while (true) {
         const msgIt = await packetRx.next()

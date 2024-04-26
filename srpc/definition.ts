@@ -1,4 +1,5 @@
-import { MessageType, MethodKind, MethodIdempotency } from '@bufbuild/protobuf'
+import { MethodIdempotency, MethodKind } from '@bufbuild/protobuf'
+import { MessageType } from '@aptre/protobuf-es-lite'
 
 // ServiceMethodDefinitions is the type of the methods map on the service definition.
 export type ServiceMethodDefinitions = {
