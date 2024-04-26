@@ -96,6 +96,7 @@
     "ws": "^8.15.1"
   },
   "peerDependencies": {
-    "@bufbuild/protobuf": "1.9.0"
+    "@bufbuild/protobuf": "1.9.0",
+    "@aptre/protobuf-es-lite": "0.2.3"
   }
 }
