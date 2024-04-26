@@ -108,8 +108,14 @@ export interface RpcStreamPacket extends Message<RpcStreamPacket> {
 export const RpcStreamPacket: MessageType<RpcStreamPacket> = createMessageType({
   typeName: 'rpcstream.RpcStreamPacket',
   fields: [
-    { no: 1, name: 'init', kind: 'message', T: RpcStreamInit, oneof: 'body' },
-    { no: 2, name: 'ack', kind: 'message', T: RpcAck, oneof: 'body' },
+    {
+      no: 1,
+      name: 'init',
+      kind: 'message',
+      T: () => RpcStreamInit,
+      oneof: 'body',
+    },
+    { no: 2, name: 'ack', kind: 'message', T: () => RpcAck, oneof: 'body' },
     {
       no: 3,
       name: 'data',

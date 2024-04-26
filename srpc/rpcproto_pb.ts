@@ -154,8 +154,20 @@ export interface Packet extends Message<Packet> {
 export const Packet: MessageType<Packet> = createMessageType({
   typeName: 'srpc.Packet',
   fields: [
-    { no: 1, name: 'call_start', kind: 'message', T: CallStart, oneof: 'body' },
-    { no: 2, name: 'call_data', kind: 'message', T: CallData, oneof: 'body' },
+    {
+      no: 1,
+      name: 'call_start',
+      kind: 'message',
+      T: () => CallStart,
+      oneof: 'body',
+    },
+    {
+      no: 2,
+      name: 'call_data',
+      kind: 'message',
+      T: () => CallData,
+      oneof: 'body',
+    },
     {
       no: 3,
       name: 'call_cancel',
