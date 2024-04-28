@@ -26,9 +26,10 @@ Supports **client-to-server and bidirectional streaming** in the web browser.
 The library leverages libp2p streams with `@chainsafe/libp2p-yamux` to
 coordinate balancing many ongoing RPCs over a single connection.
 
-starpc uses [protobuf-go-lite] to generate reflection-free Go code.
+starpc uses [protobuf-go-lite] to generate reflection-free Go code and [protobuf-es-lite] for TypeScript interfaces.
 
 [protobuf-go-lite]: https://github.com/aperturerobotics/protobuf-go-lite
+[protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
 
 ## Usage
 
