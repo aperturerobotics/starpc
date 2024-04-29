@@ -1012,7 +1012,7 @@ message FeatureSet {
   extensions 1002;  // for Protobuf Go
 
   extensions 9995 to 9999;  // For internal testing
-  extensions 10000;         // for https://github.com/bufbuild/protobuf-es
+  extensions 10000;         // for protobuf-es-lite
 }
 
 // A compiled specification for the defaults of a set of features.  These

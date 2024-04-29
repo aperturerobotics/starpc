@@ -9,7 +9,7 @@ protogen() {
         --es-lite_opt target=ts \
         --es-lite_opt ts_nocheck=false \
         --proto_path ./ \
-        ./google/protobuf/*.proto
+        ./google/protobuf/**/*.proto
 };
 
 protogen
