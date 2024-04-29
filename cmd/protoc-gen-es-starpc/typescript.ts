@@ -116,7 +116,10 @@ function generateService(
   f.print("export const ", localName(service), "ServiceName = ", localName(service), "Definition.typeName");
   f.print();
 
-  // Generate the client implementation
+  // Skip the rest if there are no methods.
+  if (!service.methods.length) { return; }
+
+  // Generate the client implementation if there are any methods
   f.print("export class ", localName(service), "Client implements ", localName(service), " {");
   f.print("  private readonly rpc: ", createImportSymbol("ProtoRpc", "starpc"));
   f.print("  private readonly service: string");
