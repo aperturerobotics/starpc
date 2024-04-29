@@ -2,8 +2,8 @@ import type { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
-import type { CallData, CallStart } from './rpcproto_pb.js'
-import { Packet } from './rpcproto_pb.js'
+import type { CallData, CallStart } from './rpcproto.pb.js'
+import { Packet } from './rpcproto.pb.js'
 import { ERR_RPC_ABORT } from './errors.js'
 
 // CommonRPC is common logic between server and client RPCs.

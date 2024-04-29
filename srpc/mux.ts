@@ -1,4 +1,4 @@
-import { InvokeFn, Handler } from './handler'
+import { InvokeFn, Handler } from './handler.js'
 
 // LookupMethod is a function to lookup a RPC method.
 export type LookupMethod = (

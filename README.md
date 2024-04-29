@@ -196,13 +196,14 @@ Be sure to check out [drpc] as well: it's compatible with grpc, twirp, and more.
 
 [drpc]: https://github.com/storj/drpc
 
-Uses [vtprotobuf] to generate Protobuf marshal / unmarshal code.
+Uses [vtprotobuf] to generate Go Protobuf marshal / unmarshal code.
 
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
 
-Uses [protobuf-es] to serialize Protobuf in TypeScript.
+Uses [protobuf-es-lite] (fork of [protobuf-es]) to generate TypeScript Protobuf marshal / unmarshal code.
 
 [protobuf-es]: https://github.com/bufbuild/protobuf-es
+[protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
 
 `protoc-gen-es-starpc` is a heavily modified version of `protoc-gen-connect-es`.
 

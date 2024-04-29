@@ -8,9 +8,12 @@ import {
   ChannelStream,
   combineUint8ArrayListTransform,
   ChannelStreamOpts,
-} from '../srpc'
-import { EchoerDefinition, EchoerServer, runClientTest } from '../echo'
-import { runAbortControllerTest, runRpcStreamTest } from '../echo/client-test'
+} from '../srpc/index.js'
+import { EchoerDefinition, EchoerServer, runClientTest } from '../echo/index.js'
+import {
+  runAbortControllerTest,
+  runRpcStreamTest,
+} from '../echo/client-test.js'
 
 async function runRPC() {
   const mux = createMux()

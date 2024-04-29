@@ -23,7 +23,7 @@ export {
   createHandler,
 } from './handler.js'
 export { MethodProto, createInvokeFn } from './invoker.js'
-export { Packet, CallStart, CallData } from './rpcproto_pb.js'
+export { Packet, CallStart, CallData } from './rpcproto.pb.js'
 export { Mux, StaticMux, LookupMethod, createMux } from './mux.js'
 export {
   ChannelStreamMessage,
@@ -48,8 +48,6 @@ export {
   buildDecodeMessageTransform,
   EncodeMessageTransform,
   buildEncodeMessageTransform,
-  memoProto,
-  memoProtoDecode,
 } from './message.js'
 export {
   parseLengthPrefixTransform,

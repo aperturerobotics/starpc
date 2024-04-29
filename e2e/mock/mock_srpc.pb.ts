@@ -2,9 +2,8 @@
 // @generated from file github.com/aperturerobotics/starpc/e2e/mock/mock.proto (package e2e.mock, syntax proto3)
 /* eslint-disable */
 
-import { MockMsg } from "./mock_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
-import { Message } from "@aptre/protobuf-es-lite";
+import { MockMsg } from "./mock.pb.js";
+import { Message, MethodKind } from "@aptre/protobuf-es-lite";
 import { ProtoRpc } from "starpc";
 
 /**

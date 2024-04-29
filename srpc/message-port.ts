@@ -3,7 +3,7 @@ import { EventIterator } from 'event-iterator'
 import { pipe } from 'it-pipe'
 
 import { StreamConn, StreamConnParams } from './conn.js'
-import { Server } from './server'
+import { Server } from './server.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
 
 // MessagePortDuplex is a AsyncIterable wrapper for MessagePort.

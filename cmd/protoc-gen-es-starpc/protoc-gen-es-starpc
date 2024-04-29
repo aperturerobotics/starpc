@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { runNodeJs } from "@bufbuild/protoplugin";
+import { runNodeJs } from "@aptre/protobuf-es-lite/protoplugin";
 import { protocGenEsStarpc } from "../../dist/cmd/protoc-gen-es-starpc/plugin.js";
 
 runNodeJs(protocGenEsStarpc)

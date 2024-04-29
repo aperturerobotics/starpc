@@ -1,4 +1,4 @@
-export { EchoMsg } from './echo_pb.js'
+export { EchoMsg } from './echo.pb.js'
 export {
   Echoer,
   EchoerClient,

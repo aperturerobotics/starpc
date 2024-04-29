@@ -13,9 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DescService, MethodIdempotency, MethodKind } from '@bufbuild/protobuf'
-import type { GeneratedFile, Schema } from '@bufbuild/protoplugin/ecmascript'
-import { createImportSymbol, localName } from '@bufbuild/protoplugin/ecmascript'
+import {
+  DescService,
+  MethodIdempotency,
+  MethodKind,
+  localName,
+} from '@aptre/protobuf-es-lite'
+import {
+  GeneratedFile,
+  Schema,
+  createImportSymbol,
+} from '@aptre/protobuf-es-lite/protoplugin/ecmascript'
 
 const MessageStream = createImportSymbol('MessageStream', 'starpc')
 const Message = createImportSymbol('Message', '@aptre/protobuf-es-lite')

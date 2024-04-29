@@ -2,10 +2,9 @@
 // @generated from file github.com/aperturerobotics/starpc/echo/echo.proto (package echo, syntax proto3)
 /* eslint-disable */
 
-import { EchoMsg } from "./echo_pb.js";
-import { MethodKind } from "@bufbuild/protobuf";
-import { RpcStreamPacket } from "../rpcstream/rpcstream_pb.js";
-import { Message } from "@aptre/protobuf-es-lite";
+import { EchoMsg } from "./echo.pb.js";
+import { Message, MethodKind } from "@aptre/protobuf-es-lite";
+import { RpcStreamPacket } from "../rpcstream/rpcstream.pb.js";
 import { buildDecodeMessageTransform, buildEncodeMessageTransform, MessageStream, ProtoRpc } from "starpc";
 
 /**

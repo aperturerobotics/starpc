@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createEcmaScriptPlugin } from '@bufbuild/protoplugin'
+import { createEcmaScriptPlugin } from '@aptre/protobuf-es-lite/protoplugin'
 import { generateTs } from './typescript.js'
 
 export const protocGenEsStarpc = createEcmaScriptPlugin({

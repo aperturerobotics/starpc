@@ -7,4 +7,4 @@ export {
   handleRpcStream,
   buildRpcStreamOpenStream,
 } from './rpcstream.js'
-export { RpcStreamPacket, RpcStreamInit, RpcAck } from './rpcstream_pb.js'
+export { RpcStreamPacket, RpcStreamInit, RpcAck } from './rpcstream.pb.js'

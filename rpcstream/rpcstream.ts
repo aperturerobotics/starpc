@@ -2,7 +2,7 @@ import { pushable, Pushable } from 'it-pushable'
 import { Source, Sink } from 'it-stream-types'
 import { Message } from '@aptre/protobuf-es-lite'
 
-import { RpcStreamPacket } from './rpcstream_pb.js'
+import { RpcStreamPacket } from './rpcstream.pb.js'
 import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
 import { MessageStream } from '../srpc/message.js'
 
@@ -18,7 +18,7 @@ export async function openRpcStream(
   caller: RpcStreamCaller,
   waitAck?: boolean,
 ): Promise<PacketStream> {
-  const packetTx = pushable<Message<RpcStreamPacket>>({
+  const packetTx = pushable<RpcStreamPacket>({
     objectMode: true,
   })
   const packetRx = caller(packetTx)

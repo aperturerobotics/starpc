@@ -1,5 +1,5 @@
 import { Client, ERR_RPC_ABORT } from '../srpc/index.js'
-import { EchoMsg } from './echo_pb.js'
+import { EchoMsg } from './echo.pb.js'
 import { EchoerClient } from './echo_srpc.pb.js'
 import { pushable } from 'it-pushable'
 import { buildRpcStreamOpenStream } from '../rpcstream/rpcstream.js'
