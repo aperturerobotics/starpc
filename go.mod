@@ -2,8 +2,11 @@ module github.com/aperturerobotics/starpc
 
 go 1.22
 
-// While not absolutely necessary, this fork uses go-protobuf-lite.
+// Optional: this fork uses go-protobuf-lite.
 replace github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.33.1-0.20240504075939-591fc65373be // aperture
+
+// Optional: this fork avoids importing net/http on wasm.
+replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.20240504231911-2358de657064 // aperture-1
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.6.1 // latest

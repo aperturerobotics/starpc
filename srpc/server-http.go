@@ -1,3 +1,5 @@
+//go:build !js
+
 package srpc
 
 import (
@@ -8,7 +10,9 @@ import (
 	"nhooyr.io/websocket"
 )
 
-// HTTPServer implements the SRPC server.
+// HTTPServer implements the SRPC HTTP/WebSocket server.
+//
+// NOTE: accepting websocket connections is stubbed out on GOOS=js!
 type HTTPServer struct {
 	mux  Mux
 	srpc *Server
