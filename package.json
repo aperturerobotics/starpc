@@ -1,6 +1,6 @@
 {
   "name": "starpc",
-  "version": "0.32.4",
+  "version": "0.32.5",
   "description": "Streaming protobuf RPC service protocol over any two-way channel.",
   "license": "MIT",
   "author": {
@@ -91,8 +91,8 @@
     "lint-staged": "^15.2.2",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.4",
-    "rimraf": "^5.0.1",
-    "tsx": "^4.9.1",
+    "rimraf": "^5.0.6",
+    "tsx": "^4.9.4",
     "typescript": "^5.3.2"
   },
   "dependencies": {
