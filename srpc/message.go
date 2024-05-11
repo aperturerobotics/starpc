@@ -1,9 +1,12 @@
 package srpc
 
-import protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
+import (
+	"errors"
+
+	protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
+)
 
 // Message is the vtprotobuf message interface.
-// TODO use VTMessage interface
 type Message = protobuf_go_lite.Message
 
 // RawMessage is a raw protobuf message container.
@@ -66,6 +69,20 @@ func (m *RawMessage) MarshalVT() ([]byte, error) {
 func (m *RawMessage) UnmarshalVT(data []byte) error {
 	m.SetData(data)
 	return nil
+}
+
+// SizeVT returns the size of the message when marshaled.
+func (m *RawMessage) SizeVT() int {
+	return len(m.data)
+}
+
+// MarshalToSizedBufferVT marshals to a buffer that already is SizeVT bytes long.
+func (m *RawMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if len(dAtA) != len(m.data) {
+		return 0, errors.New("invalid buffer length")
+	}
+	copy(dAtA, m.data)
+	return len(dAtA), nil
 }
 
 // _ is a type assertion

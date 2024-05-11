@@ -9,7 +9,7 @@ replace github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.
 replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.20240504231911-2358de657064 // aperture-1
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.6.2 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.6.3 // latest
 	github.com/aperturerobotics/util v1.23.1 // latest
 )
 
