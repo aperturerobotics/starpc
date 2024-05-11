@@ -9,8 +9,8 @@ replace github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.
 replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.20240504231911-2358de657064 // aperture-1
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.6.1 // latest
-	github.com/aperturerobotics/util v1.23.0 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.6.2 // latest
+	github.com/aperturerobotics/util v1.23.1 // latest
 )
 
 require (
@@ -41,7 +41,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
