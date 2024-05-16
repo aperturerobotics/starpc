@@ -2,9 +2,9 @@
 // @generated from file github.com/aperturerobotics/starpc/e2e/mock/mock.proto (package e2e.mock, syntax proto3)
 /* eslint-disable */
 
-import { MockMsg } from "./mock.pb.js";
-import { Message, MethodKind } from "@aptre/protobuf-es-lite";
-import { ProtoRpc } from "starpc";
+import { MockMsg } from './mock.pb.js'
+import { Message, MethodKind } from '@aptre/protobuf-es-lite'
+import { ProtoRpc } from 'starpc'
 
 /**
  * Mock service mocks some RPCs for the e2e tests.
@@ -12,7 +12,7 @@ import { ProtoRpc } from "starpc";
  * @generated from service e2e.mock.Mock
  */
 export const MockDefinition = {
-  typeName: "e2e.mock.Mock",
+  typeName: 'e2e.mock.Mock',
   methods: {
     /**
      * MockRequest runs a mock unary request.
@@ -20,13 +20,13 @@ export const MockDefinition = {
      * @generated from rpc e2e.mock.Mock.MockRequest
      */
     MockRequest: {
-      name: "MockRequest",
+      name: 'MockRequest',
       I: MockMsg,
       O: MockMsg,
       kind: MethodKind.Unary,
     },
-  }
-} as const;
+  },
+} as const
 
 /**
  * Mock service mocks some RPCs for the e2e tests.
@@ -40,10 +40,9 @@ export interface Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   MockRequest(
-request: Message<MockMsg>, abortSignal?: AbortSignal
-): 
-Promise<Message<MockMsg>>
-
+    request: Message<MockMsg>,
+    abortSignal?: AbortSignal,
+  ): Promise<Message<MockMsg>>
 }
 
 export const MockServiceName = MockDefinition.typeName
@@ -62,9 +61,9 @@ export class MockClient implements Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   async MockRequest(
-request: Message<MockMsg>, abortSignal?: AbortSignal
-): 
-Promise<Message<MockMsg>> {
+    request: Message<MockMsg>,
+    abortSignal?: AbortSignal,
+  ): Promise<Message<MockMsg>> {
     const requestMsg = MockMsg.create(request)
     const result = await this.rpc.request(
       this.service,
@@ -74,5 +73,4 @@ Promise<Message<MockMsg>> {
     )
     return MockMsg.fromBinary(result)
   }
-
 }
