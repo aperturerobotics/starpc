@@ -2,8 +2,8 @@ github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19 h1:Z
 github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19/go.mod h1:/TIElEA8TzmHQTgGJQyzg0zHNZRCMYbdKyOsKwn9i6E=
 github.com/aperturerobotics/json-iterator-lite v1.0.0 h1:cihbrYWoK/S2RYXhJLpDZd+GUjVvFJN+D3w1VOqqHRI=
 github.com/aperturerobotics/json-iterator-lite v1.0.0/go.mod h1:snaApCEDtrHHP6UWSLKiYNOZU9A5NyzccKenx9oZEzg=
-github.com/aperturerobotics/protobuf-go-lite v0.6.3 h1:AZ821ntYqzCpq6jE5rWJwJLikYbaa63Nka7YfW9EJdE=
-github.com/aperturerobotics/protobuf-go-lite v0.6.3/go.mod h1:YTbfnUj3feSULhs8VgepAHFnF3wUc0CPj4jd2axy21I=
+github.com/aperturerobotics/protobuf-go-lite v0.6.4 h1:zFak5xuNuiiEnF8d+pewYE9giyPtMLvSiusBq/FLEjA=
+github.com/aperturerobotics/protobuf-go-lite v0.6.4/go.mod h1:YTbfnUj3feSULhs8VgepAHFnF3wUc0CPj4jd2axy21I=
 github.com/aperturerobotics/util v1.23.1 h1:pEeBrN5UUNy83OFyv9d7BQod8O++j5ZwIkEuYGdpRXw=
 github.com/aperturerobotics/util v1.23.1/go.mod h1:dO8P8Ut5xNPpLrPPpn7kM/aJL+qT20C5Ppcs1GE0VNg=
 github.com/cloudflare/circl v1.3.8 h1:j+V8jJt09PoeMFIu2uh5JUyEaIHTXVOHslFoLNAKqwI=

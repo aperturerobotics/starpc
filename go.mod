@@ -2,28 +2,28 @@ module github.com/aperturerobotics/starpc
 
 go 1.22
 
-// Optional: this fork uses go-protobuf-lite and adds post-quantum crypto support.
+// This fork uses go-protobuf-lite and adds post-quantum crypto support.
 replace github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19 // aperture
 
+// This fork uses go-protobuf-lite.
 replace github.com/libp2p/go-msgio => github.com/aperturerobotics/go-libp2p-msgio v0.0.0-20240511033615-1b69178aa5c8 // aperture
 
-// Optional: this fork avoids importing net/http on wasm.
+// This fork avoids importing net/http on wasm.
 replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.20240504231911-2358de657064 // aperture-1
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.6.3 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.6.4 // latest
 	github.com/aperturerobotics/util v1.23.1 // latest
 )
 
 require (
 	github.com/libp2p/go-libp2p v0.33.2 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
+	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.34.1 // latest
 	nhooyr.io/websocket v1.8.11 // latest
 )
-
-require github.com/pkg/errors v0.9.1
 
 require (
 	github.com/aperturerobotics/json-iterator-lite v1.0.0 // indirect
