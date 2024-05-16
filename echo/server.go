@@ -6,6 +6,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/aperturerobotics/protobuf-go-lite/types/known/emptypb"
 	rpcstream "github.com/aperturerobotics/starpc/rpcstream"
 	srpc "github.com/aperturerobotics/starpc/srpc"
 )
@@ -85,6 +86,11 @@ func (r *EchoServer) RpcStream(stream SRPCEchoer_RpcStreamStream) error {
 		}
 		return r.rpcStreamMux, nil, nil
 	})
+}
+
+// DoNothing does nothing.
+func (r *EchoServer) DoNothing(ctx context.Context, empty *emptypb.Empty) (*emptypb.Empty, error) {
+	return &emptypb.Empty{}, nil
 }
 
 // _ is a type assertion

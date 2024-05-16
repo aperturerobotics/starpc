@@ -7,6 +7,7 @@ package echo
 import (
 	context "context"
 
+	emptypb "github.com/aperturerobotics/protobuf-go-lite/types/known/emptypb"
 	rpcstream "github.com/aperturerobotics/starpc/rpcstream"
 	srpc "github.com/aperturerobotics/starpc/srpc"
 )
@@ -19,6 +20,7 @@ type SRPCEchoerClient interface {
 	EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error)
 	EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error)
 	RpcStream(ctx context.Context) (SRPCEchoer_RpcStreamClient, error)
+	DoNothing(ctx context.Context, in *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 type srpcEchoerClient struct {
@@ -204,12 +206,22 @@ func (x *srpcEchoer_RpcStreamClient) RecvTo(m *rpcstream.RpcStreamPacket) error 
 	return x.MsgRecv(m)
 }
 
+func (c *srpcEchoerClient) DoNothing(ctx context.Context, in *emptypb.Empty) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.ExecCall(ctx, c.serviceID, "DoNothing", in, out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 type SRPCEchoerServer interface {
 	Echo(context.Context, *EchoMsg) (*EchoMsg, error)
 	EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error
 	EchoClientStream(SRPCEchoer_EchoClientStreamStream) (*EchoMsg, error)
 	EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error
 	RpcStream(SRPCEchoer_RpcStreamStream) error
+	DoNothing(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 type SRPCEchoerUnimplementedServer struct{}
@@ -232,6 +244,10 @@ func (s *SRPCEchoerUnimplementedServer) EchoBidiStream(SRPCEchoer_EchoBidiStream
 
 func (s *SRPCEchoerUnimplementedServer) RpcStream(SRPCEchoer_RpcStreamStream) error {
 	return srpc.ErrUnimplemented
+}
+
+func (s *SRPCEchoerUnimplementedServer) DoNothing(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, srpc.ErrUnimplemented
 }
 
 const SRPCEchoerServiceID = "echo.Echoer"
@@ -265,6 +281,7 @@ func (SRPCEchoerHandler) GetMethodIDs() []string {
 		"EchoClientStream",
 		"EchoBidiStream",
 		"RpcStream",
+		"DoNothing",
 	}
 }
 
@@ -287,6 +304,8 @@ func (d *SRPCEchoerHandler) InvokeMethod(
 		return true, d.InvokeMethod_EchoBidiStream(d.impl, strm)
 	case "RpcStream":
 		return true, d.InvokeMethod_RpcStream(d.impl, strm)
+	case "DoNothing":
+		return true, d.InvokeMethod_DoNothing(d.impl, strm)
 	default:
 		return false, nil
 	}
@@ -330,6 +349,18 @@ func (SRPCEchoerHandler) InvokeMethod_EchoBidiStream(impl SRPCEchoerServer, strm
 func (SRPCEchoerHandler) InvokeMethod_RpcStream(impl SRPCEchoerServer, strm srpc.Stream) error {
 	clientStrm := &srpcEchoer_RpcStreamStream{strm}
 	return impl.RpcStream(clientStrm)
+}
+
+func (SRPCEchoerHandler) InvokeMethod_DoNothing(impl SRPCEchoerServer, strm srpc.Stream) error {
+	req := new(emptypb.Empty)
+	if err := strm.MsgRecv(req); err != nil {
+		return err
+	}
+	out, err := impl.DoNothing(strm.Context(), req)
+	if err != nil {
+		return err
+	}
+	return strm.MsgSend(out)
 }
 
 type SRPCEchoer_EchoStream interface {
@@ -457,4 +488,12 @@ func (x *srpcEchoer_RpcStreamStream) Recv() (*rpcstream.RpcStreamPacket, error) 
 
 func (x *srpcEchoer_RpcStreamStream) RecvTo(m *rpcstream.RpcStreamPacket) error {
 	return x.MsgRecv(m)
+}
+
+type SRPCEchoer_DoNothingStream interface {
+	srpc.Stream
+}
+
+type srpcEchoer_DoNothingStream struct {
+	srpc.Stream
 }

@@ -4,11 +4,11 @@ go 1.22
 
 replace github.com/aperturerobotics/starpc => ../
 
-replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1.33.1-0.20240411062030-e36f75e0a3b8 // aperture
+replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1.33.1-0.20240516052628-4470bc019102 // aperture
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.1
-	github.com/aperturerobotics/protobuf-go-lite v0.6.4
+	github.com/aperturerobotics/protobuf-go-lite v0.6.5
 	github.com/aperturerobotics/starpc v0.28.1
 )
 

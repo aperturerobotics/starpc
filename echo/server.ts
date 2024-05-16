@@ -1,5 +1,5 @@
 import first from 'it-first'
-import { Message } from '@aptre/protobuf-es-lite'
+import { Empty, Message } from '@aptre/protobuf-es-lite'
 import { EchoMsg } from './echo.pb.js'
 import { Server } from '../srpc/server.js'
 import { messagePushable, writeToPushable } from '../srpc/pushable.js'
@@ -61,5 +61,9 @@ export class EchoerServer implements Echoer {
         return this.proxyServer.rpcStreamHandler
       },
     )
+  }
+
+  public async DoNothing(): Promise<Empty> {
+    return {}
   }
 }

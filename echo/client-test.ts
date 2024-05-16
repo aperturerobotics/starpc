@@ -14,6 +14,12 @@ export async function runClientTest(client: Client) {
   })
   console.log('success: output', result.body)
 
+  console.log('Calling Echo: unary call with empty request/response...')
+  await demoServiceClient.DoNothing({
+    body: 'Hello world!',
+  })
+  console.log('success')
+
   // observable for client requests
   const clientRequestStream = pushable<Message<EchoMsg>>({
     objectMode: true,

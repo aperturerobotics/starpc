@@ -68,6 +68,7 @@ node_modules:
 genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTOC_GEN_STARPC)
 	shopt -s globstar; \
 	set -eo pipefail; \
+	export PROTOBUF_GO_TYPES_PKG=github.com/aperturerobotics/protobuf-go-lite/types; \
 	export PROJECT=$$(go list -m); \
 	export PATH=$$(pwd)/hack/bin:$${PATH}; \
 	export OUT=./vendor; \
