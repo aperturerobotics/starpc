@@ -26,7 +26,7 @@ import {
 } from '@aptre/protobuf-es-lite/protoplugin/ecmascript'
 
 const MessageStream = createImportSymbol('MessageStream', 'starpc')
-const Message = createImportSymbol('Message', '@aptre/protobuf-es-lite')
+// const Message = createImportSymbol('Message', '@aptre/protobuf-es-lite')
 
 export function generateTs(schema: Schema) {
   for (const protoFile of schema.files) {
@@ -88,9 +88,9 @@ function generateService(
     f.print(f.jsDoc(method, "  "));
     f.print("  ", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("request: ", Message, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("request: ", Message, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
       f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
@@ -98,11 +98,11 @@ function generateService(
     }
     f.print("): ");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", Message, "<", method.output, ">>");
+      f.print("Promise<", method.output, ">");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
       f.print(MessageStream, "<", method.output, ">");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", Message, "<", method.output, ">>");
+      f.print("Promise<", method.output, ">");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
       f.print(MessageStream, "<", method.output, ">");
     }
@@ -137,9 +137,9 @@ function generateService(
     f.print(f.jsDoc(method, "  "));
     f.print("  ", method.methodKind === MethodKind.Unary || method.methodKind === MethodKind.ClientStreaming ? "async " : "", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("request: ", Message, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("request: ", Message, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
       f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
@@ -147,7 +147,7 @@ function generateService(
     }
     f.print("): ");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", Message, "<", method.output, ">> {");
+      f.print("Promise<", method.output, "> {");
       f.print("    const requestMsg = ", method.input, ".create(request)");
       f.print("    const result = await this.rpc.request(");
       f.print("      this.service,");
@@ -169,7 +169,7 @@ function generateService(
       f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");
       f.print("  }");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", Message, "<", method.output, ">> {");
+      f.print("Promise<", method.output, "> {");
       f.print("    const result = await this.rpc.clientStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");

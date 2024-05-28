@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import { MockMsg } from './mock.pb.js'
-import { Message, MethodKind } from '@aptre/protobuf-es-lite'
+import { MethodKind } from '@aptre/protobuf-es-lite'
 import { ProtoRpc } from 'starpc'
 
 /**
@@ -39,10 +39,7 @@ export interface Mock {
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  MockRequest(
-    request: Message<MockMsg>,
-    abortSignal?: AbortSignal,
-  ): Promise<Message<MockMsg>>
+  MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>
 }
 
 export const MockServiceName = MockDefinition.typeName
@@ -61,9 +58,9 @@ export class MockClient implements Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   async MockRequest(
-    request: Message<MockMsg>,
+    request: MockMsg,
     abortSignal?: AbortSignal,
-  ): Promise<Message<MockMsg>> {
+  ): Promise<MockMsg> {
     const requestMsg = MockMsg.create(request)
     const result = await this.rpc.request(
       this.service,
