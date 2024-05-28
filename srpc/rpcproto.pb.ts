@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, Message, ScalarType } from '@aptre/protobuf-es-lite'
+import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
 
 export const protobufPackage = 'srpc'
 
@@ -12,7 +12,7 @@ export const protobufPackage = 'srpc'
  *
  * @generated from message srpc.CallStart
  */
-export type CallStart = Message<{
+export interface CallStart {
   /**
    * RpcService is the service to contact.
    * Must be set.
@@ -40,7 +40,7 @@ export type CallStart = Message<{
    * @generated from field: bool data_is_zero = 4;
    */
   dataIsZero?: boolean
-}>
+}
 
 // CallStart contains the message type declaration for CallStart.
 export const CallStart: MessageType<CallStart> = createMessageType({
@@ -59,7 +59,7 @@ export const CallStart: MessageType<CallStart> = createMessageType({
  *
  * @generated from message srpc.CallData
  */
-export type CallData = Message<{
+export interface CallData {
   /**
    * Data contains the packet in the sequence.
    *
@@ -85,7 +85,7 @@ export type CallData = Message<{
    * @generated from field: string error = 4;
    */
   error?: string
-}>
+}
 
 // CallData contains the message type declaration for CallData.
 export const CallData: MessageType<CallData> = createMessageType({
@@ -104,7 +104,7 @@ export const CallData: MessageType<CallData> = createMessageType({
  *
  * @generated from message srpc.Packet
  */
-export type Packet = Message<{
+export interface Packet {
   /**
    * Body is the packet body.
    *
@@ -142,7 +142,7 @@ export type Packet = Message<{
         value: boolean
         case: 'callCancel'
       }
-}>
+}
 
 // Packet contains the message type declaration for Packet.
 export const Packet: MessageType<Packet> = createMessageType({

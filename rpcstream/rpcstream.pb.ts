@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, Message, ScalarType } from '@aptre/protobuf-es-lite'
+import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
 
 export const protobufPackage = 'rpcstream'
 
@@ -12,14 +12,14 @@ export const protobufPackage = 'rpcstream'
  *
  * @generated from message rpcstream.RpcStreamInit
  */
-export type RpcStreamInit = Message<{
+export interface RpcStreamInit {
   /**
    * ComponentId is the identifier of the component making the request.
    *
    * @generated from field: string component_id = 1;
    */
   componentId?: string
-}>
+}
 
 // RpcStreamInit contains the message type declaration for RpcStreamInit.
 export const RpcStreamInit: MessageType<RpcStreamInit> = createMessageType({
@@ -35,14 +35,14 @@ export const RpcStreamInit: MessageType<RpcStreamInit> = createMessageType({
  *
  * @generated from message rpcstream.RpcAck
  */
-export type RpcAck = Message<{
+export interface RpcAck {
   /**
    * Error indicates there was some error setting up the stream.
    *
    * @generated from field: string error = 1;
    */
   error?: string
-}>
+}
 
 // RpcAck contains the message type declaration for RpcAck.
 export const RpcAck: MessageType<RpcAck> = createMessageType({
@@ -58,7 +58,7 @@ export const RpcAck: MessageType<RpcAck> = createMessageType({
  *
  * @generated from message rpcstream.RpcStreamPacket
  */
-export type RpcStreamPacket = Message<{
+export interface RpcStreamPacket {
   /**
    * @generated from oneof rpcstream.RpcStreamPacket.body
    */
@@ -96,7 +96,7 @@ export type RpcStreamPacket = Message<{
         value: Uint8Array
         case: 'data'
       }
-}>
+}
 
 // RpcStreamPacket contains the message type declaration for RpcStreamPacket.
 export const RpcStreamPacket: MessageType<RpcStreamPacket> = createMessageType({

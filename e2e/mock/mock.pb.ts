@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, Message, ScalarType } from '@aptre/protobuf-es-lite'
+import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
 
 export const protobufPackage = 'e2e.mock'
 
@@ -12,12 +12,12 @@ export const protobufPackage = 'e2e.mock'
  *
  * @generated from message e2e.mock.MockMsg
  */
-export type MockMsg = Message<{
+export interface MockMsg {
   /**
    * @generated from field: string body = 1;
    */
   body?: string
-}>
+}
 
 // MockMsg contains the message type declaration for MockMsg.
 export const MockMsg: MessageType<MockMsg> = createMessageType({
