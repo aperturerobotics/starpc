@@ -6,6 +6,8 @@ github.com/aperturerobotics/protobuf-go-lite v0.6.5 h1:AuPPcZ7ZaJe9ZYYC4gF7/5/Xb
 github.com/aperturerobotics/protobuf-go-lite v0.6.5/go.mod h1:YTbfnUj3feSULhs8VgepAHFnF3wUc0CPj4jd2axy21I=
 github.com/aperturerobotics/util v1.23.4 h1:IXkVoN3Cc+5U5Rhd5hC00VGgL1PainhpaTyz5IPkc8I=
 github.com/aperturerobotics/util v1.23.4/go.mod h1:y/BGl05icfllBf7l51IMJ6UOjpsDscAPt3ynhDZrwZ4=
+github.com/aperturerobotics/util v1.23.5 h1:OkqrAI3fJGwNyMk7WNpYZD9CvkTemxSZinqb1RzFvHY=
+github.com/aperturerobotics/util v1.23.5/go.mod h1:SBLeMheuujF7z+CZM58iPV9yvEwDiHrPIWUjdf0vVFY=
 github.com/cloudflare/circl v1.3.8 h1:j+V8jJt09PoeMFIu2uh5JUyEaIHTXVOHslFoLNAKqwI=
 github.com/cloudflare/circl v1.3.8/go.mod h1:PDRU+oXvdD7KCtgKxW95M5Z8BpSCJXQORiZFnBQS5QU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
