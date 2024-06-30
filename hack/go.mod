@@ -9,11 +9,11 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.1
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5
-	github.com/aperturerobotics/starpc v0.32.13
+	github.com/aperturerobotics/starpc v0.32.14
 )
 
 require (
-	github.com/evanw/esbuild v0.21.5
+	github.com/evanw/esbuild v0.22.0
 	github.com/golangci/golangci-lint v1.59.1
 	github.com/psampaz/go-mod-outdated v0.9.0
 	golang.org/x/tools v0.22.0
@@ -39,7 +39,7 @@ require (
 	github.com/alexkohler/prealloc v1.0.0 // indirect
 	github.com/alingse/asasalint v0.0.11 // indirect
 	github.com/aperturerobotics/json-iterator-lite v1.0.0 // indirect
-	github.com/aperturerobotics/util v1.23.5 // indirect
+	github.com/aperturerobotics/util v1.23.7 // indirect
 	github.com/ashanbrown/forbidigo v1.6.0 // indirect
 	github.com/ashanbrown/makezero v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -207,7 +207,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240314144324-c7f7c6466f7f // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
