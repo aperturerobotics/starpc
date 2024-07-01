@@ -30,7 +30,7 @@
     "!**/*.tsbuildinfo",
     "Makefile",
     "dist",
-    "e2e",
+    "mock",
     "echo",
     "go.mod",
     "go.sum",

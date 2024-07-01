@@ -22,7 +22,7 @@
   "include": [
     "echo",
     "srpc",
-    "e2e",
+    "mock",
     "integration",
     "rpcstream",
     "index.ts",
