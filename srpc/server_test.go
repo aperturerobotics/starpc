@@ -1,4 +1,4 @@
-package e2e
+package srpc_test
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	e2e_mock "github.com/aperturerobotics/starpc/e2e/mock"
 	"github.com/aperturerobotics/starpc/echo"
+	e2e_mock "github.com/aperturerobotics/starpc/mock"
 	"github.com/aperturerobotics/starpc/rpcstream"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"

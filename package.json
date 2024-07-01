@@ -57,7 +57,7 @@
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",
     "build:e2e": "npm run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.cjs --bundle --platform=node",
-    "test:js": "npm run build:e2e && cd e2e && node ./e2e.cjs",
+    "test:js": "vitest",
     "debug:js": "npm run build:e2e && cd e2e && node --inspect --inspect-brk ./e2e.cjs",
     "test:integration": "make integration",
     "integration": "npm run test:integration",
@@ -93,7 +93,8 @@
     "prettier": "^3.2.4",
     "rimraf": "^5.0.7",
     "tsx": "^4.15.7",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
   },
   "dependencies": {
     "@aptre/it-ws": "^1.0.1",
