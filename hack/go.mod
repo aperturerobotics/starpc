@@ -9,11 +9,11 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.1
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5
-	github.com/aperturerobotics/starpc v0.32.14
+	github.com/aperturerobotics/starpc v0.32.15
 )
 
 require (
-	github.com/evanw/esbuild v0.22.0
+	github.com/evanw/esbuild v0.23.0
 	github.com/golangci/golangci-lint v1.59.1
 	github.com/psampaz/go-mod-outdated v0.9.0
 	golang.org/x/tools v0.22.0
