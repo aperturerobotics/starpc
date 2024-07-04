@@ -12,6 +12,10 @@
       "matchManagers": ["gomod"],
       "matchDepTypes": ["replace"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["github.com/aperturerobotics/starpc"],
+      "enabled": false
     }
   ]
 }
