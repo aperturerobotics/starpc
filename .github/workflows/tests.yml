@@ -41,9 +41,7 @@ jobs:
         with:
           path: |
             ./hack/bin
-          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-aptre-tools-
+          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('hack/go.sum') }}
 
       - name: Build Javascript
         run: yarn run build
