@@ -26,12 +26,12 @@ func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 // Start sets the writer and writes the MsgSend message.
 // must only be called once!
 func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []byte) error {
-	select {
-	case <-r.ctx.Done():
+	if err := r.ctx.Err(); err != nil {
 		r.ctxCancel()
+		_ = writer.Close()
 		return context.Canceled
-	default:
 	}
+
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	defer r.bcast.Broadcast()
