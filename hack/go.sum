@@ -234,8 +234,8 @@ github.com/leonklingele/grouper v1.1.2 h1:o1ARBDLOmmasUaNDesWqWCIFH3u7hoFlM84Yrj
 github.com/leonklingele/grouper v1.1.2/go.mod h1:6D0M/HVkhs2yRKRFZUoGjeDy7EZTfFBE9gl4kjmIGkA=
 github.com/libp2p/go-buffer-pool v0.1.0 h1:oK4mSFcQz7cTQIfqbe4MIj9gLW+mnanjyFtc6cdF0Y8=
 github.com/libp2p/go-buffer-pool v0.1.0/go.mod h1:N+vh8gMqimBzdKkSMVuydVDq+UV5QTWy5HSiZacSbPg=
-github.com/libp2p/go-libp2p v0.35.2 h1:287oHbuplkrLdAF+syB0n/qDgd50AUBtEODqS0e0HDs=
-github.com/libp2p/go-libp2p v0.35.2/go.mod h1:RKCDNt30IkFipGL0tl8wQW/3zVWEGFUZo8g2gAKxwjU=
+github.com/libp2p/go-libp2p v0.35.3 h1:7Je71b8YuUD+aYbM6GYU84mNXo9vcc8VDfGuB57RSXs=
+github.com/libp2p/go-libp2p v0.35.3/go.mod h1:RKCDNt30IkFipGL0tl8wQW/3zVWEGFUZo8g2gAKxwjU=
 github.com/libp2p/go-libp2p-testing v0.12.0 h1:EPvBb4kKMWO29qP4mZGyhVzUyR25dvfUIK5WDu6iPUA=
 github.com/libp2p/go-libp2p-testing v0.12.0/go.mod h1:KcGDRXyN7sQCllucn1cOOS+Dmm7ujhfEyXQL5lvkcPg=
 github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 h1:KI65sCCL2h9IyCQwBhBXDgkKt3bmXoTu8T3rLVLZW4I=
