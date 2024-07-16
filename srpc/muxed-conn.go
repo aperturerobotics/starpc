@@ -75,6 +75,12 @@ func NewOpenStreamWithMuxedConn(conn network.MuxedConn) OpenStreamFunc {
 	return func(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error) {
 		mstrm, err := conn.OpenStream(ctx)
 		if err != nil {
+			// If the error is a timeout, context may be canceled.
+			// Prefer the context canceled error (yamux returns timeout for context cancel.)
+			timeoutErr, ok := err.(interface{ Timeout() bool })
+			if ok && timeoutErr.Timeout() && ctx.Err() != nil {
+				return nil, context.Canceled
+			}
 			return nil, err
 		}
 		rw := NewPacketReadWriter(mstrm)
