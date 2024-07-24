@@ -1,11 +1,11 @@
 //go:build deps_only
 // +build deps_only
 
-package hack
+package tools
 
 import (
 	// _ imports the parent project.
-	// this forces the versions in hack to be at least the versions in ..
+	// this forces the versions in tools to be at least the versions in ..
 	_ "github.com/aperturerobotics/starpc/srpc"
 
 	// _ imports protowrap

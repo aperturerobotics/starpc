@@ -1,13 +1,13 @@
 # https://github.com/aperturerobotics/template
 
 SHELL:=bash
-PROTOWRAP=hack/bin/protowrap
-PROTOC_GEN_GO=hack/bin/protoc-gen-go-lite
-PROTOC_GEN_STARPC=hack/bin/protoc-gen-go-starpc
-GOIMPORTS=hack/bin/goimports
-GOFUMPT=hack/bin/gofumpt
-GOLANGCI_LINT=hack/bin/golangci-lint
-GO_MOD_OUTDATED=hack/bin/go-mod-outdated
+PROTOWRAP=tools/bin/protowrap
+PROTOC_GEN_GO=tools/bin/protoc-gen-go-lite
+PROTOC_GEN_STARPC=tools/bin/protoc-gen-go-starpc
+GOIMPORTS=tools/bin/goimports
+GOFUMPT=tools/bin/gofumpt
+GOLANGCI_LINT=tools/bin/golangci-lint
+GO_MOD_OUTDATED=tools/bin/go-mod-outdated
 GOLIST=go list -f "{{ .Dir }}" -m
 
 export GO111MODULE=on
@@ -20,43 +20,43 @@ vendor:
 	go mod vendor
 
 $(PROTOC_GEN_GO):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/protoc-gen-go-lite \
 		github.com/aperturerobotics/protobuf-go-lite/cmd/protoc-gen-go-lite
 
 $(GOIMPORTS):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/goimports \
 		golang.org/x/tools/cmd/goimports
 
 $(GOFUMPT):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/gofumpt \
 		mvdan.cc/gofumpt
 
 $(PROTOWRAP):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/protowrap \
 		github.com/aperturerobotics/goprotowrap/cmd/protowrap
 
 $(GOLANGCI_LINT):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/golangci-lint \
 		github.com/golangci/golangci-lint/cmd/golangci-lint
 
 $(GO_MOD_OUTDATED):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/go-mod-outdated \
 		github.com/psampaz/go-mod-outdated
 
 $(PROTOC_GEN_STARPC):
-	cd ./hack; \
+	cd ./tools; \
 	go build -v \
 		-o ./bin/protoc-gen-go-starpc \
 		github.com/aperturerobotics/starpc/cmd/protoc-gen-go-starpc
@@ -70,7 +70,7 @@ genproto: vendor node_modules $(GOIMPORTS) $(PROTOWRAP) $(PROTOC_GEN_GO) $(PROTO
 	set -eo pipefail; \
 	export PROTOBUF_GO_TYPES_PKG=github.com/aperturerobotics/protobuf-go-lite/types; \
 	export PROJECT=$$(go list -m); \
-	export PATH=$$(pwd)/hack/bin:$${PATH}; \
+	export PATH=$$(pwd)/tools/bin:$${PATH}; \
 	export OUT=./vendor; \
 	mkdir -p $${OUT}/$$(dirname $${PROJECT}); \
 	rm ./vendor/$${PROJECT} || true; \

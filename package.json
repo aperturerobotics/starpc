@@ -65,7 +65,7 @@
     "lint": "npm run lint:go && npm run lint:js",
     "lint:go": "make lint",
     "lint:js": "ESLINT_USE_FLAT_CONFIG=false eslint -c .eslintrc.cjs --ignore-pattern *.js --ignore-pattern *.d.ts ./",
-    "prepare": "go mod vendor && rimraf ./hack/bin",
+    "prepare": "go mod vendor && rimraf ./tools/bin",
     "precommit": "lint-staged",
     "release": "npm run release:version && npm run release:commit",
     "release:minor": "npm run release:version:minor && npm run release:commit",
