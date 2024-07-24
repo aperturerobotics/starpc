@@ -13,11 +13,11 @@ replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.202
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5 // latest
-	github.com/aperturerobotics/util v1.23.10 // latest
+	github.com/aperturerobotics/util v1.23.11 // latest
 )
 
 require (
-	github.com/libp2p/go-libp2p v0.35.3 // latest
+	github.com/libp2p/go-libp2p v0.35.4 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
