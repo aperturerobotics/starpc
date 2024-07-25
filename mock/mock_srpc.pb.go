@@ -47,12 +47,6 @@ type SRPCMockServer interface {
 	MockRequest(context.Context, *MockMsg) (*MockMsg, error)
 }
 
-type SRPCMockUnimplementedServer struct{}
-
-func (s *SRPCMockUnimplementedServer) MockRequest(context.Context, *MockMsg) (*MockMsg, error) {
-	return nil, srpc.ErrUnimplemented
-}
-
 const SRPCMockServiceID = "e2e.mock.Mock"
 
 type SRPCMockHandler struct {

@@ -224,32 +224,6 @@ type SRPCEchoerServer interface {
 	DoNothing(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
-type SRPCEchoerUnimplementedServer struct{}
-
-func (s *SRPCEchoerUnimplementedServer) Echo(context.Context, *EchoMsg) (*EchoMsg, error) {
-	return nil, srpc.ErrUnimplemented
-}
-
-func (s *SRPCEchoerUnimplementedServer) EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error {
-	return srpc.ErrUnimplemented
-}
-
-func (s *SRPCEchoerUnimplementedServer) EchoClientStream(SRPCEchoer_EchoClientStreamStream) (*EchoMsg, error) {
-	return nil, srpc.ErrUnimplemented
-}
-
-func (s *SRPCEchoerUnimplementedServer) EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error {
-	return srpc.ErrUnimplemented
-}
-
-func (s *SRPCEchoerUnimplementedServer) RpcStream(SRPCEchoer_RpcStreamStream) error {
-	return srpc.ErrUnimplemented
-}
-
-func (s *SRPCEchoerUnimplementedServer) DoNothing(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
-	return nil, srpc.ErrUnimplemented
-}
-
 const SRPCEchoerServiceID = "echo.Echoer"
 
 type SRPCEchoerHandler struct {

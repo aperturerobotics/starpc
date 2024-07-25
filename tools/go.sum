@@ -44,8 +44,8 @@ github.com/aperturerobotics/protobuf-go v1.33.1-0.20240516052628-4470bc019102 h1
 github.com/aperturerobotics/protobuf-go v1.33.1-0.20240516052628-4470bc019102/go.mod h1:c6P6GXX6sHbq/GpV6MGZEdwhWPcYBgnhAHhKbcUYpos=
 github.com/aperturerobotics/protobuf-go-lite v0.6.5 h1:AuPPcZ7ZaJe9ZYYC4gF7/5/Xbn9Mt9uXyV3+ADWy+Ys=
 github.com/aperturerobotics/protobuf-go-lite v0.6.5/go.mod h1:YTbfnUj3feSULhs8VgepAHFnF3wUc0CPj4jd2axy21I=
-github.com/aperturerobotics/util v1.23.11 h1:nB01x7hbKtZzPyeXsY+OvLBQVM69iQ/OfeT59I32hMQ=
-github.com/aperturerobotics/util v1.23.11/go.mod h1:QiSWcOha1HhCI4f48w6rd3gia9jIMGpfoeJiZMU+jLM=
+github.com/aperturerobotics/util v1.24.0 h1:QIZ2Fr9H+pV9uYs7JHMQPL4+Lz/2BagdrQq09Kru3mQ=
+github.com/aperturerobotics/util v1.24.0/go.mod h1:QiSWcOha1HhCI4f48w6rd3gia9jIMGpfoeJiZMU+jLM=
 github.com/ashanbrown/forbidigo v1.6.0 h1:D3aewfM37Yb3pxHujIPSpTf6oQk9sc9WZi8gerOIVIY=
 github.com/ashanbrown/forbidigo v1.6.0/go.mod h1:Y8j9jy9ZYAEHXdu723cUlraTqbzjKF1MUyfOKL+AjcU=
 github.com/ashanbrown/makezero v1.1.1 h1:iCQ87C0V0vSyO+M9E/FZYbu65auqH0lnsOkf5FcB28s=
