@@ -109,7 +109,7 @@ func (r *ClientRPC) Close() {
 	}
 
 	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		r.closeLocked()
+		r.closeLocked(broadcast)
 		broadcast()
 	})
 }

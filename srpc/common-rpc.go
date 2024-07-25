@@ -79,7 +79,7 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 
 			if ctxDone && !c.dataClosed {
 				// context must have been canceled locally
-				c.closeLocked()
+				c.closeLocked(broadcast)
 				err = context.Canceled
 				return
 			}
@@ -183,7 +183,7 @@ func (c *commonRPC) WriteCancel() error {
 }
 
 // closeLocked releases resources held by the RPC.
-func (c *commonRPC) closeLocked() {
+func (c *commonRPC) closeLocked(broadcast func()) {
 	c.dataClosed = true
 	if c.remoteErr == nil {
 		c.remoteErr = context.Canceled
@@ -191,6 +191,6 @@ func (c *commonRPC) closeLocked() {
 	if c.writer != nil {
 		_ = c.writer.Close()
 	}
-	c.bcast.Broadcast()
+	broadcast()
 	c.ctxCancel()
 }
