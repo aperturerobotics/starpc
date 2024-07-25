@@ -101,10 +101,6 @@ func (s *srpc) ServerImpl(service *protogen.Service) string {
 	return "srpc" + service.GoName + "Server"
 }
 
-func (s *srpc) ServerUnimpl(service *protogen.Service) string {
-	return "SRPC" + service.GoName + "UnimplementedServer"
-}
-
 func (s *srpc) ServerHandler(service *protogen.Service) string {
 	return "SRPC" + service.GoName + "Handler"
 }
@@ -182,14 +178,6 @@ func (s *srpc) generateService(service *protogen.Service) {
 		s.P(s.generateServerSignature(method))
 	}
 	s.P("}")
-	s.P()
-
-	// Server Unimplemented struct
-	s.P("type ", s.ServerUnimpl(service), " struct {}")
-	s.P()
-	for _, method := range service.Methods {
-		s.generateUnimplementedServerMethod(method)
-	}
 	s.P()
 
 	// Service ID constant
@@ -445,42 +433,6 @@ func (s *srpc) generateServerSignature(method *protogen.Method) string {
 	}
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
 }
-
-func (s *srpc) generateUnimplementedServerMethod(method *protogen.Method) {
-	s.P("func (s *", s.ServerUnimpl(method.Parent), ") ", s.generateServerSignature(method), " {")
-	if !method.Desc.IsStreamingServer() {
-		s.P("return nil, ", s.Ident(SRPCPackage, "ErrUnimplemented"))
-	} else {
-		s.P("return ", s.Ident(SRPCPackage, "ErrUnimplemented"))
-	}
-	s.P("}")
-	s.P()
-}
-
-/*
-func (s *srpc) generateServerReceiver(method *protogen.Method) {
-	s.P("func (srv interface{}, ctx context.Context, in1, in2 interface{}) (" + s.Ident(SRPCPackage, "Message") + ", error) {")
-	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
-		s.P("return srv.(", s.ServerIface(method.Parent), ").")
-	} else {
-		s.P("return nil, srv.(", s.ServerIface(method.Parent), ").")
-	}
-	s.P(method.GoName, "(")
-
-	n := 1
-	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
-		s.P("ctx,")
-	}
-	if !method.Desc.IsStreamingClient() {
-		s.P("in", n, ".(*", s.InputType(method), "),")
-		n++
-	}
-	if method.Desc.IsStreamingServer() || method.Desc.IsStreamingClient() {
-		s.P("&", s.ServerStreamImpl(method), "{in", n, ".(", s.Ident(SRPCPackage, "Stream"), ")},")
-	}
-	s.P(")")
-}
-*/
 
 func (s *srpc) generateServerMethod(method *protogen.Method) {
 	genSend := method.Desc.IsStreamingServer()
