@@ -57,27 +57,33 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 
 // HandleCallStart handles the call start packet.
 func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	// process start: method and service
-	if r.method != "" || r.service != "" {
-		return errors.New("call start must be sent only once")
-	}
-	if r.dataClosed {
-		return ErrCompleted
-	}
-	service, method := pkt.GetRpcService(), pkt.GetRpcMethod()
-	r.service, r.method = service, method
+	var err error
 
-	// process first data packet, if included
-	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
-		r.dataQueue = append(r.dataQueue, data)
-	}
+	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		// process start: method and service
+		if r.method != "" || r.service != "" {
+			err = errors.New("call start must be sent only once")
+			return
+		}
+		if r.dataClosed {
+			err = ErrCompleted
+			return
+		}
 
-	// invoke the rpc
-	r.bcast.Broadcast()
-	go r.invokeRPC(service, method)
-	return nil
+		service, method := pkt.GetRpcService(), pkt.GetRpcMethod()
+		r.service, r.method = service, method
+
+		// process first data packet, if included
+		if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
+			r.dataQueue = append(r.dataQueue, data)
+		}
+
+		// invoke the rpc
+		broadcast()
+		go r.invokeRPC(service, method)
+	})
+
+	return err
 }
 
 // invokeRPC invokes the RPC after CallStart is received.

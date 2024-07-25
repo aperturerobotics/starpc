@@ -32,21 +32,26 @@ func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []by
 		return context.Canceled
 	}
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	defer r.bcast.Broadcast()
-	r.writer = writer
 	var firstMsgEmpty bool
-	if writeFirstMsg {
-		firstMsgEmpty = len(firstMsg) == 0
-	}
-	pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
-	if err := writer.WritePacket(pkt); err != nil {
-		r.ctxCancel()
-		_ = writer.Close()
-		return err
-	}
-	return nil
+	var err error
+	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		r.writer = writer
+
+		if writeFirstMsg {
+			firstMsgEmpty = len(firstMsg) == 0
+		}
+
+		pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
+		err = writer.WritePacket(pkt)
+		if err != nil {
+			r.ctxCancel()
+			_ = writer.Close()
+		}
+
+		broadcast()
+	})
+
+	return err
 }
 
 // HandlePacketData handles an incoming unparsed message packet.
@@ -60,14 +65,14 @@ func (r *ClientRPC) HandlePacketData(data []byte) error {
 
 // HandleStreamClose handles the stream closing optionally w/ an error.
 func (r *ClientRPC) HandleStreamClose(closeErr error) {
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-	defer r.bcast.Broadcast()
-	if closeErr != nil && r.remoteErr == nil {
-		r.remoteErr = closeErr
-	}
-	r.dataClosed = true
-	r.ctxCancel()
+	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		if closeErr != nil && r.remoteErr == nil {
+			r.remoteErr = closeErr
+		}
+		r.dataClosed = true
+		r.ctxCancel()
+		broadcast()
+	})
 }
 
 // HandlePacket handles an incoming parsed message packet.
@@ -102,8 +107,9 @@ func (r *ClientRPC) Close() {
 	if r.writer != nil {
 		_ = r.WriteCancel()
 	}
-	r.mtx.Lock()
-	r.closeLocked()
-	r.bcast.Broadcast()
-	r.mtx.Unlock()
+
+	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		r.closeLocked()
+		broadcast()
+	})
 }

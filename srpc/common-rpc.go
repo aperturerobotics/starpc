@@ -3,7 +3,6 @@ package srpc
 import (
 	"context"
 	"io"
-	"sync"
 
 	"github.com/aperturerobotics/util/broadcast"
 	"github.com/pkg/errors"
@@ -19,9 +18,7 @@ type commonRPC struct {
 	service string
 	// method is the rpc method
 	method string
-	// mtx guards below fields
-	mtx sync.Mutex
-	// bcast broadcasts when below fields change
+	// bcast guards below fields
 	bcast broadcast.Broadcast
 	// writer is the writer to write messages to
 	writer PacketWriter
@@ -45,21 +42,25 @@ func (c *commonRPC) Context() context.Context {
 	return c.ctx
 }
 
-// Wait waits for the RPC to finish.
+// Wait waits for the RPC to finish (remote end closed the stream).
 func (c *commonRPC) Wait(ctx context.Context) error {
 	for {
-		c.mtx.Lock()
-		if c.dataClosed {
-			err := c.remoteErr
-			c.mtx.Unlock()
+		var dataClosed bool
+		var err error
+		var waitCh <-chan struct{}
+		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+			dataClosed, err = c.dataClosed, c.remoteErr
+			waitCh = getWaitCh()
+		})
+
+		if dataClosed {
 			return err
 		}
-		waiter := c.bcast.GetWaitCh()
-		c.mtx.Unlock()
+
 		select {
 		case <-ctx.Done():
 			return context.Canceled
-		case <-waiter:
+		case <-waitCh:
 		}
 	}
 }
@@ -68,39 +69,48 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 //
 // returns io.EOF if the stream ended without a packet.
 func (c *commonRPC) ReadOne() ([]byte, error) {
-	var msg []byte
+	var msg *[]byte
 	var err error
 	var ctxDone bool
 	for {
-		c.mtx.Lock()
-		waiter := c.bcast.GetWaitCh()
-		if ctxDone && !c.dataClosed {
-			// context must have been canceled locally
-			c.closeLocked()
-			err = context.Canceled
-			c.mtx.Unlock()
-			return nil, err
-		}
-		if len(c.dataQueue) != 0 {
-			msg = c.dataQueue[0]
-			c.dataQueue[0] = nil
-			c.dataQueue = c.dataQueue[1:]
-			c.mtx.Unlock()
-			return msg, nil
-		}
-		if c.dataClosed || c.remoteErr != nil {
-			err = c.remoteErr
-			if err == nil {
-				err = io.EOF
+		var waitCh <-chan struct{}
+		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+			waitCh = getWaitCh()
+
+			if ctxDone && !c.dataClosed {
+				// context must have been canceled locally
+				c.closeLocked()
+				err = context.Canceled
+				return
 			}
-			c.mtx.Unlock()
+
+			if len(c.dataQueue) != 0 {
+				msgb := c.dataQueue[0]
+				msg = &msgb
+				c.dataQueue[0] = nil
+				c.dataQueue = c.dataQueue[1:]
+			}
+
+			if c.dataClosed || c.remoteErr != nil {
+				err = c.remoteErr
+				if err == nil {
+					err = io.EOF
+				}
+			}
+		})
+
+		if err != nil {
 			return nil, err
 		}
-		c.mtx.Unlock()
+
+		if msg != nil {
+			return *msg, nil
+		}
+
 		select {
 		case <-c.ctx.Done():
 			ctxDone = true
-		case <-waiter:
+		case <-waitCh:
 		}
 	}
 }
@@ -116,17 +126,17 @@ func (c *commonRPC) WriteCallData(data []byte, complete bool, err error) error {
 
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (c *commonRPC) HandleStreamClose(closeErr error) {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
-	if closeErr != nil && c.remoteErr == nil {
-		c.remoteErr = closeErr
-	}
-	c.dataClosed = true
-	c.ctxCancel()
-	if c.writer != nil {
-		_ = c.writer.Close()
-	}
-	c.bcast.Broadcast()
+	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		if closeErr != nil && c.remoteErr == nil {
+			c.remoteErr = closeErr
+		}
+		c.dataClosed = true
+		c.ctxCancel()
+		if c.writer != nil {
+			_ = c.writer.Close()
+		}
+		broadcast()
+	})
 }
 
 // HandleCallCancel handles the call cancel packet.
@@ -137,29 +147,31 @@ func (c *commonRPC) HandleCallCancel() error {
 
 // HandleCallData handles the call data packet.
 func (c *commonRPC) HandleCallData(pkt *CallData) error {
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
+	var err error
+	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		if c.dataClosed {
+			err = ErrCompleted
+			return
+		}
 
-	if c.dataClosed {
-		return ErrCompleted
-	}
+		if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
+			c.dataQueue = append(c.dataQueue, data)
+		}
 
-	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
-		c.dataQueue = append(c.dataQueue, data)
-	}
+		complete := pkt.GetComplete()
+		if err := pkt.GetError(); len(err) != 0 {
+			complete = true
+			c.remoteErr = errors.New(err)
+		}
 
-	complete := pkt.GetComplete()
-	if err := pkt.GetError(); len(err) != 0 {
-		complete = true
-		c.remoteErr = errors.New(err)
-	}
+		if complete {
+			c.dataClosed = true
+		}
 
-	if complete {
-		c.dataClosed = true
-	}
+		broadcast()
+	})
 
-	c.bcast.Broadcast()
-	return nil
+	return err
 }
 
 // WriteCancel writes a call cancel packet.
