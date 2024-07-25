@@ -75,8 +75,6 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 	for {
 		var waitCh <-chan struct{}
 		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-			waitCh = getWaitCh()
-
 			if ctxDone && !c.dataClosed {
 				// context must have been canceled locally
 				c.closeLocked(broadcast)
@@ -91,12 +89,14 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 				c.dataQueue = c.dataQueue[1:]
 			}
 
-			if c.dataClosed || c.remoteErr != nil {
+			if (c.dataClosed && len(c.dataQueue) == 0) || c.remoteErr != nil {
 				err = c.remoteErr
 				if err == nil {
 					err = io.EOF
 				}
 			}
+
+			waitCh = getWaitCh()
 		})
 
 		if err != nil {
