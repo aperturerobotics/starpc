@@ -69,7 +69,8 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 //
 // returns io.EOF if the stream ended without a packet.
 func (c *commonRPC) ReadOne() ([]byte, error) {
-	var msg *[]byte
+	var hasMsg bool
+	var msg []byte
 	var err error
 	var ctxDone bool
 	for {
@@ -83,13 +84,11 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 			}
 
 			if len(c.dataQueue) != 0 {
-				msgb := c.dataQueue[0]
-				msg = &msgb
+				msg = c.dataQueue[0]
+				hasMsg = true
 				c.dataQueue[0] = nil
 				c.dataQueue = c.dataQueue[1:]
-			}
-
-			if (c.dataClosed && len(c.dataQueue) == 0) || c.remoteErr != nil {
+			} else if c.dataClosed || c.remoteErr != nil {
 				err = c.remoteErr
 				if err == nil {
 					err = io.EOF
@@ -99,12 +98,12 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 			waitCh = getWaitCh()
 		})
 
-		if err != nil {
-			return nil, err
+		if hasMsg {
+			return msg, nil
 		}
 
-		if msg != nil {
-			return *msg, nil
+		if err != nil {
+			return nil, err
 		}
 
 		select {
