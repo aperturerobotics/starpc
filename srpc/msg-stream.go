@@ -13,6 +13,9 @@ type MsgStreamRw interface {
 
 	// WriteCallData writes a call data packet.
 	WriteCallData(data []byte, complete bool, err error) error
+
+	// WriteCallCancel writes a call cancel (close) packet.
+	WriteCallCancel() error
 }
 
 // MsgStream implements the stream interface passed to implementations.
@@ -75,12 +78,12 @@ func (r *MsgStream) CloseSend() error {
 
 // Close closes the stream.
 func (r *MsgStream) Close() error {
-	_ = r.CloseSend()
+	err := r.rw.WriteCallCancel()
 	if r.closeCb != nil {
 		r.closeCb()
 	}
 
-	return nil
+	return err
 }
 
 // _ is a type assertion

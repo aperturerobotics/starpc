@@ -173,8 +173,8 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	return err
 }
 
-// WriteCancel writes a call cancel packet.
-func (c *commonRPC) WriteCancel() error {
+// WriteCallCancel writes a call cancel packet.
+func (c *commonRPC) WriteCallCancel() error {
 	if c.writer != nil {
 		return c.writer.WritePacket(NewCallCancelPacket())
 	}

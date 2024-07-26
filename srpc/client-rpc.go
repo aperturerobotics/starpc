@@ -105,7 +105,7 @@ func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
 	if r.writer != nil {
-		_ = r.WriteCancel()
+		_ = r.WriteCallCancel()
 	}
 
 	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
