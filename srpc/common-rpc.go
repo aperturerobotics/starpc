@@ -116,9 +116,6 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 
 // WriteCallData writes a call data packet.
 func (c *commonRPC) WriteCallData(data []byte, complete bool, err error) error {
-	if c.writer == nil {
-		return ErrCompleted
-	}
 	outPkt := NewCallDataPacket(data, len(data) == 0, false, nil)
 	return c.writer.WritePacket(outPkt)
 }
@@ -131,9 +128,7 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 		}
 		c.dataClosed = true
 		c.ctxCancel()
-		if c.writer != nil {
-			_ = c.writer.Close()
-		}
+		_ = c.writer.Close()
 		broadcast()
 	})
 }
@@ -175,10 +170,7 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 
 // WriteCallCancel writes a call cancel packet.
 func (c *commonRPC) WriteCallCancel() error {
-	if c.writer != nil {
-		return c.writer.WritePacket(NewCallCancelPacket())
-	}
-	return nil
+	return c.writer.WritePacket(NewCallCancelPacket())
 }
 
 // closeLocked releases resources held by the RPC.
@@ -187,9 +179,7 @@ func (c *commonRPC) closeLocked(broadcast func()) {
 	if c.remoteErr == nil {
 		c.remoteErr = context.Canceled
 	}
-	if c.writer != nil {
-		_ = c.writer.Close()
-	}
+	_ = c.writer.Close()
 	broadcast()
 	c.ctxCancel()
 }

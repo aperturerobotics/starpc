@@ -87,7 +87,10 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 		return nil, err
 	}
 
-	return NewMsgStream(ctx, clientRPC, clientRPC.ctxCancel), nil
+	return NewMsgStream(ctx, clientRPC, func() {
+		clientRPC.ctxCancel()
+		_ = writer.Close()
+	}), nil
 }
 
 // _ is a type assertion
