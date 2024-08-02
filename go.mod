@@ -13,7 +13,7 @@ replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.202
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5 // latest
-	github.com/aperturerobotics/util v1.24.0 // latest
+	github.com/aperturerobotics/util v1.25.7 // latest
 )
 
 require (
@@ -42,7 +42,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )
