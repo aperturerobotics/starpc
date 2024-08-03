@@ -19,4 +19,6 @@ var (
 	ErrEmptyServiceID = errors.New("service id empty")
 	// ErrNoAvailableClients is returned if no clients were available.
 	ErrNoAvailableClients = errors.New("no available rpc clients")
+	// ErrNilWriter is returned if the rpc writer is nil.
+	ErrNilWriter = errors.New("writer cannot be nil")
 )

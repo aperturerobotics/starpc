@@ -51,6 +51,7 @@ func (c *client) ExecCall(ctx context.Context, service, method string, in, out M
 	if err != nil {
 		return err
 	}
+
 	if err := clientRPC.Start(writer, true, firstMsg); err != nil {
 		return err
 	}
@@ -63,6 +64,7 @@ func (c *client) ExecCall(ctx context.Context, service, method string, in, out M
 	if err := out.UnmarshalVT(msg); err != nil {
 		return errors.Wrap(ErrInvalidMessage, err.Error())
 	}
+
 	return nil
 }
 
@@ -83,6 +85,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	if err != nil {
 		return nil, err
 	}
+
 	if err := clientRPC.Start(writer, firstMsg != nil, firstMsgData); err != nil {
 		return nil, err
 	}

@@ -26,6 +26,10 @@ func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 // Start sets the writer and writes the MsgSend message.
 // must only be called once!
 func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []byte) error {
+	if writer == nil {
+		return ErrNilWriter
+	}
+
 	if err := r.ctx.Err(); err != nil {
 		r.ctxCancel()
 		_ = writer.Close()
@@ -104,9 +108,11 @@ func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
 
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
-	_ = r.WriteCallCancel()
-
 	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		r.closeLocked(broadcast)
+		// call did not start yet if writer is nil.
+		if r.writer != nil {
+			_ = r.WriteCallCancel()
+			r.closeLocked(broadcast)
+		}
 	})
 }
