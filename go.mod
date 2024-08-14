@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.34.2 // latest
-	nhooyr.io/websocket v1.8.11 // latest
+	nhooyr.io/websocket v1.8.17 // latest
 )
 
 require (
