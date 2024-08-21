@@ -15,12 +15,12 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5 // latest
-	github.com/aperturerobotics/util v1.25.7 // latest
+	github.com/aperturerobotics/util v1.25.8 // latest
 )
 
 require (
 	github.com/coder/websocket v1.8.12 // latest
-	github.com/libp2p/go-libp2p v0.36.1 // latest
+	github.com/libp2p/go-libp2p v0.36.2 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
@@ -44,7 +44,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	lukechampine.com/blake3 v1.2.1 // indirect
 )

@@ -3,9 +3,9 @@ package srpc
 import (
 	"context"
 
+	"github.com/coder/websocket"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-yamux/v4"
-	"github.com/coder/websocket"
 )
 
 // NewWebSocketConn wraps a websocket into a MuxedConn.
