@@ -50,7 +50,7 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	}
 
 	data := make([]byte, 4+msgSize)
-	binary.LittleEndian.PutUint32(data, uint32(msgSize))
+	binary.LittleEndian.PutUint32(data, uint32(msgSize)) //nolint:gosec
 
 	_, err := p.MarshalToSizedBufferVT(data[4:])
 	if err != nil {
