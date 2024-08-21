@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"io"
+	"math"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -42,8 +43,15 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	defer r.writeMtx.Unlock()
 
 	msgSize := p.SizeVT()
+
+	// G115: integer overflow conversion int -> uint32 (gosec)
+	if msgSize > math.MaxUint32 {
+		return errors.New("message size exceeds maximum uint32 value")
+	}
+
 	data := make([]byte, 4+msgSize)
 	binary.LittleEndian.PutUint32(data, uint32(msgSize))
+
 	_, err := p.MarshalToSizedBufferVT(data[4:])
 	if err != nil {
 		return err
