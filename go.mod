@@ -2,14 +2,16 @@ module github.com/aperturerobotics/starpc
 
 go 1.22
 
-// This fork uses go-protobuf-lite and adds post-quantum crypto support.
-replace github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19 // aperture
+replace (
+	// This fork avoids importing net/http on wasm.
+	github.com/coder/websocket => github.com/paralin/nhooyr-websocket v1.8.13-0.20240820051708-db89d1b29ef8 // aperture-2
 
-// This fork uses go-protobuf-lite.
-replace github.com/libp2p/go-msgio => github.com/aperturerobotics/go-libp2p-msgio v0.0.0-20240511033615-1b69178aa5c8 // aperture
+	// This fork uses go-protobuf-lite and adds post-quantum crypto support.
+	github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19 // aperture
 
-// This fork avoids importing net/http on wasm.
-replace nhooyr.io/websocket => github.com/paralin/nhooyr-websocket v1.8.12-0.20240504231911-2358de657064 // aperture-1
+	// This fork uses go-protobuf-lite.
+	github.com/libp2p/go-msgio => github.com/aperturerobotics/go-libp2p-msgio v0.0.0-20240511033615-1b69178aa5c8 // aperture
+)
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.6.5 // latest
@@ -17,12 +19,12 @@ require (
 )
 
 require (
+	github.com/coder/websocket v1.8.12 // latest
 	github.com/libp2p/go-libp2p v0.36.1 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.34.2 // latest
-	nhooyr.io/websocket v1.8.17 // latest
 )
 
 require (

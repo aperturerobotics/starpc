@@ -5,7 +5,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-yamux/v4"
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // NewWebSocketConn wraps a websocket into a MuxedConn.

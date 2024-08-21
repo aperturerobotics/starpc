@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"nhooyr.io/websocket"
+	"github.com/coder/websocket"
 )
 
 // HTTPServer implements the SRPC HTTP/WebSocket server.
