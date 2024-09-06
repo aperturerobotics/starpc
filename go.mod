@@ -20,8 +20,8 @@ require (
 
 require (
 	github.com/coder/websocket v1.8.12 // latest
-	github.com/libp2p/go-libp2p v0.36.2 // latest
-	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240322071716-53ef5820bd48 // master
+	github.com/libp2p/go-libp2p v0.36.3 // latest
+	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240826150533-e92055b23e0e // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.34.2 // latest
