@@ -2,7 +2,7 @@ module github.com/aperturerobotics/starpc
 
 go 1.23
 
-toolchain go1.23.1
+toolchain go1.23.2
 
 replace (
 	// This fork uses go-protobuf-lite and adds post-quantum crypto support.
@@ -14,12 +14,12 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.7.0 // latest
-	github.com/aperturerobotics/util v1.25.8 // latest
+	github.com/aperturerobotics/util v1.25.10 // latest
 )
 
 require (
 	github.com/coder/websocket v1.8.12 // latest
-	github.com/libp2p/go-libp2p v0.36.3 // latest
+	github.com/libp2p/go-libp2p v0.36.4 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240826150533-e92055b23e0e // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
@@ -43,7 +43,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
