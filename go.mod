@@ -1,20 +1,19 @@
 module github.com/aperturerobotics/starpc
 
-go 1.22
+go 1.23
+
+toolchain go1.23.1
 
 replace (
-	// This fork avoids importing net/http on wasm.
-	github.com/coder/websocket => github.com/paralin/nhooyr-websocket v1.8.13-0.20240820051708-db89d1b29ef8 // aperture-2
-
 	// This fork uses go-protobuf-lite and adds post-quantum crypto support.
-	github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.33.1-0.20240511072027-002c32698a19 // aperture
+	github.com/libp2p/go-libp2p => github.com/aperturerobotics/go-libp2p v0.36.3-0.20241002070357-a2e1c3498dd3 // aperture
 
 	// This fork uses go-protobuf-lite.
 	github.com/libp2p/go-msgio => github.com/aperturerobotics/go-libp2p-msgio v0.0.0-20240511033615-1b69178aa5c8 // aperture
 )
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.6.5 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.7.0 // latest
 	github.com/aperturerobotics/util v1.25.8 // latest
 )
 
@@ -31,20 +30,20 @@ require (
 	github.com/aperturerobotics/json-iterator-lite v1.0.0 // indirect
 	github.com/cloudflare/circl v1.3.8 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/multiformats/go-base32 v0.1.0 // indirect
 	github.com/multiformats/go-base36 v0.2.0 // indirect
-	github.com/multiformats/go-multiaddr v0.12.3 // indirect
+	github.com/multiformats/go-multiaddr v0.13.0 // indirect
 	github.com/multiformats/go-multibase v0.2.0 // indirect
 	github.com/multiformats/go-multihash v0.2.3 // indirect
 	github.com/multiformats/go-multistream v0.5.0 // indirect
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	lukechampine.com/blake3 v1.2.1 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	lukechampine.com/blake3 v1.3.0 // indirect
 )

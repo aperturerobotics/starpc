@@ -1,6 +1,6 @@
 module tools
 
-go 1.22.1
+go 1.23
 
 toolchain go1.23.1
 
@@ -10,7 +10,7 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.1
-	github.com/aperturerobotics/protobuf-go-lite v0.6.5
+	github.com/aperturerobotics/protobuf-go-lite v0.7.0
 	github.com/aperturerobotics/starpc v0.32.15
 )
 
