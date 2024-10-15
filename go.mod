@@ -14,7 +14,7 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.7.0 // latest
-	github.com/aperturerobotics/util v1.25.10 // latest
+	github.com/aperturerobotics/util v1.26.0 // latest
 )
 
 require (
@@ -43,7 +43,7 @@ require (
 	github.com/multiformats/go-varint v0.0.7 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
