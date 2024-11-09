@@ -2,10 +2,10 @@
 // @generated from file github.com/aperturerobotics/starpc/srpc/rpcproto.proto (package srpc, syntax proto3)
 /* eslint-disable */
 
-import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
+import type { MessageType, PartialFieldInfo } from "@aptre/protobuf-es-lite";
+import { createMessageType, ScalarType } from "@aptre/protobuf-es-lite";
 
-export const protobufPackage = 'srpc'
+export const protobufPackage = "srpc";
 
 /**
  * CallStart requests starting a new RPC call.
@@ -19,40 +19,41 @@ export interface CallStart {
    *
    * @generated from field: string rpc_service = 1;
    */
-  rpcService?: string
+  rpcService?: string;
   /**
    * RpcMethod is the RPC method to call.
    * Must be set.
    *
    * @generated from field: string rpc_method = 2;
    */
-  rpcMethod?: string
+  rpcMethod?: string;
   /**
    * Data contains the request or the first message in the stream.
    * Optional if streaming.
    *
    * @generated from field: bytes data = 3;
    */
-  data?: Uint8Array
+  data?: Uint8Array;
   /**
    * DataIsZero indicates Data is set with an empty message.
    *
    * @generated from field: bool data_is_zero = 4;
    */
-  dataIsZero?: boolean
-}
+  dataIsZero?: boolean;
+
+};
 
 // CallStart contains the message type declaration for CallStart.
 export const CallStart: MessageType<CallStart> = createMessageType({
-  typeName: 'srpc.CallStart',
-  fields: [
-    { no: 1, name: 'rpc_service', kind: 'scalar', T: ScalarType.STRING },
-    { no: 2, name: 'rpc_method', kind: 'scalar', T: ScalarType.STRING },
-    { no: 3, name: 'data', kind: 'scalar', T: ScalarType.BYTES },
-    { no: 4, name: 'data_is_zero', kind: 'scalar', T: ScalarType.BOOL },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "srpc.CallStart",
+    fields: [
+        { no: 1, name: "rpc_service", kind: "scalar", T: ScalarType.STRING },
+        { no: 2, name: "rpc_method", kind: "scalar", T: ScalarType.STRING },
+        { no: 3, name: "data", kind: "scalar", T: ScalarType.BYTES },
+        { no: 4, name: "data_is_zero", kind: "scalar", T: ScalarType.BOOL },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
 
 /**
  * CallData contains a message in a streaming RPC sequence.
@@ -65,39 +66,40 @@ export interface CallData {
    *
    * @generated from field: bytes data = 1;
    */
-  data?: Uint8Array
+  data?: Uint8Array;
   /**
    * DataIsZero indicates Data is set with an empty message.
    *
    * @generated from field: bool data_is_zero = 2;
    */
-  dataIsZero?: boolean
+  dataIsZero?: boolean;
   /**
    * Complete indicates the RPC call is completed.
    *
    * @generated from field: bool complete = 3;
    */
-  complete?: boolean
+  complete?: boolean;
   /**
    * Error contains any error that caused the RPC to fail.
    * If set, implies complete=true.
    *
    * @generated from field: string error = 4;
    */
-  error?: string
-}
+  error?: string;
+
+};
 
 // CallData contains the message type declaration for CallData.
 export const CallData: MessageType<CallData> = createMessageType({
-  typeName: 'srpc.CallData',
-  fields: [
-    { no: 1, name: 'data', kind: 'scalar', T: ScalarType.BYTES },
-    { no: 2, name: 'data_is_zero', kind: 'scalar', T: ScalarType.BOOL },
-    { no: 3, name: 'complete', kind: 'scalar', T: ScalarType.BOOL },
-    { no: 4, name: 'error', kind: 'scalar', T: ScalarType.STRING },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "srpc.CallData",
+    fields: [
+        { no: 1, name: "data", kind: "scalar", T: ScalarType.BYTES },
+        { no: 2, name: "data_is_zero", kind: "scalar", T: ScalarType.BOOL },
+        { no: 3, name: "complete", kind: "scalar", T: ScalarType.BOOL },
+        { no: 4, name: "error", kind: "scalar", T: ScalarType.STRING },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
 
 /**
  * Packet is a message sent over a srpc packet connection.
@@ -105,70 +107,51 @@ export const CallData: MessageType<CallData> = createMessageType({
  * @generated from message srpc.Packet
  */
 export interface Packet {
+
   /**
    * Body is the packet body.
    *
    * @generated from oneof srpc.Packet.body
    */
-  body?:
-    | {
-        value?: undefined
-        case: undefined
-      }
-    | {
-        /**
-         * CallStart initiates a new call.
-         *
-         * @generated from field: srpc.CallStart call_start = 1;
-         */
-        value: CallStart
-        case: 'callStart'
-      }
-    | {
-        /**
-         * CallData is a message in a streaming RPC sequence.
-         *
-         * @generated from field: srpc.CallData call_data = 2;
-         */
-        value: CallData
-        case: 'callData'
-      }
-    | {
-        /**
-         * CallCancel cancels the call.
-         *
-         * @generated from field: bool call_cancel = 3;
-         */
-        value: boolean
-        case: 'callCancel'
-      }
-}
+  body?: {
+    value?: undefined,
+    case: undefined
+  } | {
+    /**
+     * CallStart initiates a new call.
+     *
+     * @generated from field: srpc.CallStart call_start = 1;
+     */
+    value: CallStart;
+    case: "callStart";
+  } | {
+    /**
+     * CallData is a message in a streaming RPC sequence.
+     *
+     * @generated from field: srpc.CallData call_data = 2;
+     */
+    value: CallData;
+    case: "callData";
+  } | {
+    /**
+     * CallCancel cancels the call.
+     *
+     * @generated from field: bool call_cancel = 3;
+     */
+    value: boolean;
+    case: "callCancel";
+  };
+
+};
 
 // Packet contains the message type declaration for Packet.
 export const Packet: MessageType<Packet> = createMessageType({
-  typeName: 'srpc.Packet',
-  fields: [
-    {
-      no: 1,
-      name: 'call_start',
-      kind: 'message',
-      T: () => CallStart,
-      oneof: 'body',
-    },
-    {
-      no: 2,
-      name: 'call_data',
-      kind: 'message',
-      T: () => CallData,
-      oneof: 'body',
-    },
-    {
-      no: 3,
-      name: 'call_cancel',
-      kind: 'scalar',
-      T: ScalarType.BOOL,
-      oneof: 'body',
-    },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "srpc.Packet",
+    fields: [
+        { no: 1, name: "call_start", kind: "message", T: () => CallStart, oneof: "body" },
+        { no: 2, name: "call_data", kind: "message", T: () => CallData, oneof: "body" },
+        { no: 3, name: "call_cancel", kind: "scalar", T: ScalarType.BOOL, oneof: "body" },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
