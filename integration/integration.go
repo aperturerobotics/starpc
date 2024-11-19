@@ -17,15 +17,15 @@ func main() {
 		logrus.Fatal(err.Error())
 	}
 
-	// listen at: ws://localhost:5000/demo
+	// listen at: ws://localhost:4352/demo
 	server, err := srpc.NewHTTPServer(mux, "/demo")
 	if err != nil {
 		logrus.Fatal(err.Error())
 	}
 
-	fmt.Print("listening on localhost:5000\n")
+	fmt.Print("listening on localhost:4352\n")
 	hserver := &http.Server{
-		Addr:              "localhost:5000",
+		Addr:              "localhost:4352",
 		Handler:           server,
 		ReadHeaderTimeout: time.Second * 10,
 	}

@@ -7,7 +7,7 @@ import {
 import WebSocket from 'isomorphic-ws'
 
 async function runRPC() {
-  const addr = 'ws://localhost:5000/demo'
+  const addr = 'ws://localhost:4352/demo'
   console.log(`Connecting to ${addr}`)
   const ws = new WebSocket(addr)
   const channel = new WebSocketConn(ws, 'outbound')
