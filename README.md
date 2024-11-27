@@ -128,7 +128,7 @@ This examples demonstrates connecting to a WebSocket server:
 import { WebSocketConn } from 'srpc'
 import { EchoerClient } from 'srpc/echo'
 
-const ws = new WebSocket('ws://localhost:5000/demo')
+const ws = new WebSocket('ws://localhost:1347/demo')
 const channel = new WebSocketConn(ws)
 const client = channel.buildClient()
 const demoServiceClient = new EchoerClient(client)
