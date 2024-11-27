@@ -1,50 +1,63 @@
-# Stream RPC
+# Stream RPC (starpc)
 
 [![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
 
-> Protobuf 3 RPC services over any stream multiplexer.
+> A high-performance Protobuf 3 RPC framework supporting bidirectional streaming over any multiplexer.
 
 [GoDoc]: https://godoc.org/github.com/aperturerobotics/starpc
 [GoDoc Widget]: https://godoc.org/github.com/aperturerobotics/starpc?status.svg
 [Go Report Card Widget]: https://goreportcard.com/badge/github.com/aperturerobotics/starpc
 [Go Report Card]: https://goreportcard.com/report/github.com/aperturerobotics/starpc
 
-## Introduction
+## Table of Contents
 
-**starpc** implements [Proto3 services] (server & client) in both TypeScript and Go.
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+  - [Protobuf Definition](#protobuf)
+  - [Go Implementation](#go)
+  - [TypeScript Implementation](#typescript)
+- [Development Setup](#development-setup)
+- [Support](#support)
+
+## Features
+
+- Full [Proto3 services] implementation for both TypeScript and Go
+- Bidirectional streaming support in web browsers
+- Built on libp2p streams with `@chainsafe/libp2p-yamux`
+- Efficient RPC multiplexing over single connections
+- Zero-reflection Go code via [protobuf-go-lite]
+- TypeScript interfaces via [protobuf-es-lite]
+- Sub-streams support through [rpcstream]
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
-
-Supports **client-to-server and bidirectional streaming** in the web browser.
-
-[rpcproto.proto](./srpc/rpcproto.proto) contains the protocol definition.
-
-[rpcstream] supports sub-streams for per-component sub-services.
-
-[rpcstream]: ./rpcstream
-
-The library leverages libp2p streams with `@chainsafe/libp2p-yamux` to
-coordinate balancing many ongoing RPCs over a single connection.
-
-starpc uses [protobuf-go-lite] to generate reflection-free Go code and [protobuf-es-lite] for TypeScript interfaces.
-
 [protobuf-go-lite]: https://github.com/aperturerobotics/protobuf-go-lite
 [protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
+[rpcstream]: ./rpcstream
 
-## Usage
+## Installation
 
-Start with the [protobuf-project] template repository on the "starpc" branch.
+```bash
+# Clone the template project
+git clone -b starpc https://github.com/aperturerobotics/protobuf-project
+cd protobuf-project
+
+# Install dependencies
+yarn install
+
+# Generate TypeScript and Go code
+yarn gen
+```
+
+## Quick Start
+
+1. Start with the [protobuf-project] template repository (starpc branch)
+2. Add your .proto files to the project
+3. Run `yarn gen` to generate TypeScript and Go code
+4. Implement your services using the examples below
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
-
-Use "git add" to add your new .proto files, then `yarn gen` to generate the
-TypeScript and Go code.
-
-## Examples
-
-The demo/boilerplate project implements the Echo example below.
-
-This repository uses protowrap, see the [Makefile](./Makefile).
 
 ### Protobuf
 
@@ -207,31 +220,41 @@ Uses [protobuf-es-lite] (fork of [protobuf-es]) to generate TypeScript Protobuf 
 
 `protoc-gen-es-starpc` is a heavily modified version of `protoc-gen-connect-es`.
 
-## Developing on MacOS
+## Development Setup
 
-On MacOS, some homebrew packages are required for `yarn gen`:
+### MacOS Requirements
 
-```
+1. Install required packages:
+```bash
 brew install bash make coreutils gnu-sed findutils protobuf
 brew link --overwrite protobuf
 ```
 
-Add to your .bashrc or .zshrc:
-
-```
+2. Add to your .bashrc or .zshrc:
+```bash
 export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
 ```
 
+## Attribution
+
+- `protoc-gen-go-starpc`: Modified version of `protoc-gen-go-drpc`
+- `protoc-gen-es-starpc`: Modified version of `protoc-gen-connect-es`
+- Uses [vtprotobuf] for Go Protobuf marshaling
+- Uses [protobuf-es-lite] for TypeScript Protobuf interfaces
+
+[vtprotobuf]: https://github.com/planetscale/vtprotobuf
+
 ## Support
 
-Please file a [GitHub issue] and/or [Join Discord] with any questions.
+Need help? We're here:
+
+- [File a GitHub Issue][GitHub issue]
+- [Join our Discord][Join Discord]
+- [Matrix Chat][Matrix Chat]
 
 [GitHub issue]: https://github.com/aperturerobotics/starpc/issues/new
-
-... or feel free to reach out on [Matrix Chat].
-
 [Join Discord]: https://discord.gg/KJutMESRsT
 [Matrix Chat]: https://matrix.to/#/#aperturerobotics:matrix.org
