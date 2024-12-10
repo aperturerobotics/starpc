@@ -2,7 +2,7 @@ module github.com/aperturerobotics/starpc
 
 go 1.23
 
-toolchain go1.23.3
+toolchain go1.23.4
 
 replace (
 	// This fork uses go-protobuf-lite and adds post-quantum crypto support.
