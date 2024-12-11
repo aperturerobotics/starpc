@@ -97,10 +97,6 @@ func (s *srpc) ServerServiceID(service *protogen.Service) string {
 	return "SRPC" + service.GoName + "ServiceID"
 }
 
-func (s *srpc) ServerImpl(service *protogen.Service) string {
-	return "srpc" + service.GoName + "Server"
-}
-
 func (s *srpc) ServerHandler(service *protogen.Service) string {
 	return "SRPC" + service.GoName + "Handler"
 }
@@ -137,9 +133,11 @@ func (s *srpc) ServerStreamImpl(method *protogen.Method) string {
 func (s *srpc) generateService(service *protogen.Service) {
 	// Client interface
 	s.P("type ", s.ClientIface(service), " interface {")
+	s.P("// SRPCClient returns the underlying SRPC client.")
 	s.P("SRPCClient() ", s.Ident(SRPCPackage, "Client"))
 	s.P()
 	for _, method := range service.Methods {
+		s.P(s.generateMethodComment(method))
 		s.P(s.generateClientSignature(method))
 	}
 	s.P("}")
@@ -175,6 +173,7 @@ func (s *srpc) generateService(service *protogen.Service) {
 	// Server interface
 	s.P("type ", s.ServerIface(service), " interface {")
 	for _, method := range service.Methods {
+		s.P(s.generateMethodComment(method))
 		s.P(s.generateServerSignature(method))
 	}
 	s.P("}")
@@ -408,6 +407,19 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 //
 // server methods
 //
+
+func (s *srpc) generateMethodComment(method *protogen.Method) string {
+	comment := method.Comments.Leading.String()
+	if comment == "" {
+		return ""
+	}
+	// Ensure comment starts with //
+	if !strings.HasPrefix(comment, "//") {
+		comment = "// " + comment
+	}
+	// Remove trailing newline if present
+	return strings.TrimRight(comment, "\n")
+}
 
 func (s *srpc) generateServerSignature(method *protogen.Method) string {
 	var reqArgs []string

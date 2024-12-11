@@ -1,1 +1,2 @@
-protoc-gen-starpc
+protoc-gen-*-starpc
+protoc-gen-go-starpc

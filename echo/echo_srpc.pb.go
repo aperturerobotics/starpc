@@ -13,13 +13,20 @@ import (
 )
 
 type SRPCEchoerClient interface {
+	// SRPCClient returns the underlying SRPC client.
 	SRPCClient() srpc.Client
 
+	// Echo returns the given message.
 	Echo(ctx context.Context, in *EchoMsg) (*EchoMsg, error)
+	// EchoServerStream is an example of a server -> client one-way stream.
 	EchoServerStream(ctx context.Context, in *EchoMsg) (SRPCEchoer_EchoServerStreamClient, error)
+	// EchoClientStream is an example of client->server one-way stream.
 	EchoClientStream(ctx context.Context) (SRPCEchoer_EchoClientStreamClient, error)
+	// EchoBidiStream is an example of a two-way stream.
 	EchoBidiStream(ctx context.Context) (SRPCEchoer_EchoBidiStreamClient, error)
+	// RpcStream opens a nested rpc call stream.
 	RpcStream(ctx context.Context) (SRPCEchoer_RpcStreamClient, error)
+	// DoNothing does nothing.
 	DoNothing(ctx context.Context, in *emptypb.Empty) (*emptypb.Empty, error)
 }
 
@@ -216,11 +223,17 @@ func (c *srpcEchoerClient) DoNothing(ctx context.Context, in *emptypb.Empty) (*e
 }
 
 type SRPCEchoerServer interface {
+	// Echo returns the given message.
 	Echo(context.Context, *EchoMsg) (*EchoMsg, error)
+	// EchoServerStream is an example of a server -> client one-way stream.
 	EchoServerStream(*EchoMsg, SRPCEchoer_EchoServerStreamStream) error
+	// EchoClientStream is an example of client->server one-way stream.
 	EchoClientStream(SRPCEchoer_EchoClientStreamStream) (*EchoMsg, error)
+	// EchoBidiStream is an example of a two-way stream.
 	EchoBidiStream(SRPCEchoer_EchoBidiStreamStream) error
+	// RpcStream opens a nested rpc call stream.
 	RpcStream(SRPCEchoer_RpcStreamStream) error
+	// DoNothing does nothing.
 	DoNothing(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 

@@ -11,8 +11,10 @@ import (
 )
 
 type SRPCMockClient interface {
+	// SRPCClient returns the underlying SRPC client.
 	SRPCClient() srpc.Client
 
+	// MockRequest runs a mock unary request.
 	MockRequest(ctx context.Context, in *MockMsg) (*MockMsg, error)
 }
 
@@ -44,6 +46,7 @@ func (c *srpcMockClient) MockRequest(ctx context.Context, in *MockMsg) (*MockMsg
 }
 
 type SRPCMockServer interface {
+	// MockRequest runs a mock unary request.
 	MockRequest(context.Context, *MockMsg) (*MockMsg, error)
 }
 
