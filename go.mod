@@ -14,7 +14,7 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.8.0 // latest
-	github.com/aperturerobotics/util v1.27.0 // latest
+	github.com/aperturerobotics/util v1.27.1 // latest
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 	github.com/libp2p/go-yamux/v4 v4.0.2-0.20240826150533-e92055b23e0e // master
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
-	google.golang.org/protobuf v1.36.0 // latest
+	google.golang.org/protobuf v1.36.1 // latest
 )
 
 require (
