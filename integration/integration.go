@@ -7,6 +7,7 @@ import (
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/coder/websocket"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,9 @@ func main() {
 	}
 
 	// listen at: ws://localhost:4352/demo
-	server, err := srpc.NewHTTPServer(mux, "/demo")
+	server, err := srpc.NewHTTPServer(mux, "/demo", &websocket.AcceptOptions{
+		InsecureSkipVerify: true,
+	})
 	if err != nil {
 		logrus.Fatal(err.Error())
 	}

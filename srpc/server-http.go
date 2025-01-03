@@ -14,18 +14,20 @@ import (
 //
 // NOTE: accepting websocket connections is stubbed out on GOOS=js!
 type HTTPServer struct {
-	mux  Mux
-	srpc *Server
-	path string
+	mux        Mux
+	srpc       *Server
+	path       string
+	acceptOpts *websocket.AcceptOptions
 }
 
 // NewHTTPServer builds a http server / handler.
 // if path is empty, serves on all routes.
-func NewHTTPServer(mux Mux, path string) (*HTTPServer, error) {
+func NewHTTPServer(mux Mux, path string, acceptOpts *websocket.AcceptOptions) (*HTTPServer, error) {
 	return &HTTPServer{
-		mux:  mux,
-		srpc: NewServer(mux),
-		path: path,
+		mux:        mux,
+		srpc:       NewServer(mux),
+		path:       path,
+		acceptOpts: acceptOpts,
 	}, nil
 }
 
@@ -34,7 +36,7 @@ func (s *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
+	c, err := websocket.Accept(w, r, s.acceptOpts)
 	if err != nil {
 		// NOTE: the error is already written with http.Error
 		// w.WriteHeader(500)
