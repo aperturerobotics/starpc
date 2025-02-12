@@ -83,7 +83,7 @@
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
     "depcheck": "^1.4.6",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.25.0",
     "eslint": "^9.11.1",
     "eslint-config-prettier": "^9.1.0",
     "husky": "^9.1.7",
