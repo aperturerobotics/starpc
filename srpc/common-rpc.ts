@@ -176,7 +176,11 @@ export class CommonRPC {
     }
     this.closed = err ?? true
     // note: this does nothing if _source is already ended.
-    await this.writeCallCancel()
+    if (err && err.message) {
+      await this.writeCallData(undefined, true, err.message)
+    } else {
+      await this.writeCallCancel()
+    }
     this._source.end()
     this._rpcDataSource.end(err)
   }
