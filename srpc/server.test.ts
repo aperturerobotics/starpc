@@ -21,7 +21,7 @@ describe('srpc server', () => {
 
   beforeEach(async () => {
     const mux = createMux()
-    const server = new Server(mux.lookupMethodFunc)
+    const server = new Server(mux.lookupMethod)
     const echoer = new EchoerServer(server)
     mux.register(createHandler(EchoerDefinition, echoer))
 

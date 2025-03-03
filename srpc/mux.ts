@@ -30,9 +30,9 @@ export class StaticMux implements Mux {
   // called if the method is not resolved by the services list.
   private lookups: LookupMethod[] = []
 
-  // lookupMethodFunc implements the LookupMethod type.
-  public get lookupMethodFunc(): LookupMethod {
-    return this.lookupMethod.bind(this)
+  // lookupMethod implements the LookupMethod type.
+  public get lookupMethod(): LookupMethod {
+    return this._lookupMethod.bind(this)
   }
 
   public register(handler: Handler): void {
@@ -53,7 +53,7 @@ export class StaticMux implements Mux {
     this.lookups.push(lookupMethod)
   }
 
-  public async lookupMethod(
+  private async _lookupMethod(
     serviceID: string,
     methodID: string,
   ): Promise<InvokeFn | null> {

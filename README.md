@@ -166,7 +166,7 @@ import { pushable } from 'it-pushable'
 const mux = createMux()
 const echoer = new EchoerServer()
 mux.register(createHandler(EchoerDefinition, echoer))
-const server = new Server(mux.lookupMethodFunc)
+const server = new Server(mux.lookupMethod)
 
 // Create the client connection to the server with an in-memory pipe.
 const clientConn = new Conn()
