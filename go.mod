@@ -25,7 +25,10 @@ require (
 	google.golang.org/protobuf v1.36.5 // latest
 )
 
-require github.com/libp2p/go-yamux/v4 v4.0.1
+require (
+	github.com/libp2p/go-yamux/v4 v4.0.1
+	github.com/libp2p/go-yamux/v5 v5.0.0
+)
 
 require (
 	github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008 // indirect
