@@ -45,21 +45,26 @@ func (c *commonRPC) Context() context.Context {
 // Wait waits for the RPC to finish (remote end closed the stream).
 func (c *commonRPC) Wait(ctx context.Context) error {
 	for {
-		var dataClosed bool
 		var err error
 		var waitCh <-chan struct{}
+		var rpcCtx context.Context
 		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-			dataClosed, err = c.dataClosed, c.remoteErr
+			rpcCtx, err = c.ctx, c.remoteErr
 			waitCh = getWaitCh()
 		})
 
-		if dataClosed {
+		if err != nil {
 			return err
+		}
+		if rpcCtx.Err() != nil {
+			// rpc must have ended w/o an error being set
+			return context.Canceled
 		}
 
 		select {
 		case <-ctx.Done():
 			return context.Canceled
+		case <-rpcCtx.Done():
 		case <-waitCh:
 		}
 	}
