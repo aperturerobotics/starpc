@@ -94,6 +94,7 @@ func CheckServerStream(t *testing.T, out echo.SRPCEchoer_EchoServerStreamClient,
 			}
 			return err
 		}
+
 		body := echoMsg.GetBody()
 		bodyTxt := req.GetBody()
 		if body != bodyTxt {
@@ -101,9 +102,16 @@ func CheckServerStream(t *testing.T, out echo.SRPCEchoer_EchoServerStreamClient,
 		}
 		t.Logf("server->client message %d/%d", totalExpected-expectedRx+1, totalExpected)
 		expectedRx--
+
+		if out.Context().Err() != nil {
+			return errors.New("expected context not canceled yet")
+		}
 	}
 	if expectedRx < 0 {
 		return errors.Errorf("got %d more messages than expected", -1*expectedRx)
+	}
+	if expectedRx > 0 {
+		return errors.Errorf("got %d less messages than expected", expectedRx)
 	}
 	return nil
 }
