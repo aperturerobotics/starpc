@@ -82,7 +82,7 @@ func HandleProxyRpcStream[T RpcStream](stream RpcStream, getter RpcProxyGetter[T
 
 	// wait for both errors
 	var outErr error
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		if err := <-errCh; err != nil && outErr == nil && err != io.EOF {
 			outErr = err
 		}
