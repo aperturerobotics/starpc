@@ -8,7 +8,7 @@ replace google.golang.org/protobuf => github.com/aperturerobotics/protobuf-go v1
 
 require (
 	github.com/aperturerobotics/goprotowrap v0.3.2
-	github.com/aperturerobotics/protobuf-go-lite v0.8.1
+	github.com/aperturerobotics/protobuf-go-lite v0.9.0
 	github.com/aperturerobotics/starpc v0.32.15
 )
 
@@ -40,7 +40,7 @@ require (
 	github.com/alingse/asasalint v0.0.11 // indirect
 	github.com/alingse/nilnesserr v0.1.2 // indirect
 	github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008 // indirect
-	github.com/aperturerobotics/util v1.29.1 // indirect
+	github.com/aperturerobotics/util v1.29.2 // indirect
 	github.com/ashanbrown/forbidigo v1.6.0 // indirect
 	github.com/ashanbrown/makezero v1.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
