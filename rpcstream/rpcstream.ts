@@ -3,7 +3,11 @@ import { Source, Sink } from 'it-stream-types'
 import { Message } from '@aptre/protobuf-es-lite'
 
 import { RpcStreamPacket } from './rpcstream.pb.js'
-import { OpenStreamFunc, PacketStream } from '../srpc/stream.js'
+import {
+  OpenStreamFunc,
+  PacketStream,
+  HandleStreamFunc,
+} from '../srpc/stream.js'
 import { MessageStream } from '../srpc/message.js'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
@@ -69,7 +73,7 @@ export function buildRpcStreamOpenStream(
 // RpcStreamHandler handles an incoming RPC stream.
 // implemented by server.handleDuplex.
 // return the result of pipe()
-export type RpcStreamHandler = (stream: PacketStream) => Promise<void>
+export type RpcStreamHandler = HandleStreamFunc
 
 // RpcStreamGetter looks up the handler to use for the given Component ID.
 // If null is returned, throws an error: "not implemented"

@@ -14,7 +14,7 @@ require (
 
 require (
 	github.com/evanw/esbuild v0.25.2
-	github.com/golangci/golangci-lint/v2 v2.0.2
+	github.com/golangci/golangci-lint v1.64.8
 	github.com/psampaz/go-mod-outdated v0.9.0
 	golang.org/x/tools v0.31.0
 	mvdan.cc/gofumpt v0.7.0

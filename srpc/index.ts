@@ -12,6 +12,7 @@ export { WebSocketConn } from './websocket.js'
 export type {
   PacketHandler,
   OpenStreamFunc,
+  HandleStreamFunc,
   PacketStream,
   streamToPacketStream,
 } from './stream.js'
@@ -65,6 +66,7 @@ export {
 export { combineUint8ArrayListTransform } from './array-list.js'
 export { ValueCtr } from './value-ctr.js'
 export { OpenStreamCtr } from './open-stream-ctr.js'
+export { HandleStreamCtr } from './handle-stream-ctr.js'
 export {
   writeToPushable,
   buildPushableSink,

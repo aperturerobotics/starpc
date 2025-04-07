@@ -22,6 +22,11 @@ export type PacketStream = Duplex<
 // OpenStreamFunc is a function to start a new RPC by opening a Stream.
 export type OpenStreamFunc = () => Promise<PacketStream>
 
+// HandleStreamFunc handles an incoming RPC stream.
+// Returns as soon as the stream has been passed off to be handled.
+// Throws an error if we can't handle the incoming stream.
+export type HandleStreamFunc = (ch: PacketStream) => Promise<void>
+
 // streamToPacketStream converts a Stream into a PacketStream using length-prefix framing.
 //
 // The stream is closed when the source writing to the sink ends.
