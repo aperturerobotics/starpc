@@ -2,10 +2,10 @@ github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0 h1:t
 github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0/go.mod h1:FJkAtQcP9XxqG1NNLNHKm+wLVIGSCQX2s6CEoD+w97g=
 github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008 h1:So9JeziaWKx2Fw8sK4AUN/szqKtJ0jEMhS6bU4sHbxs=
 github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008/go.mod h1:snaApCEDtrHHP6UWSLKiYNOZU9A5NyzccKenx9oZEzg=
-github.com/aperturerobotics/protobuf-go-lite v0.8.1 h1:CcBvqWOSep4VF3pPp+ZLcYQwPQu2kGOvL3bbF71bzKE=
-github.com/aperturerobotics/protobuf-go-lite v0.8.1/go.mod h1:6AD6TgBrC+aWprTirXrUASFvTbuIRAsuDLBNUthzcyA=
-github.com/aperturerobotics/util v1.29.1 h1:JGGP0A0OkTxoljCVm2xaMvxbaZIq7Z6YTpvfUhXp1iU=
-github.com/aperturerobotics/util v1.29.1/go.mod h1:6840KxUK/yt59V2RFzlu6XooppQ2UEitB+AtK6ybRKc=
+github.com/aperturerobotics/protobuf-go-lite v0.9.0 h1:zY3+qG0FPZiqhmEMQbVPW3wFLJ//aitvYy1zdgO8Hwo=
+github.com/aperturerobotics/protobuf-go-lite v0.9.0/go.mod h1:fULrxQxEBWKQm7vvju9AfjTp9yfHoLgwMQWTiZQ2tg0=
+github.com/aperturerobotics/util v1.29.2 h1:4mF7PfltK2g9KuD5gYUx3zvfEQXA/7F/V6EIEwJA35Q=
+github.com/aperturerobotics/util v1.29.2/go.mod h1:wfEm6n6evCQCGu+NjR8qINo0feaPEgeXxDZK6/oSuk8=
 github.com/coder/websocket v1.8.13 h1:f3QZdXy7uGVz+4uCJy2nTZyM0yTBj8yANEHhqlXZ9FE=
 github.com/coder/websocket v1.8.13/go.mod h1:LNVeNrXQZfe5qhS9ALED3uA+l5pPqvwXg3CKoDBB2gs=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
