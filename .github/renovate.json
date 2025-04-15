@@ -16,6 +16,12 @@
     {
       "matchPackageNames": ["github.com/aperturerobotics/starpc"],
       "enabled": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchPackageNames": ["github.com/libp2p/go-yamux/v4"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
