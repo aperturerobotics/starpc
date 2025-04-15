@@ -43,7 +43,7 @@ func (s *StreamRwc) Read(p []byte) (n int, err error) {
 			}
 
 			s.readMsg.Clear()
-			if err := s.Stream.MsgRecv(&s.readMsg); err != nil {
+			if err := s.MsgRecv(&s.readMsg); err != nil {
 				return n, err
 			}
 			data := s.readMsg.GetData()
@@ -73,7 +73,7 @@ func (s *StreamRwc) Read(p []byte) (n int, err error) {
 // Write writes data to the stream.
 func (s *StreamRwc) Write(p []byte) (n int, err error) {
 	s.writeMsg.SetData(p)
-	err = s.Stream.MsgSend(&s.writeMsg)
+	err = s.MsgSend(&s.writeMsg)
 	s.writeMsg.Clear()
 	if err != nil {
 		return 0, err

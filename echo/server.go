@@ -22,8 +22,8 @@ func NewEchoServer(rpcStreamMux srpc.Mux) *EchoServer {
 }
 
 // Register registers the Echo server with the Mux.
-func (e *EchoServer) Register(mux srpc.Mux) error {
-	return SRPCRegisterEchoer(mux, e)
+func (s *EchoServer) Register(mux srpc.Mux) error {
+	return SRPCRegisterEchoer(mux, s)
 }
 
 // Echo implements echo.SRPCEchoerServer
@@ -79,17 +79,17 @@ func (s *EchoServer) EchoBidiStream(strm SRPCEchoer_EchoBidiStreamStream) error 
 }
 
 // RpcStream runs a rpc stream
-func (r *EchoServer) RpcStream(stream SRPCEchoer_RpcStreamStream) error {
+func (s *EchoServer) RpcStream(stream SRPCEchoer_RpcStreamStream) error {
 	return rpcstream.HandleRpcStream(stream, func(ctx context.Context, componentID string) (srpc.Invoker, func(), error) {
-		if r.rpcStreamMux == nil {
+		if s.rpcStreamMux == nil {
 			return nil, nil, errors.New("not implemented")
 		}
-		return r.rpcStreamMux, nil, nil
+		return s.rpcStreamMux, nil, nil
 	})
 }
 
 // DoNothing does nothing.
-func (r *EchoServer) DoNothing(ctx context.Context, empty *emptypb.Empty) (*emptypb.Empty, error) {
+func (s *EchoServer) DoNothing(ctx context.Context, empty *emptypb.Empty) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, nil
 }
 

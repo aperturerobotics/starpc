@@ -17,7 +17,7 @@ func (r *RpcStreamWriter) Write(p []byte) (n int, err error) {
 	if len(p) == 0 {
 		return 0, nil
 	}
-	err = r.RpcStream.Send(&RpcStreamPacket{
+	err = r.Send(&RpcStreamPacket{
 		Body: &RpcStreamPacket_Data{
 			Data: p,
 		},
@@ -40,7 +40,7 @@ func (r *RpcStreamWriter) WritePacket(p *srpc.Packet) error {
 
 // Close closes the writer.
 func (r *RpcStreamWriter) Close() error {
-	return r.RpcStream.CloseSend()
+	return r.CloseSend()
 }
 
 // _ is a type assertion
