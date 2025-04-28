@@ -16,9 +16,10 @@ type RpcStream interface {
 }
 
 // RpcStreamGetter returns the Mux for the component ID from the remote.
+// The released function can be called to cancel the RPC stream if the Invoker is no longer valid.
 // Returns a release function to call when done with the Mux.
 // Returns nil, nil, nil if not found.
-type RpcStreamGetter func(ctx context.Context, componentID string) (srpc.Invoker, func(), error)
+type RpcStreamGetter func(ctx context.Context, componentID string, released func()) (srpc.Invoker, func(), error)
 
 // RpcStreamCaller is a function which starts the RpcStream call.
 type RpcStreamCaller[T RpcStream] func(ctx context.Context) (T, error)
@@ -106,14 +107,19 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 		return ErrUnexpectedPacket
 	}
 
+	ctx, ctxCancel := context.WithCancel(stream.Context())
+	defer ctxCancel()
+
 	// lookup the server for this component id
-	ctx := stream.Context()
 	componentID := initInner.Init.GetComponentId()
-	mux, muxRel, err := getter(ctx, componentID)
+	mux, muxRel, err := getter(ctx, componentID, ctxCancel)
+	if err == nil && ctx.Err() != nil {
+		err = context.Canceled
+	}
 	if err == nil && mux == nil {
 		err = ErrNoServerForComponent
 	}
-	if mux != nil && muxRel != nil {
+	if muxRel != nil {
 		defer muxRel()
 	}
 
