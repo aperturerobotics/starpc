@@ -2,10 +2,10 @@
 // @generated from file github.com/aperturerobotics/starpc/rpcstream/rpcstream.proto (package rpcstream, syntax proto3)
 /* eslint-disable */
 
-import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
+import type { MessageType, PartialFieldInfo } from "@aptre/protobuf-es-lite";
+import { createMessageType, ScalarType } from "@aptre/protobuf-es-lite";
 
-export const protobufPackage = 'rpcstream'
+export const protobufPackage = "rpcstream";
 
 /**
  * RpcStreamInit is the first message in a RPC stream.
@@ -18,17 +18,18 @@ export interface RpcStreamInit {
    *
    * @generated from field: string component_id = 1;
    */
-  componentId?: string
-}
+  componentId?: string;
+
+};
 
 // RpcStreamInit contains the message type declaration for RpcStreamInit.
 export const RpcStreamInit: MessageType<RpcStreamInit> = createMessageType({
-  typeName: 'rpcstream.RpcStreamInit',
-  fields: [
-    { no: 1, name: 'component_id', kind: 'scalar', T: ScalarType.STRING },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "rpcstream.RpcStreamInit",
+    fields: [
+        { no: 1, name: "component_id", kind: "scalar", T: ScalarType.STRING },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
 
 /**
  * RpcAck is the ack message in a RPC stream.
@@ -41,17 +42,18 @@ export interface RpcAck {
    *
    * @generated from field: string error = 1;
    */
-  error?: string
-}
+  error?: string;
+
+};
 
 // RpcAck contains the message type declaration for RpcAck.
 export const RpcAck: MessageType<RpcAck> = createMessageType({
-  typeName: 'rpcstream.RpcAck',
-  fields: [
-    { no: 1, name: 'error', kind: 'scalar', T: ScalarType.STRING },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "rpcstream.RpcAck",
+    fields: [
+        { no: 1, name: "error", kind: "scalar", T: ScalarType.STRING },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
 
 /**
  * RpcStreamPacket is a packet encapsulating data for a RPC stream.
@@ -59,58 +61,51 @@ export const RpcAck: MessageType<RpcAck> = createMessageType({
  * @generated from message rpcstream.RpcStreamPacket
  */
 export interface RpcStreamPacket {
+
   /**
    * @generated from oneof rpcstream.RpcStreamPacket.body
    */
-  body?:
-    | {
-        value?: undefined
-        case: undefined
-      }
-    | {
-        /**
-         * Init is the first packet in the stream.
-         * Sent by the initiator.
-         *
-         * @generated from field: rpcstream.RpcStreamInit init = 1;
-         */
-        value: RpcStreamInit
-        case: 'init'
-      }
-    | {
-        /**
-         * Ack is sent in response to Init.
-         * Sent by the server.
-         *
-         * @generated from field: rpcstream.RpcAck ack = 2;
-         */
-        value: RpcAck
-        case: 'ack'
-      }
-    | {
-        /**
-         * Data is the encapsulated data packet.
-         *
-         * @generated from field: bytes data = 3;
-         */
-        value: Uint8Array
-        case: 'data'
-      }
-}
+  body?: {
+    value?: undefined,
+    case: undefined
+  } | {
+    /**
+     * Init is the first packet in the stream.
+     * Sent by the initiator.
+     *
+     * @generated from field: rpcstream.RpcStreamInit init = 1;
+     */
+    value: RpcStreamInit;
+    case: "init";
+  } | {
+    /**
+     * Ack is sent in response to Init.
+     * Sent by the server.
+     *
+     * @generated from field: rpcstream.RpcAck ack = 2;
+     */
+    value: RpcAck;
+    case: "ack";
+  } | {
+    /**
+     * Data is the encapsulated data packet.
+     *
+     * @generated from field: bytes data = 3;
+     */
+    value: Uint8Array;
+    case: "data";
+  };
+
+};
 
 // RpcStreamPacket contains the message type declaration for RpcStreamPacket.
 export const RpcStreamPacket: MessageType<RpcStreamPacket> = createMessageType({
-  typeName: 'rpcstream.RpcStreamPacket',
-  fields: [
-    {
-      no: 1,
-      name: 'init',
-      kind: 'message',
-      T: () => RpcStreamInit,
-      oneof: 'body',
-    },
-    { no: 2, name: 'ack', kind: 'message', T: () => RpcAck, oneof: 'body' },
-    { no: 3, name: 'data', kind: 'scalar', T: ScalarType.BYTES, oneof: 'body' },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+    typeName: "rpcstream.RpcStreamPacket",
+    fields: [
+        { no: 1, name: "init", kind: "message", T: () => RpcStreamInit, oneof: "body" },
+        { no: 2, name: "ack", kind: "message", T: () => RpcAck, oneof: "body" },
+        { no: 3, name: "data", kind: "scalar", T: ScalarType.BYTES, oneof: "body" },
+    ] as readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
