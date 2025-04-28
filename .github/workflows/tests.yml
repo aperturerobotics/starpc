@@ -43,6 +43,9 @@ jobs:
             ./hack/bin
           key: ${{ runner.os }}-aptre-tools-${{ hashFiles('hack/go.sum') }}
 
+      - name: Go mod vendor
+        run: go mod vendor
+
       - name: Build Javascript
         run: yarn run build
 
