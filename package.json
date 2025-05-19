@@ -87,7 +87,7 @@
     "eslint": "^9.21.0",
     "eslint-config-prettier": "^10.0.2",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3",
+    "lint-staged": "^16.0.0",
     "prettier": "^3.5.3",
     "rimraf": "^6.0.1",
     "tsx": "^4.19.3",
@@ -110,6 +110,6 @@
     "ws": "^8.18.1"
   },
   "resolutions": {
-    "@aptre/protobuf-es-lite": "0.4.8"
+    "@aptre/protobuf-es-lite": "0.4.9"
   }
 }
