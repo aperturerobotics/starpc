@@ -149,6 +149,12 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	var err error
 	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
 		if c.dataClosed {
+			// If the packet is just indicating the call is complete, ignore it.
+			if pkt.GetComplete() {
+				return
+			}
+
+			// Otherwise, return ErrCompleted (unexpected packet).
 			err = ErrCompleted
 			return
 		}
