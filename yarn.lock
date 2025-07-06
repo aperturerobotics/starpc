@@ -2,15 +2,14 @@
 # yarn lockfile v1
 
 
-"@aptre/it-ws@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@aptre/it-ws/-/it-ws-1.0.1.tgz#fd3e45d517849b7a76a37f19d5c25f5dbc3ba991"
-  integrity sha512-8gbaW9utMyVtAi317JX+CYm4uM2XUy+a4y62pok++sSkvlHjG4tjPYOkzVxeTer10BjgTHLek2K/1naWgYicgQ==
+"@aptre/it-ws@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@aptre/it-ws/-/it-ws-1.1.2.tgz#c158e7ee534e2ecd7e3b0f23c8ac7bb39a2e12bb"
+  integrity sha512-llC/rTR1YXs3sNven2QRyHp3PoUwxpe0/iohiFNIfUTjbThlv1vGuq6GZysOGwCqEgbYRJGMhu4A4pTjwqztJQ==
   dependencies:
     "@types/ws" "^8.2.2"
     event-iterator "^2.0.0"
     it-stream-types "^2.0.1"
-    uint8arrays "^5.1.0"
     ws "^8.17.1"
 
 "@aptre/protobuf-es-lite@0.5.0", "@aptre/protobuf-es-lite@^0.5.0":
