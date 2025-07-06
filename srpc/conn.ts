@@ -1,5 +1,6 @@
 import { YamuxMuxerInit, yamux } from '@chainsafe/libp2p-yamux'
 import type {
+  ComponentLogger,
   Direction,
   Stream,
   StreamMuxer,
@@ -7,7 +8,6 @@ import type {
 } from '@libp2p/interface'
 import type { Duplex } from 'it-stream-types'
 import { Uint8ArrayList } from 'uint8arraylist'
-import { defaultLogger } from '@libp2p/logger'
 
 import {
   streamToPacketStream,
@@ -15,9 +15,12 @@ import {
   type PacketStream,
 } from './stream.js'
 import { Client } from './client.js'
+import { createDisabledComponentLogger } from './log.js'
 
 // ConnParams are parameters that can be passed to the StreamConn constructor.
 export interface StreamConnParams {
+  // logger is the logger to use, defaults to disabled logger.
+  logger?: ComponentLogger
   // muxerFactory overrides using the default yamux factory.
   muxerFactory?: StreamMuxerFactory
   // direction is the muxer connection direction.
@@ -59,7 +62,7 @@ export class StreamConn
     const muxerFactory =
       connParams?.muxerFactory ??
       yamux({ enableKeepAlive: false, ...connParams?.yamuxParams })({
-        logger: defaultLogger(),
+        logger: connParams?.logger ?? createDisabledComponentLogger(),
       })
     this._muxer = muxerFactory.createStreamMuxer({
       onIncomingStream: this.handleIncomingStream.bind(this),

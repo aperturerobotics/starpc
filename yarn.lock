@@ -427,7 +427,7 @@
     progress-events "^1.0.1"
     uint8arraylist "^2.4.8"
 
-"@libp2p/logger@^5.1.11", "@libp2p/logger@^5.1.21":
+"@libp2p/logger@^5.1.21":
   version "5.1.21"
   resolved "https://registry.yarnpkg.com/@libp2p/logger/-/logger-5.1.21.tgz#40ce0b9bfbc7d17b6cece0b63547711621ec5ff8"
   integrity sha512-V1TWlZM5BuKkiGQ7En4qOnseVP82JwDIpIfNjceUZz1ArL32A5HXJjLQnJchkZ3VW8PVciJzUos/vP6slhPY6Q==
