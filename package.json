@@ -96,7 +96,7 @@
   },
   "dependencies": {
     "@aptre/it-ws": "^1.0.1",
-    "@aptre/protobuf-es-lite": "^0.4.6",
+    "@aptre/protobuf-es-lite": "^0.5.0",
     "@chainsafe/libp2p-yamux": "^7.0.1",
     "@libp2p/interface": "^2.6.1",
     "@libp2p/logger": "^5.1.11",
@@ -110,6 +110,6 @@
     "ws": "^8.18.1"
   },
   "resolutions": {
-    "@aptre/protobuf-es-lite": "0.4.9"
+    "@aptre/protobuf-es-lite": "0.5.0"
   }
 }
