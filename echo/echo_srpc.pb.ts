@@ -2,10 +2,16 @@
 // @generated from file github.com/aperturerobotics/starpc/echo/echo.proto (package echo, syntax proto3)
 /* eslint-disable */
 
-import { EchoMsg } from "./echo.pb.js";
-import { Empty, MethodKind } from "@aptre/protobuf-es-lite";
-import { RpcStreamPacket } from "../rpcstream/rpcstream.pb.js";
-import { buildDecodeMessageTransform, buildEncodeMessageTransform, MessageStream, ProtoRpc } from "starpc";
+import { EchoMsg } from './echo.pb.js'
+import { MethodKind } from '@aptre/protobuf-es-lite'
+import { RpcStreamPacket } from '../rpcstream/rpcstream.pb.js'
+import { Empty } from '@aptre/protobuf-es-lite/google/protobuf/empty'
+import {
+  buildDecodeMessageTransform,
+  buildEncodeMessageTransform,
+  MessageStream,
+  ProtoRpc,
+} from 'starpc'
 
 /**
  * Echoer service returns the given message.
@@ -13,7 +19,7 @@ import { buildDecodeMessageTransform, buildEncodeMessageTransform, MessageStream
  * @generated from service echo.Echoer
  */
 export const EchoerDefinition = {
-  typeName: "echo.Echoer",
+  typeName: 'echo.Echoer',
   methods: {
     /**
      * Echo returns the given message.
@@ -21,7 +27,7 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.Echo
      */
     Echo: {
-      name: "Echo",
+      name: 'Echo',
       I: EchoMsg,
       O: EchoMsg,
       kind: MethodKind.Unary,
@@ -32,7 +38,7 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.EchoServerStream
      */
     EchoServerStream: {
-      name: "EchoServerStream",
+      name: 'EchoServerStream',
       I: EchoMsg,
       O: EchoMsg,
       kind: MethodKind.ServerStreaming,
@@ -43,7 +49,7 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.EchoClientStream
      */
     EchoClientStream: {
-      name: "EchoClientStream",
+      name: 'EchoClientStream',
       I: EchoMsg,
       O: EchoMsg,
       kind: MethodKind.ClientStreaming,
@@ -54,7 +60,7 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.EchoBidiStream
      */
     EchoBidiStream: {
-      name: "EchoBidiStream",
+      name: 'EchoBidiStream',
       I: EchoMsg,
       O: EchoMsg,
       kind: MethodKind.BiDiStreaming,
@@ -65,7 +71,7 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.RpcStream
      */
     RpcStream: {
-      name: "RpcStream",
+      name: 'RpcStream',
       I: RpcStreamPacket,
       O: RpcStreamPacket,
       kind: MethodKind.BiDiStreaming,
@@ -76,13 +82,13 @@ export const EchoerDefinition = {
      * @generated from rpc echo.Echoer.DoNothing
      */
     DoNothing: {
-      name: "DoNothing",
+      name: 'DoNothing',
       I: Empty,
       O: Empty,
       kind: MethodKind.Unary,
     },
-  }
-} as const;
+  },
+} as const
 
 /**
  * Echoer service returns the given message.
@@ -95,10 +101,7 @@ export interface Echoer {
    *
    * @generated from rpc echo.Echoer.Echo
    */
-  Echo(
-request: EchoMsg, abortSignal?: AbortSignal
-): 
-Promise<EchoMsg>
+  Echo(request: EchoMsg, abortSignal?: AbortSignal): Promise<EchoMsg>
 
   /**
    * EchoServerStream is an example of a server -> client one-way stream.
@@ -106,9 +109,9 @@ Promise<EchoMsg>
    * @generated from rpc echo.Echoer.EchoServerStream
    */
   EchoServerStream(
-request: EchoMsg, abortSignal?: AbortSignal
-): 
-MessageStream<EchoMsg>
+    request: EchoMsg,
+    abortSignal?: AbortSignal,
+  ): MessageStream<EchoMsg>
 
   /**
    * EchoClientStream is an example of client->server one-way stream.
@@ -116,9 +119,9 @@ MessageStream<EchoMsg>
    * @generated from rpc echo.Echoer.EchoClientStream
    */
   EchoClientStream(
-request: MessageStream<EchoMsg>, abortSignal?: AbortSignal
-): 
-Promise<EchoMsg>
+    request: MessageStream<EchoMsg>,
+    abortSignal?: AbortSignal,
+  ): Promise<EchoMsg>
 
   /**
    * EchoBidiStream is an example of a two-way stream.
@@ -126,9 +129,9 @@ Promise<EchoMsg>
    * @generated from rpc echo.Echoer.EchoBidiStream
    */
   EchoBidiStream(
-request: MessageStream<EchoMsg>, abortSignal?: AbortSignal
-): 
-MessageStream<EchoMsg>
+    request: MessageStream<EchoMsg>,
+    abortSignal?: AbortSignal,
+  ): MessageStream<EchoMsg>
 
   /**
    * RpcStream opens a nested rpc call stream.
@@ -136,20 +139,16 @@ MessageStream<EchoMsg>
    * @generated from rpc echo.Echoer.RpcStream
    */
   RpcStream(
-request: MessageStream<RpcStreamPacket>, abortSignal?: AbortSignal
-): 
-MessageStream<RpcStreamPacket>
+    request: MessageStream<RpcStreamPacket>,
+    abortSignal?: AbortSignal,
+  ): MessageStream<RpcStreamPacket>
 
   /**
    * DoNothing does nothing.
    *
    * @generated from rpc echo.Echoer.DoNothing
    */
-  DoNothing(
-request: Empty, abortSignal?: AbortSignal
-): 
-Promise<Empty>
-
+  DoNothing(request: Empty, abortSignal?: AbortSignal): Promise<Empty>
 }
 
 export const EchoerServiceName = EchoerDefinition.typeName
@@ -172,10 +171,7 @@ export class EchoerClient implements Echoer {
    *
    * @generated from rpc echo.Echoer.Echo
    */
-  async Echo(
-request: EchoMsg, abortSignal?: AbortSignal
-): 
-Promise<EchoMsg> {
+  async Echo(request: EchoMsg, abortSignal?: AbortSignal): Promise<EchoMsg> {
     const requestMsg = EchoMsg.create(request)
     const result = await this.rpc.request(
       this.service,
@@ -192,9 +188,9 @@ Promise<EchoMsg> {
    * @generated from rpc echo.Echoer.EchoServerStream
    */
   EchoServerStream(
-request: EchoMsg, abortSignal?: AbortSignal
-): 
-MessageStream<EchoMsg> {
+    request: EchoMsg,
+    abortSignal?: AbortSignal,
+  ): MessageStream<EchoMsg> {
     const requestMsg = EchoMsg.create(request)
     const result = this.rpc.serverStreamingRequest(
       this.service,
@@ -211,9 +207,9 @@ MessageStream<EchoMsg> {
    * @generated from rpc echo.Echoer.EchoClientStream
    */
   async EchoClientStream(
-request: MessageStream<EchoMsg>, abortSignal?: AbortSignal
-): 
-Promise<EchoMsg> {
+    request: MessageStream<EchoMsg>,
+    abortSignal?: AbortSignal,
+  ): Promise<EchoMsg> {
     const result = await this.rpc.clientStreamingRequest(
       this.service,
       EchoerDefinition.methods.EchoClientStream.name,
@@ -229,9 +225,9 @@ Promise<EchoMsg> {
    * @generated from rpc echo.Echoer.EchoBidiStream
    */
   EchoBidiStream(
-request: MessageStream<EchoMsg>, abortSignal?: AbortSignal
-): 
-MessageStream<EchoMsg> {
+    request: MessageStream<EchoMsg>,
+    abortSignal?: AbortSignal,
+  ): MessageStream<EchoMsg> {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.EchoBidiStream.name,
@@ -247,9 +243,9 @@ MessageStream<EchoMsg> {
    * @generated from rpc echo.Echoer.RpcStream
    */
   RpcStream(
-request: MessageStream<RpcStreamPacket>, abortSignal?: AbortSignal
-): 
-MessageStream<RpcStreamPacket> {
+    request: MessageStream<RpcStreamPacket>,
+    abortSignal?: AbortSignal,
+  ): MessageStream<RpcStreamPacket> {
     const result = this.rpc.bidirectionalStreamingRequest(
       this.service,
       EchoerDefinition.methods.RpcStream.name,
@@ -264,10 +260,7 @@ MessageStream<RpcStreamPacket> {
    *
    * @generated from rpc echo.Echoer.DoNothing
    */
-  async DoNothing(
-request: Empty, abortSignal?: AbortSignal
-): 
-Promise<Empty> {
+  async DoNothing(request: Empty, abortSignal?: AbortSignal): Promise<Empty> {
     const requestMsg = Empty.create(request)
     const result = await this.rpc.request(
       this.service,
@@ -277,5 +270,4 @@ Promise<Empty> {
     )
     return Empty.fromBinary(result)
   }
-
 }

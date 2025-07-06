@@ -1,5 +1,6 @@
 import first from 'it-first'
-import { Empty, Message } from '@aptre/protobuf-es-lite'
+import { Message } from '@aptre/protobuf-es-lite'
+import { Empty } from '@aptre/protobuf-es-lite/google/protobuf/empty'
 import { EchoMsg } from './echo.pb.js'
 import { Server } from '../srpc/server.js'
 import { messagePushable, writeToPushable } from '../srpc/pushable.js'

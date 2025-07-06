@@ -12,10 +12,10 @@
     it-stream-types "^2.0.1"
     ws "^8.17.1"
 
-"@aptre/protobuf-es-lite@0.5.0", "@aptre/protobuf-es-lite@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@aptre/protobuf-es-lite/-/protobuf-es-lite-0.5.0.tgz#e6f0abcb1f675ea4fd9a507e12ae92b5420cc2b9"
-  integrity sha512-2en1KctqqeCCtdWWCcR6KPln8bdlUCrgnGSaT6Gq/qm/TihpDnuM7wmRqKLFG+DqEq/gYoWfhr0F61nw+aRTzw==
+"@aptre/protobuf-es-lite@0.5.2", "@aptre/protobuf-es-lite@^0.5.2":
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/@aptre/protobuf-es-lite/-/protobuf-es-lite-0.5.2.tgz#5e962eaea3e9153be445f72c3534c733ade842db"
+  integrity sha512-AUUiBZP/2C2W3ig50loSWKfhOvr8Gb7uL9vl49kFRsXQJOcNbcDMRSKOS7HNYcDIM6ZhASGL9EasghmNesNa7Q==
   dependencies:
     "@typescript/vfs" "^1.5.0"
     lz-string "^1.5.0"
