@@ -14,7 +14,7 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.9.1 // latest
-	github.com/aperturerobotics/util v1.30.0 // latest
+	github.com/aperturerobotics/util v1.30.1 // latest
 )
 
 require (
