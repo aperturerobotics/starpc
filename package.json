@@ -53,7 +53,7 @@
     "format:config": "prettier --write tsconfig.json package.json",
     "format:go": "make format",
     "format:js": "prettier --write './{srpc,echo,e2e,integration,rpcstream,cmd}/**/(*.ts|*.tsx|*.html|*.css)'",
-    "gen": "make genproto",
+    "gen": "rimraf ./tools/bin && cd ./tools && go mod tidy && cd ../ && go mod tidy && make genproto && yarn format",
     "test": "npm run test:js && npm run test:go",
     "test:go": "make test",
     "build:e2e": "npm run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.cjs --bundle --platform=node",
