@@ -40,8 +40,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ./hack/bin
-          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('hack/go.sum') }}
+            ./tools/bin
+          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('tools/go.sum') }}
 
       - name: Go mod vendor
         run: go mod vendor
