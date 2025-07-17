@@ -25,7 +25,14 @@ export {
 } from './handler.js'
 export { MethodProto, createInvokeFn } from './invoker.js'
 export { Packet, CallStart, CallData } from './rpcproto.pb.js'
-export { Mux, StaticMux, LookupMethod, createMux } from './mux.js'
+export {
+  Mux,
+  StaticMux,
+  MultiMux,
+  LookupMethod,
+  createMux,
+  createMultiMux,
+} from './mux.js'
 export {
   ChannelStreamMessage,
   ChannelPort,

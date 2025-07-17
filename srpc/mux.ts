@@ -18,6 +18,11 @@ export function createMux(): StaticMux {
   return new StaticMux()
 }
 
+// createMultiMux builds a new MultiMux.
+export function createMultiMux(): MultiMux {
+  return new MultiMux()
+}
+
 // staticMuxMethods is a mapping from method id to handler.
 type staticMuxMethods = { [methodID: string]: Handler }
 
@@ -90,6 +95,48 @@ export class StaticMux implements Mux {
   ): Promise<InvokeFn | null> {
     for (const lookupMethod of this.lookups) {
       const invokeFn = await lookupMethod(serviceID, methodID)
+      if (invokeFn) {
+        return invokeFn
+      }
+    }
+
+    return null
+  }
+}
+
+// MultiMux allows registering multiple Mux instances and implements Mux itself.
+// implements Mux
+export class MultiMux implements Mux {
+  // muxes stores the registered mux instances with their IDs
+  private muxes: Map<number, Mux> = new Map()
+  // muxIdCounter generates unique IDs for registered muxes
+  private muxIdCounter: number = 0
+
+  // lookupMethod implements the LookupMethod type.
+  public get lookupMethod(): LookupMethod {
+    return this._lookupMethod.bind(this)
+  }
+
+  // register adds a mux to the MultiMux and returns an ID for later removal.
+  public register(mux: Mux): number {
+    const id = ++this.muxIdCounter
+    this.muxes.set(id, mux)
+    return id
+  }
+
+  // unregister removes a mux from the MultiMux using its ID.
+  // returns true if the mux was found and removed, false otherwise.
+  public unregister(id: number): boolean {
+    return this.muxes.delete(id)
+  }
+
+  private async _lookupMethod(
+    serviceID: string,
+    methodID: string,
+  ): Promise<InvokeFn | null> {
+    // Try each registered mux in order
+    for (const mux of this.muxes.values()) {
+      const invokeFn = await mux.lookupMethod(serviceID, methodID)
       if (invokeFn) {
         return invokeFn
       }
