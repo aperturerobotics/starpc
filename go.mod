@@ -13,13 +13,13 @@ replace (
 )
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.9.1 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.10.1 // latest
 	github.com/aperturerobotics/util v1.31.0 // latest
 )
 
 require (
 	github.com/coder/websocket v1.8.13 // latest
-	github.com/libp2p/go-libp2p v0.42.0 // latest
+	github.com/libp2p/go-libp2p v0.42.1 // latest
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.36.6 // latest
