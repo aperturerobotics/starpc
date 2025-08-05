@@ -13,7 +13,7 @@ replace (
 )
 
 require (
-	github.com/aperturerobotics/protobuf-go-lite v0.9.1 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.10.1 // latest
 	github.com/aperturerobotics/util v1.31.0 // latest
 )
 
