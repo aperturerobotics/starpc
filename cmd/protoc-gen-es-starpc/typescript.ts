@@ -84,29 +84,41 @@ function generateService(
   // Generate the service interface
   f.print(f.jsDoc(service));
   f.print("export interface ", localName(service), " {");
-  for (const method of service.methods) {
+  for (let i = 0; i < service.methods.length; i++) {
+    const method = service.methods[i];
     f.print(f.jsDoc(method, "  "));
-    f.print("  ", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", method.input, ", abortSignal?: AbortSignal): ",
+        "Promise<", method.output, ">;"
+      );
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", method.input, ", abortSignal?: AbortSignal): ",
+        MessageStream, "<", method.output, ">;"
+      );
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal): ",
+        "Promise<", method.output, ">;"
+      );
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal): ",
+        MessageStream, "<", method.output, ">;"
+      );
     }
-    f.print("): ");
-    if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", method.output, ">");
-    } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print(MessageStream, "<", method.output, ">");
-    } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", method.output, ">");
-    } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print(MessageStream, "<", method.output, ">");
+    if (i < service.methods.length - 1) {
+      f.print();
     }
-    f.print();
   }
   f.print("}");
   f.print();
@@ -133,21 +145,42 @@ function generateService(
 
   const buildDecodeMessageTransformSymbol = createImportSymbol("buildDecodeMessageTransform", "starpc")
   const buildEncodeMessageTransformSymbol = createImportSymbol("buildEncodeMessageTransform", "starpc")
-  for (const method of service.methods) {
+  for (let i = 0; i < service.methods.length; i++) {
+    const method = service.methods[i];
     f.print(f.jsDoc(method, "  "));
-    f.print("  ", method.methodKind === MethodKind.Unary || method.methodKind === MethodKind.ClientStreaming ? "async " : "", method.name, "(");
     if (method.methodKind === MethodKind.Unary) {
-      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        "async ",
+        method.name,
+        "(request: ", method.input, ", abortSignal?: AbortSignal): ",
+        "Promise<", method.output, "> {"
+      );
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print("request: ", method.input, ", abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", method.input, ", abortSignal?: AbortSignal): ",
+        MessageStream, "<", method.output, "> {"
+      );
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        "async ",
+        method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal): ",
+        "Promise<", method.output, "> {"
+      );
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print("request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal");
+      f.print(
+        "  ",
+        method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal?: AbortSignal): ",
+        MessageStream, "<", method.output, "> {"
+      );
     }
-    f.print("): ");
+
     if (method.methodKind === MethodKind.Unary) {
-      f.print("Promise<", method.output, "> {");
       f.print("    const requestMsg = ", method.input, ".create(request)");
       f.print("    const result = await this.rpc.request(");
       f.print("      this.service,");
@@ -156,9 +189,7 @@ function generateService(
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", method.output, ".fromBinary(result)");
-      f.print("  }");
     } else if (method.methodKind === MethodKind.ServerStreaming) {
-      f.print(MessageStream, "<", method.output, "> {");
       f.print("    const requestMsg = ", method.input, ".create(request)");
       f.print("    const result = this.rpc.serverStreamingRequest(");
       f.print("      this.service,");
@@ -167,9 +198,7 @@ function generateService(
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");
-      f.print("  }");
     } else if (method.methodKind === MethodKind.ClientStreaming) {
-      f.print("Promise<", method.output, "> {");
       f.print("    const result = await this.rpc.clientStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
@@ -177,9 +206,7 @@ function generateService(
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", method.output, ".fromBinary(result)");
-      f.print("  }");
     } else if (method.methodKind === MethodKind.BiDiStreaming) {
-      f.print(MessageStream, "<", method.output, "> {");
       f.print("    const result = this.rpc.bidirectionalStreamingRequest(");
       f.print("      this.service,");
       f.print("      ", localName(service), "Definition.methods.", method.name, ".name,");
@@ -187,9 +214,11 @@ function generateService(
       f.print("      abortSignal || undefined,");
       f.print("    )");
       f.print("    return ", buildDecodeMessageTransformSymbol, "(", method.output, ")(result)");
-      f.print("  }");
     }
-    f.print();
+    f.print("  }");
+    if (i < service.methods.length - 1) {
+      f.print();
+    }
   }
   f.print("}");
 }

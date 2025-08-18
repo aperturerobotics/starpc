@@ -39,11 +39,7 @@ export interface Mock {
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  MockRequest(
-request: MockMsg, abortSignal?: AbortSignal
-): 
-Promise<MockMsg>
-
+  MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>;
 }
 
 export const MockServiceName = MockDefinition.typeName
@@ -61,10 +57,7 @@ export class MockClient implements Mock {
    *
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
-  async MockRequest(
-request: MockMsg, abortSignal?: AbortSignal
-): 
-Promise<MockMsg> {
+  async MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg> {
     const requestMsg = MockMsg.create(request)
     const result = await this.rpc.request(
       this.service,
@@ -74,5 +67,4 @@ Promise<MockMsg> {
     )
     return MockMsg.fromBinary(result)
   }
-
 }
