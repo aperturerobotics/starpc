@@ -69,5 +69,24 @@ func (s *streamWithClose) Close() error {
 	return err2
 }
 
+// streamWithContext is a Stream with a wrapped Context function.
+type streamWithContext struct {
+	Stream
+	ctx context.Context
+}
+
+// NewStreamWithContext wraps a Stream with a different context.
+func NewStreamWithContext(strm Stream, ctx context.Context) Stream {
+	return &streamWithContext{Stream: strm, ctx: ctx}
+}
+
+// Context returns the stream context.
+func (s *streamWithContext) Context() context.Context {
+	return s.ctx
+}
+
 // _ is a type assertion
-var _ Stream = (*streamWithClose)(nil)
+var (
+	_ Stream = (*streamWithClose)(nil)
+	_ Stream = (*streamWithContext)(nil)
+)
