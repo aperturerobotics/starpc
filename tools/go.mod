@@ -13,7 +13,7 @@ require (
 )
 
 require (
-	github.com/evanw/esbuild v0.25.9
+	github.com/evanw/esbuild v0.25.10
 	github.com/golangci/golangci-lint/v2 v2.4.0
 	github.com/psampaz/go-mod-outdated v0.9.0
 	golang.org/x/tools v0.37.0
