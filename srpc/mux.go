@@ -6,13 +6,11 @@ import "sync"
 type Mux interface {
 	// Invoker invokes the methods.
 	Invoker
+	// QueryableInvoker checks if a method is implemented.
+	QueryableInvoker
 
 	// Register registers a new RPC method handler (service).
 	Register(handler Handler) error
-	// HasService checks if the service ID exists in the handlers.
-	HasService(serviceID string) bool
-	// HasServiceMethod checks if <service-id, method-id> exists in the handlers.
-	HasServiceMethod(serviceID, methodID string) bool
 }
 
 // muxMethods is a mapping from method id to handler.

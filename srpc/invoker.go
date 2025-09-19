@@ -8,6 +8,14 @@ type Invoker interface {
 	InvokeMethod(serviceID, methodID string, strm Stream) (bool, error)
 }
 
+// QueryableInvoker can be used to check if a service and method is implemented.
+type QueryableInvoker interface {
+	// HasService checks if the service ID exists in the handlers.
+	HasService(serviceID string) bool
+	// HasServiceMethod checks if <service-id, method-id> exists in the handlers.
+	HasServiceMethod(serviceID, methodID string) bool
+}
+
 // InvokerSlice is a list of invokers.
 type InvokerSlice []Invoker
 
