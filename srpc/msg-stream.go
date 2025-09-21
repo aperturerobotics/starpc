@@ -12,7 +12,7 @@ type MsgStreamRw interface {
 	ReadOne() ([]byte, error)
 
 	// WriteCallData writes a call data packet.
-	WriteCallData(data []byte, complete bool, err error) error
+	WriteCallData(data []byte, dataIsZero bool, complete bool, err error) error
 
 	// WriteCallCancel writes a call cancel (close) packet.
 	WriteCallCancel() error
@@ -58,7 +58,7 @@ func (r *MsgStream) MsgSend(msg Message) error {
 		return err
 	}
 
-	return r.rw.WriteCallData(msgData, false, nil)
+	return r.rw.WriteCallData(msgData, len(msgData) == 0, false, nil)
 }
 
 // MsgRecv receives an incoming message from the remote.
@@ -73,7 +73,7 @@ func (r *MsgStream) MsgRecv(msg Message) error {
 
 // CloseSend signals to the remote that we will no longer send any messages.
 func (r *MsgStream) CloseSend() error {
-	return r.rw.WriteCallData(nil, true, nil)
+	return r.rw.WriteCallData(nil, false, true, nil)
 }
 
 // Close closes the stream.

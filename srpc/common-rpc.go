@@ -120,8 +120,8 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 }
 
 // WriteCallData writes a call data packet.
-func (c *commonRPC) WriteCallData(data []byte, complete bool, err error) error {
-	outPkt := NewCallDataPacket(data, len(data) == 0, complete, err)
+func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err error) error {
+	outPkt := NewCallDataPacket(data, len(data) == 0 && dataIsZero, complete, err)
 	return c.writer.WritePacket(outPkt)
 }
 
