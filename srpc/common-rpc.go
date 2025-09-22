@@ -3,6 +3,7 @@ package srpc
 import (
 	"context"
 	"io"
+	"sync/atomic"
 
 	"github.com/aperturerobotics/util/broadcast"
 	"github.com/pkg/errors"
@@ -18,6 +19,9 @@ type commonRPC struct {
 	service string
 	// method is the rpc method
 	method string
+	// localCompleted tracks if we have sent a completion or cancel locally.
+	// note: not guarded by bcast
+	localCompleted atomic.Bool
 	// bcast guards below fields
 	bcast broadcast.Broadcast
 	// writer is the writer to write messages to
@@ -121,6 +125,21 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 
 // WriteCallData writes a call data packet.
 func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err error) error {
+	// Check if already completed
+	if c.localCompleted.Load() {
+		// If we're just marking completion and already completed, allow it (no-op)
+		if complete && len(data) == 0 && !dataIsZero {
+			return nil
+		}
+		// Otherwise, return error for trying to send data after completion
+		return ErrCompleted
+	}
+
+	// Mark as completed if this call completes the RPC
+	if complete || err != nil {
+		c.localCompleted.Store(true)
+	}
+
 	outPkt := NewCallDataPacket(data, len(data) == 0 && dataIsZero, complete, err)
 	return c.writer.WritePacket(outPkt)
 }
@@ -181,12 +200,18 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 
 // WriteCallCancel writes a call cancel packet.
 func (c *commonRPC) WriteCallCancel() error {
+	// Use atomic swap to check and set completion atomically
+	if c.localCompleted.Swap(true) {
+		return ErrCompleted
+	}
+
 	return c.writer.WritePacket(NewCallCancelPacket())
 }
 
 // closeLocked releases resources held by the RPC.
 func (c *commonRPC) closeLocked(broadcast func()) {
 	c.dataClosed = true
+	c.localCompleted.Store(true)
 	if c.remoteErr == nil {
 		c.remoteErr = context.Canceled
 	}
