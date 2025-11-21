@@ -88,7 +88,7 @@
     "@typescript-eslint/eslint-plugin": "^8.39.1",
     "@typescript-eslint/parser": "^8.39.1",
     "depcheck": "^1.4.6",
-    "esbuild": "^0.25.9",
+    "esbuild": "^0.27.0",
     "eslint": "^9.33.0",
     "eslint-config-prettier": "^10.0.2",
     "husky": "^9.1.7",
@@ -97,13 +97,13 @@
     "rimraf": "^6.0.1",
     "tsx": "^4.20.4",
     "typescript": "^5.8.2",
-    "vitest": "^3.0.7"
+    "vitest": "^4.0.0"
   },
   "dependencies": {
     "@aptre/it-ws": "^1.1.2",
     "@aptre/protobuf-es-lite": "^0.5.2",
-    "@chainsafe/libp2p-yamux": "^7.0.1",
-    "@libp2p/interface": "^2.6.1",
+    "@chainsafe/libp2p-yamux": "^8.0.0",
+    "@libp2p/interface": "^3.0.0",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
     "it-first": "^3.0.6",
