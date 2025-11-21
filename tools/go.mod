@@ -13,11 +13,11 @@ require (
 )
 
 require (
-	github.com/evanw/esbuild v0.25.10
-	github.com/golangci/golangci-lint/v2 v2.5.0
+	github.com/evanw/esbuild v0.27.0
+	github.com/golangci/golangci-lint/v2 v2.6.2
 	github.com/psampaz/go-mod-outdated v0.9.0
-	golang.org/x/tools v0.38.0
-	mvdan.cc/gofumpt v0.9.1
+	golang.org/x/tools v0.39.0
+	mvdan.cc/gofumpt v0.9.2
 )
 
 require (
