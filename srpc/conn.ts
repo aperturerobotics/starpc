@@ -1,12 +1,12 @@
 import { YamuxMuxerInit, yamux } from '@chainsafe/libp2p-yamux'
 import type {
   ComponentLogger,
-  Direction,
+  MessageStreamDirection,
   Stream,
   StreamMuxer,
   StreamMuxerFactory,
 } from '@libp2p/interface'
-import type { Duplex } from 'it-stream-types'
+import type { Duplex, Source } from 'it-stream-types'
 import { Uint8ArrayList } from 'uint8arraylist'
 
 import {
@@ -15,7 +15,10 @@ import {
   type PacketStream,
 } from './stream.js'
 import { Client } from './client.js'
-import { createDisabledComponentLogger } from './log.js'
+import {
+  DuplexMessageStream,
+  createDuplexMessageStream,
+} from './duplex-message-stream.js'
 
 // ConnParams are parameters that can be passed to the StreamConn constructor.
 export interface StreamConnParams {
@@ -25,7 +28,7 @@ export interface StreamConnParams {
   muxerFactory?: StreamMuxerFactory
   // direction is the muxer connection direction.
   // defaults to outbound (client).
-  direction?: Direction
+  direction?: MessageStreamDirection
   // yamuxParams are parameters to pass to yamux.
   // only used if muxerFactory is unset
   yamuxParams?: YamuxMuxerInit
@@ -48,10 +51,17 @@ export interface StreamHandler {
 // Implements the server by handling incoming streams.
 // If the server is unset, rejects any incoming streams.
 export class StreamConn
-  implements Duplex<AsyncGenerator<Uint8Array | Uint8ArrayList>>
+  implements
+    Duplex<
+      AsyncIterable<Uint8Array | Uint8ArrayList>,
+      Source<Uint8Array | Uint8ArrayList>,
+      Promise<void>
+    >
 {
   // muxer is the stream muxer.
   private _muxer: StreamMuxer
+  // messageStream wraps the duplex as a MessageStream for the muxer.
+  private _messageStream: DuplexMessageStream
   // server is the server side, if set.
   private _server?: StreamHandler
 
@@ -59,25 +69,36 @@ export class StreamConn
     if (server) {
       this._server = server
     }
+
+    // Create the MessageStream adapter
+    const direction = connParams?.direction || 'outbound'
+    this._messageStream = createDuplexMessageStream({
+      log: connParams?.logger?.forComponent('stream-conn'),
+      direction,
+    })
+
+    // Create the muxer factory - yamux(init)() returns a StreamMuxerFactory
     const muxerFactory =
       connParams?.muxerFactory ??
-      yamux({ enableKeepAlive: false, ...connParams?.yamuxParams })({
-        logger: connParams?.logger ?? createDisabledComponentLogger(),
-      })
-    this._muxer = muxerFactory.createStreamMuxer({
-      onIncomingStream: this.handleIncomingStream.bind(this),
-      direction: connParams?.direction || 'outbound',
+      yamux({ enableKeepAlive: false, ...connParams?.yamuxParams })()
+
+    // Create the muxer with the MessageStream
+    this._muxer = muxerFactory.createStreamMuxer(this._messageStream)
+
+    // Listen for incoming streams
+    this._muxer.addEventListener('stream', (evt) => {
+      this.handleIncomingStream(evt.detail)
     })
   }
 
   // sink returns the message sink.
-  get sink() {
-    return this._muxer.sink
+  get sink(): (source: Source<Uint8Array | Uint8ArrayList>) => Promise<void> {
+    return this._messageStream.sink
   }
 
   // source returns the outgoing message source.
-  get source() {
-    return this._muxer.source
+  get source(): AsyncIterable<Uint8Array | Uint8ArrayList> {
+    return this._messageStream.source
   }
 
   // streams returns the set of all ongoing streams.
@@ -102,7 +123,7 @@ export class StreamConn
 
   // openStream implements the client open stream function.
   public async openStream(): Promise<PacketStream> {
-    const strm = await this.muxer.newStream()
+    const strm = await this.muxer.createStream()
     return streamToPacketStream(strm)
   }
 

@@ -81,3 +81,8 @@ export {
 } from './pushable.js'
 export { Watchdog } from './watchdog.js'
 export { ProtoRpc } from './proto-rpc.js'
+export {
+  DuplexMessageStream,
+  DuplexMessageStreamInit,
+  createDuplexMessageStream,
+} from './duplex-message-stream.js'

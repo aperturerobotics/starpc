@@ -1,5 +1,5 @@
 import { pipe } from 'it-pipe'
-import { Direction } from '@libp2p/interface'
+import type { MessageStreamDirection } from '@libp2p/interface'
 
 import duplex from '@aptre/it-ws/duplex'
 import type WebSocket from '@aptre/it-ws/web-socket'
@@ -13,7 +13,11 @@ export class WebSocketConn extends StreamConn {
   // socket is the web socket
   private socket: WebSocket
 
-  constructor(socket: WebSocket, direction: Direction, server?: Server) {
+  constructor(
+    socket: WebSocket,
+    direction: MessageStreamDirection,
+    server?: Server,
+  ) {
     super(server, { direction })
     this.socket = socket
     const socketDuplex = duplex(socket)

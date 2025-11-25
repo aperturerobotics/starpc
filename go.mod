@@ -14,12 +14,12 @@ replace (
 
 require (
 	github.com/aperturerobotics/protobuf-go-lite v0.11.0 // latest
-	github.com/aperturerobotics/util v1.31.3 // latest
+	github.com/aperturerobotics/util v1.31.4 // latest
 )
 
 require (
 	github.com/coder/websocket v1.8.14 // latest
-	github.com/libp2p/go-libp2p v0.44.0 // latest
+	github.com/libp2p/go-libp2p v0.45.0 // latest
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.3 // latest
 	google.golang.org/protobuf v1.36.10 // latest
