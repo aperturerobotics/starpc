@@ -1,66 +1,56 @@
-import type {
-  AbortOptions,
-  Logger,
-  MessageStream,
-  MessageStreamDirection,
-  MessageStreamEvents,
-  MessageStreamReadStatus,
-  MessageStreamStatus,
-  MessageStreamTimeline,
-  MessageStreamWriteStatus,
-} from '@libp2p/interface'
+import type { AbortOptions, MessageStreamDirection } from '@libp2p/interface'
+import { logger } from '@libp2p/logger'
 import {
-  StreamAbortEvent,
-  StreamCloseEvent,
-  StreamMessageEvent,
-  TypedEventEmitter,
-} from '@libp2p/interface'
+  AbstractMessageStream,
+  type MessageStreamInit,
+  type SendResult,
+} from '@libp2p/utils'
 import type { Duplex, Source } from 'it-stream-types'
 import { pushable, type Pushable } from 'it-pushable'
 import { Uint8ArrayList } from 'uint8arraylist'
 
-import { createDisabledLogger } from './log.js'
-
 // DuplexMessageStreamInit are parameters for DuplexMessageStream.
 export interface DuplexMessageStreamInit {
-  // log is the logger to use.
-  log?: Logger
   // direction is the stream direction.
   direction?: MessageStreamDirection
+  // loggerName is the name to use for the logger.
+  loggerName?: string
+  // inactivityTimeout is the inactivity timeout in ms.
+  inactivityTimeout?: number
+  // maxReadBufferLength is the max read buffer length.
+  maxReadBufferLength?: number
 }
 
 // DuplexMessageStream wraps a Duplex stream as a MessageStream.
 // This allows using duplex streams with the new libp2p StreamMuxer API.
-export class DuplexMessageStream
-  extends TypedEventEmitter<MessageStreamEvents>
-  implements MessageStream
-{
-  public status: MessageStreamStatus = 'open'
-  public readonly timeline: MessageStreamTimeline = { open: Date.now() }
-  public readonly log: Logger
-  public direction: MessageStreamDirection
-  public maxReadBufferLength: number = 4 * 1024 * 1024 // 4MB
-  public maxWriteBufferLength?: number
-  public inactivityTimeout: number = 120_000
-  public writableNeedsDrain: boolean = false
-
-  private readonly _pushable: Pushable<Uint8Array | Uint8ArrayList>
-  private _readStatus: MessageStreamReadStatus = 'readable'
-  private _writeStatus: MessageStreamWriteStatus = 'writable'
-
-  // Bound sink function (created once in constructor for efficiency)
-  public readonly sink: (
-    source: Source<Uint8Array | Uint8ArrayList>,
-  ) => Promise<void>
+//
+// Extends AbstractMessageStream to get proper read/write buffer management,
+// backpressure handling, and event semantics from libp2p.
+export class DuplexMessageStream extends AbstractMessageStream {
+  // _outgoing is a pushable that collects data to be sent out.
+  private readonly _outgoing: Pushable<Uint8Array | Uint8ArrayList>
 
   constructor(init?: DuplexMessageStreamInit) {
-    super()
-    this.log = init?.log ?? createDisabledLogger('duplex-message-stream')
-    this.direction = init?.direction ?? 'outbound'
-    this._pushable = pushable<Uint8Array | Uint8ArrayList>()
+    // Create the MessageStreamInit required by AbstractMessageStream
+    const streamInit: MessageStreamInit = {
+      log: logger(init?.loggerName ?? 'starpc:duplex-message-stream'),
+      direction: init?.direction ?? 'outbound',
+      inactivityTimeout: init?.inactivityTimeout,
+      maxReadBufferLength: init?.maxReadBufferLength,
+    }
+    super(streamInit)
+    this._outgoing = pushable<Uint8Array | Uint8ArrayList>()
+  }
 
-    // Bind sink once in constructor for efficiency
-    this.sink = async (
+  // source returns an async iterable that yields data to be sent to the remote.
+  get source(): AsyncIterable<Uint8Array | Uint8ArrayList> {
+    return this._outgoing
+  }
+
+  // sink consumes data from the remote and feeds it into the stream.
+  // This is the receiving end of the duplex.
+  get sink(): (source: Source<Uint8Array | Uint8ArrayList>) => Promise<void> {
+    return async (
       source: Source<Uint8Array | Uint8ArrayList>,
     ): Promise<void> => {
       try {
@@ -72,8 +62,10 @@ export class DuplexMessageStream
           ) {
             break
           }
+          // Use the parent's onData method which handles buffering and events
           this.onData(data)
         }
+        // Remote closed their write side
         this.onRemoteCloseWrite()
       } catch (err) {
         this.abort(err as Error)
@@ -81,62 +73,36 @@ export class DuplexMessageStream
     }
   }
 
-  get readBufferLength(): number {
-    return 0
-  }
-
-  get writeBufferLength(): number {
-    return 0
-  }
-
-  // source returns an async iterable that yields data to be sent.
-  get source(): AsyncIterable<Uint8Array | Uint8ArrayList> {
-    return this._pushable
-  }
-
-  // onData is called when data is received from the remote.
-  private onData(data: Uint8Array | Uint8ArrayList): void {
-    if (this._readStatus === 'closed' || this._readStatus === 'closing') {
-      return
-    }
-    this.dispatchEvent(new StreamMessageEvent(data))
-  }
-
-  // onRemoteCloseWrite is called when the remote closes its write side.
-  private onRemoteCloseWrite(): void {
-    if (this.status === 'closed' || this.status === 'closing') {
-      return
-    }
-    this.safeDispatchEvent('remoteCloseWrite')
-    if (this._writeStatus === 'closed') {
-      this.onTransportClosed()
+  // sendData implements AbstractMessageStream.sendData
+  // Called by the parent class when processing the write queue.
+  sendData(data: Uint8ArrayList): SendResult {
+    // Push data to the outgoing pushable
+    this._outgoing.push(data)
+    return {
+      sentBytes: data.byteLength,
+      canSendMore: true, // Our pushable can always accept more
     }
   }
 
-  // onTransportClosed is called when the underlying transport is closed.
-  private onTransportClosed(err?: Error): void {
-    if (this.status === 'closed') {
-      return
-    }
-    this.status = 'closed'
-    this._readStatus = 'closed'
-    this._writeStatus = 'closed'
-    this.timeline.close = Date.now()
-    if (err) {
-      this.dispatchEvent(new StreamAbortEvent(err))
-    } else {
-      this.dispatchEvent(new StreamCloseEvent())
-    }
+  // sendReset implements AbstractMessageStream.sendReset
+  // Called when the stream is aborted locally.
+  sendReset(_err: Error): void {
+    // End the outgoing pushable - we can't send a reset over a generic duplex
+    this._outgoing.end()
   }
 
-  // send writes data to the stream.
-  send(data: Uint8Array | Uint8ArrayList): boolean {
-    if (this._writeStatus === 'closed' || this._writeStatus === 'closing') {
-      throw new Error(`Cannot write to a stream that is ${this._writeStatus}`)
-    }
-    this._pushable.push(data)
-    this.safeDispatchEvent('idle')
-    return true
+  // sendPause implements AbstractMessageStream.sendPause
+  // Called when the stream is paused.
+  sendPause(): void {
+    // No-op: generic duplex streams don't support pause signaling
+    this.log.trace('pause requested (no-op for duplex stream)')
+  }
+
+  // sendResume implements AbstractMessageStream.sendResume
+  // Called when the stream is resumed.
+  sendResume(): void {
+    // No-op: generic duplex streams don't support resume signaling
+    this.log.trace('resume requested (no-op for duplex stream)')
   }
 
   // close gracefully closes the stream.
@@ -145,89 +111,14 @@ export class DuplexMessageStream
       return
     }
     this.status = 'closing'
-    this._writeStatus = 'closing'
-    this._pushable.end()
-    this._writeStatus = 'closed'
-    if (this._readStatus === 'closed') {
+    this.writeStatus = 'closing'
+
+    // End the outgoing pushable to signal we're done writing
+    this._outgoing.end()
+
+    this.writeStatus = 'closed'
+    if (this.readStatus === 'closed') {
       this.onTransportClosed()
-    }
-  }
-
-  // abort immediately closes the stream with an error.
-  abort(err: Error): void {
-    if (
-      this.status === 'closed' ||
-      this.status === 'aborted' ||
-      this.status === 'reset'
-    ) {
-      return
-    }
-    this.status = 'aborted'
-    this._readStatus = 'closed'
-    this._writeStatus = 'closed'
-    this._pushable.end(err)
-    this.timeline.close = Date.now()
-    this.dispatchEvent(new StreamAbortEvent(err))
-  }
-
-  // pause stops emitting message events.
-  pause(): void {
-    if (this._readStatus === 'closed' || this._readStatus === 'closing') {
-      return
-    }
-    this._readStatus = 'paused'
-  }
-
-  // resume resumes emitting message events.
-  resume(): void {
-    if (this._readStatus === 'closed' || this._readStatus === 'closing') {
-      return
-    }
-    this._readStatus = 'readable'
-  }
-
-  // push queues data to be emitted as a message event.
-  push(buf: Uint8Array | Uint8ArrayList): void {
-    this.onData(buf)
-  }
-
-  // unshift queues data at the front of the read buffer.
-  unshift(data: Uint8Array | Uint8ArrayList): void {
-    this.onData(data)
-  }
-
-  // onDrain returns a promise that resolves when the stream can accept more data.
-  async onDrain(_options?: AbortOptions): Promise<void> {
-    // Our implementation always accepts data immediately
-    return Promise.resolve()
-  }
-
-  // AsyncIterable implementation - yields received data
-  async *[Symbol.asyncIterator](): AsyncGenerator<Uint8Array | Uint8ArrayList> {
-    const output = pushable<Uint8Array | Uint8ArrayList>()
-    let ended = false
-    const endOutput = () => {
-      if (!ended) {
-        ended = true
-        output.end()
-      }
-    }
-    const onMessage = (evt: Event) => {
-      const messageEvt = evt as StreamMessageEvent
-      output.push(messageEvt.data)
-    }
-    const onClose = endOutput
-    const onRemoteCloseWrite = endOutput
-
-    this.addEventListener('message', onMessage)
-    this.addEventListener('close', onClose)
-    this.addEventListener('remoteCloseWrite', onRemoteCloseWrite)
-    try {
-      yield* output
-    } finally {
-      this.removeEventListener('message', onMessage)
-      this.removeEventListener('close', onClose)
-      this.removeEventListener('remoteCloseWrite', onRemoteCloseWrite)
     }
   }
 }

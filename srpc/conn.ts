@@ -1,6 +1,5 @@
 import { YamuxMuxerInit, yamux } from '@chainsafe/libp2p-yamux'
 import type {
-  ComponentLogger,
   MessageStreamDirection,
   Stream,
   StreamMuxer,
@@ -22,8 +21,8 @@ import {
 
 // ConnParams are parameters that can be passed to the StreamConn constructor.
 export interface StreamConnParams {
-  // logger is the logger to use, defaults to disabled logger.
-  logger?: ComponentLogger
+  // loggerName is the debug-style logger name (e.g. 'starpc:conn').
+  loggerName?: string
   // muxerFactory overrides using the default yamux factory.
   muxerFactory?: StreamMuxerFactory
   // direction is the muxer connection direction.
@@ -73,7 +72,7 @@ export class StreamConn
     // Create the MessageStream adapter
     const direction = connParams?.direction || 'outbound'
     this._messageStream = createDuplexMessageStream({
-      log: connParams?.logger?.forComponent('stream-conn'),
+      loggerName: connParams?.loggerName,
       direction,
     })
 

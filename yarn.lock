@@ -544,7 +544,7 @@
     multiformats "^13.4.0"
     weald "^1.1.0"
 
-"@libp2p/utils@^7.0.0":
+"@libp2p/utils@^7.0.0", "@libp2p/utils@^7.0.9":
   version "7.0.9"
   resolved "https://registry.yarnpkg.com/@libp2p/utils/-/utils-7.0.9.tgz#ec63ff20396cc1b44c8b4158095b6988ef4be301"
   integrity sha512-2wYhsgfbFXfh5ui0ME9MNHc7uUIuZwpeZ/yagKmDSjIP7B+L3/9mj+vVXO14AhmjfwnKx2xUDQvzGZeq5to4ow==
