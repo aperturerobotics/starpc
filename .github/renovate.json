@@ -22,6 +22,16 @@
       "matchPackageNames": ["github.com/libp2p/go-yamux/v4"],
       "matchUpdateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["@chainsafe/libp2p-yamux"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["@libp2p/interface"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
