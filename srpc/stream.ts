@@ -43,7 +43,7 @@ export function streamToPacketStream(stream: Stream): PacketStream {
           stream.send(data)
         }
         await stream.close()
-      } catch (err: unknown) {
+      } catch {
         await stream
           .close({ signal: AbortSignal.timeout(1000) })
           .catch(() => {})
