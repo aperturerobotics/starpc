@@ -792,10 +792,22 @@
   dependencies:
     undici-types "~7.14.0"
 
+"@types/node@^20.0.0":
+  version "20.19.25"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.19.25.tgz#467da94a2fd966b57cc39c357247d68047611190"
+  integrity sha512-ZsJzA5thDQMSQO788d7IocwwQbI8B5OPzmqNvpf3NY/+MHDAS759Wo0gd2WQeXYt5AAAQjzcrTVC6SKCuYgoCQ==
+  dependencies:
+    undici-types "~6.21.0"
+
 "@types/parse-json@^4.0.0":
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/@types/parse-json/-/parse-json-4.0.2.tgz#5950e50960793055845e956c427fc2b0d70c5239"
   integrity sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==
+
+"@types/whatwg-mimetype@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/whatwg-mimetype/-/whatwg-mimetype-3.0.2.tgz#e5e06dcd3e92d4e622ef0129637707d66c28d6a4"
+  integrity sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==
 
 "@types/ws@^8.2.2":
   version "8.18.1"
@@ -1684,6 +1696,15 @@ graphemer@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/graphemer/-/graphemer-1.4.0.tgz#fb2f1d55e0e3a1849aeffc90c4fa0dd53a0e66c6"
   integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
+
+happy-dom@^20.0.10:
+  version "20.0.10"
+  resolved "https://registry.yarnpkg.com/happy-dom/-/happy-dom-20.0.10.tgz#01fb5f09426420994e47e966598e272102678dd2"
+  integrity sha512-6umCCHcjQrhP5oXhrHQQvLB0bwb1UzHAHdsXy+FjtKoYjUhmNZsQL8NivwM1vDvNEChJabVrUYxUnp/ZdYmy2g==
+  dependencies:
+    "@types/node" "^20.0.0"
+    "@types/whatwg-mimetype" "^3.0.2"
+    whatwg-mimetype "^3.0.0"
 
 has-flag@^4.0.0:
   version "4.0.0"
@@ -2624,6 +2645,11 @@ uint8arrays@^5.0.0, uint8arrays@^5.0.1, uint8arrays@^5.0.2, uint8arrays@^5.1.0:
   dependencies:
     multiformats "^13.0.0"
 
+undici-types@~6.21.0:
+  version "6.21.0"
+  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.21.0.tgz#691d00af3909be93a7faa13be61b3a5b50ef12cb"
+  integrity sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==
+
 undici-types@~7.14.0:
   version "7.14.0"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.14.0.tgz#4c037b32ca4d7d62fae042174604341588bc0840"
@@ -2683,6 +2709,11 @@ weald@^1.0.4:
   dependencies:
     ms "^3.0.0-canary.1"
     supports-color "^10.0.0"
+
+whatwg-mimetype@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/whatwg-mimetype/-/whatwg-mimetype-3.0.0.tgz#5fa1a7623867ff1af6ca3dc72ad6b8a4208beba7"
+  integrity sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==
 
 which@^1.2.14:
   version "1.3.1"
