@@ -8,7 +8,7 @@ module.exports = {
     'prettier',
   ],
   parserOptions: {
-    project: './tsconfig.json',
+    project: './tsconfig.eslint.json',
   },
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': 'off',

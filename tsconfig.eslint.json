@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "echo",
+    "srpc",
+    "mock",
+    "integration",
+    "rpcstream",
+    "index.ts",
+    "tools",
+    "cmd/protoc-gen-es-starpc",
+    "vitest.config.ts"
+  ]
+}
