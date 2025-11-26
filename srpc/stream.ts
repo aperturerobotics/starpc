@@ -1,6 +1,6 @@
 import type { Duplex, Source } from 'it-stream-types'
 import { pipe } from 'it-pipe'
-import type { Stream } from '@libp2p/interface'
+import { Stream } from '@libp2p/interface'
 
 import type { Packet } from './rpcproto.pb.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
@@ -38,16 +38,9 @@ export function streamToPacketStream(stream: Stream): PacketStream {
       combineUint8ArrayListTransform(),
     ),
     sink: async (source: Source<Uint8Array>): Promise<void> => {
-      try {
-        for await (const data of pipe(source, prependLengthPrefixTransform())) {
-          stream.send(data)
-        }
-        await stream.close()
-      } catch {
-        await stream
-          .close({ signal: AbortSignal.timeout(1000) })
-          .catch(() => {})
-      }
+      await pipe(source, prependLengthPrefixTransform(), stream)
+        .catch((err) => stream.close(err))
+        .then(() => stream.close())
     },
   }
 }
