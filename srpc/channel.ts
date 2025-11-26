@@ -89,6 +89,11 @@ export class ChannelStream<T = Uint8Array>
     return this.remoteOpen ?? false
   }
 
+  // isIdlePaused checks if the idle watchdog is paused.
+  public get isIdlePaused() {
+    return this.idleWatchdog?.isPaused ?? false
+  }
+
   constructor(localId: string, channel: ChannelPort, opts?: ChannelStreamOpts) {
     // initial state
     this.localId = localId
@@ -214,6 +219,18 @@ export class ChannelStream<T = Uint8Array>
       delete this.keepAlive
     }
     this._source.end(error)
+  }
+
+  // pauseIdle pauses the idle watchdog, preventing the stream from timing out.
+  // Use this when the remote is known to be inactive (e.g., browser tab hidden).
+  public pauseIdle() {
+    this.idleWatchdog?.pause()
+  }
+
+  // resumeIdle resumes the idle watchdog after being paused.
+  // The timeout continues from where it left off.
+  public resumeIdle() {
+    this.idleWatchdog?.resume()
   }
 
   // onLocalOpened indicates the local side has opened the read stream.

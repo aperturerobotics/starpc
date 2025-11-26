@@ -5,6 +5,10 @@ export class Watchdog {
   private expiredCallback: () => void
   private timerId: NodeJS.Timeout | null = null
   private lastFeedTimestamp: number | null = null
+  // paused indicates the watchdog is paused and will not expire.
+  private paused = false
+  // pausedTimestamp records when the watchdog was paused.
+  private pausedTimestamp: number | null = null
 
   /**
    * Constructs a Watchdog instance.
@@ -15,6 +19,52 @@ export class Watchdog {
   constructor(timeoutDuration: number, expiredCallback: () => void) {
     this.timeoutDuration = timeoutDuration
     this.expiredCallback = expiredCallback
+  }
+
+  /**
+   * Returns whether the watchdog is currently paused.
+   */
+  public get isPaused(): boolean {
+    return this.paused
+  }
+
+  /**
+   * Pauses the watchdog, preventing it from expiring until resumed.
+   * The time spent paused does not count towards the timeout.
+   */
+  public pause(): void {
+    if (this.paused) {
+      return
+    }
+    this.paused = true
+    this.pausedTimestamp = Date.now()
+    if (this.timerId != null) {
+      clearTimeout(this.timerId)
+      this.timerId = null
+    }
+  }
+
+  /**
+   * Resumes the watchdog after being paused.
+   * The timeout continues from where it left off, not counting the paused duration.
+   */
+  public resume(): void {
+    if (!this.paused) {
+      return
+    }
+    this.paused = false
+    // Adjust lastFeedTimestamp to exclude paused duration.
+    if (this.lastFeedTimestamp != null && this.pausedTimestamp != null) {
+      const pausedDuration = Date.now() - this.pausedTimestamp
+      this.lastFeedTimestamp += pausedDuration
+    }
+    this.pausedTimestamp = null
+    // Reschedule the watchdog if it was active.
+    if (this.lastFeedTimestamp != null) {
+      const elapsed = Date.now() - this.lastFeedTimestamp
+      const remaining = Math.max(0, this.timeoutDuration - elapsed)
+      this.scheduleTickWatchdog(remaining)
+    }
   }
 
   /**
@@ -57,6 +107,9 @@ export class Watchdog {
    */
   private tickWatchdog(): void {
     this.timerId = null
+    if (this.paused) {
+      return
+    }
     if (this.lastFeedTimestamp == null) {
       this.expiredCallback()
       return
