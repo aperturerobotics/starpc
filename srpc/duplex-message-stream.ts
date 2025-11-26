@@ -29,6 +29,10 @@ export interface DuplexMessageStreamInit {
 export class DuplexMessageStream extends AbstractMessageStream {
   // _outgoing is a pushable that collects data to be sent out.
   private readonly _outgoing: Pushable<Uint8Array | Uint8ArrayList>
+  // _sink is the bound sink function
+  private readonly _sink: (
+    source: Source<Uint8Array | Uint8ArrayList>,
+  ) => Promise<void>
 
   constructor(init?: DuplexMessageStreamInit) {
     // Create the MessageStreamInit required by AbstractMessageStream
@@ -40,17 +44,7 @@ export class DuplexMessageStream extends AbstractMessageStream {
     }
     super(streamInit)
     this._outgoing = pushable<Uint8Array | Uint8ArrayList>()
-  }
-
-  // source returns an async iterable that yields data to be sent to the remote.
-  get source(): AsyncIterable<Uint8Array | Uint8ArrayList> {
-    return this._outgoing
-  }
-
-  // sink consumes data from the remote and feeds it into the stream.
-  // This is the receiving end of the duplex.
-  get sink(): (source: Source<Uint8Array | Uint8ArrayList>) => Promise<void> {
-    return async (
+    this._sink = async (
       source: Source<Uint8Array | Uint8ArrayList>,
     ): Promise<void> => {
       try {
@@ -71,6 +65,17 @@ export class DuplexMessageStream extends AbstractMessageStream {
         this.abort(err as Error)
       }
     }
+  }
+
+  // source returns an async iterable that yields data to be sent to the remote.
+  get source(): AsyncIterable<Uint8Array | Uint8ArrayList> {
+    return this._outgoing
+  }
+
+  // sink consumes data from the remote and feeds it into the stream.
+  // This is the receiving end of the duplex.
+  get sink(): (source: Source<Uint8Array | Uint8ArrayList>) => Promise<void> {
+    return this._sink
   }
 
   // sendData implements AbstractMessageStream.sendData
