@@ -1,8 +1,8 @@
-# Stream RPC (starpc)
+# starpc
 
 [![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
 
-> A high-performance Protobuf 3 RPC framework supporting bidirectional streaming over any multiplexer.
+> Streaming Protobuf RPC with bidirectional streaming over any multiplexed transport.
 
 [GoDoc]: https://godoc.org/github.com/aperturerobotics/starpc
 [GoDoc Widget]: https://godoc.org/github.com/aperturerobotics/starpc?status.svg
@@ -18,20 +18,22 @@
   - [Protobuf Definition](#protobuf)
   - [Go Implementation](#go)
   - [TypeScript Implementation](#typescript)
+- [Debugging](#debugging)
 - [Development Setup](#development-setup)
 - [Support](#support)
 
 ## Features
 
-- Full [Proto3 services] implementation for both TypeScript and Go
-- Bidirectional streaming support in web browsers
-- Built on libp2p streams with `@chainsafe/libp2p-yamux`
-- Efficient RPC multiplexing over single connections
-- Zero-reflection Go code via [protobuf-go-lite]
-- TypeScript interfaces via [protobuf-es-lite]
-- Sub-streams support through [rpcstream]
+- Full [Proto3 services] support for TypeScript and Go
+- Bidirectional streaming in browsers via WebSocket or WebRTC
+- Built on libp2p streams with [@chainsafe/libp2p-yamux]
+- Efficient multiplexing of RPCs over single connections
+- Zero-reflection Go via [protobuf-go-lite]
+- Lightweight TypeScript via [protobuf-es-lite]
+- Sub-stream support via [rpcstream]
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
+[@chainsafe/libp2p-yamux]: https://github.com/ChainSafe/js-libp2p-yamux
 [protobuf-go-lite]: https://github.com/aperturerobotics/protobuf-go-lite
 [protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
 [rpcstream]: ./rpcstream
@@ -119,118 +121,115 @@ if out.GetBody() != bodyTxt {
 }
 ```
 
-[e2e test]: ./e2e/e2e_test.go
-
 ### TypeScript
 
-See the ts-proto README to generate the TypeScript for your protobufs.
-
-For an example of Go <-> TypeScript interop, see the [integration] test. For an
-example of TypeScript <-> TypeScript interop, see the [e2e] test.
+For Go <-> TypeScript interop, see the [integration] test.
+For TypeScript <-> TypeScript, see the [e2e] test.
 
 [e2e]: ./e2e/e2e.ts
 [integration]: ./integration/integration.ts
 
-Supports any AsyncIterable communication channel.
-
 #### WebSocket Example
 
-This examples demonstrates connecting to a WebSocket server:
+Connect to a WebSocket server:
 
 ```typescript
-import { WebSocketConn } from 'srpc'
-import { EchoerClient } from 'srpc/echo'
+import { WebSocketConn } from 'starpc'
+import { EchoerClient } from './echo/index.js'
 
-const ws = new WebSocket('ws://localhost:1347/demo')
-const channel = new WebSocketConn(ws)
-const client = channel.buildClient()
-const demoServiceClient = new EchoerClient(client)
+const ws = new WebSocket('ws://localhost:8080/api')
+const conn = new WebSocketConn(ws)
+const client = conn.buildClient()
+const echoer = new EchoerClient(client)
 
-const result = await demoServiceClient.Echo({
-  body: "Hello world!"
-})
-console.log('output', result.body)
+const result = await echoer.Echo({ body: 'Hello world!' })
+console.log('result:', result.body)
 ```
 
-#### In-memory Demo with TypeScript Server and Client
+#### In-Memory Example
 
-This example demonstrates both the server and client with an in-memory pipe:
+Server and client with an in-memory pipe:
 
 ```typescript
 import { pipe } from 'it-pipe'
-import { createHandler, createMux, Server, Client, Conn } from 'srpc'
-import { EchoerDefinition, EchoerServer, runClientTest } from 'srpc/echo'
-import { pushable } from 'it-pushable'
+import { createHandler, createMux, Server, StreamConn } from 'starpc'
+import { EchoerDefinition, EchoerServer } from './echo/index.js'
 
-// Create the server and register the handlers.
+// Create server with registered handlers
 const mux = createMux()
 const echoer = new EchoerServer()
 mux.register(createHandler(EchoerDefinition, echoer))
 const server = new Server(mux.lookupMethod)
 
-// Create the client connection to the server with an in-memory pipe.
-const clientConn = new Conn()
-const serverConn = new Conn(server)
+// Create client and server connections, pipe together
+const clientConn = new StreamConn()
+const serverConn = new StreamConn(server)
 pipe(clientConn, serverConn, clientConn)
-const client = new Client(clientConn.buildOpenStreamFunc())
 
-// Examples of different types of RPC calls:
+// Build client and make RPC calls
+const client = clientConn.buildClient()
+const echoerClient = new EchoerClient(client)
 
-// One-shot request/response (unary):
-console.log('Calling Echo: unary call...')
-let result = await demoServiceClient.Echo({
-  body: 'Hello world!',
-})
-console.log('success: output', result.body)
+// Unary call
+const result = await echoerClient.Echo({ body: 'Hello world!' })
+console.log('result:', result.body)
 
-// Streaming from client->server with a single server response:
-const clientRequestStream = pushable<EchoMsg>({objectMode: true})
-clientRequestStream.push({body: 'Hello world from streaming request.'})
-clientRequestStream.end()
-console.log('Calling EchoClientStream: client -> server...')
-result = await demoServiceClient.EchoClientStream(clientRequestStream)
-console.log('success: output', result.body)
+// Client streaming
+import { pushable } from 'it-pushable'
+const stream = pushable({ objectMode: true })
+stream.push({ body: 'Message 1' })
+stream.push({ body: 'Message 2' })
+stream.end()
+const response = await echoerClient.EchoClientStream(stream)
+console.log('response:', response.body)
 
-// Streaming from server -> client with a single client message.
-console.log('Calling EchoServerStream: server -> client...')
-const serverStream = demoServiceClient.EchoServerStream({
-  body: 'Hello world from server to client streaming request.',
-})
-for await (const msg of serverStream) {
-  console.log('server: output', msg.body)
+// Server streaming
+for await (const msg of echoerClient.EchoServerStream({ body: 'Hello' })) {
+  console.log('server msg:', msg.body)
 }
+```
+
+## Debugging
+
+Enable debug logging in TypeScript using the `DEBUG` environment variable:
+
+```bash
+# Enable all starpc logs
+DEBUG=starpc:* node app.js
+
+# Enable specific component logs
+DEBUG=starpc:stream-conn node app.js
 ```
 
 ## Attribution
 
 `protoc-gen-go-starpc` is a heavily modified version of `protoc-gen-go-drpc`.
-
-Be sure to check out [drpc] as well: it's compatible with grpc, twirp, and more.
+Check out [drpc] as well - it's compatible with grpc, twirp, and more.
 
 [drpc]: https://github.com/storj/drpc
 
-Uses [vtprotobuf] to generate Go Protobuf marshal / unmarshal code.
+Uses [vtprotobuf] to generate Protobuf marshal/unmarshal code for Go.
 
 [vtprotobuf]: https://github.com/planetscale/vtprotobuf
 
-Uses [protobuf-es-lite] (fork of [protobuf-es]) to generate TypeScript Protobuf marshal / unmarshal code.
+`protoc-gen-es-starpc` is a modified version of `protoc-gen-connect-es`.
+Uses [protobuf-es-lite] (fork of [protobuf-es]) for TypeScript.
 
 [protobuf-es]: https://github.com/bufbuild/protobuf-es
-[protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
-
-`protoc-gen-es-starpc` is a heavily modified version of `protoc-gen-connect-es`.
 
 ## Development Setup
 
-### MacOS Requirements
+### MacOS
 
-1. Install required packages:
+Install required packages:
+
 ```bash
 brew install bash make coreutils gnu-sed findutils protobuf
 brew link --overwrite protobuf
 ```
 
-2. Add to your .bashrc or .zshrc:
+Add to your shell rc file (.bashrc, .zshrc):
+
 ```bash
 export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
@@ -238,23 +237,12 @@ export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
 export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
 ```
 
-## Attribution
-
-- `protoc-gen-go-starpc`: Modified version of `protoc-gen-go-drpc`
-- `protoc-gen-es-starpc`: Modified version of `protoc-gen-connect-es`
-- Uses [vtprotobuf] for Go Protobuf marshaling
-- Uses [protobuf-es-lite] for TypeScript Protobuf interfaces
-
-[vtprotobuf]: https://github.com/planetscale/vtprotobuf
-
 ## Support
 
-Need help? We're here:
+- [GitHub Issues][issues]
+- [Discord][discord]
+- [Matrix][matrix]
 
-- [File a GitHub Issue][GitHub issue]
-- [Join our Discord][Join Discord]
-- [Matrix Chat][Matrix Chat]
-
-[GitHub issue]: https://github.com/aperturerobotics/starpc/issues/new
-[Join Discord]: https://discord.gg/KJutMESRsT
-[Matrix Chat]: https://matrix.to/#/#aperturerobotics:matrix.org
+[issues]: https://github.com/aperturerobotics/starpc/issues/new
+[discord]: https://discord.gg/KJutMESRsT
+[matrix]: https://matrix.to/#/#aperturerobotics:matrix.org
