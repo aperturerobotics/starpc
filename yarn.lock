@@ -1698,9 +1698,9 @@ graphemer@^1.4.0:
   integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
 
 happy-dom@^20.0.10:
-  version "20.0.10"
-  resolved "https://registry.yarnpkg.com/happy-dom/-/happy-dom-20.0.10.tgz#01fb5f09426420994e47e966598e272102678dd2"
-  integrity sha512-6umCCHcjQrhP5oXhrHQQvLB0bwb1UzHAHdsXy+FjtKoYjUhmNZsQL8NivwM1vDvNEChJabVrUYxUnp/ZdYmy2g==
+  version "20.0.11"
+  resolved "https://registry.yarnpkg.com/happy-dom/-/happy-dom-20.0.11.tgz#c6152ea770a97f04ad74b70519b37bc013bc3a48"
+  integrity sha512-QsCdAUHAmiDeKeaNojb1OHOPF7NjcWPBR7obdu3NwH2a/oyQaLg5d0aaCy/9My6CdPChYF07dvz5chaXBGaD4g==
   dependencies:
     "@types/node" "^20.0.0"
     "@types/whatwg-mimetype" "^3.0.2"
@@ -2303,9 +2303,9 @@ prelude-ls@^1.2.1:
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
 prettier@^3.5.3:
-  version "3.6.2"
-  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.6.2.tgz#ccda02a1003ebbb2bfda6f83a074978f608b9393"
-  integrity sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.7.2.tgz#7b393a865f9dd97bc244215db9aac8e04dc1841b"
+  integrity sha512-n3HV2J6QhItCXndGa3oMWvWFAgN1ibnS7R9mt6iokScBOC0Ul9/iZORmU2IWUMcyAQaMPjTlY3uT34TqocUxMA==
 
 progress-events@^1.0.0, progress-events@^1.0.1:
   version "1.0.1"
