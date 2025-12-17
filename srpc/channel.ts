@@ -44,9 +44,11 @@ export interface ChannelStreamOpts {
 // However: if the remote is removed w/o closing cleanly, the stream will be left open!
 // Enable keepAliveMs and idleTimeoutMs to mitigate this issue with keep-alive messages.
 // NOTE: Browsers will throttle setTimeout in background tabs.
-export class ChannelStream<T = Uint8Array>
-  implements Duplex<AsyncGenerator<T>, Source<T>, Promise<void>>
-{
+export class ChannelStream<T = Uint8Array> implements Duplex<
+  AsyncGenerator<T>,
+  Source<T>,
+  Promise<void>
+> {
   // channel is the read/write channel.
   public readonly channel: ChannelPort
   // sink is the sink for incoming messages.

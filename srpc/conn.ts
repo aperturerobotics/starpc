@@ -47,9 +47,9 @@ export interface StreamHandler {
 // Implements the client by opening streams with the remote.
 // Implements the server by handling incoming streams.
 // If the server is unset, rejects any incoming streams.
-export class StreamConn
-  implements Duplex<AsyncGenerator<Uint8Array | Uint8ArrayList>>
-{
+export class StreamConn implements Duplex<
+  AsyncGenerator<Uint8Array | Uint8ArrayList>
+> {
   // muxer is the stream muxer.
   private _muxer: StreamMuxer
   // server is the server side, if set.

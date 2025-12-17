@@ -11,9 +11,11 @@ import { pipe } from 'it-pipe'
 // When the sink is closed, the broadcast channel also be closed.
 // Note: there is no way to know when a BroadcastChannel is closed!
 // You will need an additional keep-alive on top of BroadcastChannelDuplex.
-export class BroadcastChannelDuplex<T>
-  implements Duplex<AsyncGenerator<T>, Source<T>, Promise<void>>
-{
+export class BroadcastChannelDuplex<T> implements Duplex<
+  AsyncGenerator<T>,
+  Source<T>,
+  Promise<void>
+> {
   // read is the read channel
   public readonly read: BroadcastChannel
   // write is the write channel
