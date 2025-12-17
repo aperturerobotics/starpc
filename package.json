@@ -29,6 +29,21 @@
       "types": "./dist/mock/index.d.ts",
       "import": "./dist/mock/index.js",
       "require": "./dist/mock/index.js"
+    },
+    "./echo": {
+      "types": "./dist/echo/index.d.ts",
+      "import": "./dist/echo/index.js",
+      "require": "./dist/echo/index.js"
+    },
+    "./rpcstream": {
+      "types": "./dist/rpcstream/index.d.ts",
+      "import": "./dist/rpcstream/index.js",
+      "require": "./dist/rpcstream/index.js"
+    },
+    "./rpcstream/rpcstream.pb.js": {
+      "types": "./dist/rpcstream/rpcstream.pb.d.ts",
+      "import": "./dist/rpcstream/rpcstream.pb.js",
+      "require": "./dist/rpcstream/rpcstream.pb.js"
     }
   },
   "files": [
