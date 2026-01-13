@@ -4,8 +4,6 @@ github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3
 github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008/go.mod h1:snaApCEDtrHHP6UWSLKiYNOZU9A5NyzccKenx9oZEzg=
 github.com/aperturerobotics/protobuf-go-lite v0.11.0 h1:IAaZISqrEpodqECYxk0yKWgROEbZtMhs7bErP+Zma9o=
 github.com/aperturerobotics/protobuf-go-lite v0.11.0/go.mod h1:c4kGy7Dkfz6B1m0t4QBIMQoNeQ7m+nYj3Qxxnlwhygo=
-github.com/aperturerobotics/util v1.31.4 h1:2F4j5CML/Hb4dQT1E1pjkZd3AdJhsAQiaRCR9pD/dwo=
-github.com/aperturerobotics/util v1.31.4/go.mod h1:qfeWUnkC60QpjxH4yocO6Q/No+J1E488yzuconPgF8c=
 github.com/aperturerobotics/util v1.32.0 h1:6gIx5zt1/cOpyH5Wq+im3yNLnRncsfw9PupHNQsy8c0=
 github.com/aperturerobotics/util v1.32.0/go.mod h1:Aufy+WeKncuhc1L2yEg+QxRhb8uVnGBprPyTubaDxLw=
 github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=
