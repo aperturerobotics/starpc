@@ -2,67 +2,34 @@ name: Tests
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ['master']
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "master" ]
+    branches: ['master']
 
-# Builds images for target boards.
 permissions:
   contents: read
 
 jobs:
   tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: ['1.25']
-        node: [25.x]
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-
-      - name: Setup Go ${{ matrix.go }}
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
-
-      - name: Setup Node.JS ${{ matrix.node }}
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
-        with:
-          node-version: ${{ matrix.node }}
-          cache: 'yarn'
-
-      - name: Yarn install
-        run: yarn install
-
+          go-version: '1.25'
+      - run: bun install
       - name: Cache tools
         uses: actions/cache@v5
         with:
-          path: |
-            ./tools/bin
+          path: ./tools/bin
           key: ${{ runner.os }}-aptre-tools-${{ hashFiles('tools/go.sum') }}
-
-      - name: Go mod vendor
-        run: go mod vendor
-
-      - name: Build Javascript
-        run: yarn run build
-
-      - name: Test Go
-        run: make test
-
-      - name: Test Js
-        run: yarn test:js
-
-      - name: Lint Js
-        run: yarn run lint:js
-
-      - name: Lint Go
-        run: yarn run lint:go
-
-      - name: Test integration
-        run: yarn run integration
-
-      - name: Depcheck Js
-        run: yarn run deps
+      - run: go mod vendor
+      - run: bun run build
+      - run: make test
+      - run: bun run test:js
+      - run: bun run lint:js
+      - run: bun run lint:go
+      - run: bun run integration
+      - run: bun run deps

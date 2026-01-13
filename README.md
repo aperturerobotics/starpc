@@ -1,5 +1,7 @@
 # starpc
 
+[![npm](https://img.shields.io/npm/v/starpc?style=flat-square)](https://www.npmjs.com/package/starpc)
+[![Build status](https://img.shields.io/github/actions/workflow/status/aperturerobotics/starpc/tests.yml?style=flat-square&branch=master)](https://github.com/aperturerobotics/starpc/actions)
 [![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
 
 > Streaming Protobuf RPC with bidirectional streaming over any multiplexed transport.
@@ -46,17 +48,20 @@ git clone -b starpc https://github.com/aperturerobotics/protobuf-project
 cd protobuf-project
 
 # Install dependencies
+npm install
 yarn install
+pnpm install
+bun install
 
 # Generate TypeScript and Go code
-yarn gen
+bun run gen
 ```
 
 ## Quick Start
 
 1. Start with the [protobuf-project] template repository (starpc branch)
 2. Add your .proto files to the project
-3. Run `yarn gen` to generate TypeScript and Go code
+3. Run `bun run gen` to generate TypeScript and Go code
 4. Implement your services using the examples below
 
 [protobuf-project]: https://github.com/aperturerobotics/protobuf-project/tree/starpc
