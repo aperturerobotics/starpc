@@ -17,9 +17,9 @@ require (
 
 require (
 	github.com/coder/websocket v1.8.14 // latest
-	github.com/libp2p/go-libp2p v0.46.0 // latest
+	github.com/libp2p/go-libp2p v0.47.0 // latest
 	github.com/pkg/errors v0.9.1 // latest
-	github.com/sirupsen/logrus v1.9.3 // latest
+	github.com/sirupsen/logrus v1.9.4 // latest
 	google.golang.org/protobuf v1.36.11 // latest
 )
 
