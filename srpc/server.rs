@@ -195,6 +195,10 @@ impl<I: Invoker + 'static> Server<I> {
             let _ = rpc.close_send().await;
         }
 
+        // Explicitly close the RPC to release the writer/transport.
+        // This ensures the connection doesn't remain open after the terminal response.
+        let _ = rpc.close().await;
+
         // Wait for the read task to finish or timeout, then abort it.
         // This gives time for the client to receive our response.
         tokio::select! {

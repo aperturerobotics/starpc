@@ -115,10 +115,15 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
         // Receive the response.
         let output: O = rpc.msg_recv().await?;
 
+        // Wait for the RPC to complete properly (receive any trailing packets).
+        // This ensures we process any completion/error packets from the server
+        // before cleaning up.
+        let _ = rpc.wait().await;
+
         // Close the RPC to signal completion.
         let _ = rpc.close().await;
 
-        // Clean up the packet handler - it should exit soon after close.
+        // Clean up the packet handler.
         packet_handler.abort();
 
         Ok(output)
@@ -148,7 +153,7 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
 
         // Spawn a task to handle incoming packets.
         let rpc_clone = rpc.clone();
-        tokio::spawn(async move {
+        let packet_handler = tokio::spawn(async move {
             while let Some(packet) = receiver.recv().await {
                 if rpc_clone.handle_packet(packet).await.is_err() {
                     break;
@@ -158,13 +163,19 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
         });
 
         // Return a stream wrapper that provides the Stream interface.
-        Ok(Box::new(ClientStream { rpc }))
+        Ok(Box::new(ClientStream {
+            rpc,
+            packet_handler: tokio::sync::Mutex::new(Some(packet_handler)),
+        }))
     }
 }
 
 /// Stream wrapper for client-side streaming.
 struct ClientStream {
     rpc: Arc<ClientRpc>,
+    /// Handle to the background packet handler task.
+    /// Aborted when the stream is closed.
+    packet_handler: tokio::sync::Mutex<Option<tokio::task::JoinHandle<()>>>,
 }
 
 #[async_trait]
@@ -187,6 +198,10 @@ impl Stream for ClientStream {
 
     async fn close(&self) -> Result<()> {
         let _ = self.rpc.close().await;
+        // Abort the background packet handler to ensure cleanup.
+        if let Some(handle) = self.packet_handler.lock().await.take() {
+            handle.abort();
+        }
         Ok(())
     }
 }
