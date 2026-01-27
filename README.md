@@ -1,6 +1,7 @@
 # starpc
 
 [![npm](https://img.shields.io/npm/v/starpc?style=flat-square)](https://www.npmjs.com/package/starpc)
+[![crates.io](https://img.shields.io/crates/v/starpc.svg?style=flat-square)](https://crates.io/crates/starpc)
 [![Build status](https://img.shields.io/github/actions/workflow/status/aperturerobotics/starpc/tests.yml?style=flat-square&branch=master)](https://github.com/aperturerobotics/starpc/actions)
 [![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
 
@@ -20,24 +21,28 @@
   - [Protobuf Definition](#protobuf)
   - [Go Implementation](#go)
   - [TypeScript Implementation](#typescript)
+  - [Rust Implementation](#rust)
 - [Debugging](#debugging)
 - [Development Setup](#development-setup)
 - [Support](#support)
 
 ## Features
 
-- Full [Proto3 services] support for TypeScript and Go
+- Full [Proto3 services] support for TypeScript, Go, and Rust
 - Bidirectional streaming in browsers via WebSocket or WebRTC
 - Built on libp2p streams with [@chainsafe/libp2p-yamux]
 - Efficient multiplexing of RPCs over single connections
 - Zero-reflection Go via [protobuf-go-lite]
 - Lightweight TypeScript via [protobuf-es-lite]
+- Async Rust via [prost] and [tokio]
 - Sub-stream support via [rpcstream]
 
 [Proto3 services]: https://developers.google.com/protocol-buffers/docs/proto3#services
 [@chainsafe/libp2p-yamux]: https://github.com/ChainSafe/js-libp2p-yamux
 [protobuf-go-lite]: https://github.com/aperturerobotics/protobuf-go-lite
 [protobuf-es-lite]: https://github.com/aperturerobotics/protobuf-es-lite
+[prost]: https://github.com/tokio-rs/prost
+[tokio]: https://github.com/tokio-rs/tokio
 [rpcstream]: ./rpcstream
 
 ## Installation
@@ -133,6 +138,84 @@ For TypeScript <-> TypeScript, see the [e2e] test.
 
 [e2e]: ./e2e/e2e.ts
 [integration]: ./integration/integration.ts
+
+### Rust
+
+Add the dependencies to your `Cargo.toml`:
+
+```toml
+[dependencies]
+starpc = "0.1"
+prost = "0.13"
+tokio = { version = "1", features = ["rt", "macros"] }
+
+[build-dependencies]
+starpc-build = "0.1"
+prost-build = "0.13"
+```
+
+Create a `build.rs` to generate code from your proto files:
+
+```rust
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    starpc_build::configure()
+        .compile_protos(&["proto/echo.proto"], &["proto"])?;
+    Ok(())
+}
+```
+
+Implement and use your service:
+
+```rust
+use starpc::{Client, Mux, Server, SrpcClient};
+use std::sync::Arc;
+
+// Include generated code
+mod proto {
+    include!(concat!(env!("OUT_DIR"), "/echo.rs"));
+}
+
+use proto::*;
+
+// Implement the server trait
+struct EchoServer;
+
+#[starpc::async_trait]
+impl EchoerServer for EchoServer {
+    async fn echo(&self, request: EchoMsg) -> starpc::Result<EchoMsg> {
+        Ok(request) // Echo back the message
+    }
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create server
+    let mux = Arc::new(Mux::new());
+    mux.register(Arc::new(EchoerHandler::new(EchoServer)))?;
+    let server = Server::with_arc(mux);
+
+    // Create an in-memory connection for demonstration
+    let (client_stream, server_stream) = tokio::io::duplex(64 * 1024);
+
+    // Spawn server handler
+    tokio::spawn(async move {
+        let _ = server.handle_stream(server_stream).await;
+    });
+
+    // Create client
+    let opener = starpc::client::transport::SingleStreamOpener::new(client_stream);
+    let client = SrpcClient::new(opener);
+    let echoer = EchoerClientImpl::new(client);
+
+    // Make RPC call
+    let response = echoer.echo(&EchoMsg { body: "Hello!".into() }).await?;
+    println!("Response: {}", response.body);
+
+    Ok(())
+}
+```
+
+See the [echo example](./echo/main.rs) for a complete working example.
 
 #### WebSocket Example
 
