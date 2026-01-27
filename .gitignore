@@ -1,8 +1,7 @@
 /node_modules
 /coverage
-/build
 /.log
-/.snowpack
+/dist
 
 # misc
 .DS_Store
@@ -16,7 +15,6 @@ yarn-debug.log*
 yarn-error.log*
 
 .#*
-/dist
 .*.swp
 .vs/
 .vscode/
@@ -32,3 +30,4 @@ starpc-*.tgz
 # Rust
 /target/
 Cargo.lock
+.opencode/tool-output/
