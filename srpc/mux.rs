@@ -200,16 +200,12 @@ impl Invoker for Mux {
             return h.invoke_method(service_id, method_id, stream).await;
         }
 
-        // Try fallback invokers
-        let fallbacks: Vec<_> = self.fallbacks.read().unwrap().clone();
-        for fallback in fallbacks {
-            let (handled, result) = fallback.invoke_method(service_id, method_id, stream).await;
-            if handled || result.is_err() {
-                return (handled, result);
-            }
-            // Note: if not handled, we can't continue because stream was consumed
-            // This matches Go behavior - only the first fallback gets a chance
-            break;
+        // Try the first fallback invoker.
+        // Only the first fallback gets a chance because the stream is consumed by the call.
+        // This matches Go behavior where the stream cannot be reused after an invocation attempt.
+        let maybe_fallback = self.fallbacks.read().unwrap().first().cloned();
+        if let Some(fallback) = maybe_fallback {
+            return fallback.invoke_method(service_id, method_id, stream).await;
         }
 
         (false, Err(Error::Unimplemented))

@@ -39,18 +39,20 @@ impl StarpcServiceGenerator {
     }
 
     fn generate_service_id(&self, buf: &mut String, service: &Service) {
-        let service_id = format!("{}.{}", service.package, service.proto_name);
-        writeln!(
-            buf,
-            "/// Service ID for {}.",
-            service.proto_name
-        ).unwrap();
+        // Handle empty package: use just the proto_name without leading dot.
+        let service_id = if service.package.is_empty() {
+            service.proto_name.clone()
+        } else {
+            format!("{}.{}", service.package, service.proto_name)
+        };
+        writeln!(buf, "/// Service ID for {}.", service.proto_name).unwrap();
         writeln!(
             buf,
             "pub const {}_SERVICE_ID: &str = \"{}\";",
             to_screaming_snake_case(&service.proto_name),
             service_id
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(buf).unwrap();
     }
 
@@ -58,7 +60,12 @@ impl StarpcServiceGenerator {
         // Generate client trait.
         writeln!(buf, "/// Client trait for {}.", service.proto_name).unwrap();
         writeln!(buf, "#[starpc::async_trait]").unwrap();
-        writeln!(buf, "pub trait {}Client: Send + Sync {{", service.proto_name).unwrap();
+        writeln!(
+            buf,
+            "pub trait {}Client: Send + Sync {{",
+            service.proto_name
+        )
+        .unwrap();
 
         for method in &service.methods {
             let input_type = &method.input_type;
@@ -77,7 +84,8 @@ impl StarpcServiceGenerator {
                     to_snake_case(&method.proto_name),
                     service.proto_name,
                     method.proto_name
-                ).unwrap();
+                )
+                .unwrap();
             } else if method.server_streaming {
                 // Server streaming.
                 writeln!(
@@ -87,7 +95,8 @@ impl StarpcServiceGenerator {
                     input_type,
                     service.proto_name,
                     method.proto_name
-                ).unwrap();
+                )
+                .unwrap();
             } else if method.client_streaming {
                 // Client streaming.
                 writeln!(
@@ -96,7 +105,8 @@ impl StarpcServiceGenerator {
                     to_snake_case(&method.proto_name),
                     service.proto_name,
                     method.proto_name
-                ).unwrap();
+                )
+                .unwrap();
             } else {
                 // Unary.
                 writeln!(
@@ -105,7 +115,8 @@ impl StarpcServiceGenerator {
                     to_snake_case(&method.proto_name),
                     input_type,
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
             }
         }
 
@@ -125,16 +136,16 @@ impl StarpcServiceGenerator {
             writeln!(
                 buf,
                 "/// Stream trait for {}.{}.",
-                service.proto_name,
-                method.proto_name
-            ).unwrap();
+                service.proto_name, method.proto_name
+            )
+            .unwrap();
             writeln!(buf, "#[starpc::async_trait]").unwrap();
             writeln!(
                 buf,
                 "pub trait {}{}Stream: Send + Sync {{",
-                service.proto_name,
-                method.proto_name
-            ).unwrap();
+                service.proto_name, method.proto_name
+            )
+            .unwrap();
 
             // Always provide context.
             writeln!(buf, "    /// Returns the context for this stream.").unwrap();
@@ -146,7 +157,8 @@ impl StarpcServiceGenerator {
                     buf,
                     "    async fn send(&self, msg: &{}) -> starpc::Result<()>;",
                     input_type
-                ).unwrap();
+                )
+                .unwrap();
             }
 
             if method.server_streaming {
@@ -155,17 +167,23 @@ impl StarpcServiceGenerator {
                     buf,
                     "    async fn recv(&self) -> starpc::Result<{}>;",
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
             }
 
             if method.client_streaming && !method.server_streaming {
                 // Client streaming - need close_and_recv for the final response.
-                writeln!(buf, "    /// Closes the send side and receives the response.").unwrap();
+                writeln!(
+                    buf,
+                    "    /// Closes the send side and receives the response."
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "    async fn close_and_recv(&self) -> starpc::Result<{}>;",
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
             } else {
                 writeln!(buf, "    /// Closes the stream.").unwrap();
                 writeln!(buf, "    async fn close(&self) -> starpc::Result<()>;").unwrap();
@@ -186,7 +204,12 @@ impl StarpcServiceGenerator {
         writeln!(buf, "}}").unwrap();
         writeln!(buf).unwrap();
 
-        writeln!(buf, "impl<C: starpc::Client> {}ClientImpl<C> {{", service.proto_name).unwrap();
+        writeln!(
+            buf,
+            "impl<C: starpc::Client> {}ClientImpl<C> {{",
+            service.proto_name
+        )
+        .unwrap();
         writeln!(buf, "    /// Creates a new client.").unwrap();
         writeln!(buf, "    pub fn new(client: C) -> Self {{").unwrap();
         writeln!(buf, "        Self {{ client }}").unwrap();
@@ -200,7 +223,8 @@ impl StarpcServiceGenerator {
             buf,
             "impl<C: starpc::Client + 'static> {}Client for {}ClientImpl<C> {{",
             service.proto_name, service.proto_name
-        ).unwrap();
+        )
+        .unwrap();
 
         for method in &service.methods {
             let input_type = &method.input_type;
@@ -212,22 +236,21 @@ impl StarpcServiceGenerator {
                 writeln!(
                     buf,
                     "    async fn {}(&self) -> starpc::Result<Box<dyn {}{}Stream>> {{",
-                    method_name,
-                    service.proto_name,
-                    method.proto_name
-                ).unwrap();
+                    method_name, service.proto_name, method.proto_name
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "        let stream = self.client.new_stream(\"{}\", \"{}\", None).await?;",
-                    service_id,
-                    method.proto_name
-                ).unwrap();
+                    service_id, method.proto_name
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "        Ok(Box::new({}{}StreamImpl {{ stream }}))",
-                    service.proto_name,
-                    method.proto_name
-                ).unwrap();
+                    service.proto_name, method.proto_name
+                )
+                .unwrap();
                 writeln!(buf, "    }}").unwrap();
             } else if method.server_streaming {
                 // Server streaming.
@@ -251,47 +274,45 @@ impl StarpcServiceGenerator {
                 writeln!(
                     buf,
                     "        Ok(Box::new({}{}StreamImpl {{ stream }}))",
-                    service.proto_name,
-                    method.proto_name
-                ).unwrap();
+                    service.proto_name, method.proto_name
+                )
+                .unwrap();
                 writeln!(buf, "    }}").unwrap();
             } else if method.client_streaming {
                 // Client streaming.
                 writeln!(
                     buf,
                     "    async fn {}(&self) -> starpc::Result<Box<dyn {}{}Stream>> {{",
-                    method_name,
-                    service.proto_name,
-                    method.proto_name
-                ).unwrap();
+                    method_name, service.proto_name, method.proto_name
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "        let stream = self.client.new_stream(\"{}\", \"{}\", None).await?;",
-                    service_id,
-                    method.proto_name
-                ).unwrap();
+                    service_id, method.proto_name
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "        Ok(Box::new({}{}StreamImpl {{ stream }}))",
-                    service.proto_name,
-                    method.proto_name
-                ).unwrap();
+                    service.proto_name, method.proto_name
+                )
+                .unwrap();
                 writeln!(buf, "    }}").unwrap();
             } else {
                 // Unary.
                 writeln!(
                     buf,
                     "    async fn {}(&self, request: &{}) -> starpc::Result<{}> {{",
-                    method_name,
-                    input_type,
-                    output_type
-                ).unwrap();
+                    method_name, input_type, output_type
+                )
+                .unwrap();
                 writeln!(
                     buf,
                     "        self.client.exec_call(\"{}\", \"{}\", request).await",
-                    service_id,
-                    method.proto_name
-                ).unwrap();
+                    service_id, method.proto_name
+                )
+                .unwrap();
                 writeln!(buf, "    }}").unwrap();
             }
         }
@@ -315,9 +336,9 @@ impl StarpcServiceGenerator {
             writeln!(
                 buf,
                 "struct {}{}StreamImpl {{",
-                service.proto_name,
-                method.proto_name
-            ).unwrap();
+                service.proto_name, method.proto_name
+            )
+            .unwrap();
             writeln!(buf, "    stream: Box<dyn starpc::Stream>,").unwrap();
             writeln!(buf, "}}").unwrap();
             writeln!(buf).unwrap();
@@ -326,11 +347,9 @@ impl StarpcServiceGenerator {
             writeln!(
                 buf,
                 "impl {}{}Stream for {}{}StreamImpl {{",
-                service.proto_name,
-                method.proto_name,
-                service.proto_name,
-                method.proto_name
-            ).unwrap();
+                service.proto_name, method.proto_name, service.proto_name, method.proto_name
+            )
+            .unwrap();
 
             writeln!(buf, "    fn context(&self) -> &starpc::Context {{").unwrap();
             writeln!(buf, "        self.stream.context()").unwrap();
@@ -341,7 +360,8 @@ impl StarpcServiceGenerator {
                     buf,
                     "    async fn send(&self, msg: &{}) -> starpc::Result<()> {{",
                     input_type
-                ).unwrap();
+                )
+                .unwrap();
                 writeln!(buf, "        self.stream.msg_send(msg).await").unwrap();
                 writeln!(buf, "    }}").unwrap();
             }
@@ -351,7 +371,8 @@ impl StarpcServiceGenerator {
                     buf,
                     "    async fn recv(&self) -> starpc::Result<{}> {{",
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
                 writeln!(buf, "        self.stream.msg_recv().await").unwrap();
                 writeln!(buf, "    }}").unwrap();
             }
@@ -361,7 +382,8 @@ impl StarpcServiceGenerator {
                     buf,
                     "    async fn close_and_recv(&self) -> starpc::Result<{}> {{",
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
                 writeln!(buf, "        self.stream.close_send().await?;").unwrap();
                 writeln!(buf, "        self.stream.msg_recv().await").unwrap();
                 writeln!(buf, "    }}").unwrap();
@@ -379,7 +401,12 @@ impl StarpcServiceGenerator {
     fn generate_server_trait(&self, buf: &mut String, service: &Service) {
         writeln!(buf, "/// Server trait for {}.", service.proto_name).unwrap();
         writeln!(buf, "#[starpc::async_trait]").unwrap();
-        writeln!(buf, "pub trait {}Server: Send + Sync {{", service.proto_name).unwrap();
+        writeln!(
+            buf,
+            "pub trait {}Server: Send + Sync {{",
+            service.proto_name
+        )
+        .unwrap();
 
         for method in &service.methods {
             let input_type = &method.input_type;
@@ -409,10 +436,11 @@ impl StarpcServiceGenerator {
                 // Client streaming.
                 writeln!(
                     buf,
-                    "    async fn {}(&self, stream: Box<dyn starpc::Stream>) -> starpc::Result<{}>;",
+                    "    async fn {}(&self, stream: &dyn starpc::Stream) -> starpc::Result<{}>;",
                     to_snake_case(&method.proto_name),
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
             } else {
                 // Unary.
                 writeln!(
@@ -421,7 +449,8 @@ impl StarpcServiceGenerator {
                     to_snake_case(&method.proto_name),
                     input_type,
                     output_type
-                ).unwrap();
+                )
+                .unwrap();
             }
         }
 
@@ -437,7 +466,8 @@ impl StarpcServiceGenerator {
             buf,
             "const {}_METHOD_IDS: &[&str] = &[",
             to_screaming_snake_case(&service.proto_name)
-        ).unwrap();
+        )
+        .unwrap();
         for method in &service.methods {
             writeln!(buf, "    \"{}\",", method.proto_name).unwrap();
         }
@@ -450,7 +480,8 @@ impl StarpcServiceGenerator {
             buf,
             "pub struct {}Handler<S: {}Server> {{",
             service.proto_name, service.proto_name
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(buf, "    server: std::sync::Arc<S>,").unwrap();
         writeln!(buf, "}}").unwrap();
         writeln!(buf).unwrap();
@@ -459,14 +490,27 @@ impl StarpcServiceGenerator {
             buf,
             "impl<S: {}Server + 'static> {}Handler<S> {{",
             service.proto_name, service.proto_name
-        ).unwrap();
-        writeln!(buf, "    /// Creates a new handler wrapping the server implementation.").unwrap();
+        )
+        .unwrap();
+        writeln!(
+            buf,
+            "    /// Creates a new handler wrapping the server implementation."
+        )
+        .unwrap();
         writeln!(buf, "    pub fn new(server: S) -> Self {{").unwrap();
-        writeln!(buf, "        Self {{ server: std::sync::Arc::new(server) }}").unwrap();
+        writeln!(
+            buf,
+            "        Self {{ server: std::sync::Arc::new(server) }}"
+        )
+        .unwrap();
         writeln!(buf, "    }}").unwrap();
         writeln!(buf).unwrap();
         writeln!(buf, "    /// Creates a new handler with a shared server.").unwrap();
-        writeln!(buf, "    pub fn with_arc(server: std::sync::Arc<S>) -> Self {{").unwrap();
+        writeln!(
+            buf,
+            "    pub fn with_arc(server: std::sync::Arc<S>) -> Self {{"
+        )
+        .unwrap();
         writeln!(buf, "        Self {{ server }}").unwrap();
         writeln!(buf, "    }}").unwrap();
         writeln!(buf, "}}").unwrap();
@@ -478,7 +522,8 @@ impl StarpcServiceGenerator {
             buf,
             "impl<S: {}Server + 'static> starpc::Invoker for {}Handler<S> {{",
             service.proto_name, service.proto_name
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(buf, "    async fn invoke_method(").unwrap();
         writeln!(buf, "        &self,").unwrap();
         writeln!(buf, "        _service_id: &str,").unwrap();
@@ -499,10 +544,16 @@ impl StarpcServiceGenerator {
                     buf,
                     "                (true, self.server.{}(stream).await)",
                     method_name
-                ).unwrap();
+                )
+                .unwrap();
             } else if method.server_streaming {
                 // Server streaming - receive request first.
-                writeln!(buf, "                let request: {} = match stream.msg_recv().await {{", input_type).unwrap();
+                writeln!(
+                    buf,
+                    "                let request: {} = match stream.msg_recv().await {{",
+                    input_type
+                )
+                .unwrap();
                 writeln!(buf, "                    Ok(r) => r,").unwrap();
                 writeln!(buf, "                    Err(e) => return (true, Err(e)),").unwrap();
                 writeln!(buf, "                }};").unwrap();
@@ -510,23 +561,36 @@ impl StarpcServiceGenerator {
                     buf,
                     "                (true, self.server.{}(request, stream).await)",
                     method_name
-                ).unwrap();
+                )
+                .unwrap();
             } else if method.client_streaming {
-                // Client streaming.
+                // Client streaming - receive messages, then send response.
                 writeln!(
                     buf,
-                    "                match self.server.{}(stream).await {{",
+                    "                match self.server.{}(stream.as_ref()).await {{",
                     method_name
-                ).unwrap();
+                )
+                .unwrap();
                 writeln!(buf, "                    Ok(response) => {{").unwrap();
-                writeln!(buf, "                        // Response is sent by the handler.").unwrap();
+                writeln!(
+                    buf,
+                    "                        if let Err(e) = stream.msg_send(&response).await {{"
+                )
+                .unwrap();
+                writeln!(buf, "                            return (true, Err(e));").unwrap();
+                writeln!(buf, "                        }}").unwrap();
                 writeln!(buf, "                        (true, Ok(()))").unwrap();
                 writeln!(buf, "                    }}").unwrap();
                 writeln!(buf, "                    Err(e) => (true, Err(e)),").unwrap();
                 writeln!(buf, "                }}").unwrap();
             } else {
                 // Unary.
-                writeln!(buf, "                let request: {} = match stream.msg_recv().await {{", input_type).unwrap();
+                writeln!(
+                    buf,
+                    "                let request: {} = match stream.msg_recv().await {{",
+                    input_type
+                )
+                .unwrap();
                 writeln!(buf, "                    Ok(r) => r,").unwrap();
                 writeln!(buf, "                    Err(e) => return (true, Err(e)),").unwrap();
                 writeln!(buf, "                }};").unwrap();
@@ -534,9 +598,14 @@ impl StarpcServiceGenerator {
                     buf,
                     "                match self.server.{}(request).await {{",
                     method_name
-                ).unwrap();
+                )
+                .unwrap();
                 writeln!(buf, "                    Ok(response) => {{").unwrap();
-                writeln!(buf, "                        if let Err(e) = stream.msg_send(&response).await {{").unwrap();
+                writeln!(
+                    buf,
+                    "                        if let Err(e) = stream.msg_send(&response).await {{"
+                )
+                .unwrap();
                 writeln!(buf, "                            return (true, Err(e));").unwrap();
                 writeln!(buf, "                        }}").unwrap();
                 writeln!(buf, "                        (true, Ok(()))").unwrap();
@@ -548,7 +617,11 @@ impl StarpcServiceGenerator {
             writeln!(buf, "            }}").unwrap();
         }
 
-        writeln!(buf, "            _ => (false, Err(starpc::Error::Unimplemented)),").unwrap();
+        writeln!(
+            buf,
+            "            _ => (false, Err(starpc::Error::Unimplemented)),"
+        )
+        .unwrap();
         writeln!(buf, "        }}").unwrap();
         writeln!(buf, "    }}").unwrap();
         writeln!(buf, "}}").unwrap();
@@ -559,17 +632,23 @@ impl StarpcServiceGenerator {
             buf,
             "impl<S: {}Server + 'static> starpc::Handler for {}Handler<S> {{",
             service.proto_name, service.proto_name
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(buf, "    fn service_id(&self) -> &'static str {{").unwrap();
         writeln!(buf, "        \"{}\"", service_id).unwrap();
         writeln!(buf, "    }}").unwrap();
         writeln!(buf).unwrap();
-        writeln!(buf, "    fn method_ids(&self) -> &'static [&'static str] {{").unwrap();
+        writeln!(
+            buf,
+            "    fn method_ids(&self) -> &'static [&'static str] {{"
+        )
+        .unwrap();
         writeln!(
             buf,
             "        {}_METHOD_IDS",
             to_screaming_snake_case(&service.proto_name)
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(buf, "    }}").unwrap();
         writeln!(buf, "}}").unwrap();
         writeln!(buf).unwrap();
@@ -579,6 +658,8 @@ impl StarpcServiceGenerator {
 impl ServiceGenerator for StarpcServiceGenerator {
     fn generate(&mut self, service: Service, buf: &mut String) {
         // Import StreamExt for msg_send/msg_recv methods.
+        // Allow unused in case no streaming methods use it.
+        writeln!(buf, "#[allow(unused_imports)]").unwrap();
         writeln!(buf, "use starpc::StreamExt;").unwrap();
         writeln!(buf).unwrap();
 
