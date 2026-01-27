@@ -15,6 +15,7 @@
 ## Table of Contents
 
 - [Features](#features)
+- [Documentation](#documentation)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Examples](#examples)
@@ -44,6 +45,12 @@
 [prost]: https://github.com/tokio-rs/prost
 [tokio]: https://github.com/tokio-rs/tokio
 [rpcstream]: ./rpcstream
+
+## Documentation
+
+- [Getting Started with TypeScript](./GET_STARTED_TYPESCRIPT.md)
+- [Getting Started with Go](./GET_STARTED_GO.md)
+- [Getting Started with Rust](./GET_STARTED_RUST.md)
 
 ## Installation
 
