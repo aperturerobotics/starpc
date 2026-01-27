@@ -115,7 +115,10 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
         // Receive the response.
         let output: O = rpc.msg_recv().await?;
 
-        // Clean up the packet handler.
+        // Close the RPC to signal completion.
+        let _ = rpc.close().await;
+
+        // Clean up the packet handler - it should exit soon after close.
         packet_handler.abort();
 
         Ok(output)

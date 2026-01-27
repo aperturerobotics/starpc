@@ -47,7 +47,7 @@ impl EchoerServer for EchoServerImpl {
         Ok(())
     }
 
-    async fn echo_client_stream(&self, stream: Box<dyn Stream>) -> Result<EchoMsg> {
+    async fn echo_client_stream(&self, stream: &dyn Stream) -> Result<EchoMsg> {
         println!("Server: starting client stream");
 
         let mut messages = Vec::new();
@@ -64,11 +64,10 @@ impl EchoerServer for EchoServerImpl {
             }
         }
 
-        // Return combined response.
+        // Return combined response (the handler will send it automatically).
         let response = EchoMsg {
             body: messages.join(", "),
         };
-        stream.msg_send(&response).await?;
 
         Ok(response)
     }
