@@ -195,7 +195,12 @@ impl StarpcServiceGenerator {
     }
 
     fn generate_client_impl(&self, buf: &mut String, service: &Service) {
-        let service_id = format!("{}.{}", service.package, service.proto_name);
+        // Handle empty package: use just the proto_name without leading dot.
+        let service_id = if service.package.is_empty() {
+            service.proto_name.clone()
+        } else {
+            format!("{}.{}", service.package, service.proto_name)
+        };
 
         // Generate client implementation struct.
         writeln!(buf, "/// Client implementation for {}.", service.proto_name).unwrap();
@@ -459,7 +464,12 @@ impl StarpcServiceGenerator {
     }
 
     fn generate_handler(&self, buf: &mut String, service: &Service) {
-        let service_id = format!("{}.{}", service.package, service.proto_name);
+        // Handle empty package: use just the proto_name without leading dot.
+        let service_id = if service.package.is_empty() {
+            service.proto_name.clone()
+        } else {
+            format!("{}.{}", service.package, service.proto_name)
+        };
 
         // Generate method IDs constant.
         writeln!(

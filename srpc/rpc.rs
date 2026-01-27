@@ -122,12 +122,13 @@ impl CommonRpc {
             {
                 let state = self.state.lock().await;
 
-                if let Some(ref err) = state.remote_err {
-                    return Err(Error::Remote(err.clone()));
-                }
-
+                // Check cancellation first - local cancellation takes priority
                 if self.ctx.is_cancelled() {
                     return Err(Error::Cancelled);
+                }
+
+                if let Some(ref err) = state.remote_err {
+                    return Err(Error::Remote(err.clone()));
                 }
 
                 if state.data_closed {
@@ -149,24 +150,8 @@ impl CommonRpc {
     /// This matches the Go implementation which returns `io.EOF`.
     pub async fn read_one(&self) -> Result<Bytes> {
         loop {
-            // Check for cancellation first
-            if self.ctx.is_cancelled() {
-                // If context cancelled and data not closed, close it now
-                let mut state = self.state.lock().await;
-                if !state.data_closed {
-                    state.data_closed = true;
-                    if state.remote_err.is_none() {
-                        state.remote_err = Some("context cancelled".to_string());
-                    }
-                    drop(state);
-                    let _ = self.writer.close().await;
-                    self.ctx.cancel();
-                    self.notify.notify_waiters();
-                }
-                return Err(Error::Cancelled);
-            }
-
-            // Try to get a message from the queue
+            // Try to get a message from the queue first, before checking cancellation.
+            // This ensures we drain any pending messages even if the context is cancelled.
             {
                 let mut state = self.state.lock().await;
 
@@ -174,13 +159,28 @@ impl CommonRpc {
                     return Ok(data);
                 }
 
-                // Check if the stream is closed
+                // Check if the stream is closed (graceful close from remote)
                 if state.data_closed {
                     if let Some(ref err) = state.remote_err {
                         return Err(Error::Remote(err.clone()));
                     }
                     return Err(Error::StreamClosed);
                 }
+            }
+
+            // Now check for cancellation - only if no data is available
+            // and the stream isn't properly closed.
+            if self.ctx.is_cancelled() {
+                // If context cancelled and data not closed, close it now
+                let mut state = self.state.lock().await;
+                if !state.data_closed {
+                    state.data_closed = true;
+                    drop(state);
+                    let _ = self.writer.close().await;
+                    self.ctx.cancel();
+                    self.notify.notify_waiters();
+                }
+                return Err(Error::Cancelled);
             }
 
             // Wait for notification or cancellation
@@ -304,13 +304,14 @@ impl CommonRpc {
     /// Closes the RPC, releasing resources.
     ///
     /// This is called internally and handles cleanup.
+    /// Note: We don't set remote_err here because local cancellation is signaled
+    /// via ctx.is_cancelled(), which is checked first in wait()/read_one().
     async fn close_locked(&self) {
         let mut state = self.state.lock().await;
         state.data_closed = true;
         self.local_completed.store(true, Ordering::SeqCst);
-        if state.remote_err.is_none() {
-            state.remote_err = Some("cancelled".to_string());
-        }
+        // Don't set remote_err for local closure - rely on ctx.is_cancelled() instead
+        // to distinguish between local cancellation and remote errors.
         drop(state);
 
         let _ = self.writer.close().await;
