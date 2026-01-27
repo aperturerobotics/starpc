@@ -1,0 +1,21 @@
+[package]
+name = "echo-example"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "echo-example"
+path = "main.rs"
+
+[dependencies]
+starpc = { workspace = true }
+prost = { workspace = true }
+tokio = { version = "1", features = ["full"] }
+async-trait = { workspace = true }
+
+[build-dependencies]
+starpc-build = { workspace = true }
+prost-build = { workspace = true }

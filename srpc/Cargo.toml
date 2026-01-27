@@ -1,0 +1,26 @@
+[package]
+name = "starpc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+prost = { workspace = true }
+bytes = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+futures = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+pin-project-lite = { workspace = true }
+
+[build-dependencies]
+prost-build = { workspace = true }

@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = ["srpc", "starpc-build", "echo"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+repository = "https://github.com/aperturerobotics/starpc"
+description = "Streaming protobuf RPC framework"
+keywords = ["rpc", "protobuf", "streaming", "grpc"]
+categories = ["network-programming", "asynchronous"]
+
+[workspace.dependencies]
+starpc = { path = "srpc", package = "starpc" }
+starpc-build = { path = "starpc-build" }
+prost = "0.13"
+prost-build = "0.13"
+bytes = "1.9"
+tokio = { version = "1", features = ["io-util", "sync", "rt", "macros", "time"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+futures = "0.3"
+thiserror = "2.0"
+async-trait = "0.1"
+pin-project-lite = "0.2"

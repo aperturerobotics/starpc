@@ -28,3 +28,7 @@ debug.test
 .aider*
 starpc-*.tgz
 .env
+
+# Rust
+/target/
+Cargo.lock
