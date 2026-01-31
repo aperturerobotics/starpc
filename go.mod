@@ -13,7 +13,7 @@ replace (
 require (
 	github.com/aperturerobotics/common v0.26.11 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.12.0 // latest
-	github.com/aperturerobotics/util v1.32.0 // latest
+	github.com/aperturerobotics/util v1.32.3 // latest
 )
 
 require (
@@ -29,7 +29,7 @@ require (
 	github.com/aperturerobotics/abseil-cpp v0.0.0-20260130220554-305ed0ea7006 // indirect
 	github.com/aperturerobotics/cli v1.1.0 // indirect
 	github.com/aperturerobotics/go-protoc-wasi v0.0.0-20260131050911-b5f94b044584 // indirect
-	github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20240713111131-be6bf89c3008 // indirect
+	github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20251104042408-0c9eb8a3f726 // indirect
 	github.com/aperturerobotics/protobuf v0.0.0-20260131033322-bd4a2148b9c4 // indirect
 )
 
@@ -52,6 +52,6 @@ require (
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )

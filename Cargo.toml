@@ -15,8 +15,8 @@ categories = ["network-programming", "asynchronous"]
 [workspace.dependencies]
 starpc = { path = "srpc", package = "starpc" }
 starpc-build = { path = "build/rs" }
-prost = "0.13"
-prost-build = "0.13"
+prost = "0.14"
+prost-build = "0.14"
 bytes = "1.9"
 tokio = { version = "1", features = ["io-util", "sync", "rt", "macros", "time"] }
 tokio-util = { version = "0.7", features = ["codec"] }
