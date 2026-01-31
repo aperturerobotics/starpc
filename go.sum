@@ -2,8 +2,8 @@ github.com/aperturerobotics/abseil-cpp v0.0.0-20260130220554-305ed0ea7006 h1:Uva
 github.com/aperturerobotics/abseil-cpp v0.0.0-20260130220554-305ed0ea7006/go.mod h1:lNSJTKECIUFAnfeSqy01kXYTYe1BHubW7198jNX3nEw=
 github.com/aperturerobotics/cli v1.1.0 h1:7a+YRC+EY3npAnTzhHV5gLCiw91KS0Ts3XwLILGOsT8=
 github.com/aperturerobotics/cli v1.1.0/go.mod h1:M7BFP9wow5ytTzMyJQOOO991fGfsUqdTI7gGEsHfTQ8=
-github.com/aperturerobotics/common v0.26.10 h1:Ze/SNDVLNsVWySVY9Jf9jq0/AzS+P6aTcsPr1w9lFNU=
-github.com/aperturerobotics/common v0.26.10/go.mod h1:mSIaXBsZbPQP2Tw8CHl0CiAPCwq7QDsiFG3rVtof2ik=
+github.com/aperturerobotics/common v0.26.11 h1:pEcMztDoPxb5X36rL/BVW6wPeiX8jor+65dUj4nFl14=
+github.com/aperturerobotics/common v0.26.11/go.mod h1:mSIaXBsZbPQP2Tw8CHl0CiAPCwq7QDsiFG3rVtof2ik=
 github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0 h1:tGwbeDoEeQCrUQL+ClUywldqvz9eRmhcVrGwGxz2xJg=
 github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0/go.mod h1:FJkAtQcP9XxqG1NNLNHKm+wLVIGSCQX2s6CEoD+w97g=
 github.com/aperturerobotics/go-protoc-wasi v0.0.0-20260131050911-b5f94b044584 h1:ER8DYYL71cTg39uZ+Gi699tL/hZoscUWDOw4DbizqhI=

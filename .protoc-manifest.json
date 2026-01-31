@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "protocFlagsHash": "b18bc65b42b0b8d9d78f734bb4d1e4c8138b7ed27b4dae3dc6cf79ad3847d5db",
+  "protocFlagsHash": "c1e57cda2b0c13779271aa02fc0d46f00bb6e52688c6ae5cefcdbae02e444ad9",
   "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.0,starpc=v0.42.0,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
