@@ -23,11 +23,11 @@ jobs:
       - name: Cache tools
         uses: actions/cache@v5
         with:
-          path: ./tools/bin
-          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('tools/go.sum') }}
+          path: ./.tools
+          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
       - run: go mod vendor
       - run: bun run build
-      - run: make test
+      - run: bun run go:aptre -- test
       - run: bun run test:js
       - run: bun run lint:js
       - run: bun run lint:go

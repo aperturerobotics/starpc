@@ -2,6 +2,7 @@
 /coverage
 /.log
 /dist
+/.tools
 
 # misc
 .DS_Store

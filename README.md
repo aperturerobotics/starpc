@@ -59,11 +59,10 @@
 git clone -b starpc https://github.com/aperturerobotics/protobuf-project
 cd protobuf-project
 
-# Install dependencies
-npm install
-yarn install
-pnpm install
+# Install dependencies (any of these work)
 bun install
+npm install
+pnpm install
 
 # Generate TypeScript and Go code
 bun run gen
@@ -316,21 +315,8 @@ Uses [protobuf-es-lite] (fork of [protobuf-es]) for TypeScript.
 
 ### MacOS
 
-Install required packages:
-
-```bash
-brew install bash make coreutils gnu-sed findutils protobuf
-brew link --overwrite protobuf
-```
-
-Add to your shell rc file (.bashrc, .zshrc):
-
-```bash
-export PATH="/opt/homebrew/opt/coreutils/libexec/gnubin:$PATH"
-export PATH="/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH"
-export PATH="/opt/homebrew/opt/findutils/libexec/gnubin:$PATH"
-export PATH="/opt/homebrew/opt/make/libexec/gnubin:$PATH"
-```
+The `aptre` CLI handles all protobuf generation without requiring additional
+homebrew packages. Just run `bun run gen` after installing bun.
 
 ## Support
 

@@ -2,10 +2,10 @@
 // @generated from file github.com/aperturerobotics/starpc/mock/mock.proto (package e2e.mock, syntax proto3)
 /* eslint-disable */
 
-import type { MessageType, PartialFieldInfo } from "@aptre/protobuf-es-lite";
-import { createMessageType, ScalarType } from "@aptre/protobuf-es-lite";
+import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
+import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
 
-export const protobufPackage = "e2e.mock";
+export const protobufPackage = 'e2e.mock'
 
 /**
  * MockMsg is the mock message body.
@@ -16,16 +16,14 @@ export interface MockMsg {
   /**
    * @generated from field: string body = 1;
    */
-  body?: string;
-
-};
+  body?: string
+}
 
 // MockMsg contains the message type declaration for MockMsg.
 export const MockMsg: MessageType<MockMsg> = createMessageType({
-    typeName: "e2e.mock.MockMsg",
-    fields: [
-        { no: 1, name: "body", kind: "scalar", T: ScalarType.STRING },
-    ] as readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
+  typeName: 'e2e.mock.MockMsg',
+  fields: [
+    { no: 1, name: 'body', kind: 'scalar', T: ScalarType.STRING },
+  ] as readonly PartialFieldInfo[],
+  packedByDefault: true,
+})
