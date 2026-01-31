@@ -32,11 +32,13 @@ A typical starpc Rust project structure:
 
 ```
 my-project/
-├── proto/
-│   └── echo.proto          # Your service definitions
+├── echo/
+│   ├── echo.proto          # Your service definitions
+│   ├── echo.pb.go          # Generated message types (for codegen)
+│   └── echo_srpc.pb.go     # Generated service interfaces (for codegen)
 ├── src/
 │   ├── gen/
-│   │   └── mod.rs          # Include generated code
+│   │   └── mod.rs          # Include generated Rust code
 │   ├── main.rs             # Application entry point
 │   └── lib.rs              # Optional library
 ├── build.rs                # Code generation script

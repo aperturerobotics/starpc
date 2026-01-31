@@ -43,9 +43,8 @@ A typical starpc C++ project structure:
 
 ```
 my-project/
-├── proto/
-│   └── echo.proto              # Your service definitions
 ├── echo/
+│   ├── echo.proto              # Your service definitions
 │   ├── echo.pb.h               # Generated message types
 │   ├── echo.pb.cc              # Generated message implementation
 │   ├── echo_srpc.pb.hpp        # Generated service interfaces

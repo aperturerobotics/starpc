@@ -38,9 +38,8 @@ A typical starpc TypeScript project structure:
 
 ```
 my-project/
-├── proto/
-│   └── echo.proto        # Your service definitions
-├── src/
+├── echo/
+│   ├── echo.proto        # Your service definitions
 │   ├── echo.pb.ts        # Generated message types
 │   ├── echo_srpc.pb.ts   # Generated service interfaces
 │   ├── server.ts         # Server implementation

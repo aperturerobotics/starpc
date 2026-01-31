@@ -33,9 +33,8 @@ A typical starpc Go project structure:
 
 ```
 my-project/
-├── proto/
-│   └── echo.proto          # Your service definitions
 ├── echo/
+│   ├── echo.proto          # Your service definitions
 │   ├── echo.pb.go          # Generated message types
 │   ├── echo_srpc.pb.go     # Generated service interfaces
 │   └── server.go           # Server implementation
