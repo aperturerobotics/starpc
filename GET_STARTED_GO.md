@@ -5,8 +5,8 @@ This guide walks you through building your first starpc service in Go, covering 
 ## Prerequisites
 
 - **Go** 1.21+
-- **protoc** - Protocol Buffers compiler ([installation guide](https://grpc.io/docs/protoc-installation/))
-- **Make** (optional, for code generation)
+
+No separate protoc installation is required - the code generator uses an embedded WebAssembly version of protoc via [go-protoc-wasi].
 
 ## Installation
 
@@ -458,3 +458,5 @@ func TestEchoServer(t *testing.T) {
 - [Integration tests](./integration) - Go/TypeScript interop examples
 - [rpcstream](./rpcstream) - Nested RPC streams
 - [README](./README.md) - Full documentation
+
+[go-protoc-wasi]: https://github.com/aperturerobotics/go-protoc-wasi

@@ -6,7 +6,9 @@ This guide walks you through building your first starpc service in Rust, coverin
 
 - **Rust** 1.75+
 - **Cargo**
-- **protoc** - Protocol Buffers compiler ([installation guide](https://grpc.io/docs/protoc-installation/))
+- **Go** 1.21+ (for code generation)
+
+No separate protoc installation is required - the code generator uses an embedded WebAssembly version of protoc via [go-protoc-wasi].
 
 ## Installation
 
@@ -479,3 +481,5 @@ For multiplexed connections (multiple concurrent streams), consider using yamux 
 - [Echo example](./echo/main.rs) - Complete working example
 - [starpc crate docs](https://docs.rs/starpc) - API documentation
 - [README](./README.md) - Full documentation
+
+[go-protoc-wasi]: https://github.com/aperturerobotics/go-protoc-wasi

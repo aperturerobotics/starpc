@@ -6,7 +6,9 @@ This guide walks you through building your first starpc service in TypeScript, c
 
 - **Node.js** v18+ (or Bun/Deno)
 - **npm**, **yarn**, **pnpm**, or **bun**
-- **protoc** - Protocol Buffers compiler ([installation guide](https://grpc.io/docs/protoc-installation/))
+- **Go** 1.21+ (for code generation)
+
+No separate protoc installation is required - the code generator uses an embedded WebAssembly version of protoc via [go-protoc-wasi].
 
 ## Installation
 
@@ -356,3 +358,5 @@ DEBUG=starpc:stream-conn node app.js
 - [Integration tests](./integration) - Go/TypeScript interop examples
 - [rpcstream](./rpcstream) - Nested RPC streams
 - [README](./README.md) - Full documentation
+
+[go-protoc-wasi]: https://github.com/aperturerobotics/go-protoc-wasi
