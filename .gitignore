@@ -3,6 +3,8 @@
 /.log
 /dist
 /.tools
+/protoc-gen-starpc-cpp
+/build
 
 # misc
 .DS_Store
