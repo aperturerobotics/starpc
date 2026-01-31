@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["srpc", "build/rs", "echo"]
+members = ["srpc", "rs", "echo"]
 
 [workspace.package]
 version = "0.1.0"
@@ -14,7 +14,7 @@ categories = ["network-programming", "asynchronous"]
 
 [workspace.dependencies]
 starpc = { path = "srpc", package = "starpc" }
-starpc-build = { path = "build/rs" }
+starpc-build = { path = "rs" }
 prost = "0.14"
 prost-build = "0.14"
 bytes = "1.9"

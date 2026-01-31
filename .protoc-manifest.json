@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "protocFlagsHash": "c1e57cda2b0c13779271aa02fc0d46f00bb6e52688c6ae5cefcdbae02e444ad9",
+  "protocFlagsHash": "ef56c438333280d8ae5bb9d4738ffa817a4afd1684833a7ce6615f673cd26d3b",
   "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.0,starpc=v0.42.0,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
@@ -10,13 +10,17 @@
         "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.go",
         "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.h",
         "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.ts",
+        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.cpp",
         "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.go",
+        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.hpp",
         "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.ts",
         "echo/echo.pb.cc",
         "echo/echo.pb.go",
         "echo/echo.pb.h",
         "echo/echo.pb.ts",
+        "echo/echo_srpc.pb.cpp",
         "echo/echo_srpc.pb.go",
+        "echo/echo_srpc.pb.hpp",
         "echo/echo_srpc.pb.ts"
       ],
       "protoFiles": [
@@ -30,13 +34,17 @@
         "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.go",
         "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.h",
         "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.ts",
+        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.cpp",
         "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.go",
+        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.hpp",
         "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.ts",
         "mock/mock.pb.cc",
         "mock/mock.pb.go",
         "mock/mock.pb.h",
         "mock/mock.pb.ts",
+        "mock/mock_srpc.pb.cpp",
         "mock/mock_srpc.pb.go",
+        "mock/mock_srpc.pb.hpp",
         "mock/mock_srpc.pb.ts"
       ],
       "protoFiles": [

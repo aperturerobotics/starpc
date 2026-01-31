@@ -119,7 +119,7 @@
   },
   "dependencies": {
     "@aptre/it-ws": "^1.1.2",
-    "@aptre/protobuf-es-lite": "^0.5.2",
+    "@aptre/protobuf-es-lite": "^0.5.3",
     "@chainsafe/libp2p-yamux": "^7.0.1",
     "@libp2p/interface": "^2.6.1",
     "event-iterator": "^2.0.0",
