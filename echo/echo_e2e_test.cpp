@@ -13,7 +13,6 @@
 
 #include "echo/echo_srpc.pb.hpp"
 #include "srpc/rpcproto.pb.h"
-#include "srpc/starpc.hpp"
 
 namespace {
 
@@ -154,7 +153,7 @@ class EchoServerImpl : public echo::SRPCEchoerServer {
   }
 
   starpc::Error RpcStream(echo::SRPCEchoer_RpcStreamStream* strm) override {
-    // Simple echo for RpcStream - not used in tests
+    // RpcStream not tested in e2e - requires full rpcstream implementation
     return starpc::Error::Unimplemented;
   }
 
@@ -268,6 +267,332 @@ bool TestUnary() {
   return true;
 }
 
+// Test server streaming RPC
+bool TestServerStream() {
+  std::cout << "Testing ServerStream RPC... " << std::flush;
+
+  InMemoryTransport transport;
+
+  // Setup server
+  auto mux = starpc::NewMux();
+  EchoServerImpl server_impl;
+  auto [handler, reg_err] = echo::SRPCRegisterEchoer(mux.get(), &server_impl);
+  if (reg_err != starpc::Error::OK) {
+    std::cerr << "FAILED: Registration error: " << starpc::ErrorString(reg_err) << std::endl;
+    return false;
+  }
+
+  // Start server thread
+  std::thread server_thread([&transport, &mux]() {
+    RunServer(&transport, mux.get());
+  });
+
+  // Setup client
+  auto client_rpc = starpc::NewClientRPC("echo.Echoer", "EchoServerStream");
+  auto writer = std::make_unique<InMemoryPacketWriter>(transport.ClientToServer());
+
+  // Start client receive thread
+  auto client_reader = transport.ClientReader();
+  std::atomic<bool> client_done{false};
+  std::thread client_recv_thread([&client_rpc, &client_reader, &client_done]() {
+    while (!client_done.load()) {
+      std::string data;
+      if (!InMemoryTransport::Recv(client_reader, &data, 100)) {
+        continue;
+      }
+      starpc::Error err = client_rpc->HandlePacketData(data);
+      if (err != starpc::Error::OK) {
+        break;
+      }
+    }
+  });
+
+  // Send request
+  echo::EchoMsg req;
+  req.set_body(kTestBody);
+  std::string req_data;
+  req.SerializeToString(&req_data);
+
+  starpc::Error err = client_rpc->Start(writer.get(), true, req_data);
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: Start error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Read 5 responses
+  int received = 0;
+  for (int i = 0; i < 5; i++) {
+    std::string resp_data;
+    err = client_rpc->ReadOne(&resp_data);
+    if (err != starpc::Error::OK) {
+      std::cerr << "FAILED: ReadOne error at message " << i << ": " << starpc::ErrorString(err) << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+
+    echo::EchoMsg resp;
+    if (!resp.ParseFromString(resp_data)) {
+      std::cerr << "FAILED: Parse response error at message " << i << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+
+    if (resp.body() != kTestBody) {
+      std::cerr << "FAILED: Expected '" << kTestBody << "' got '" << resp.body() << "'" << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+    received++;
+  }
+
+  if (received != 5) {
+    std::cerr << "FAILED: Expected 5 messages, got " << received << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Cleanup
+  client_rpc->Close();
+  writer->Close();
+  client_done.store(true);
+  InMemoryTransport::Close(transport.ServerReader());
+
+  client_recv_thread.join();
+  server_thread.join();
+
+  std::cout << "PASSED" << std::endl;
+  return true;
+}
+
+// Test client streaming RPC
+bool TestClientStream() {
+  std::cout << "Testing ClientStream RPC... " << std::flush;
+
+  InMemoryTransport transport;
+
+  // Setup server
+  auto mux = starpc::NewMux();
+  EchoServerImpl server_impl;
+  auto [handler, reg_err] = echo::SRPCRegisterEchoer(mux.get(), &server_impl);
+  if (reg_err != starpc::Error::OK) {
+    std::cerr << "FAILED: Registration error: " << starpc::ErrorString(reg_err) << std::endl;
+    return false;
+  }
+
+  // Start server thread
+  std::thread server_thread([&transport, &mux]() {
+    RunServer(&transport, mux.get());
+  });
+
+  // Setup client
+  auto client_rpc = starpc::NewClientRPC("echo.Echoer", "EchoClientStream");
+  auto writer = std::make_unique<InMemoryPacketWriter>(transport.ClientToServer());
+
+  // Start client receive thread
+  auto client_reader = transport.ClientReader();
+  std::atomic<bool> client_done{false};
+  std::thread client_recv_thread([&client_rpc, &client_reader, &client_done]() {
+    while (!client_done.load()) {
+      std::string data;
+      if (!InMemoryTransport::Recv(client_reader, &data, 100)) {
+        continue;
+      }
+      starpc::Error err = client_rpc->HandlePacketData(data);
+      if (err != starpc::Error::OK) {
+        break;
+      }
+    }
+  });
+
+  // Send request (no initial data for streaming)
+  starpc::Error err = client_rpc->Start(writer.get(), false, "");
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: Start error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Send first message using WriteCallData
+  echo::EchoMsg req;
+  req.set_body(kTestBody);
+  std::string req_data;
+  req.SerializeToString(&req_data);
+
+  err = client_rpc->WriteCallData(req_data, false, false, starpc::Error::OK);
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: WriteCallData error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Close send side to indicate we're done sending
+  err = client_rpc->WriteCallData("", false, true, starpc::Error::OK);
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: WriteCallData (close) error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Read response
+  std::string resp_data;
+  err = client_rpc->ReadOne(&resp_data);
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: ReadOne error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  echo::EchoMsg resp;
+  if (!resp.ParseFromString(resp_data)) {
+    std::cerr << "FAILED: Parse response error" << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  if (resp.body() != kTestBody) {
+    std::cerr << "FAILED: Expected '" << kTestBody << "' got '" << resp.body() << "'" << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Cleanup
+  client_rpc->Close();
+  writer->Close();
+  client_done.store(true);
+  InMemoryTransport::Close(transport.ServerReader());
+
+  client_recv_thread.join();
+  server_thread.join();
+
+  std::cout << "PASSED" << std::endl;
+  return true;
+}
+
+// Test bidirectional streaming RPC
+bool TestBidiStream() {
+  std::cout << "Testing BidiStream RPC... " << std::flush;
+
+  InMemoryTransport transport;
+
+  // Setup server
+  auto mux = starpc::NewMux();
+  EchoServerImpl server_impl;
+  auto [handler, reg_err] = echo::SRPCRegisterEchoer(mux.get(), &server_impl);
+  if (reg_err != starpc::Error::OK) {
+    std::cerr << "FAILED: Registration error: " << starpc::ErrorString(reg_err) << std::endl;
+    return false;
+  }
+
+  // Start server thread
+  std::thread server_thread([&transport, &mux]() {
+    RunServer(&transport, mux.get());
+  });
+
+  // Setup client
+  auto client_rpc = starpc::NewClientRPC("echo.Echoer", "EchoBidiStream");
+  auto writer = std::make_unique<InMemoryPacketWriter>(transport.ClientToServer());
+
+  // Start client receive thread
+  auto client_reader = transport.ClientReader();
+  std::atomic<bool> client_done{false};
+  std::thread client_recv_thread([&client_rpc, &client_reader, &client_done]() {
+    while (!client_done.load()) {
+      std::string data;
+      if (!InMemoryTransport::Recv(client_reader, &data, 100)) {
+        continue;
+      }
+      starpc::Error err = client_rpc->HandlePacketData(data);
+      if (err != starpc::Error::OK) {
+        break;
+      }
+    }
+  });
+
+  // Send request (no initial data for bidi streaming)
+  starpc::Error err = client_rpc->Start(writer.get(), false, "");
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: Start error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Send 3 messages and receive 3 responses
+  for (int i = 0; i < 3; i++) {
+    // Send message
+    echo::EchoMsg req;
+    req.set_body(kTestBody);
+    std::string req_data;
+    req.SerializeToString(&req_data);
+
+    err = client_rpc->WriteCallData(req_data, false, false, starpc::Error::OK);
+    if (err != starpc::Error::OK) {
+      std::cerr << "FAILED: WriteCallData error at message " << i << ": " << starpc::ErrorString(err) << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+
+    // Receive echoed response
+    std::string resp_data;
+    err = client_rpc->ReadOne(&resp_data);
+    if (err != starpc::Error::OK) {
+      std::cerr << "FAILED: ReadOne error at message " << i << ": " << starpc::ErrorString(err) << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+
+    echo::EchoMsg resp;
+    if (!resp.ParseFromString(resp_data)) {
+      std::cerr << "FAILED: Parse response error at message " << i << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+
+    if (resp.body() != kTestBody) {
+      std::cerr << "FAILED: Expected '" << kTestBody << "' got '" << resp.body() << "'" << std::endl;
+      client_done.store(true);
+      client_recv_thread.join();
+      return false;
+    }
+  }
+
+  // Close send side
+  err = client_rpc->WriteCallData("", false, true, starpc::Error::OK);
+  if (err != starpc::Error::OK) {
+    std::cerr << "FAILED: WriteCallData (close) error: " << starpc::ErrorString(err) << std::endl;
+    client_done.store(true);
+    client_recv_thread.join();
+    return false;
+  }
+
+  // Cleanup
+  client_rpc->Close();
+  writer->Close();
+  client_done.store(true);
+  InMemoryTransport::Close(transport.ServerReader());
+
+  client_recv_thread.join();
+  server_thread.join();
+
+  std::cout << "PASSED" << std::endl;
+  return true;
+}
+
 }  // namespace
 
 int main() {
@@ -277,6 +602,24 @@ int main() {
   int failed = 0;
 
   if (TestUnary()) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  if (TestServerStream()) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  if (TestClientStream()) {
+    passed++;
+  } else {
+    failed++;
+  }
+
+  if (TestBidiStream()) {
     passed++;
   } else {
     failed++;
