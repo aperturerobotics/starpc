@@ -76,6 +76,7 @@
     "gen:force": "bun run go:aptre -- generate --force && bun run format",
     "test": "bun run test:js && bun run test:go",
     "test:go": "bun run go:aptre -- test",
+    "test:cpp": "mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build . --parallel && ctest --output-on-failure",
     "build:e2e": "bun run build && cd e2e && esbuild e2e.ts --sourcemap --outfile=e2e.cjs --bundle --platform=node",
     "test:js": "vitest run",
     "test:js:watch": "vitest",
