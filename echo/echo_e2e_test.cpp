@@ -13,6 +13,7 @@
 
 #include "echo/echo_srpc.pb.hpp"
 #include "srpc/rpcproto.pb.h"
+#include "srpc/starpc.hpp"
 
 namespace {
 

@@ -30,7 +30,7 @@ require (
 	github.com/aperturerobotics/cli v1.1.0 // indirect
 	github.com/aperturerobotics/go-protoc-wasi v0.0.0-20260131050911-b5f94b044584 // indirect
 	github.com/aperturerobotics/json-iterator-lite v1.0.1-0.20251104042408-0c9eb8a3f726 // indirect
-	github.com/aperturerobotics/protobuf v0.0.0-20260131105503-b82131c27d52 // wasi
+	github.com/aperturerobotics/protobuf v0.0.0-20260203024654-8201686529c4 // wasi
 )
 
 require (
