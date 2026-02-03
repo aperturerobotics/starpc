@@ -12,7 +12,7 @@ replace (
 
 require (
 	github.com/aperturerobotics/common v0.29.0 // latest
-	github.com/aperturerobotics/protobuf-go-lite v0.12.0 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.12.1 // latest
 	github.com/aperturerobotics/util v1.32.3 // latest
 )
 
