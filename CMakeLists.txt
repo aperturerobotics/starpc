@@ -55,6 +55,7 @@ set(STARPC_SOURCES
     srpc/server-rpc.cpp
     srpc/mux.cpp
     srpc/client.cpp
+    rpcstream/rpcstream.cpp
 )
 
 # Generated protobuf sources

@@ -13,18 +13,16 @@ using Message = google::protobuf::MessageLite;
 
 // MarshalVT serializes the message to bytes.
 // (VT suffix matches vtprotobuf convention used in Go)
-inline bool MarshalVT(const Message& msg, std::string* out) {
+inline bool MarshalVT(const Message &msg, std::string *out) {
   return msg.SerializeToString(out);
 }
 
 // UnmarshalVT deserializes the message from bytes.
-inline bool UnmarshalVT(Message* msg, const std::string& data) {
+inline bool UnmarshalVT(Message *msg, const std::string &data) {
   return msg->ParseFromString(data);
 }
 
 // SizeVT returns the serialized size of the message.
-inline size_t SizeVT(const Message& msg) {
-  return msg.ByteSizeLong();
-}
+inline size_t SizeVT(const Message &msg) { return msg.ByteSizeLong(); }
 
-}  // namespace starpc
+} // namespace starpc

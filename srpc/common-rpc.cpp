@@ -1,4 +1,4 @@
-//go:build deps_only
+// go:build deps_only
 
 #include "common-rpc.hpp"
 
@@ -24,16 +24,14 @@ void CommonRPC::Cancel() {
   cv_.notify_all();
 }
 
-bool CommonRPC::IsCanceled() const {
-  return canceled_.load();
-}
+bool CommonRPC::IsCanceled() const { return canceled_.load(); }
 
-void CommonRPC::SetWriter(PacketWriter* writer) {
+void CommonRPC::SetWriter(PacketWriter *writer) {
   std::lock_guard<std::mutex> lock(mtx_);
   writer_ = writer;
 }
 
-Error CommonRPC::ReadOne(std::string* out) {
+Error CommonRPC::ReadOne(std::string *out) {
   bool ctx_done = false;
 
   while (true) {
@@ -73,7 +71,8 @@ Error CommonRPC::ReadOne(std::string* out) {
   }
 }
 
-Error CommonRPC::WriteCallData(const std::string& data, bool data_is_zero, bool complete, Error err) {
+Error CommonRPC::WriteCallData(const std::string &data, bool data_is_zero,
+                               bool complete, Error err) {
   // Check if already completed
   if (local_completed_.load()) {
     // If we're just marking completion and already completed, allow it (no-op)
@@ -94,7 +93,8 @@ Error CommonRPC::WriteCallData(const std::string& data, bool data_is_zero, bool 
     return Error::NilWriter;
   }
 
-  auto pkt = NewCallDataPacket(data, data.empty() && data_is_zero, complete, err);
+  auto pkt =
+      NewCallDataPacket(data, data.empty() && data_is_zero, complete, err);
   return writer_->WritePacket(*pkt);
 }
 
@@ -116,7 +116,7 @@ Error CommonRPC::HandleCallCancel() {
   return Error::OK;
 }
 
-Error CommonRPC::HandleCallData(const srpc::CallData& pkt) {
+Error CommonRPC::HandleCallData(const srpc::CallData &pkt) {
   std::lock_guard<std::mutex> lock(mtx_);
 
   if (data_closed_) {
@@ -136,8 +136,9 @@ Error CommonRPC::HandleCallData(const srpc::CallData& pkt) {
   bool complete = pkt.complete();
   if (!pkt.error().empty()) {
     complete = true;
-    // Store remote error - in a full implementation we might parse the error string
-    remote_err_ = Error::Unimplemented;  // Generic remote error
+    // Store remote error - in a full implementation we might parse the error
+    // string
+    remote_err_ = Error::Unimplemented; // Generic remote error
   }
 
   if (complete) {
@@ -180,4 +181,4 @@ void CommonRPC::CloseLocked() {
   canceled_.store(true);
 }
 
-}  // namespace starpc
+} // namespace starpc

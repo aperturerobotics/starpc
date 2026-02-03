@@ -1,4 +1,4 @@
-//go:build deps_only
+// go:build deps_only
 
 #include "server-rpc.hpp"
 
@@ -7,7 +7,7 @@
 
 namespace starpc {
 
-ServerRPC::ServerRPC(Invoker* invoker, PacketWriter* writer)
+ServerRPC::ServerRPC(Invoker *invoker, PacketWriter *writer)
     : invoker_(invoker) {
   Init();
   writer_ = writer;
@@ -19,7 +19,7 @@ ServerRPC::~ServerRPC() {
   }
 }
 
-Error ServerRPC::HandlePacketData(const std::string& data) {
+Error ServerRPC::HandlePacketData(const std::string &data) {
   srpc::Packet msg;
   if (!msg.ParseFromString(data)) {
     return Error::InvalidMessage;
@@ -27,33 +27,33 @@ Error ServerRPC::HandlePacketData(const std::string& data) {
   return HandlePacket(msg);
 }
 
-Error ServerRPC::HandlePacket(const srpc::Packet& msg) {
+Error ServerRPC::HandlePacket(const srpc::Packet &msg) {
   Error err = ValidatePacket(msg);
   if (err != Error::OK) {
     return err;
   }
 
   switch (msg.body_case()) {
-    case srpc::Packet::kCallStart:
-      return HandleCallStart(msg.call_start());
-    case srpc::Packet::kCallData:
-      return HandleCallData(msg.call_data());
-    case srpc::Packet::kCallCancel:
-      if (msg.call_cancel()) {
-        return HandleCallCancel();
-      }
-      return Error::OK;
-    default:
-      return Error::OK;
+  case srpc::Packet::kCallStart:
+    return HandleCallStart(msg.call_start());
+  case srpc::Packet::kCallData:
+    return HandleCallData(msg.call_data());
+  case srpc::Packet::kCallCancel:
+    if (msg.call_cancel()) {
+      return HandleCallCancel();
+    }
+    return Error::OK;
+  default:
+    return Error::OK;
   }
 }
 
-Error ServerRPC::HandleCallStart(const srpc::CallStart& pkt) {
+Error ServerRPC::HandleCallStart(const srpc::CallStart &pkt) {
   std::lock_guard<std::mutex> lock(mtx_);
 
   // process start: method and service
   if (!method_.empty() || !service_.empty()) {
-    return Error::Completed;  // call start must be sent only once
+    return Error::Completed; // call start must be sent only once
   }
   if (data_closed_) {
     return Error::Completed;
@@ -72,14 +72,14 @@ Error ServerRPC::HandleCallStart(const srpc::CallStart& pkt) {
   std::string method_id = method_;
   cv_.notify_all();
 
-  invoke_thread_ = std::thread([this, service_id, method_id]() {
-    InvokeRPC(service_id, method_id);
-  });
+  invoke_thread_ = std::thread(
+      [this, service_id, method_id]() { InvokeRPC(service_id, method_id); });
 
   return Error::OK;
 }
 
-void ServerRPC::InvokeRPC(const std::string& service_id, const std::string& method_id) {
+void ServerRPC::InvokeRPC(const std::string &service_id,
+                          const std::string &method_id) {
   // On the server side, the writer is closed by invokeRPC.
   auto strm = NewMsgStream(this, [this]() { Cancel(); });
 
@@ -94,4 +94,4 @@ void ServerRPC::InvokeRPC(const std::string& service_id, const std::string& meth
   Cancel();
 }
 
-}  // namespace starpc
+} // namespace starpc

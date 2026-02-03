@@ -16,7 +16,7 @@
 namespace echo {
 
 // Service ID for Echoer
-constexpr const char* kSRPCEchoerServiceID = "echo.Echoer";
+constexpr const char *kSRPCEchoerServiceID = "echo.Echoer";
 
 class SRPCEchoer_EchoServerStreamClient;
 class SRPCEchoer_EchoServerStreamStream;
@@ -29,102 +29,130 @@ class SRPCEchoer_RpcStreamStream;
 
 // SRPCEchoerClient is the client API for Echoer service.
 class SRPCEchoerClient {
- public:
+public:
   virtual ~SRPCEchoerClient() = default;
 
   // SRPCClient returns the underlying SRPC client.
-  virtual starpc::Client* SRPCClient() = 0;
+  virtual starpc::Client *SRPCClient() = 0;
 
   // Echo
-  virtual starpc::Error Echo(const echo::EchoMsg& in, echo::EchoMsg* out) = 0;
+  virtual starpc::Error Echo(const echo::EchoMsg &in, echo::EchoMsg *out) = 0;
   // EchoServerStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoServerStreamClient>, starpc::Error> EchoServerStream(const echo::EchoMsg& in) = 0;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoServerStreamClient>,
+                    starpc::Error>
+  EchoServerStream(const echo::EchoMsg &in) = 0;
   // EchoClientStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoClientStreamClient>, starpc::Error> EchoClientStream() = 0;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoClientStreamClient>,
+                    starpc::Error>
+  EchoClientStream() = 0;
   // EchoBidiStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoBidiStreamClient>, starpc::Error> EchoBidiStream() = 0;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoBidiStreamClient>,
+                    starpc::Error>
+  EchoBidiStream() = 0;
   // RpcStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_RpcStreamClient>, starpc::Error> RpcStream() = 0;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_RpcStreamClient>, starpc::Error>
+  RpcStream() = 0;
   // DoNothing
-  virtual starpc::Error DoNothing(const google::protobuf::Empty& in, google::protobuf::Empty* out) = 0;
+  virtual starpc::Error DoNothing(const google::protobuf::Empty &in,
+                                  google::protobuf::Empty *out) = 0;
 };
 
 // SRPCEchoerClientImpl implements SRPCEchoerClient.
 class SRPCEchoerClientImpl : public SRPCEchoerClient {
- public:
-  explicit SRPCEchoerClientImpl(starpc::Client* cc, const std::string& service_id = "")
-      : cc_(cc), service_id_(service_id.empty() ? kSRPCEchoerServiceID : service_id) {}
+public:
+  explicit SRPCEchoerClientImpl(starpc::Client *cc,
+                                const std::string &service_id = "")
+      : cc_(cc),
+        service_id_(service_id.empty() ? kSRPCEchoerServiceID : service_id) {}
 
-  starpc::Client* SRPCClient() override { return cc_; }
+  starpc::Client *SRPCClient() override { return cc_; }
 
   // Echo
-  virtual starpc::Error Echo(const echo::EchoMsg& in, echo::EchoMsg* out) override;
+  virtual starpc::Error Echo(const echo::EchoMsg &in,
+                             echo::EchoMsg *out) override;
   // EchoServerStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoServerStreamClient>, starpc::Error> EchoServerStream(const echo::EchoMsg& in) override;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoServerStreamClient>,
+                    starpc::Error>
+  EchoServerStream(const echo::EchoMsg &in) override;
   // EchoClientStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoClientStreamClient>, starpc::Error> EchoClientStream() override;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoClientStreamClient>,
+                    starpc::Error>
+  EchoClientStream() override;
   // EchoBidiStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoBidiStreamClient>, starpc::Error> EchoBidiStream() override;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_EchoBidiStreamClient>,
+                    starpc::Error>
+  EchoBidiStream() override;
   // RpcStream
-  virtual std::pair<std::unique_ptr<SRPCEchoer_RpcStreamClient>, starpc::Error> RpcStream() override;
+  virtual std::pair<std::unique_ptr<SRPCEchoer_RpcStreamClient>, starpc::Error>
+  RpcStream() override;
   // DoNothing
-  virtual starpc::Error DoNothing(const google::protobuf::Empty& in, google::protobuf::Empty* out) override;
+  virtual starpc::Error DoNothing(const google::protobuf::Empty &in,
+                                  google::protobuf::Empty *out) override;
 
- private:
-  starpc::Client* cc_;
+private:
+  starpc::Client *cc_;
   std::string service_id_;
 };
 
 // NewSRPCEchoerClient creates a new client.
-inline std::unique_ptr<SRPCEchoerClient> NewSRPCEchoerClient(starpc::Client* cc) {
+inline std::unique_ptr<SRPCEchoerClient>
+NewSRPCEchoerClient(starpc::Client *cc) {
   return std::make_unique<SRPCEchoerClientImpl>(cc);
 }
 
 // SRPCEchoerServer is the server API for Echoer service.
 class SRPCEchoerServer {
- public:
+public:
   virtual ~SRPCEchoerServer() = default;
 
   // Echo
-  virtual starpc::Error Echo(const echo::EchoMsg& req, echo::EchoMsg* resp) = 0;
+  virtual starpc::Error Echo(const echo::EchoMsg &req, echo::EchoMsg *resp) = 0;
   // EchoServerStream
-  virtual starpc::Error EchoServerStream(const echo::EchoMsg& req, SRPCEchoer_EchoServerStreamStream* strm) = 0;
+  virtual starpc::Error
+  EchoServerStream(const echo::EchoMsg &req,
+                   SRPCEchoer_EchoServerStreamStream *strm) = 0;
   // EchoClientStream
-  virtual starpc::Error EchoClientStream(SRPCEchoer_EchoClientStreamStream* strm, echo::EchoMsg* resp) = 0;
+  virtual starpc::Error
+  EchoClientStream(SRPCEchoer_EchoClientStreamStream *strm,
+                   echo::EchoMsg *resp) = 0;
   // EchoBidiStream
-  virtual starpc::Error EchoBidiStream(SRPCEchoer_EchoBidiStreamStream* strm) = 0;
+  virtual starpc::Error
+  EchoBidiStream(SRPCEchoer_EchoBidiStreamStream *strm) = 0;
   // RpcStream
-  virtual starpc::Error RpcStream(SRPCEchoer_RpcStreamStream* strm) = 0;
+  virtual starpc::Error RpcStream(SRPCEchoer_RpcStreamStream *strm) = 0;
   // DoNothing
-  virtual starpc::Error DoNothing(const google::protobuf::Empty& req, google::protobuf::Empty* resp) = 0;
+  virtual starpc::Error DoNothing(const google::protobuf::Empty &req,
+                                  google::protobuf::Empty *resp) = 0;
 };
 
 // SRPCEchoerHandler implements starpc::Handler for Echoer.
 class SRPCEchoerHandler : public starpc::Handler {
- public:
-  SRPCEchoerHandler(SRPCEchoerServer* impl, const std::string& service_id = "")
-      : impl_(impl), service_id_(service_id.empty() ? kSRPCEchoerServiceID : service_id) {}
+public:
+  SRPCEchoerHandler(SRPCEchoerServer *impl, const std::string &service_id = "")
+      : impl_(impl),
+        service_id_(service_id.empty() ? kSRPCEchoerServiceID : service_id) {}
 
-  const std::string& GetServiceID() const override { return service_id_; }
+  const std::string &GetServiceID() const override { return service_id_; }
   std::vector<std::string> GetMethodIDs() const override;
-  std::pair<bool, starpc::Error> InvokeMethod(
-      const std::string& service_id,
-      const std::string& method_id,
-      starpc::Stream* strm) override;
+  std::pair<bool, starpc::Error> InvokeMethod(const std::string &service_id,
+                                              const std::string &method_id,
+                                              starpc::Stream *strm) override;
 
- private:
-  SRPCEchoerServer* impl_;
+private:
+  SRPCEchoerServer *impl_;
   std::string service_id_;
 };
 
 // NewSRPCEchoerHandler creates a new handler for the given implementation.
-inline std::unique_ptr<SRPCEchoerHandler> NewSRPCEchoerHandler(SRPCEchoerServer* impl) {
+inline std::unique_ptr<SRPCEchoerHandler>
+NewSRPCEchoerHandler(SRPCEchoerServer *impl) {
   return std::make_unique<SRPCEchoerHandler>(impl);
 }
 
 // SRPCRegisterEchoer registers the server implementation with the mux.
 // The returned handler must outlive the mux registration.
-inline std::pair<std::unique_ptr<SRPCEchoerHandler>, starpc::Error> SRPCRegisterEchoer(starpc::Mux* mux, SRPCEchoerServer* impl) {
+inline std::pair<std::unique_ptr<SRPCEchoerHandler>, starpc::Error>
+SRPCRegisterEchoer(starpc::Mux *mux, SRPCEchoerServer *impl) {
   auto handler = NewSRPCEchoerHandler(impl);
   starpc::Error err = mux->Register(handler.get());
   if (err != starpc::Error::OK) {
@@ -135,158 +163,155 @@ inline std::pair<std::unique_ptr<SRPCEchoerHandler>, starpc::Error> SRPCRegister
 
 // SRPCEchoer_EchoServerStreamClient is the client stream for EchoServerStream.
 class SRPCEchoer_EchoServerStreamClient {
- public:
-  explicit SRPCEchoer_EchoServerStreamClient(std::unique_ptr<starpc::Stream> strm) : strm_(std::move(strm)) {}
+public:
+  explicit SRPCEchoer_EchoServerStreamClient(
+      std::unique_ptr<starpc::Stream> strm)
+      : strm_(std::move(strm)) {}
 
-  starpc::Error Recv(echo::EchoMsg* msg) {
-    return strm_->MsgRecv(msg);
-  }
+  starpc::Error Recv(echo::EchoMsg *msg) { return strm_->MsgRecv(msg); }
 
   starpc::Error CloseSend() { return strm_->CloseSend(); }
   starpc::Error Close() { return strm_->Close(); }
 
- private:
+private:
   std::unique_ptr<starpc::Stream> strm_;
 };
 
 // SRPCEchoer_EchoServerStreamStream is the server stream for EchoServerStream.
 class SRPCEchoer_EchoServerStreamStream {
- public:
-  explicit SRPCEchoer_EchoServerStreamStream(starpc::Stream* strm) : strm_(strm) {}
+public:
+  explicit SRPCEchoer_EchoServerStreamStream(starpc::Stream *strm)
+      : strm_(strm) {}
 
-  starpc::Error Send(const echo::EchoMsg& msg) {
-    return strm_->MsgSend(msg);
-  }
+  starpc::Error Send(const echo::EchoMsg &msg) { return strm_->MsgSend(msg); }
 
-  starpc::Error SendAndClose(const echo::EchoMsg& msg) {
+  starpc::Error SendAndClose(const echo::EchoMsg &msg) {
     starpc::Error err = strm_->MsgSend(msg);
-    if (err != starpc::Error::OK) return err;
+    if (err != starpc::Error::OK)
+      return err;
     return strm_->CloseSend();
   }
 
- private:
-  starpc::Stream* strm_;
+private:
+  starpc::Stream *strm_;
 };
 
 // SRPCEchoer_EchoClientStreamClient is the client stream for EchoClientStream.
 class SRPCEchoer_EchoClientStreamClient {
- public:
-  explicit SRPCEchoer_EchoClientStreamClient(std::unique_ptr<starpc::Stream> strm) : strm_(std::move(strm)) {}
+public:
+  explicit SRPCEchoer_EchoClientStreamClient(
+      std::unique_ptr<starpc::Stream> strm)
+      : strm_(std::move(strm)) {}
 
-  starpc::Error Send(const echo::EchoMsg& msg) {
-    return strm_->MsgSend(msg);
-  }
+  starpc::Error Send(const echo::EchoMsg &msg) { return strm_->MsgSend(msg); }
 
-  starpc::Error CloseAndRecv(echo::EchoMsg* msg) {
+  starpc::Error CloseAndRecv(echo::EchoMsg *msg) {
     starpc::Error err = strm_->CloseSend();
-    if (err != starpc::Error::OK) return err;
+    if (err != starpc::Error::OK)
+      return err;
     return strm_->MsgRecv(msg);
   }
 
   starpc::Error CloseSend() { return strm_->CloseSend(); }
   starpc::Error Close() { return strm_->Close(); }
 
- private:
+private:
   std::unique_ptr<starpc::Stream> strm_;
 };
 
 // SRPCEchoer_EchoClientStreamStream is the server stream for EchoClientStream.
 class SRPCEchoer_EchoClientStreamStream {
- public:
-  explicit SRPCEchoer_EchoClientStreamStream(starpc::Stream* strm) : strm_(strm) {}
+public:
+  explicit SRPCEchoer_EchoClientStreamStream(starpc::Stream *strm)
+      : strm_(strm) {}
 
-  starpc::Error Recv(echo::EchoMsg* msg) {
-    return strm_->MsgRecv(msg);
-  }
+  starpc::Error Recv(echo::EchoMsg *msg) { return strm_->MsgRecv(msg); }
 
- private:
-  starpc::Stream* strm_;
+private:
+  starpc::Stream *strm_;
 };
 
 // SRPCEchoer_EchoBidiStreamClient is the client stream for EchoBidiStream.
 class SRPCEchoer_EchoBidiStreamClient {
- public:
-  explicit SRPCEchoer_EchoBidiStreamClient(std::unique_ptr<starpc::Stream> strm) : strm_(std::move(strm)) {}
+public:
+  explicit SRPCEchoer_EchoBidiStreamClient(std::unique_ptr<starpc::Stream> strm)
+      : strm_(std::move(strm)) {}
 
-  starpc::Error Send(const echo::EchoMsg& msg) {
-    return strm_->MsgSend(msg);
-  }
+  starpc::Error Send(const echo::EchoMsg &msg) { return strm_->MsgSend(msg); }
 
-  starpc::Error Recv(echo::EchoMsg* msg) {
-    return strm_->MsgRecv(msg);
-  }
+  starpc::Error Recv(echo::EchoMsg *msg) { return strm_->MsgRecv(msg); }
 
   starpc::Error CloseSend() { return strm_->CloseSend(); }
   starpc::Error Close() { return strm_->Close(); }
 
- private:
+private:
   std::unique_ptr<starpc::Stream> strm_;
 };
 
 // SRPCEchoer_EchoBidiStreamStream is the server stream for EchoBidiStream.
 class SRPCEchoer_EchoBidiStreamStream {
- public:
-  explicit SRPCEchoer_EchoBidiStreamStream(starpc::Stream* strm) : strm_(strm) {}
+public:
+  explicit SRPCEchoer_EchoBidiStreamStream(starpc::Stream *strm)
+      : strm_(strm) {}
 
-  starpc::Error Send(const echo::EchoMsg& msg) {
-    return strm_->MsgSend(msg);
-  }
+  starpc::Error Send(const echo::EchoMsg &msg) { return strm_->MsgSend(msg); }
 
-  starpc::Error SendAndClose(const echo::EchoMsg& msg) {
+  starpc::Error SendAndClose(const echo::EchoMsg &msg) {
     starpc::Error err = strm_->MsgSend(msg);
-    if (err != starpc::Error::OK) return err;
+    if (err != starpc::Error::OK)
+      return err;
     return strm_->CloseSend();
   }
 
-  starpc::Error Recv(echo::EchoMsg* msg) {
-    return strm_->MsgRecv(msg);
-  }
+  starpc::Error Recv(echo::EchoMsg *msg) { return strm_->MsgRecv(msg); }
 
- private:
-  starpc::Stream* strm_;
+private:
+  starpc::Stream *strm_;
 };
 
 // SRPCEchoer_RpcStreamClient is the client stream for RpcStream.
 class SRPCEchoer_RpcStreamClient {
- public:
-  explicit SRPCEchoer_RpcStreamClient(std::unique_ptr<starpc::Stream> strm) : strm_(std::move(strm)) {}
+public:
+  explicit SRPCEchoer_RpcStreamClient(std::unique_ptr<starpc::Stream> strm)
+      : strm_(std::move(strm)) {}
 
-  starpc::Error Send(const rpcstream::RpcStreamPacket& msg) {
+  starpc::Error Send(const rpcstream::RpcStreamPacket &msg) {
     return strm_->MsgSend(msg);
   }
 
-  starpc::Error Recv(rpcstream::RpcStreamPacket* msg) {
+  starpc::Error Recv(rpcstream::RpcStreamPacket *msg) {
     return strm_->MsgRecv(msg);
   }
 
   starpc::Error CloseSend() { return strm_->CloseSend(); }
   starpc::Error Close() { return strm_->Close(); }
 
- private:
+private:
   std::unique_ptr<starpc::Stream> strm_;
 };
 
 // SRPCEchoer_RpcStreamStream is the server stream for RpcStream.
 class SRPCEchoer_RpcStreamStream {
- public:
-  explicit SRPCEchoer_RpcStreamStream(starpc::Stream* strm) : strm_(strm) {}
+public:
+  explicit SRPCEchoer_RpcStreamStream(starpc::Stream *strm) : strm_(strm) {}
 
-  starpc::Error Send(const rpcstream::RpcStreamPacket& msg) {
+  starpc::Error Send(const rpcstream::RpcStreamPacket &msg) {
     return strm_->MsgSend(msg);
   }
 
-  starpc::Error SendAndClose(const rpcstream::RpcStreamPacket& msg) {
+  starpc::Error SendAndClose(const rpcstream::RpcStreamPacket &msg) {
     starpc::Error err = strm_->MsgSend(msg);
-    if (err != starpc::Error::OK) return err;
+    if (err != starpc::Error::OK)
+      return err;
     return strm_->CloseSend();
   }
 
-  starpc::Error Recv(rpcstream::RpcStreamPacket* msg) {
+  starpc::Error Recv(rpcstream::RpcStreamPacket *msg) {
     return strm_->MsgRecv(msg);
   }
 
- private:
-  starpc::Stream* strm_;
+private:
+  starpc::Stream *strm_;
 };
 
-}  // namespace echo
+} // namespace echo

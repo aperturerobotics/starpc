@@ -3,8 +3,8 @@
 // Main header for starpc C++ library
 // Include this to get all starpc functionality
 
-#include "client.hpp"
 #include "client-rpc.hpp"
+#include "client.hpp"
 #include "common-rpc.hpp"
 #include "errors.hpp"
 #include "handler.hpp"

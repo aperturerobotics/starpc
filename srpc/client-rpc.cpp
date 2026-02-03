@@ -1,4 +1,4 @@
-//go:build deps_only
+// go:build deps_only
 
 #include "client-rpc.hpp"
 
@@ -6,7 +6,7 @@
 
 namespace starpc {
 
-ClientRPC::ClientRPC(const std::string& service, const std::string& method) {
+ClientRPC::ClientRPC(const std::string &service, const std::string &method) {
   Init();
   service_ = service;
   method_ = method;
@@ -14,7 +14,8 @@ ClientRPC::ClientRPC(const std::string& service, const std::string& method) {
 
 ClientRPC::~ClientRPC() = default;
 
-Error ClientRPC::Start(PacketWriter* writer, bool write_first_msg, const std::string& first_msg) {
+Error ClientRPC::Start(PacketWriter *writer, bool write_first_msg,
+                       const std::string &first_msg) {
   if (writer == nullptr) {
     return Error::NilWriter;
   }
@@ -36,7 +37,8 @@ Error ClientRPC::Start(PacketWriter* writer, bool write_first_msg, const std::st
       first_msg_empty = first_msg.empty();
     }
 
-    auto pkt = NewCallStartPacket(service_, method_, first_msg, first_msg_empty);
+    auto pkt =
+        NewCallStartPacket(service_, method_, first_msg, first_msg_empty);
     err = writer->WritePacket(*pkt);
     if (err != Error::OK) {
       Cancel();
@@ -48,7 +50,7 @@ Error ClientRPC::Start(PacketWriter* writer, bool write_first_msg, const std::st
   return err;
 }
 
-Error ClientRPC::HandlePacketData(const std::string& data) {
+Error ClientRPC::HandlePacketData(const std::string &data) {
   srpc::Packet pkt;
   if (!pkt.ParseFromString(data)) {
     return Error::InvalidMessage;
@@ -66,28 +68,28 @@ void ClientRPC::HandleStreamClose(Error close_err) {
   cv_.notify_all();
 }
 
-Error ClientRPC::HandlePacket(const srpc::Packet& msg) {
+Error ClientRPC::HandlePacket(const srpc::Packet &msg) {
   Error err = ValidatePacket(msg);
   if (err != Error::OK) {
     return err;
   }
 
   switch (msg.body_case()) {
-    case srpc::Packet::kCallStart:
-      return HandleCallStart(msg.call_start());
-    case srpc::Packet::kCallData:
-      return HandleCallData(msg.call_data());
-    case srpc::Packet::kCallCancel:
-      if (msg.call_cancel()) {
-        return HandleCallCancel();
-      }
-      return Error::OK;
-    default:
-      return Error::OK;
+  case srpc::Packet::kCallStart:
+    return HandleCallStart(msg.call_start());
+  case srpc::Packet::kCallData:
+    return HandleCallData(msg.call_data());
+  case srpc::Packet::kCallCancel:
+    if (msg.call_cancel()) {
+      return HandleCallCancel();
+    }
+    return Error::OK;
+  default:
+    return Error::OK;
   }
 }
 
-Error ClientRPC::HandleCallStart(const srpc::CallStart& pkt) {
+Error ClientRPC::HandleCallStart(const srpc::CallStart &pkt) {
   // server-to-client calls not supported
   return Error::UnrecognizedPacket;
 }
@@ -101,4 +103,4 @@ void ClientRPC::Close() {
   }
 }
 
-}  // namespace starpc
+} // namespace starpc
