@@ -38,7 +38,6 @@ Error CommonRPC::ReadOne(std::string *out) {
     std::unique_lock<std::mutex> lock(mtx_);
 
     if (ctx_done && !data_closed_) {
-      // context must have been canceled locally
       CloseLocked();
       return Error::Canceled;
     }
@@ -56,7 +55,6 @@ Error CommonRPC::ReadOne(std::string *out) {
       return Error::EOF_;
     }
 
-    // Wait for more data or state change
     cv_.wait(lock, [this, &ctx_done]() {
       if (canceled_.load()) {
         ctx_done = true;
