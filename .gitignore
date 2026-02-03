@@ -3,6 +3,7 @@
 /.log
 /dist
 /.tools
+/.cache
 /protoc-gen-starpc-cpp
 /build
 

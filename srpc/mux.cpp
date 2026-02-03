@@ -1,6 +1,7 @@
 //go:build deps_only
 
 #include "mux.hpp"
+#include <mutex>
 
 namespace starpc {
 
