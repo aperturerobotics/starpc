@@ -28,6 +28,7 @@ jobs:
       - run: go mod vendor
       - run: bun run build
       - run: bun run go:aptre -- test
+      - run: cargo test
       - run: bun run test:js
       - run: bun run test:cpp
       - run: bun run lint:js

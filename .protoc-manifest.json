@@ -1,26 +1,20 @@
 {
   "version": 2,
-  "protocFlagsHash": "ef56c438333280d8ae5bb9d4738ffa817a4afd1684833a7ce6615f673cd26d3b",
-  "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.0,starpc=v0.42.0,protobuf-es-lite=bun run gen",
+  "protocFlagsHash": "83ded0c4bd3499d6ea54ff211b3620b62bef0259c9813ef88dfab5b2951b9d29",
+  "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.1,starpc=v0.45.1-0.20260203090429-3e915608d4e8,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
       "hash": "0fb45dbcc9f340c138490318022c26cdb3ded99e50ce07827bfc81d7be6c25d0",
       "generatedFiles": [
-        "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.cc",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.h",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo.pb.ts",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.cpp",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.hpp",
-        "vendor/github.com/aperturerobotics/starpc/echo/echo_srpc.pb.ts",
         "echo/echo.pb.cc",
+        "echo/echo_srpc.pb.go",
         "echo/echo.pb.go",
         "echo/echo.pb.h",
+        "echo/echo.pb.rs",
         "echo/echo.pb.ts",
         "echo/echo_srpc.pb.cpp",
-        "echo/echo_srpc.pb.go",
         "echo/echo_srpc.pb.hpp",
+        "echo/echo_srpc.pb.rs",
         "echo/echo_srpc.pb.ts"
       ],
       "protoFiles": [
@@ -30,21 +24,15 @@
     "github.com/aperturerobotics/starpc/mock": {
       "hash": "06310ac85dca81e8ae5ad3b0d07fa5d51a067571d22c637ece49640ca10435f0",
       "generatedFiles": [
-        "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.cc",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.h",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock.pb.ts",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.cpp",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.hpp",
-        "vendor/github.com/aperturerobotics/starpc/mock/mock_srpc.pb.ts",
-        "mock/mock.pb.cc",
         "mock/mock.pb.go",
         "mock/mock.pb.h",
+        "mock/mock.pb.rs",
         "mock/mock.pb.ts",
         "mock/mock_srpc.pb.cpp",
-        "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.hpp",
+        "mock/mock_srpc.pb.rs",
+        "mock/mock.pb.cc",
+        "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.ts"
       ],
       "protoFiles": [
@@ -54,13 +42,10 @@
     "github.com/aperturerobotics/starpc/rpcstream": {
       "hash": "c1408c8d74074e5f5e49b114030b0ce59bed70074f80c6397ba4d625e84ddcd5",
       "generatedFiles": [
-        "vendor/github.com/aperturerobotics/starpc/rpcstream/rpcstream.pb.cc",
-        "vendor/github.com/aperturerobotics/starpc/rpcstream/rpcstream.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/rpcstream/rpcstream.pb.h",
-        "vendor/github.com/aperturerobotics/starpc/rpcstream/rpcstream.pb.ts",
         "rpcstream/rpcstream.pb.cc",
         "rpcstream/rpcstream.pb.go",
         "rpcstream/rpcstream.pb.h",
+        "rpcstream/rpcstream.pb.rs",
         "rpcstream/rpcstream.pb.ts"
       ],
       "protoFiles": [
@@ -70,13 +55,10 @@
     "github.com/aperturerobotics/starpc/srpc": {
       "hash": "f39d4b1a33193c6a50c0f18aae03e9f694b1f26087b643ecfff061f579bc991e",
       "generatedFiles": [
-        "vendor/github.com/aperturerobotics/starpc/srpc/rpcproto.pb.cc",
-        "vendor/github.com/aperturerobotics/starpc/srpc/rpcproto.pb.go",
-        "vendor/github.com/aperturerobotics/starpc/srpc/rpcproto.pb.h",
-        "vendor/github.com/aperturerobotics/starpc/srpc/rpcproto.pb.ts",
         "srpc/rpcproto.pb.cc",
         "srpc/rpcproto.pb.go",
         "srpc/rpcproto.pb.h",
+        "srpc/rpcproto.pb.rs",
         "srpc/rpcproto.pb.ts"
       ],
       "protoFiles": [

@@ -23,5 +23,3 @@ async-trait = { workspace = true }
 pin-project-lite = { workspace = true }
 scopeguard = { workspace = true }
 
-[build-dependencies]
-prost-build = { workspace = true }

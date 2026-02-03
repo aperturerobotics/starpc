@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["srpc", "rs", "echo"]
+members = ["srpc", "echo"]
 
 [workspace.package]
 version = "0.1.0"
@@ -14,9 +14,7 @@ categories = ["network-programming", "asynchronous"]
 
 [workspace.dependencies]
 starpc = { path = "srpc", package = "starpc" }
-starpc-build = { path = "rs" }
 prost = "0.14"
-prost-build = "0.14"
 bytes = "1.9"
 tokio = { version = "1", features = ["io-util", "sync", "rt", "macros", "time"] }
 tokio-util = { version = "0.7", features = ["codec"] }

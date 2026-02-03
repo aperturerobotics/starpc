@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/aperturerobotics/common v0.29.0 // latest
+	github.com/aperturerobotics/common v0.30.1-0.20260203095300-e0754eb22a37 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.12.1 // latest
 	github.com/aperturerobotics/util v1.32.3 // latest
 )
@@ -34,6 +34,7 @@ require (
 )
 
 require (
+	github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260203094828-3faf47d2c868 // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect

@@ -89,6 +89,15 @@ impl EchoerServer for EchoServerImpl {
 
         Ok(())
     }
+
+    async fn rpc_stream(&self, _stream: Box<dyn Stream>) -> Result<()> {
+        // RPC stream is not implemented in this example.
+        Err(Error::Unimplemented)
+    }
+
+    async fn do_nothing(&self, _request: gen::Empty) -> Result<gen::Empty> {
+        Ok(gen::Empty {})
+    }
 }
 
 #[tokio::main]
