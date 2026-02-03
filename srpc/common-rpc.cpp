@@ -1,4 +1,4 @@
-// go:build deps_only
+//go:build deps_only
 
 #include "common-rpc.hpp"
 

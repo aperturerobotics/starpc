@@ -1,4 +1,4 @@
-// go:build deps_only
+//go:build deps_only
 
 // Echo end-to-end test for starpc C++ implementation.
 // Tests unary and streaming RPC patterns.
