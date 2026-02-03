@@ -66,6 +66,7 @@ pub mod mux;
 pub mod packet;
 pub mod proto;
 pub mod rpc;
+pub mod rpcstream;
 pub mod server;
 pub mod stream;
 pub mod testing;
