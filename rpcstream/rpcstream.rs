@@ -12,8 +12,8 @@ use crate::proto::Packet;
 use crate::rpc::{PacketWriter, ServerRpc};
 use crate::stream::{Context, Stream};
 
-use super::proto::{RpcStreamPacket, RpcStreamPacketBody};
-use super::writer::RpcStreamWriter;
+use super::{rpc_stream_packet, RpcAck, RpcStreamInit, RpcStreamPacket};
+use super::RpcStreamWriter;
 
 /// RpcStream is a bidirectional stream for RpcStreamPacket messages.
 ///
@@ -103,6 +103,29 @@ pub type RpcStreamGetter = Arc<
         + Sync,
 >;
 
+impl RpcStreamPacket {
+    /// Creates a new Init packet.
+    pub fn new_init(component_id: String) -> Self {
+        Self {
+            body: Some(rpc_stream_packet::Body::Init(RpcStreamInit { component_id })),
+        }
+    }
+
+    /// Creates a new Ack packet.
+    pub fn new_ack(error: String) -> Self {
+        Self {
+            body: Some(rpc_stream_packet::Body::Ack(RpcAck { error })),
+        }
+    }
+
+    /// Creates a new Data packet.
+    pub fn new_data(data: impl Into<Vec<u8>>) -> Self {
+        Self {
+            body: Some(rpc_stream_packet::Body::Data(data.into())),
+        }
+    }
+}
+
 /// Opens an RPC stream with a remote component.
 ///
 /// This function performs the client-side init/ack handshake:
@@ -129,7 +152,7 @@ pub async fn open_rpc_stream<S: RpcStream + Send + Sync>(
     if wait_ack {
         let ack_packet = stream.recv_packet().await?;
         match ack_packet.body {
-            Some(RpcStreamPacketBody::Ack(ack)) => {
+            Some(rpc_stream_packet::Body::Ack(ack)) => {
                 if !ack.error.is_empty() {
                     return Err(Error::Remote(format!("remote: {}", ack.error)));
                 }
@@ -161,7 +184,7 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
     // Read the init packet
     let init_packet = stream.recv_packet().await?;
     let component_id = match init_packet.body {
-        Some(RpcStreamPacketBody::Init(init)) => init.component_id,
+        Some(rpc_stream_packet::Body::Init(init)) => init.component_id,
         _ => {
             return Err(Error::UnrecognizedPacket);
         }
@@ -215,7 +238,7 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
         };
 
         let packet = match rpc_packet.body {
-            Some(RpcStreamPacketBody::Data(data)) => {
+            Some(rpc_stream_packet::Body::Data(data)) => {
                 match Packet::decode(&data[..]) {
                     Ok(p) => p,
                     Err(e) => return Err(Error::InvalidMessage(e)),
@@ -345,7 +368,7 @@ where
             loop {
                 match stream_clone.recv_packet().await {
                     Ok(packet) => {
-                        if let Some(RpcStreamPacketBody::Data(data)) = packet.body {
+                        if let Some(rpc_stream_packet::Body::Data(data)) = packet.body {
                             match Packet::decode(&data[..]) {
                                 Ok(p) => {
                                     if tx.send(p).await.is_err() {
@@ -482,7 +505,7 @@ mod tests {
         // Check that init was sent
         let sent = stream.pop_sent().await.unwrap();
         match sent.body {
-            Some(RpcStreamPacketBody::Init(init)) => {
+            Some(rpc_stream_packet::Body::Init(init)) => {
                 assert_eq!(init.component_id, "test-component");
             }
             _ => panic!("Expected Init packet"),

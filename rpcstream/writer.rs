@@ -1,15 +1,14 @@
 //! RpcStreamWriter - PacketWriter implementation for RpcStream.
 
 use async_trait::async_trait;
-use bytes::Bytes;
 use prost::Message;
 
 use crate::error::Result;
 use crate::proto::Packet;
 use crate::rpc::PacketWriter;
 
-use super::proto::RpcStreamPacket;
-use super::stream::RpcStream;
+use super::rpcstream::RpcStream;
+use super::RpcStreamPacket;
 
 /// RpcStreamWriter wraps an RpcStream and implements PacketWriter.
 ///
@@ -36,7 +35,7 @@ impl<S> RpcStreamWriter<S> {
 impl<S: RpcStream + Send + Sync> PacketWriter for RpcStreamWriter<S> {
     async fn write_packet(&self, packet: Packet) -> Result<()> {
         let data = packet.encode_to_vec();
-        let rpc_packet = RpcStreamPacket::new_data(Bytes::from(data));
+        let rpc_packet = RpcStreamPacket::new_data(data);
         self.inner.send_packet(&rpc_packet).await
     }
 
@@ -45,11 +44,12 @@ impl<S: RpcStream + Send + Sync> PacketWriter for RpcStreamWriter<S> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rpcstream::rpc_stream_packet;
     use crate::stream::{Context, Stream};
+    use bytes::Bytes;
     use std::collections::VecDeque;
     use std::sync::atomic::{AtomicBool, Ordering};
     use tokio::sync::Mutex;
@@ -129,7 +129,7 @@ mod tests {
         assert_eq!(packets.len(), 1);
 
         match &packets[0].body {
-            Some(crate::rpcstream::RpcStreamPacketBody::Data(data)) => {
+            Some(rpc_stream_packet::Body::Data(data)) => {
                 // Verify we can decode the inner packet
                 let inner = Packet::decode(&data[..]).unwrap();
                 assert!(inner.body.is_some());

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "rpcstream/rpcstream.pb.h"
 #include "srpc/errors.hpp"
 #include "srpc/rpcproto.pb.h"
@@ -9,10 +11,11 @@ namespace rpcstream {
 
 class RpcStream;
 
-// RpcStreamWriter wraps an RpcStream as a PacketWriter.
+// RpcStreamWriter wraps a shared_ptr<RpcStream> as a PacketWriter.
+// The shared_ptr ensures the stream stays alive as long as the writer exists.
 class RpcStreamWriter : public starpc::PacketWriter {
 public:
-  explicit RpcStreamWriter(RpcStream *stream);
+  explicit RpcStreamWriter(std::shared_ptr<RpcStream> stream);
 
   // WritePacket serializes the packet and sends it as RpcStreamPacket data.
   starpc::Error WritePacket(const srpc::Packet &pkt) override;
@@ -21,7 +24,7 @@ public:
   starpc::Error Close() override;
 
 private:
-  RpcStream *stream_;
+  std::shared_ptr<RpcStream> stream_;
 };
 
 } // namespace rpcstream

@@ -29,10 +29,11 @@
 //! handle_rpc_stream(stream, getter).await?;
 //! ```
 
-mod proto;
-mod stream;
+mod rpcstream;
 mod writer;
 
-pub use proto::*;
-pub use stream::*;
+// Include the generated protobuf types.
+include!("rpcstream.pb.rs");
+
+pub use rpcstream::*;
 pub use writer::*;

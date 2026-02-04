@@ -7,7 +7,8 @@
 
 namespace rpcstream {
 
-RpcStreamWriter::RpcStreamWriter(RpcStream *stream) : stream_(stream) {}
+RpcStreamWriter::RpcStreamWriter(std::shared_ptr<RpcStream> stream)
+    : stream_(std::move(stream)) {}
 
 starpc::Error RpcStreamWriter::WritePacket(const srpc::Packet &pkt) {
   std::string data;
@@ -40,9 +41,10 @@ starpc::Error ReadToHandler(RpcStream *stream,
   }
 }
 
-void ReadPump(RpcStream *stream, starpc::PacketDataHandler handler,
+void ReadPump(std::shared_ptr<RpcStream> stream,
+              starpc::PacketDataHandler handler,
               starpc::CloseHandler close_handler) {
-  starpc::Error err = ReadToHandler(stream, handler);
+  starpc::Error err = ReadToHandler(stream.get(), handler);
   if (err == starpc::Error::EOF_) {
     err = starpc::Error::OK;
   }
@@ -78,7 +80,8 @@ starpc::Error OpenRpcStream(RpcStream *stream, const std::string &component_id,
   return starpc::Error::OK;
 }
 
-starpc::Error HandleRpcStream(RpcStream *stream, RpcStreamGetter getter) {
+starpc::Error HandleRpcStream(std::shared_ptr<RpcStream> stream,
+                              RpcStreamGetter getter) {
   // Read and validate init packet
   RpcStreamPacket init_pkt;
   starpc::Error err = stream->Recv(&init_pkt);
@@ -118,8 +121,8 @@ starpc::Error HandleRpcStream(RpcStream *stream, RpcStreamGetter getter) {
   }
 
   // Create writer and server RPC to handle the proxied packets
-  RpcStreamWriter writer(stream);
-  auto server_rpc = starpc::NewServerRPC(invoker, &writer);
+  auto writer = std::make_unique<RpcStreamWriter>(stream);
+  auto server_rpc = starpc::NewServerRPC(invoker, writer.get());
 
   // Forward data packets to the server RPC
   while (true) {

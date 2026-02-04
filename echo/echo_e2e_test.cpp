@@ -182,9 +182,9 @@ public:
 
   starpc::Error RpcStream(echo::SRPCEchoer_RpcStreamStream *strm) override {
     // Wrap stream to implement rpcstream::RpcStream interface
-    RpcStreamAdapter adapter(strm);
+    auto adapter = std::make_shared<RpcStreamAdapter>(strm);
     return rpcstream::HandleRpcStream(
-        &adapter, [this](const std::string &component_id) {
+        adapter, [this](const std::string &component_id) {
           if (!rpc_stream_mux_) {
             return std::make_tuple(static_cast<starpc::Invoker *>(nullptr),
                                    std::function<void()>(),

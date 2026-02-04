@@ -66,6 +66,7 @@ pub mod mux;
 pub mod packet;
 pub mod proto;
 pub mod rpc;
+#[path = "../rpcstream/mod.rs"]
 pub mod rpcstream;
 pub mod server;
 pub mod stream;

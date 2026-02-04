@@ -47,9 +47,11 @@ starpc::Error OpenRpcStream(RpcStream *stream, const std::string &component_id,
                             bool wait_ack);
 
 // HandleRpcStream handles the server-side of an RpcStream connection.
-starpc::Error HandleRpcStream(RpcStream *stream, RpcStreamGetter getter);
+starpc::Error HandleRpcStream(std::shared_ptr<RpcStream> stream,
+                              RpcStreamGetter getter);
 
 // NewRpcStreamOpenStream creates an OpenStreamFunc for use with Client.
+// The RpcStreamCaller must return a pair of (shared_ptr<RpcStream>, Error).
 template <typename RpcStreamCaller>
 starpc::OpenStreamFunc NewRpcStreamOpenStream(RpcStreamCaller caller,
                                               const std::string &component_id,
@@ -69,17 +71,14 @@ starpc::OpenStreamFunc NewRpcStreamOpenStream(RpcStreamCaller caller,
           return {nullptr, err};
         }
 
-        auto writer = std::make_unique<RpcStreamWriter>(stream.get());
+        // Create writer with shared_ptr to keep stream alive
+        auto writer = std::make_unique<RpcStreamWriter>(stream);
 
-        // Start read pump in background thread; stream ownership transfers to
-        // lambda
-        auto *stream_ptr = stream.release();
-        std::thread([stream_ptr, msg_handler, close_handler]() {
-          ReadPump(stream_ptr, msg_handler,
-                   [stream_ptr, close_handler](starpc::Error err) {
-                     close_handler(err);
-                     delete stream_ptr;
-                   });
+        // Start read pump in background thread
+        // The shared_ptr ensures the stream stays alive until both the writer
+        // and the read pump are done with it.
+        std::thread([stream, msg_handler, close_handler]() {
+          ReadPump(stream, msg_handler, close_handler);
         }).detach();
 
         return {std::move(writer), starpc::Error::OK};
