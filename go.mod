@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/aperturerobotics/common v0.30.1-0.20260203095300-e0754eb22a37 // latest
+	github.com/aperturerobotics/common v0.30.1 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.12.1 // latest
 	github.com/aperturerobotics/util v1.32.3 // latest
 )
