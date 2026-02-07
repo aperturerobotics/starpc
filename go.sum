@@ -4,6 +4,7 @@ github.com/aperturerobotics/cli v1.1.0 h1:7a+YRC+EY3npAnTzhHV5gLCiw91KS0Ts3XwLIL
 github.com/aperturerobotics/cli v1.1.0/go.mod h1:M7BFP9wow5ytTzMyJQOOO991fGfsUqdTI7gGEsHfTQ8=
 github.com/aperturerobotics/common v0.30.1-0.20260203095300-e0754eb22a37 h1:ia/PiOkGovJUA2Evo3Qjn6mARVbpeACO5ENs5EKH3aQ=
 github.com/aperturerobotics/common v0.30.1-0.20260203095300-e0754eb22a37/go.mod h1:o3LkfVkdyNtWz31nGkCKuMP7H2dxarmYCYgXmy1zjtg=
+github.com/aperturerobotics/common v0.30.1/go.mod h1:o3LkfVkdyNtWz31nGkCKuMP7H2dxarmYCYgXmy1zjtg=
 github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0 h1:tGwbeDoEeQCrUQL+ClUywldqvz9eRmhcVrGwGxz2xJg=
 github.com/aperturerobotics/go-libp2p v0.37.1-0.20241111002741-5cfbb50b74e0/go.mod h1:FJkAtQcP9XxqG1NNLNHKm+wLVIGSCQX2s6CEoD+w97g=
 github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260203094828-3faf47d2c868 h1:r2j7F1tGHkchPBLL55e44g/DfYqK2JV0Ed8suMAxmlU=
