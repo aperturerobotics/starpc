@@ -1,4 +1,6 @@
 #!/bin/bash
+# Go<->TypeScript integration test: Go WebSocket server + TypeScript client.
+# For cross-language tests across all 4 languages, see integration/cross-language/.
 set -eo pipefail
 
 unset GOOS

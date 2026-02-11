@@ -35,3 +35,11 @@ starpc-*.tgz
 /target/
 Cargo.lock
 .opencode/tool-output/
+
+# Cross-language integration build artifacts
+integration/cross-language/go-server/go-server
+integration/cross-language/go-client/go-client
+integration/cross-language/*.mjs
+integration/cross-language/*.mjs.map
+/go-client
+/go-server

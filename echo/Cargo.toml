@@ -10,6 +10,14 @@ publish = false
 name = "echo-example"
 path = "main.rs"
 
+[[bin]]
+name = "integration-server"
+path = "integration_server.rs"
+
+[[bin]]
+name = "integration-client"
+path = "integration_client.rs"
+
 [dependencies]
 starpc = { workspace = true }
 prost = { workspace = true }

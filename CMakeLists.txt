@@ -109,6 +109,26 @@ if(STARPC_BUILD_TESTS)
     )
 
     add_test(NAME echo_e2e_test COMMAND echo_e2e_test)
+
+    # Cross-language integration test server
+    add_executable(cpp-integration-server
+        integration/cross-language/cpp-server.cpp
+        echo/echo_srpc.pb.cpp
+    )
+    target_link_libraries(cpp-integration-server PRIVATE
+        starpc
+        echo_proto
+    )
+
+    # Cross-language integration test client
+    add_executable(cpp-integration-client
+        integration/cross-language/cpp-client.cpp
+        echo/echo_srpc.pb.cpp
+    )
+    target_link_libraries(cpp-integration-client PRIVATE
+        starpc
+        echo_proto
+    )
 endif()
 
 # Install targets
