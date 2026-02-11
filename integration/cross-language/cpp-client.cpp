@@ -113,6 +113,15 @@ void ReadPacketLoop(int fd, starpc::ClientRPC *rpc, std::atomic<bool> *done) {
   }
 }
 
+// CleanupConn shuts down the socket, joins the reader thread, then closes fd.
+// Must be called to avoid fd reuse races between close() and the reader thread.
+void CleanupConn(int fd, std::atomic<bool> &done, std::thread &reader) {
+  done.store(true);
+  shutdown(fd, SHUT_RDWR);
+  reader.join();
+  close(fd);
+}
+
 // ParseAddr parses "host:port" into host and port.
 bool ParseAddr(const std::string &addr, std::string *host, int *port) {
   auto pos = addr.rfind(':');
@@ -146,9 +155,7 @@ bool TestUnary(const std::string &host, int port) {
   starpc::Error err = rpc->Start(writer.get(), true, reqData);
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: start: " << starpc::ErrorString(err) << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -157,9 +164,7 @@ bool TestUnary(const std::string &host, int port) {
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: read: " << starpc::ErrorString(err) << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -167,17 +172,12 @@ bool TestUnary(const std::string &host, int port) {
   if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
     std::cerr << "FAILED: body mismatch" << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
   rpc->Close();
-  writer->Close();
-  done.store(true);
-  close(fd);
-  reader.join();
+  CleanupConn(fd, done, reader);
 
   std::cout << "PASSED" << std::endl;
   return true;
@@ -206,9 +206,7 @@ bool TestServerStream(const std::string &host, int port) {
   starpc::Error err = rpc->Start(writer.get(), true, reqData);
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: start" << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -220,28 +218,21 @@ bool TestServerStream(const std::string &host, int port) {
       std::cerr << "FAILED: read " << i << ": " << starpc::ErrorString(err)
                 << std::endl;
       rpc->Close();
-      done.store(true);
-      close(fd);
-      reader.join();
+      CleanupConn(fd, done, reader);
       return false;
     }
     echo::EchoMsg resp;
     if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
       std::cerr << "FAILED: body mismatch at " << i << std::endl;
       rpc->Close();
-      done.store(true);
-      close(fd);
-      reader.join();
+      CleanupConn(fd, done, reader);
       return false;
     }
     received++;
   }
 
   rpc->Close();
-  writer->Close();
-  done.store(true);
-  close(fd);
-  reader.join();
+  CleanupConn(fd, done, reader);
 
   if (received != 5) {
     std::cerr << "FAILED: expected 5, got " << received << std::endl;
@@ -270,9 +261,7 @@ bool TestClientStream(const std::string &host, int port) {
   starpc::Error err = rpc->Start(writer.get(), false, "");
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: start" << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -284,18 +273,14 @@ bool TestClientStream(const std::string &host, int port) {
   err = rpc->WriteCallData(reqData, false, false, starpc::Error::OK);
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: write" << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
   err = rpc->WriteCallData("", false, true, starpc::Error::OK);
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: close send" << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -304,9 +289,7 @@ bool TestClientStream(const std::string &host, int port) {
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: read: " << starpc::ErrorString(err) << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -314,17 +297,12 @@ bool TestClientStream(const std::string &host, int port) {
   if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
     std::cerr << "FAILED: body mismatch" << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
   rpc->Close();
-  writer->Close();
-  done.store(true);
-  close(fd);
-  reader.join();
+  CleanupConn(fd, done, reader);
 
   std::cout << "PASSED" << std::endl;
   return true;
@@ -348,9 +326,7 @@ bool TestBidiStream(const std::string &host, int port) {
   starpc::Error err = rpc->Start(writer.get(), false, "");
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: start" << std::endl;
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -360,9 +336,7 @@ bool TestBidiStream(const std::string &host, int port) {
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: read init: " << starpc::ErrorString(err) << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
   echo::EchoMsg initMsg;
@@ -371,9 +345,7 @@ bool TestBidiStream(const std::string &host, int port) {
     std::cerr << "FAILED: init body mismatch: '" << initMsg.body() << "'"
               << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -387,9 +359,7 @@ bool TestBidiStream(const std::string &host, int port) {
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: write" << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -398,9 +368,7 @@ bool TestBidiStream(const std::string &host, int port) {
   if (err != starpc::Error::OK) {
     std::cerr << "FAILED: read echo: " << starpc::ErrorString(err) << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -408,9 +376,7 @@ bool TestBidiStream(const std::string &host, int port) {
   if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
     std::cerr << "FAILED: echo body mismatch" << std::endl;
     rpc->Close();
-    done.store(true);
-    close(fd);
-    reader.join();
+    CleanupConn(fd, done, reader);
     return false;
   }
 
@@ -421,10 +387,7 @@ bool TestBidiStream(const std::string &host, int port) {
   }
 
   rpc->Close();
-  writer->Close();
-  done.store(true);
-  close(fd);
-  reader.join();
+  CleanupConn(fd, done, reader);
 
   std::cout << "PASSED" << std::endl;
   return true;

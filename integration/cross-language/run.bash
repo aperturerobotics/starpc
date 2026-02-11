@@ -140,14 +140,19 @@ run_pair() {
         return
     fi
 
-    if "${cli_args[@]}" "$SERVER_ADDR" > /dev/null 2>&1; then
+    local client_out
+    client_out=$(mktemp)
+    if "${cli_args[@]}" "$SERVER_ADDR" > "$client_out" 2>&1; then
         echo "PASSED"
         PASSED=$((PASSED + 1))
     else
         echo "FAILED"
         FAILED=$((FAILED + 1))
         ERRORS="${ERRORS}\n  ${test_name}"
+        echo "    client output:"
+        sed 's/^/    /' "$client_out"
     fi
+    rm -f "$client_out"
 
     stop_server
 }
