@@ -58,7 +58,7 @@ export async function runAbortControllerTest(client: Client) {
       const errMsg = (err as Error).message
       errorReturned = true
       if (errMsg !== ERR_RPC_ABORT) {
-        throw new Error('unexpected error: ' + errMsg)
+        throw new Error('unexpected error: ' + errMsg, { cause: err })
       }
     }
     if (!errorReturned) {
@@ -80,7 +80,9 @@ export async function runAbortControllerTest(client: Client) {
       }
     } catch (err) {
       if (msgs.length < 3) {
-        throw new Error('expected at least three messages before error')
+        throw new Error('expected at least three messages before error', {
+          cause: err,
+        })
       }
       throw err
     }
