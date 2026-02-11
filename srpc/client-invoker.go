@@ -65,10 +65,6 @@ func proxyStreamTo(src, dst Stream, errCh chan error) {
 		}
 	}()
 
-	srcErr := src.Close()
-	if rerr == nil && srcErr != nil {
-		rerr = srcErr
-	}
 	if rerr != nil && rerr != io.EOF {
 		if errCh != nil {
 			errCh <- rerr
