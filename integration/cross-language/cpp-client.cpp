@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>
 #include <atomic>
+#include <csignal>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -396,6 +397,11 @@ bool TestBidiStream(const std::string &host, int port) {
 } // namespace
 
 int main(int argc, char *argv[]) {
+  // Ignore SIGPIPE so writing to a closed socket returns EPIPE instead of
+  // killing the process. The server may close its side before we send cleanup
+  // packets.
+  signal(SIGPIPE, SIG_IGN);
+
   if (argc < 2) {
     std::cerr << "usage: cpp-client <host:port>" << std::endl;
     return 1;

@@ -4,6 +4,7 @@
 // Listens on TCP, handles one RPC per connection using length-prefixed packets.
 
 #include <arpa/inet.h>
+#include <csignal>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -165,9 +166,12 @@ void HandleConnection(int fd, starpc::Mux *mux) {
 } // namespace
 
 int main() {
+  signal(SIGPIPE, SIG_IGN);
+
   auto mux = starpc::NewMux();
   EchoServerImpl server;
   auto [handler, err] = echo::SRPCRegisterEchoer(mux.get(), &server);
+  (void)handler;
   if (err != starpc::Error::OK) {
     std::cerr << "register error: " << starpc::ErrorString(err) << std::endl;
     return 1;
