@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 mod gen;
 
 use std::sync::Arc;
