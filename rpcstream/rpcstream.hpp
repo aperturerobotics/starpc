@@ -60,7 +60,9 @@ starpc::OpenStreamFunc NewRpcStreamOpenStream(RpcStreamCaller caller,
       [caller, component_id, wait_ack](starpc::PacketDataHandler msg_handler,
                                        starpc::CloseHandler close_handler)
           -> std::pair<std::unique_ptr<starpc::PacketWriter>, starpc::Error> {
-        auto [stream, err] = caller();
+        auto result = caller();
+        auto stream = std::move(result.first);
+        auto err = result.second;
         if (err != starpc::Error::OK) {
           return {nullptr, err};
         }
