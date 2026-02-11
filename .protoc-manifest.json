@@ -6,16 +6,16 @@
     "github.com/aperturerobotics/starpc/echo": {
       "hash": "0fb45dbcc9f340c138490318022c26cdb3ded99e50ce07827bfc81d7be6c25d0",
       "generatedFiles": [
-        "echo/echo.pb.cc",
-        "echo/echo_srpc.pb.go",
         "echo/echo.pb.go",
         "echo/echo.pb.h",
-        "echo/echo.pb.rs",
         "echo/echo.pb.ts",
         "echo/echo_srpc.pb.cpp",
+        "echo/echo_srpc.pb.go",
         "echo/echo_srpc.pb.hpp",
         "echo/echo_srpc.pb.rs",
-        "echo/echo_srpc.pb.ts"
+        "echo/echo_srpc.pb.ts",
+        "echo/echo.pb.cc",
+        "echo/echo.pb.rs"
       ],
       "protoFiles": [
         "echo/echo.proto"
@@ -24,15 +24,15 @@
     "github.com/aperturerobotics/starpc/mock": {
       "hash": "06310ac85dca81e8ae5ad3b0d07fa5d51a067571d22c637ece49640ca10435f0",
       "generatedFiles": [
-        "mock/mock.pb.go",
-        "mock/mock.pb.h",
+        "mock/mock.pb.cc",
         "mock/mock.pb.rs",
         "mock/mock.pb.ts",
+        "mock/mock_srpc.pb.go",
+        "mock/mock_srpc.pb.rs",
+        "mock/mock.pb.go",
+        "mock/mock.pb.h",
         "mock/mock_srpc.pb.cpp",
         "mock/mock_srpc.pb.hpp",
-        "mock/mock_srpc.pb.rs",
-        "mock/mock.pb.cc",
-        "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.ts"
       ],
       "protoFiles": [

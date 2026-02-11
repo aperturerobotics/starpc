@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/aperturerobotics/common v0.30.1-0.20260203095300-e0754eb22a37 // latest
+	github.com/aperturerobotics/common v0.30.3 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.12.1 // latest
 	github.com/aperturerobotics/util v1.32.3 // latest
 )
@@ -34,7 +34,7 @@ require (
 )
 
 require (
-	github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260203094828-3faf47d2c868 // indirect
+	github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260204215916-dc1f0fed8cfc // indirect
 	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
-	golang.org/x/mod v0.32.0 // indirect
+	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/sys v0.40.0 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
