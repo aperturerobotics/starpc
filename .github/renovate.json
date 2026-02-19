@@ -10,7 +10,11 @@
   "packageRules": [
     {
       "matchManagers": ["gomod"],
-      "matchDepTypes": ["replace", "toolchain", "go"],
+      "matchDepTypes": [
+        "replace",
+        "toolchain",
+        "go"
+      ],
       "enabled": false
     },
     {
@@ -31,6 +35,11 @@
     {
       "matchPackageNames": ["@libp2p/interface"],
       "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
       "enabled": false
     }
   ]
