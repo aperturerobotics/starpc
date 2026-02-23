@@ -37,7 +37,7 @@ func (*EchoServer) EchoServerStream(msg *EchoMsg, strm SRPCEchoer_EchoServerStre
 	responses := 5
 	tkr := time.NewTicker(time.Millisecond * 200)
 	defer tkr.Stop()
-	for i := 0; i < responses; i++ {
+	for range responses {
 		if err := strm.MsgSend(msg); err != nil {
 			return err
 		}

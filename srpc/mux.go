@@ -1,5 +1,7 @@
 package srpc
 
+import "slices"
+
 import "sync"
 
 // Mux contains a set of <service, method> handlers.
@@ -86,10 +88,8 @@ func (m *mux) HasServiceMethod(serviceID, methodID string) bool {
 
 	handlers := m.services[serviceID]
 	for _, mh := range handlers {
-		for _, mhMethodID := range mh.GetMethodIDs() {
-			if mhMethodID == methodID {
-				return true
-			}
+		if slices.Contains(mh.GetMethodIDs(), methodID) {
+			return true
 		}
 	}
 

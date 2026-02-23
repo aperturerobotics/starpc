@@ -15,7 +15,7 @@ type generator struct {
 	buf     strings.Builder
 }
 
-func (g *generator) P(args ...interface{}) {
+func (g *generator) P(args ...any) {
 	for _, arg := range args {
 		switch v := arg.(type) {
 		case string:
