@@ -3,6 +3,8 @@ package srpc
 import "errors"
 
 var (
+	// ErrReset is returned when a stream is reset.
+	ErrReset = errors.New("stream reset")
 	// ErrUnimplemented is returned if the RPC method was not implemented.
 	ErrUnimplemented = errors.New("unimplemented")
 	// ErrCompleted is returned if a message is received after the rpc was completed.
