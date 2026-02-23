@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/coder/websocket"
-	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-yamux/v4"
 )
 
@@ -15,7 +14,7 @@ func NewWebSocketConn(
 	conn *websocket.Conn,
 	isServer bool,
 	yamuxConf *yamux.Config,
-) (network.MuxedConn, error) {
+) (MuxedConn, error) {
 	nc := websocket.NetConn(ctx, conn, websocket.MessageBinary)
 	return NewMuxedConn(nc, !isServer, yamuxConf)
 }

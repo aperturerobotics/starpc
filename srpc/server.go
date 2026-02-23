@@ -3,8 +3,6 @@ package srpc
 import (
 	"context"
 	"io"
-
-	"github.com/libp2p/go-libp2p/core/network"
 )
 
 // Server handles incoming RPC streams with a mux.
@@ -39,7 +37,7 @@ func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
 //
 // Starts HandleStream in a separate goroutine to handle the stream.
 // Returns context.Canceled or io.EOF when the loop is complete / closed.
-func (s *Server) AcceptMuxedConn(ctx context.Context, mc network.MuxedConn) error {
+func (s *Server) AcceptMuxedConn(ctx context.Context, mc MuxedConn) error {
 	for {
 		if err := ctx.Err(); err != nil {
 			return context.Canceled

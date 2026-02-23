@@ -3,26 +3,28 @@ package srpc
 import (
 	"context"
 	"io"
+	"math"
 	"net"
 
-	"github.com/libp2p/go-libp2p/core/network"
-	ymuxer "github.com/libp2p/go-libp2p/p2p/muxer/yamux"
 	yamux "github.com/libp2p/go-yamux/v4"
 )
 
 // NewYamuxConfig builds the default yamux configuration.
 func NewYamuxConfig() *yamux.Config {
-	// Configuration options from go-libp2p-yamux:
-	config := *ymuxer.DefaultTransport.Config()
+	config := yamux.DefaultConfig()
+	config.MaxStreamWindowSize = 16 * 1024 * 1024
+	config.LogOutput = io.Discard
+	config.ReadBufSize = 0
+	config.MaxIncomingStreams = math.MaxUint32
 	config.AcceptBacklog = 512
 	config.EnableKeepAlive = false
-	return &config
+	return config
 }
 
 // NewMuxedConn constructs a new MuxedConn from a net.Conn.
 //
 // If yamuxConf is nil, uses defaults.
-func NewMuxedConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (network.MuxedConn, error) {
+func NewMuxedConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (MuxedConn, error) {
 	if yamuxConf == nil {
 		yamuxConf = NewYamuxConfig()
 	}
@@ -38,7 +40,7 @@ func NewMuxedConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (networ
 		return nil, err
 	}
 
-	return ymuxer.NewMuxedConn(sess), nil
+	return newYamuxConn(sess), nil
 }
 
 // NewMuxedConnWithRwc builds a new MuxedConn with a io.ReadWriteCloser.
@@ -49,7 +51,7 @@ func NewMuxedConnWithRwc(
 	rwc io.ReadWriteCloser,
 	outbound bool,
 	yamuxConf *yamux.Config,
-) (network.MuxedConn, error) {
+) (MuxedConn, error) {
 	return NewMuxedConn(NewRwcConn(ctx, rwc, nil, nil, 10), outbound, yamuxConf)
 }
 
@@ -65,13 +67,13 @@ func NewClientWithConn(conn net.Conn, outbound bool, yamuxConf *yamux.Config) (C
 }
 
 // NewClientWithMuxedConn constructs a new client with a MuxedConn.
-func NewClientWithMuxedConn(conn network.MuxedConn) Client {
+func NewClientWithMuxedConn(conn MuxedConn) Client {
 	openStreamFn := NewOpenStreamWithMuxedConn(conn)
 	return NewClient(openStreamFn)
 }
 
 // NewOpenStreamWithMuxedConn constructs a OpenStream func with a MuxedConn.
-func NewOpenStreamWithMuxedConn(conn network.MuxedConn) OpenStreamFunc {
+func NewOpenStreamWithMuxedConn(conn MuxedConn) OpenStreamFunc {
 	return func(ctx context.Context, msgHandler PacketDataHandler, closeHandler CloseHandler) (PacketWriter, error) {
 		mstrm, err := conn.OpenStream(ctx)
 		if err != nil {
