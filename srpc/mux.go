@@ -1,8 +1,9 @@
 package srpc
 
-import "slices"
-
-import "sync"
+import (
+	"slices"
+	"sync"
+)
 
 // Mux contains a set of <service, method> handlers.
 type Mux interface {
