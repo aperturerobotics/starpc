@@ -57,6 +57,9 @@ echo "Building TypeScript server/client..."
 echo "Building Rust server/client..."
 cargo build --release --bin integration-server --bin integration-client 2>&1 | grep -v "^warning:" || true
 
+echo "Vendoring Go dependencies (needed for C++ build)..."
+go mod vendor
+
 echo "Building C++ server/client..."
 mkdir -p "$REPO_DIR/build"
 pushd "$REPO_DIR/build" > /dev/null
