@@ -20,7 +20,7 @@ require (
 	github.com/coder/websocket v1.8.14 // latest
 	github.com/libp2p/go-yamux/v4 v4.0.2 // latest
 	github.com/pkg/errors v0.9.1 // latest
-	github.com/sirupsen/logrus v1.9.4 // latest
+	github.com/sirupsen/logrus v1.9.5-0.20260226151524-34027eac4204 // latest
 	google.golang.org/protobuf v1.36.11 // latest
 )
 
