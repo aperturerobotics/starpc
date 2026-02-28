@@ -7,7 +7,7 @@ import (
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
-	"github.com/coder/websocket"
+	"github.com/aperturerobotics/go-websocket"
 	"github.com/sirupsen/logrus"
 )
 

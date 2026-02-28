@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/coder/websocket"
+	"github.com/aperturerobotics/go-websocket"
 )
 
 // HTTPServer implements the SRPC HTTP/WebSocket server.

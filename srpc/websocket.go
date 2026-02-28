@@ -3,7 +3,7 @@ package srpc
 import (
 	"context"
 
-	"github.com/coder/websocket"
+	"github.com/aperturerobotics/go-websocket"
 	"github.com/libp2p/go-yamux/v4"
 )
 
