@@ -3,7 +3,7 @@ import { pipe } from 'it-pipe'
 import { LookupMethod } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
 import { decodePacketSource, encodePacketSource } from './packet.js'
-import { StreamHandler } from './conn.js'
+import type { StreamHandler } from './conn.js'
 import { PacketStream } from './stream.js'
 import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
 

@@ -7,7 +7,8 @@ export {
 } from './errors.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
-export { StreamConn, StreamConnParams, StreamHandler } from './conn.js'
+export { StreamConn } from './conn.js'
+export type { StreamConnParams, StreamHandler } from './conn.js'
 export { WebSocketConn } from './websocket.js'
 export type {
   PacketHandler,
@@ -16,29 +17,18 @@ export type {
   PacketStream,
   streamToPacketStream,
 } from './stream.js'
-export {
-  Handler,
-  InvokeFn,
-  MethodMap,
-  StaticHandler,
-  createHandler,
-} from './handler.js'
-export { MethodProto, createInvokeFn } from './invoker.js'
+export { StaticHandler, createHandler } from './handler.js'
+export type { Handler, InvokeFn, MethodMap } from './handler.js'
+export { createInvokeFn } from './invoker.js'
+export type { MethodProto } from './invoker.js'
 export { Packet, CallStart, CallData } from './rpcproto.pb.js'
-export {
-  Mux,
-  StaticMux,
-  MultiMux,
-  LookupMethod,
-  createMux,
-  createMultiMux,
-} from './mux.js'
-export {
+export { StaticMux, MultiMux, createMux, createMultiMux } from './mux.js'
+export type { Mux, LookupMethod } from './mux.js'
+export { ChannelStream, newBroadcastChannelStream } from './channel.js'
+export type {
   ChannelStreamMessage,
   ChannelPort,
-  ChannelStream,
   ChannelStreamOpts,
-  newBroadcastChannelStream,
 } from './channel.js'
 export {
   BroadcastChannelDuplex,
@@ -51,11 +41,13 @@ export {
   newMessagePortDuplex,
 } from './message-port.js'
 export {
+  buildDecodeMessageTransform,
+  buildEncodeMessageTransform,
+} from './message.js'
+export type {
   MessageStream,
   DecodeMessageTransform,
-  buildDecodeMessageTransform,
   EncodeMessageTransform,
-  buildEncodeMessageTransform,
 } from './message.js'
 export {
   parseLengthPrefixTransform,
@@ -80,4 +72,4 @@ export {
   messagePushable,
 } from './pushable.js'
 export { Watchdog } from './watchdog.js'
-export { ProtoRpc } from './proto-rpc.js'
+export type { ProtoRpc } from './proto-rpc.js'
