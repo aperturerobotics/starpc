@@ -12,32 +12,56 @@ import (
 // connPktSize is the size of the buffers to use for packets for the RwcConn.
 const connPktSize = 2048
 
-// RwcConn implements a Conn with a buffered ReadWriteCloser.
-type RwcConn struct {
-	// ctx is the context
-	ctx context.Context
-	// ctxCancel is the context canceler
-	ctxCancel context.CancelFunc
-	// rwc is the read-write-closer
-	rwc io.ReadWriteCloser
-	// laddr is the local addr
-	laddr net.Addr
-	// raddr is the remote addr
-	raddr net.Addr
+// bufPool is a channel-based buffer pool with predictable reuse behavior.
+type bufPool struct {
+	ch   chan []byte
+	size int
+}
 
-	ar       sync.Pool   // packet arena
-	rd       time.Time   // read deadline
-	wd       time.Time   // write deadline
-	packetCh chan []byte // packet ch
+func newBufPool(poolSize, bufSize int) *bufPool {
+	return &bufPool{
+		ch:   make(chan []byte, poolSize),
+		size: bufSize,
+	}
+}
+
+func (p *bufPool) get() []byte {
+	select {
+	case b := <-p.ch:
+		return b[:p.size]
+	default:
+		return make([]byte, p.size)
+	}
+}
+
+func (p *bufPool) put(b []byte) {
+	select {
+	case p.ch <- b:
+	default:
+	}
+}
+
+// RwcConn implements a net.Conn with a buffered ReadWriteCloser.
+type RwcConn struct {
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+	rwc       io.ReadWriteCloser
+	laddr     net.Addr
+	raddr     net.Addr
+
+	pool     *bufPool
+	packetCh chan []byte
+
+	mu       sync.Mutex
+	rd       time.Time
+	wd       time.Time
 	closeErr error
 
-	// pending holds leftover data from a packet that was larger than
-	// the caller's Read buffer. Without this, excess bytes are lost.
 	pendingMu sync.Mutex
 	pending   []byte
 }
 
-// NewRwcConn constructs a new packet conn and starts the rx pump.
+// NewRwcConn constructs a new RwcConn and starts the rx pump.
 func NewRwcConn(
 	ctx context.Context,
 	rwc io.ReadWriteCloser,
@@ -55,11 +79,10 @@ func NewRwcConn(
 		rwc:       rwc,
 		laddr:     laddr,
 		raddr:     raddr,
+		pool:      newBufPool(bufferPacketN, connPktSize),
 		packetCh:  make(chan []byte, bufferPacketN),
 	}
-	go func() {
-		_ = c.rxPump()
-	}()
+	go c.rxPump()
 	return c
 }
 
@@ -73,14 +96,35 @@ func (p *RwcConn) RemoteAddr() net.Addr {
 	return p.raddr
 }
 
+// readDeadline returns the current read deadline under the mutex.
+func (p *RwcConn) readDeadline() time.Time {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.rd
+}
+
+// getCloseErr returns the close error under the mutex.
+func (p *RwcConn) getCloseErr() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.closeErr
+}
+
+// setCloseErr stores the close error under the mutex.
+func (p *RwcConn) setCloseErr(err error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.closeErr = err
+}
+
 // Read reads data from the connection.
 // Read can be made to time out and return an error after a fixed
 // time limit; see SetDeadline and SetReadDeadline.
-func (p *RwcConn) Read(b []byte) (n int, err error) {
+func (p *RwcConn) Read(b []byte) (int, error) {
 	// Drain pending data from a previous partial read first.
 	p.pendingMu.Lock()
 	if len(p.pending) > 0 {
-		n = copy(b, p.pending)
+		n := copy(b, p.pending)
 		if n < len(p.pending) {
 			p.pending = p.pending[n:]
 		} else {
@@ -91,52 +135,52 @@ func (p *RwcConn) Read(b []byte) (n int, err error) {
 	}
 	p.pendingMu.Unlock()
 
-	deadline := p.rd
+	// Build a context with the read deadline if one is set.
 	ctx := p.ctx
+	deadline := p.readDeadline()
 	if !deadline.IsZero() {
-		var ctxCancel context.CancelFunc
-		ctx, ctxCancel = context.WithDeadline(ctx, deadline)
-		defer ctxCancel()
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithDeadline(ctx, deadline)
+		defer cancel()
 	}
 
-	var pkt []byte
-	var ok bool
 	select {
 	case <-ctx.Done():
 		if !deadline.IsZero() {
 			return 0, os.ErrDeadlineExceeded
 		}
 		return 0, context.Canceled
-	case pkt, ok = <-p.packetCh:
+	case pkt, ok := <-p.packetCh:
 		if !ok {
-			err = p.closeErr
+			err := p.getCloseErr()
 			if err == nil {
 				err = io.EOF
 			}
 			return 0, err
 		}
-	}
 
-	n = copy(b, pkt)
-	if n < len(pkt) {
-		// Buffer the remaining bytes for the next Read call.
-		p.pendingMu.Lock()
-		p.pending = append(p.pending[:0], pkt[n:]...)
-		p.pendingMu.Unlock()
+		n := copy(b, pkt)
+		if n < len(pkt) {
+			// Buffer the remaining bytes for the next Read call.
+			// Explicitly copy so the pool buffer is not aliased.
+			p.pendingMu.Lock()
+			p.pending = append(p.pending[:0], pkt[n:]...)
+			p.pendingMu.Unlock()
+		}
+		p.pool.put(pkt)
+		return n, nil
 	}
-	p.ar.Put(&pkt)
-	return n, nil
 }
 
 // Write writes data to the connection.
-func (p *RwcConn) Write(pkt []byte) (n int, err error) {
+func (p *RwcConn) Write(pkt []byte) (int, error) {
 	if len(pkt) == 0 {
 		return 0, nil
 	}
 
 	written := 0
 	for written < len(pkt) {
-		n, err = p.rwc.Write(pkt[written:])
+		n, err := p.rwc.Write(pkt[written:])
 		written += n
 		if err != nil {
 			return written, err
@@ -145,106 +189,74 @@ func (p *RwcConn) Write(pkt []byte) (n int, err error) {
 	return written, nil
 }
 
-// SetDeadline sets the read and write deadlines associated
-// with the connection. It is equivalent to calling both
-// SetReadDeadline and SetWriteDeadline.
-//
-// A deadline is an absolute time after which I/O operations
-// fail instead of blocking. The deadline applies to all future
-// and pending I/O, not just the immediately following call to
-// Read or Write. After a deadline has been exceeded, the
-// connection can be refreshed by setting a deadline in the future.
-//
-// If the deadline is exceeded a call to Read or Write or to other
-// I/O methods will return an error that wraps os.ErrDeadlineExceeded.
-// This can be tested using errors.Is(err, os.ErrDeadlineExceeded).
-// The error's Timeout method will return true, but note that there
-// are other possible errors for which the Timeout method will
-// return true even if the deadline has not been exceeded.
-//
-// An idle timeout can be implemented by repeatedly extending
-// the deadline after successful ReadFrom or WriteTo calls.
+// SetDeadline sets the read and write deadlines associated with the
+// connection. It is equivalent to calling both SetReadDeadline and
+// SetWriteDeadline.
 //
 // A zero value for t means I/O operations will not time out.
 func (p *RwcConn) SetDeadline(t time.Time) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.rd = t
 	p.wd = t
 	return nil
 }
 
-// SetReadDeadline sets the deadline for future ReadFrom calls
-// and any currently-blocked ReadFrom call.
-// A zero value for t means ReadFrom will not time out.
+// SetReadDeadline sets the deadline for future Read calls and any
+// currently-blocked Read call.
+// A zero value for t means Read will not time out.
 func (p *RwcConn) SetReadDeadline(t time.Time) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.rd = t
 	return nil
 }
 
-// SetWriteDeadline sets the deadline for future WriteTo calls
-// and any currently-blocked WriteTo call.
-// Even if write times out, it may return n > 0, indicating that
-// some of the data was successfully written.
-// A zero value for t means WriteTo will not time out.
+// SetWriteDeadline sets the deadline for future Write calls and any
+// currently-blocked Write call.
+// A zero value for t means Write will not time out.
 func (p *RwcConn) SetWriteDeadline(t time.Time) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.wd = t
 	return nil
 }
 
 // Close closes the connection.
-// Any blocked ReadFrom or WriteTo operations will be unblocked and return errors.
+// Any blocked Read or Write operations will be unblocked and return errors.
 func (p *RwcConn) Close() error {
+	p.ctxCancel()
 	return p.rwc.Close()
 }
 
-// getArenaBuf returns a buf from the packet arena with at least the given size
-func (p *RwcConn) getArenaBuf(size int) []byte {
-	var buf []byte
-	bufp := p.ar.Get()
-	if bufp != nil {
-		buf = *bufp.(*[]byte)
-	}
-	if size != 0 {
-		if cap(buf) < size {
-			buf = make([]byte, size)
-		} else {
-			buf = buf[:size]
-		}
-	} else {
-		buf = buf[:cap(buf)]
-	}
-	return buf
-}
-
 // rxPump receives messages from the underlying connection.
-func (p *RwcConn) rxPump() (rerr error) {
+func (p *RwcConn) rxPump() {
+	var rerr error
 	defer func() {
-		p.closeErr = rerr
+		p.setCloseErr(rerr)
 		close(p.packetCh)
 	}()
 
 	for {
-		select {
-		case <-p.ctx.Done():
-			return p.ctx.Err()
-		default:
-		}
-
-		pktBuf := p.getArenaBuf(int(connPktSize))
-		n, err := p.rwc.Read(pktBuf)
+		buf := p.pool.get()
+		n, err := p.rwc.Read(buf)
 		if n == 0 {
-			p.ar.Put(&pktBuf)
+			p.pool.put(buf)
 		} else {
 			select {
 			case <-p.ctx.Done():
-				return context.Canceled
-			case p.packetCh <- pktBuf[:n]:
+				p.pool.put(buf)
+				rerr = context.Canceled
+				return
+			case p.packetCh <- buf[:n]:
 			}
 		}
 		if err != nil {
-			return err
+			rerr = err
+			return
 		}
 	}
 }
 
 // _ is a type assertion
-var _ net.Conn = ((*RwcConn)(nil))
+var _ net.Conn = (*RwcConn)(nil)
