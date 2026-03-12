@@ -30,6 +30,11 @@ type RwcConn struct {
 	wd       time.Time   // write deadline
 	packetCh chan []byte // packet ch
 	closeErr error
+
+	// pending holds leftover data from a packet that was larger than
+	// the caller's Read buffer. Without this, excess bytes are lost.
+	pendingMu sync.Mutex
+	pending   []byte
 }
 
 // NewRwcConn constructs a new packet conn and starts the rx pump.
@@ -72,6 +77,20 @@ func (p *RwcConn) RemoteAddr() net.Addr {
 // Read can be made to time out and return an error after a fixed
 // time limit; see SetDeadline and SetReadDeadline.
 func (p *RwcConn) Read(b []byte) (n int, err error) {
+	// Drain pending data from a previous partial read first.
+	p.pendingMu.Lock()
+	if len(p.pending) > 0 {
+		n = copy(b, p.pending)
+		if n < len(p.pending) {
+			p.pending = p.pending[n:]
+		} else {
+			p.pending = nil
+		}
+		p.pendingMu.Unlock()
+		return n, nil
+	}
+	p.pendingMu.Unlock()
+
 	deadline := p.rd
 	ctx := p.ctx
 	if !deadline.IsZero() {
@@ -98,13 +117,15 @@ func (p *RwcConn) Read(b []byte) (n int, err error) {
 		}
 	}
 
-	pl := len(pkt)
-	copy(b, pkt)
-	p.ar.Put(&pkt)
-	if len(b) < pl {
-		return len(b), io.ErrShortBuffer
+	n = copy(b, pkt)
+	if n < len(pkt) {
+		// Buffer the remaining bytes for the next Read call.
+		p.pendingMu.Lock()
+		p.pending = append(p.pending[:0], pkt[n:]...)
+		p.pendingMu.Unlock()
 	}
-	return pl, nil
+	p.ar.Put(&pkt)
+	return n, nil
 }
 
 // Write writes data to the connection.
