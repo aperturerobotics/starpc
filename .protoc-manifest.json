@@ -1,21 +1,21 @@
 {
   "version": 2,
-  "protocFlagsHash": "83ded0c4bd3499d6ea54ff211b3620b62bef0259c9813ef88dfab5b2951b9d29",
-  "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.1,starpc=v0.45.1-0.20260203090429-3e915608d4e8,protobuf-es-lite=bun run gen",
+  "protocFlagsHash": "84f2cf8264d0aa87bf689b27b808d965518fdf9e185bd7b881a5732703fbfa4d",
+  "toolVersions": "protoc=embedded,protobuf-go-lite=v0.12.1,starpc=v0.46.1,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
       "hash": "0fb45dbcc9f340c138490318022c26cdb3ded99e50ce07827bfc81d7be6c25d0",
       "generatedFiles": [
+        "echo/echo.pb.cc",
         "echo/echo.pb.go",
         "echo/echo.pb.h",
+        "echo/echo.pb.rs",
         "echo/echo.pb.ts",
         "echo/echo_srpc.pb.cpp",
         "echo/echo_srpc.pb.go",
         "echo/echo_srpc.pb.hpp",
         "echo/echo_srpc.pb.rs",
-        "echo/echo_srpc.pb.ts",
-        "echo/echo.pb.cc",
-        "echo/echo.pb.rs"
+        "echo/echo_srpc.pb.ts"
       ],
       "protoFiles": [
         "echo/echo.proto"
@@ -25,14 +25,14 @@
       "hash": "06310ac85dca81e8ae5ad3b0d07fa5d51a067571d22c637ece49640ca10435f0",
       "generatedFiles": [
         "mock/mock.pb.cc",
-        "mock/mock.pb.rs",
-        "mock/mock.pb.ts",
-        "mock/mock_srpc.pb.go",
-        "mock/mock_srpc.pb.rs",
         "mock/mock.pb.go",
         "mock/mock.pb.h",
+        "mock/mock.pb.rs",
+        "mock/mock.pb.ts",
         "mock/mock_srpc.pb.cpp",
+        "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.hpp",
+        "mock/mock_srpc.pb.rs",
         "mock/mock_srpc.pb.ts"
       ],
       "protoFiles": [

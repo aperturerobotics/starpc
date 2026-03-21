@@ -41,12 +41,12 @@
     },
   },
   "overrides": {
-    "@aptre/protobuf-es-lite": "1.0.1",
+    "@aptre/protobuf-es-lite": "1.0.2",
   },
   "packages": {
     "@aptre/it-ws": ["@aptre/it-ws@1.1.2", "", { "dependencies": { "@types/ws": "^8.2.2", "event-iterator": "^2.0.0", "it-stream-types": "^2.0.1", "ws": "^8.17.1" } }, "sha512-llC/rTR1YXs3sNven2QRyHp3PoUwxpe0/iohiFNIfUTjbThlv1vGuq6GZysOGwCqEgbYRJGMhu4A4pTjwqztJQ=="],
 
-    "@aptre/protobuf-es-lite": ["@aptre/protobuf-es-lite@1.0.1", "", { "dependencies": { "@typescript/vfs": "^1.5.0", "lz-string": "^1.5.0" }, "bin": { "protoc-gen-es-lite": "bin/protoc-gen-es-lite" } }, "sha512-n2wlt5vn/BLYDNxvRe1/mZ2EuxGCWl5bOYVRKltONChCN3Qukb3nfjoBfn89GV6pXv16rZL++iGp2lmP/CHwVA=="],
+    "@aptre/protobuf-es-lite": ["@aptre/protobuf-es-lite@1.0.2", "", { "dependencies": { "@typescript/vfs": "^1.5.0", "lz-string": "^1.5.0" }, "bin": { "protoc-gen-es-lite": "bin/protoc-gen-es-lite" } }, "sha512-bada/GPR59Qdlf+2Df1n/f5f1UxjrucdGJUPx4K9rDnJptnd2uZR0tfsqurHLlIAR6/I7oPuSnATF2FGlZ17AA=="],
 
     "@babel/code-frame": ["@babel/code-frame@7.28.6", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-JYgintcMjRiCvS8mMECzaEn+m3PfoQiyqukOMCCVQtoJGYJw8j/8LBJEiqkHLkfwCcs74E3pbAUFNg7d9VNJ+Q=="],
 
