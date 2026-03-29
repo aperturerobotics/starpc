@@ -1,11 +1,11 @@
 module github.com/aperturerobotics/starpc
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/aperturerobotics/common v0.32.0 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.12.2 // latest
-	github.com/aperturerobotics/util v1.32.5 // latest
+	github.com/aperturerobotics/util v1.33.0 // latest
 )
 
 require (
@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/aperturerobotics/go-websocket v1.8.15-0.20260228132212-c5f88237fdf8 // master
+	github.com/aperturerobotics/go-websocket v1.8.15-0.20260329113544-74dbfb8f11c6 // master
 	github.com/libp2p/go-yamux/v4 v4.0.2 // latest
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.5-0.20260309202648-9f0600962f75 // latest
@@ -30,5 +30,5 @@ require (
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
 	golang.org/x/mod v0.33.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
 )
