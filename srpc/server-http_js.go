@@ -10,7 +10,7 @@ import "errors"
 type HTTPServer struct{}
 
 // NewHTTPServer builds a http server / handler.
-func NewHTTPServer(mux Mux, path string) (*HTTPServer, error) {
+func NewHTTPServer(mux Mux, path string, websocketOpts any) (*HTTPServer, error) {
 	return nil, errors.New("srpc: http server not implemented on js")
 }
 
