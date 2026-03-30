@@ -4,8 +4,7 @@ import { LookupMethod } from './mux.js'
 import { ServerRPC } from './server-rpc.js'
 import { decodePacketSource, encodePacketSource } from './packet.js'
 import type { StreamHandler } from './conn.js'
-import { PacketStream } from './stream.js'
-import { RpcStreamHandler } from '../rpcstream/rpcstream.js'
+import { HandleStreamFunc, PacketStream } from './stream.js'
 
 // Server implements the SRPC server in TypeScript with a Mux.
 export class Server implements StreamHandler {
@@ -18,7 +17,7 @@ export class Server implements StreamHandler {
 
   // rpcStreamHandler implements the RpcStreamHandler interface.
   // uses handlePacketDuplex (expects 1 buf = 1 Packet)
-  public get rpcStreamHandler(): RpcStreamHandler {
+  public get rpcStreamHandler(): HandleStreamFunc {
     return async (stream: PacketStream) => {
       const rpc = this.startRpc()
       return pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
