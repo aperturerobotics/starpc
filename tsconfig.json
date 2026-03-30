@@ -4,18 +4,16 @@
     "module": "Node16",
     "moduleResolution": "Node16",
     "jsx": "preserve",
-    "baseUrl": "./",
     "rootDir": "./",
     "paths": {
-      "starpc": ["./"]
+      "starpc": ["./index.ts"]
     },
-    "noEmit": true,
+    "declaration": true,
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "importsNotUsedAsValues": "remove",
     "esModuleInterop": true,
     "noImplicitOverride": true
   },
@@ -28,9 +26,5 @@
     "index.ts",
     "tools",
     "cmd/protoc-gen-es-starpc"
-  ],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": true
-  }
+  ]
 }
