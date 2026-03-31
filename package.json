@@ -62,7 +62,7 @@
   },
   "scripts": {
     "clean": "rimraf ./dist",
-    "build": "bun run clean && tsc --outDir ./dist/",
+    "build": "bun run clean && tsgo --outDir ./dist/",
     "check": "bun run typecheck",
     "typecheck": "tsgo --noEmit",
     "deps": "depcheck --ignores 'bufferutil,utf-8-validate,rimraf,starpc,@aptre/protobuf-es-lite,tsx'",
