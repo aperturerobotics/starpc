@@ -21,7 +21,7 @@ func main() {
 	addr := os.Args[1]
 
 	openStream := func(ctx context.Context, msgHandler srpc.PacketDataHandler, closeHandler srpc.CloseHandler) (srpc.PacketWriter, error) {
-		conn, err := net.Dial("tcp", addr)
+		conn, err := net.Dial("tcp", addr) //nolint:gosec
 		if err != nil {
 			return nil, err
 		}
