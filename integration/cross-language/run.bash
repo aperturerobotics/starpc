@@ -55,7 +55,7 @@ echo "Building TypeScript server/client..."
     --outfile="$SCRIPT_DIR/ts-client.mjs"
 
 echo "Building Rust server/client..."
-cargo build --release --bin integration-server --bin integration-client 2>&1 | grep -v "^warning:" || true
+cargo build --release -p echo-example --bin integration-server --bin integration-client
 
 echo "Vendoring Go dependencies (needed for C++ build)..."
 go mod vendor
