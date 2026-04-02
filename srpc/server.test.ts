@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from 'vitest'
+import { describe, it, beforeEach, expect, vi } from 'vitest'
 import { pipe } from 'it-pipe'
 import {
   createHandler,
@@ -10,7 +10,12 @@ import {
   combineUint8ArrayListTransform,
   ChannelStreamOpts,
 } from '../srpc/index.js'
-import { EchoerDefinition, EchoerServer, runClientTest } from '../echo/index.js'
+import {
+  EchoerDefinition,
+  EchoerServer,
+  EchoerServiceName,
+  runClientTest,
+} from '../echo/index.js'
 import {
   runAbortControllerTest,
   runRpcStreamTest,
@@ -70,5 +75,42 @@ describe('srpc server', () => {
 
   it('should pass rpc stream tests', async () => {
     await runRpcStreamTest(client)
+  })
+
+  it('removes abort listeners after a request completes', async () => {
+    const controller = new AbortController()
+    const removeEventListener = vi.spyOn(
+      controller.signal,
+      'removeEventListener',
+    )
+
+    await client.request(
+      EchoerServiceName,
+      'Echo',
+      new TextEncoder().encode('hello'),
+      controller.signal,
+    )
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    expect(removeEventListener).toHaveBeenCalledWith(
+      'abort',
+      expect.any(Function),
+    )
+  })
+
+  it('tears down passive channel close state', async () => {
+    const { port1, port2 } = new MessageChannel()
+    const opts: ChannelStreamOpts = { idleTimeoutMs: 1000, keepAliveMs: 1000 }
+    const active = new ChannelStream('active', port1, opts)
+    const passive = new ChannelStream('passive', port2, opts)
+    const next = passive.source[Symbol.asyncIterator]().next()
+
+    active.close()
+    await expect(next).resolves.toEqual({ done: true, value: undefined })
+
+    expect((passive as any).closed).toBe(true)
+    expect((passive as any).idleWatchdog).toBeUndefined()
+    expect((passive as any).keepAlive).toBeUndefined()
+    expect(port2.onmessage).toBe(null)
   })
 })

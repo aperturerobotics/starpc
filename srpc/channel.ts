@@ -80,6 +80,8 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
   private keepAlive?: Watchdog
   // idleWatchdog is the receive timeout watchdog.
   private idleWatchdog?: Watchdog
+  // closed indicates the local channel has been torn down.
+  private closed = false
 
   // isAcked checks if the stream is acknowledged by the remote.
   public get isAcked() {
@@ -168,6 +170,9 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
 
   // postMessage writes a message to the stream.
   private postMessage(msg: Partial<ChannelStreamMessage<T>>) {
+    if (this.closed) {
+      return
+    }
     msg.from = this.localId
     if (this.channel instanceof MessagePort) {
       this.channel.postMessage(msg)
@@ -195,22 +200,35 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
     }
   }
 
-  // close closes the broadcast channels.
-  public close(error?: Error) {
-    // write a message to indicate the stream is now closed.
-    this.postMessage({ closed: true, error })
+  // finish tears down local stream state, optionally notifying the remote side.
+  private finish(error?: Error, notifyRemote?: boolean) {
+    if (this.closed) {
+      return
+    }
+    if (notifyRemote) {
+      try {
+        this.postMessage({ closed: true, error })
+      } catch {
+        // Ignore close races while tearing down the local channel.
+      }
+    }
+    this.closed = true
     // close channels
     if (this.channel instanceof MessagePort) {
+      this.channel.onmessage = null
       this.channel.close()
     } else {
+      this.channel.rx.onmessage = null
       this.channel.tx.close()
       this.channel.rx.close()
     }
     if (!this.remoteOpen && this._remoteOpen) {
       this._remoteOpen(error || new Error('closed'))
+      delete this._remoteOpen
     }
     if (!this.remoteAck && this._remoteAck) {
       this._remoteAck(error || new Error('closed'))
+      delete this._remoteAck
     }
     if (this.idleWatchdog) {
       this.idleWatchdog.clear()
@@ -221,6 +239,11 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
       delete this.keepAlive
     }
     this._source.end(error)
+  }
+
+  // close closes the broadcast channels.
+  public close(error?: Error) {
+    this.finish(error, true)
   }
 
   // pauseIdle pauses the idle watchdog, preventing the stream from timing out.
@@ -298,9 +321,11 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
       this._source.push(data)
     }
     if (err) {
-      this._source.end(err)
-    } else if (closed) {
-      this._source.end()
+      this.finish(err, false)
+      return
+    }
+    if (closed) {
+      this.finish(undefined, false)
     }
   }
 }
