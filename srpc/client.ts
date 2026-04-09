@@ -8,6 +8,7 @@ import { ClientRPC } from './client-rpc.js'
 import { writeToPushable } from './pushable.js'
 import { decodePacketSource, encodePacketSource } from './packet.js'
 import { OpenStreamCtr } from './open-stream-ctr.js'
+import { getRpcDebugTracker } from './debug.js'
 
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
 export class Client implements ProtoRpc {
@@ -116,6 +117,7 @@ export class Client implements ProtoRpc {
     const openStreamFn = await this.openStreamCtr.wait()
     const stream = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
+    const rpcDebugId = getRpcDebugTracker().registerRpc(rpcService, rpcMethod)
     const onAbort = () => {
       call.writeCallCancel()
       call.close(new Error(ERR_RPC_ABORT))
@@ -126,8 +128,21 @@ export class Client implements ProtoRpc {
       .then(() => call.close())
       .finally(() => {
         abortSignal?.removeEventListener('abort', onAbort)
+        getRpcDebugTracker().closeRpc(
+          rpcDebugId,
+          typeof call.isClosed === 'object' ? call.isClosed.message : undefined,
+        )
       })
-    await call.writeCallStart(data ?? undefined)
+    try {
+      await call.writeCallStart(data ?? undefined)
+    } catch (err) {
+      call.close(err as Error)
+      getRpcDebugTracker().closeRpc(
+        rpcDebugId,
+        err instanceof Error ? err.message : undefined,
+      )
+      throw err
+    }
     return call
   }
 }
