@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"google.golang.org/protobuf/types/descriptorpb"
+	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 )
 
 type generator struct {

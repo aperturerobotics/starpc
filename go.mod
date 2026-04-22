@@ -4,8 +4,8 @@ go 1.25.0
 
 require (
 	github.com/aperturerobotics/common v0.32.2 // latest
-	github.com/aperturerobotics/protobuf-go-lite v0.12.2 // latest
-	github.com/aperturerobotics/util v1.33.1 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.13.0 // latest
+	github.com/aperturerobotics/util v1.33.0 // latest
 )
 
 require (
@@ -21,7 +21,6 @@ require (
 	github.com/libp2p/go-yamux/v4 v4.0.2 // latest
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.5-0.20260309202648-9f0600962f75 // latest
-	google.golang.org/protobuf v1.36.11 // latest
 )
 
 require (

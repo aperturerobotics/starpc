@@ -10,15 +10,15 @@ import (
 	"strconv"
 	"strings"
 
-	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/types/pluginpb"
+	"github.com/aperturerobotics/protobuf-go-lite/compiler/protogenlite"
+	pluginpb "github.com/aperturerobotics/protobuf-go-lite/types/pluginpb"
 )
 
 const SRPCPackage = "github.com/aperturerobotics/starpc/srpc"
 
 func main() {
-	opts := protogen.Options{}
-	opts.Run(func(plugin *protogen.Plugin) error {
+	opts := protogenlite.Options{}
+	opts.Run(func(plugin *protogenlite.Plugin) error {
 		for _, f := range plugin.Files {
 			if !f.Generate || len(f.Services) == 0 {
 				continue
@@ -30,7 +30,7 @@ func main() {
 	})
 }
 
-func generatePluginFile(plugin *protogen.Plugin, file *protogen.File) {
+func generatePluginFile(plugin *protogenlite.Plugin, file *protogenlite.File) {
 	gf := plugin.NewGeneratedFile(file.GeneratedFilenamePrefix+"_srpc.pb.go", file.GoImportPath)
 	s := &srpc{gf, file}
 
@@ -49,80 +49,80 @@ func generatePluginFile(plugin *protogen.Plugin, file *protogen.File) {
 }
 
 type srpc struct {
-	*protogen.GeneratedFile
-	file *protogen.File
+	*protogenlite.GeneratedFile
+	file *protogenlite.File
 }
 
 func (s *srpc) Ident(path, ident string) string {
-	return s.QualifiedGoIdent(protogen.GoImportPath(path).Ident(ident))
+	return s.QualifiedGoIdent(protogenlite.GoImportPath(path).Ident(ident))
 }
 
 // GetServiceID returns the service id for the srpc.
-func (s *srpc) GetServiceID(p *protogen.Service) (service string) {
+func (s *srpc) GetServiceID(p *protogenlite.Service) (service string) {
 	return string(p.Desc.FullName())
 }
 
 // GetServiceAndMethodID returns the service and method for the srpc.
-func (s *srpc) GetServiceAndMethodID(p *protogen.Method) (service, method string) {
+func (s *srpc) GetServiceAndMethodID(p *protogenlite.Method) (service, method string) {
 	return string(p.Parent.Desc.FullName()), string(p.Desc.Name())
 }
 
 /*
-func (s *srpc) ServiceMethodString(method *protogen.Method) string {
+func (s *srpc) ServiceMethodString(method *protogenlite.Method) string {
 	return strconv.Quote(fmt.Sprintf("/%s/%s", method.Parent.Desc.FullName(), method.Desc.Name()))
 }
 */
 
-func (s *srpc) InputType(method *protogen.Method) string {
+func (s *srpc) InputType(method *protogenlite.Method) string {
 	return s.QualifiedGoIdent(method.Input.GoIdent)
 }
 
-func (s *srpc) OutputType(method *protogen.Method) string {
+func (s *srpc) OutputType(method *protogenlite.Method) string {
 	return s.QualifiedGoIdent(method.Output.GoIdent)
 }
 
-func (s *srpc) ClientIface(service *protogen.Service) string {
+func (s *srpc) ClientIface(service *protogenlite.Service) string {
 	return "SRPC" + service.GoName + "Client"
 }
 
-func (s *srpc) ClientImpl(service *protogen.Service) string {
+func (s *srpc) ClientImpl(service *protogenlite.Service) string {
 	return "srpc" + service.GoName + "Client"
 }
 
-func (s *srpc) ServerIface(service *protogen.Service) string {
+func (s *srpc) ServerIface(service *protogenlite.Service) string {
 	return "SRPC" + service.GoName + "Server"
 }
 
-func (s *srpc) ServerServiceID(service *protogen.Service) string {
+func (s *srpc) ServerServiceID(service *protogenlite.Service) string {
 	return "SRPC" + service.GoName + "ServiceID"
 }
 
-func (s *srpc) ServerHandler(service *protogen.Service) string {
+func (s *srpc) ServerHandler(service *protogenlite.Service) string {
 	return "SRPC" + service.GoName + "Handler"
 }
 
-func (s *srpc) ClientStreamIface(method *protogen.Method) string {
+func (s *srpc) ClientStreamIface(method *protogenlite.Method) string {
 	return "SRPC" +
 		strings.ReplaceAll(method.Parent.GoName, "_", "__") + "_" +
 		strings.ReplaceAll(method.GoName, "_", "__") +
 		"Client"
 }
 
-func (s *srpc) ClientStreamImpl(method *protogen.Method) string {
+func (s *srpc) ClientStreamImpl(method *protogenlite.Method) string {
 	return "srpc" +
 		strings.ReplaceAll(method.Parent.GoName, "_", "__") + "_" +
 		strings.ReplaceAll(method.GoName, "_", "__") +
 		"Client"
 }
 
-func (s *srpc) ServerStreamIface(method *protogen.Method) string {
+func (s *srpc) ServerStreamIface(method *protogenlite.Method) string {
 	return "SRPC" +
 		strings.ReplaceAll(method.Parent.GoName, "_", "__") + "_" +
 		strings.ReplaceAll(method.GoName, "_", "__") +
 		"Stream"
 }
 
-func (s *srpc) ServerStreamImpl(method *protogen.Method) string {
+func (s *srpc) ServerStreamImpl(method *protogenlite.Method) string {
 	return "srpc" +
 		strings.ReplaceAll(method.Parent.GoName, "_", "__") + "_" +
 		strings.ReplaceAll(method.GoName, "_", "__") +
@@ -130,7 +130,7 @@ func (s *srpc) ServerStreamImpl(method *protogen.Method) string {
 }
 
 // service generation
-func (s *srpc) generateService(service *protogen.Service) {
+func (s *srpc) generateService(service *protogenlite.Service) {
 	// Client interface
 	s.P("type ", s.ClientIface(service), " interface {")
 	s.P("// SRPCClient returns the underlying SRPC client.")
@@ -296,7 +296,7 @@ func (s *srpc) generateService(service *protogen.Service) {
 // client methods
 //
 
-func (s *srpc) generateClientSignature(method *protogen.Method) string {
+func (s *srpc) generateClientSignature(method *protogenlite.Method) string {
 	reqArg := ", in *" + s.InputType(method)
 	if method.Desc.IsStreamingClient() {
 		reqArg = ""
@@ -308,7 +308,7 @@ func (s *srpc) generateClientSignature(method *protogen.Method) string {
 	return fmt.Sprintf("%s(ctx %s%s) (%s, error)", method.GoName, s.Ident("context", "Context"), reqArg, respName)
 }
 
-func (s *srpc) generateClientMethod(p *protogen.Method) {
+func (s *srpc) generateClientMethod(p *protogenlite.Method) {
 	recvType := s.ClientImpl(p.Parent)
 	outType := s.OutputType(p)
 	inType := s.InputType(p)
@@ -408,7 +408,7 @@ func (s *srpc) generateClientMethod(p *protogen.Method) {
 // server methods
 //
 
-func (s *srpc) generateMethodComment(method *protogen.Method) string {
+func (s *srpc) generateMethodComment(method *protogenlite.Method) string {
 	comment := method.Comments.Leading.String()
 	if comment == "" {
 		return ""
@@ -421,7 +421,7 @@ func (s *srpc) generateMethodComment(method *protogen.Method) string {
 	return strings.TrimRight(comment, "\n")
 }
 
-func (s *srpc) generateServerSignature(method *protogen.Method) string {
+func (s *srpc) generateServerSignature(method *protogenlite.Method) string {
 	var reqArgs []string
 	// if neither client nor server is streaming, expose ctx as a parameter.
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
@@ -446,7 +446,7 @@ func (s *srpc) generateServerSignature(method *protogen.Method) string {
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
 }
 
-func (s *srpc) generateServerMethod(method *protogen.Method) {
+func (s *srpc) generateServerMethod(method *protogenlite.Method) {
 	genSend := method.Desc.IsStreamingServer()
 	genSendAndClose := method.Desc.IsStreamingServer()
 	genRecv := method.Desc.IsStreamingClient()

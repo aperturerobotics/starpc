@@ -5,9 +5,8 @@ import (
 	"io"
 	"os"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/pluginpb"
+	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
+	pluginpb "github.com/aperturerobotics/protobuf-go-lite/types/pluginpb"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	}
 
 	var req pluginpb.CodeGeneratorRequest
-	if err := proto.Unmarshal(data, &req); err != nil {
+	if err := req.UnmarshalVT(data); err != nil {
 		panic(err)
 	}
 
@@ -30,7 +29,8 @@ func main() {
 
 	// Generate response
 	resp := &pluginpb.CodeGeneratorResponse{}
-	resp.SupportedFeatures = proto.Uint64(uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL))
+	supportedFeatures := uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+	resp.SupportedFeatures = &supportedFeatures
 
 	// Process files to generate
 	for _, fileName := range req.FileToGenerate {
@@ -42,7 +42,7 @@ func main() {
 	}
 
 	// Write response to stdout
-	out, err := proto.Marshal(resp)
+	out, err := resp.MarshalVT()
 	if err != nil {
 		panic(err)
 	}
