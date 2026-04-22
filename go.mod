@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/aperturerobotics/common v0.32.7 // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.13.0 // latest
-	github.com/aperturerobotics/util v1.33.0 // latest
+	github.com/aperturerobotics/util v1.34.3 // latest
 )
 
 require (
@@ -29,5 +29,5 @@ require (
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
 	golang.org/x/mod v0.35.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 )
