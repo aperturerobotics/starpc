@@ -3,7 +3,7 @@ import { pipe } from 'it-pipe'
 import duplex from '@aptre/it-ws/duplex'
 import type WebSocket from '@aptre/it-ws/web-socket'
 
-import type { Direction } from './libp2p.js'
+import type { Direction } from './stream-muxer.js'
 import { StreamConn } from './conn.js'
 import { Server } from './server.js'
 import { combineUint8ArrayListTransform } from './array-list.js'

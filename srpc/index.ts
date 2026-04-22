@@ -18,7 +18,7 @@ export type {
   StreamMuxer,
   StreamMuxerFactory,
   StreamMuxerInit,
-} from './libp2p.js'
+} from './stream-muxer.js'
 export { WebSocketConn } from './websocket.js'
 export type {
   PacketHandler,
