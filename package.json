@@ -131,7 +131,6 @@
     "@aptre/it-ws": "^1.1.2",
     "@aptre/protobuf-es-lite": "^1.0.1",
     "@chainsafe/libp2p-yamux": "^7.0.1",
-    "@libp2p/interface": "^2.6.1",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
     "it-first": "^3.0.11",

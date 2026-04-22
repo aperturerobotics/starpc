@@ -9,6 +9,16 @@ export { Client } from './client.js'
 export { Server } from './server.js'
 export { StreamConn } from './conn.js'
 export type { StreamConnParams, StreamHandler } from './conn.js'
+export type {
+  AbortOptions,
+  ComponentLogger,
+  Direction,
+  Logger,
+  Stream,
+  StreamMuxer,
+  StreamMuxerFactory,
+  StreamMuxerInit,
+} from './libp2p.js'
 export { WebSocketConn } from './websocket.js'
 export type {
   PacketHandler,

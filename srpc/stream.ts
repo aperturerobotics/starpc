@@ -1,7 +1,7 @@
 import type { Duplex, Source } from 'it-stream-types'
 import { pipe } from 'it-pipe'
-import { Stream } from '@libp2p/interface'
 
+import type { Stream } from './libp2p.js'
 import type { Packet } from './rpcproto.pb.js'
 import { combineUint8ArrayListTransform } from './array-list.js'
 import {

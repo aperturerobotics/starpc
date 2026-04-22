@@ -1,9 +1,9 @@
 import { pipe } from 'it-pipe'
-import { Direction } from '@libp2p/interface'
 
 import duplex from '@aptre/it-ws/duplex'
 import type WebSocket from '@aptre/it-ws/web-socket'
 
+import type { Direction } from './libp2p.js'
 import { StreamConn } from './conn.js'
 import { Server } from './server.js'
 import { combineUint8ArrayListTransform } from './array-list.js'

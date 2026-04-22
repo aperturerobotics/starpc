@@ -1,4 +1,4 @@
-import type { ComponentLogger, Logger } from '@libp2p/interface'
+import type { ComponentLogger, Logger } from './libp2p.js'
 
 // https://github.com/libp2p/js-libp2p/issues/2276
 // https://github.com/libp2p/js-libp2p/blob/bca8d6e689b47d85dda74082ed72e671139391de/packages/logger/src/index.ts#L86

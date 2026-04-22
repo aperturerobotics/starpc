@@ -1,14 +1,14 @@
 import { YamuxMuxerInit, yamux } from '@chainsafe/libp2p-yamux'
+import type { Duplex } from 'it-stream-types'
+import { Uint8ArrayList } from 'uint8arraylist'
+
 import type {
   ComponentLogger,
   Direction,
   Stream,
   StreamMuxer,
   StreamMuxerFactory,
-} from '@libp2p/interface'
-import type { Duplex } from 'it-stream-types'
-import { Uint8ArrayList } from 'uint8arraylist'
-
+} from './libp2p.js'
 import {
   streamToPacketStream,
   type OpenStreamFunc,
