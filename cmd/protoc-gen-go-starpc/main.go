@@ -59,12 +59,12 @@ func (s *srpc) Ident(path, ident string) string {
 
 // GetServiceID returns the service id for the srpc.
 func (s *srpc) GetServiceID(p *protogenlite.Service) (service string) {
-	return string(p.Desc.FullName())
+	return p.Desc.FullName()
 }
 
 // GetServiceAndMethodID returns the service and method for the srpc.
 func (s *srpc) GetServiceAndMethodID(p *protogenlite.Method) (service, method string) {
-	return string(p.Parent.Desc.FullName()), string(p.Desc.Name())
+	return p.Parent.Desc.FullName(), p.Desc.Name()
 }
 
 /*
