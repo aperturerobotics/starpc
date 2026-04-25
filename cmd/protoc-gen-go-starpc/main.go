@@ -413,12 +413,17 @@ func (s *srpc) generateMethodComment(method *protogenlite.Method) string {
 	if comment == "" {
 		return ""
 	}
-	// Ensure comment starts with //
-	if !strings.HasPrefix(comment, "//") {
-		comment = "// " + comment
+	comment = strings.TrimRight(comment, "\n")
+	lines := strings.Split(comment, "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			lines[i] = "//"
+			continue
+		}
+		lines[i] = "// " + line
 	}
-	// Remove trailing newline if present
-	return strings.TrimRight(comment, "\n")
+	return strings.Join(lines, "\n")
 }
 
 func (s *srpc) generateServerSignature(method *protogenlite.Method) string {
