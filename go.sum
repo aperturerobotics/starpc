@@ -4,6 +4,7 @@ github.com/aperturerobotics/cli v1.1.0 h1:7a+YRC+EY3npAnTzhHV5gLCiw91KS0Ts3XwLIL
 github.com/aperturerobotics/cli v1.1.0/go.mod h1:M7BFP9wow5ytTzMyJQOOO991fGfsUqdTI7gGEsHfTQ8=
 github.com/aperturerobotics/common v0.32.7 h1:gmiFtqEpJm9kMMj3ZaWcu/JJtbLL4z9vInnp1mY4QVo=
 github.com/aperturerobotics/common v0.32.7/go.mod h1:2ShBlwKiYj6LbKUQCEHvMBt70wJ5v+Wkwtoe4hCRsnA=
+github.com/aperturerobotics/common v0.33.0/go.mod h1:xabIJydWovkzjs5YZD8ru/BgFTAXekgHwV8DrTl3R2w=
 github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260329113538-218ccd8f20e0 h1:6/3RSSlPEQ6LeidslB1ZCJkxW+MnfYDkvdWMDklDXw4=
 github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260329113538-218ccd8f20e0/go.mod h1:OBb/beWmr/pDIZAUfi86j/4tBh2v5ctTxKMqSnh9c/4=
 github.com/aperturerobotics/go-protoc-wasi v0.0.0-20260329113540-600516012db3 h1:lp+V8RYcBwTX1p81swkpZn5fhw1wn2xLorzETIxRyZQ=
@@ -34,6 +35,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/sirupsen/logrus v1.9.5-0.20260309202648-9f0600962f75 h1:JeSpp4dH/b6DwynjIVL8YDlOSNrEtfhhPajrT3CUUTI=
 github.com/sirupsen/logrus v1.9.5-0.20260309202648-9f0600962f75/go.mod h1:FXZFonkDAnFozmO+5hGAFvB0Yg9/j2SIhA/QuIkP180=
+github.com/sirupsen/logrus v1.9.5-0.20260426203557-6878cb36b029 h1:24s81vaIm1uch3GUIIZxneOyFRfBbHRdymMRBdoDuk0=
+github.com/sirupsen/logrus v1.9.5-0.20260426203557-6878cb36b029/go.mod h1:FXZFonkDAnFozmO+5hGAFvB0Yg9/j2SIhA/QuIkP180=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/tetratelabs/wazero v1.11.0 h1:+gKemEuKCTevU4d7ZTzlsvgd1uaToIDtlQlmNbwqYhA=
