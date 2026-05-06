@@ -45,7 +45,7 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	msgSize := p.SizeVT()
 
 	// G115: integer overflow conversion int -> uint32 (gosec)
-	if msgSize > math.MaxUint32 {
+	if uint64(msgSize) > uint64(math.MaxUint32) {
 		return errors.New("message size exceeds maximum uint32 value")
 	}
 
