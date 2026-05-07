@@ -22,6 +22,22 @@ export function isStreamIdleError(err: unknown): boolean {
   return message === ERR_STREAM_IDLE
 }
 
+// RemoteRPCError is returned when the remote peer completes an RPC with an
+// error response.
+export class RemoteRPCError extends Error {
+  public readonly rpcService: string
+  public readonly rpcMethod: string
+  public readonly rpcError: string
+
+  constructor(rpcService: string, rpcMethod: string, rpcError: string) {
+    super(rpcError)
+    this.name = 'RemoteRPCError'
+    this.rpcService = rpcService
+    this.rpcMethod = rpcMethod
+    this.rpcError = rpcError
+  }
+}
+
 // castToError casts an object to an Error.
 // if err is a string, uses it as the message.
 // if err is undefined, returns new Error(defaultMsg)

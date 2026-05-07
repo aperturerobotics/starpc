@@ -4,7 +4,7 @@ import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
 import type { CallData, CallStart } from './rpcproto.pb.js'
 import { Packet } from './rpcproto.pb.js'
-import { ERR_RPC_ABORT } from './errors.js'
+import { ERR_RPC_ABORT, RemoteRPCError } from './errors.js'
 
 // CommonRPC is common logic between server and client RPCs.
 export class CommonRPC {
@@ -158,7 +158,9 @@ export class CommonRPC {
 
     this.pushRpcData(packet.data, packet.dataIsZero)
     if (packet.error) {
-      this._rpcDataSource.end(new Error(packet.error))
+      this._rpcDataSource.end(
+        new RemoteRPCError(this.service, this.method, packet.error),
+      )
     } else if (packet.complete) {
       this._rpcDataSource.end()
     }
