@@ -137,7 +137,7 @@
     "it-pipe": "^3.0.1",
     "it-pushable": "^3.2.3",
     "it-stream-types": "^2.0.4",
-    "uint8arraylist": "^2.4.9",
+    "uint8arraylist": "^3.0.0",
     "ws": "^8.20.0"
   }
 }

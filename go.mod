@@ -21,7 +21,7 @@ require (
 require (
 	github.com/libp2p/go-yamux/v4 v4.0.2 // latest
 	github.com/pkg/errors v0.9.1 // latest
-	github.com/sirupsen/logrus v1.9.5-0.20260426203557-6878cb36b029 // latest
+	github.com/sirupsen/logrus v1.9.5-0.20260508084601-d4a50659cfd6 // latest
 )
 
 require (
