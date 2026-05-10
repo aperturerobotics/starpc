@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/binary"
 	"io"
-	"math"
 	"sync"
 
 	"github.com/pkg/errors"
 )
 
 // maxMessageSize is the max message size in bytes
-var maxMessageSize = 1e7
+const maxMessageSize = 10_000_000
 
 // PacketReadWriter reads and writes packets from a io.ReadWriter.
 // Uses a LittleEndian uint32 length prefix.
@@ -43,10 +42,8 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	defer r.writeMtx.Unlock()
 
 	msgSize := p.SizeVT()
-
-	// G115: integer overflow conversion int -> uint32 (gosec)
-	if uint64(msgSize) > uint64(math.MaxUint32) {
-		return errors.New("message size exceeds maximum uint32 value")
+	if msgSize < 0 || msgSize > maxMessageSize {
+		return errors.Errorf("message size %v greater than maximum %v", msgSize, maxMessageSize)
 	}
 
 	data := make([]byte, 4+msgSize)
