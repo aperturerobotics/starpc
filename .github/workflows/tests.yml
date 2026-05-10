@@ -9,15 +9,57 @@ on:
 permissions:
   contents: read
 
+env:
+  CCACHE_DIR: ~/.cache/ccache
+  CCACHE_MAXSIZE: 500M
+  CCACHE_COMPILERCHECK: content
+  CCACHE_BASEDIR: ${{ github.workspace }}
+
 jobs:
-  tests:
+  javascript:
+    name: JavaScript
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      CCACHE_DIR: ~/.cache/ccache
-      CCACHE_MAXSIZE: 500M
-      CCACHE_COMPILERCHECK: content
-      CCACHE_BASEDIR: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run build
+      - run: bun run test:js
+      - run: bun run lint:js
+      - run: bun run deps
+
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+      - name: Cache tools
+        uses: actions/cache@v5
+        with:
+          path: ./.tools
+          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
+      - run: bun run go:aptre -- test
+      - run: bun run lint:go
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo test --all-features
+
+  cpp:
+    name: C++
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -26,12 +68,6 @@ jobs:
           go-version: '1.26'
       - name: Install native build cache/tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
-      - run: bun install
-      - name: Cache tools
-        uses: actions/cache@v5
-        with:
-          path: ./.tools
-          key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
       - name: Cache C++ compiler outputs
         uses: actions/cache@v5
         with:
@@ -42,16 +78,49 @@ jobs:
       - name: Zero ccache stats
         run: ccache --zero-stats || true
       - run: go mod vendor
-      - run: bun run build
-      - run: bun run go:aptre -- test
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --all-features
-      - run: bun run test:js
       - run: bun run test:cpp
       - name: Show ccache stats
         if: always()
         run: ccache --show-stats || true
-      - run: bun run lint:js
-      - run: bun run lint:go
-      - run: bun run integration
-      - run: bun run deps
+
+  integration:
+    name: Cross-language (${{ matrix.pair }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        pair:
+          - 'go:go'
+          - 'go:ts'
+          - 'go:rust'
+          - 'go:cpp'
+          - 'ts:ts'
+          - 'ts:rust'
+          - 'ts:cpp'
+          - 'rust:rust'
+          - 'rust:cpp'
+          - 'cpp:cpp'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install native build cache/tools
+        run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
+      - run: bun install
+      - name: Cache C++ compiler outputs
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ccache
+          key: ${{ runner.os }}-ccache-${{ hashFiles('go.sum', 'CMakeLists.txt', 'srpc/CMakeLists.txt', 'srpc/**/*.cpp', 'srpc/**/*.hpp', 'srpc/**/*.cc', 'srpc/**/*.h', 'echo/**/*.cpp', 'echo/**/*.hpp', 'integration/cross-language/*.cpp', 'rpcstream/**/*.cpp', 'rpcstream/**/*.hpp', '**/*.pb.cc', '**/*.pb.h') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+      - name: Zero ccache stats
+        run: ccache --zero-stats || true
+      - run: bun run integration -- "${{ matrix.pair }}"
+      - name: Show ccache stats
+        if: always()
+        run: ccache --show-stats || true
