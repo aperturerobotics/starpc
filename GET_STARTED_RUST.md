@@ -6,9 +6,9 @@ This guide walks you through building your first starpc service in Rust, coverin
 
 - **Rust** 1.75+
 - **Cargo**
-- **Go** 1.21+ (for code generation)
+- No separate `protoc` or Go installation is required for Rust code generation.
 
-No separate protoc installation is required - the code generator uses an embedded WebAssembly version of protoc via [go-protoc-wasi].
+The `starpc` crate's `build` feature wires a bundled `protoc` into `prost-build`.
 
 ## Installation
 
@@ -16,14 +16,14 @@ Add the dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-starpc = "0.1"
-prost = "0.13"
+starpc = "0.49"
+prost = "0.14"
 async-trait = "0.1"
 tokio = { version = "1", features = ["rt", "macros", "net", "io-util", "time"] }
 
 [build-dependencies]
-starpc-build = "0.1"
-prost-build = "0.13"
+starpc = { version = "0.49", features = ["build"] }
+prost-build = "0.14"
 ```
 
 ## Project Setup
@@ -32,10 +32,8 @@ A typical starpc Rust project structure:
 
 ```
 my-project/
-├── echo/
-│   ├── echo.proto          # Your service definitions
-│   ├── echo.pb.go          # Generated message types (for codegen)
-│   └── echo_srpc.pb.go     # Generated service interfaces (for codegen)
+├── proto/
+│   └── echo.proto          # Your service definitions
 ├── src/
 │   ├── gen/
 │   │   └── mod.rs          # Include generated Rust code
@@ -87,7 +85,7 @@ fn main() -> Result<()> {
 
     println!("cargo:rerun-if-changed={}", proto_path.display());
 
-    starpc_build::configure()
+    starpc::build::configure()
         .compile_protos(&[proto_path], &[manifest_dir.join("proto")])?;
 
     Ok(())
@@ -483,5 +481,3 @@ For multiplexed connections (multiple concurrent streams), consider using yamux 
 - [Echo example](./echo/main.rs) - Complete working example
 - [starpc crate docs](https://docs.rs/starpc) - API documentation
 - [README](./README.md) - Full documentation
-
-[go-protoc-wasi]: https://github.com/aperturerobotics/go-protoc-wasi

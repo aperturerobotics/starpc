@@ -10,6 +10,10 @@ keywords = ["rpc", "protobuf", "streaming", "grpc"]
 categories = ["network-programming", "asynchronous"]
 include = ["srpc/**/*.rs", "rpcstream/*.rs", "Cargo.toml", "LICENSE", "!node_modules/**", "!vendor/**"]
 
+[features]
+default = []
+build = ["dep:prost-build", "dep:protoc-bin-vendored"]
+
 [lib]
 path = "srpc/lib.rs"
 
@@ -45,3 +49,5 @@ thiserror = { workspace = true }
 async-trait = { workspace = true }
 pin-project-lite = { workspace = true }
 scopeguard = { workspace = true }
+prost-build = { version = "0.14", optional = true }
+protoc-bin-vendored = { version = "3.2", optional = true }

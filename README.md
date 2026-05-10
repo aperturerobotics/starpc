@@ -151,20 +151,20 @@ Add the dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-starpc = "0.1"
-prost = "0.13"
+starpc = "0.49"
+prost = "0.14"
 tokio = { version = "1", features = ["rt", "macros"] }
 
 [build-dependencies]
-starpc-build = "0.1"
-prost-build = "0.13"
+starpc = { version = "0.49", features = ["build"] }
+prost-build = "0.14"
 ```
 
 Create a `build.rs` to generate code from your proto files:
 
 ```rust
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    starpc_build::configure()
+    starpc::build::configure()
         .compile_protos(&["proto/echo.proto"], &["proto"])?;
     Ok(())
 }

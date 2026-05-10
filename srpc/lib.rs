@@ -9,7 +9,7 @@
 //! - **Wire-compatible** with the Go and TypeScript implementations
 //! - **Streaming support** for all RPC patterns
 //! - **Transport agnostic** - works with TCP, WebSocket, or any AsyncRead/AsyncWrite
-//! - **Code generation** via starpc-build crate
+//! - **Code generation** via the optional `build` feature
 //!
 //! # Quick Start
 //!
@@ -72,6 +72,9 @@ pub mod server;
 pub mod stream;
 pub mod testing;
 pub mod transport;
+
+#[cfg(feature = "build")]
+pub mod build;
 
 // Re-exports for convenience.
 pub use client::{BoxClient, Client, OpenStream, SrpcClient};
