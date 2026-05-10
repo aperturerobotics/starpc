@@ -44,6 +44,8 @@ jobs:
         with:
           path: ./.tools
           key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
+      - run: go mod tidy
+      - run: go mod vendor
       - run: bun run go:aptre -- test
       - run: bun run lint:go
 
