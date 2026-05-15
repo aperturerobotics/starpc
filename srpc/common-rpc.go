@@ -146,15 +146,22 @@ func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err er
 
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (c *commonRPC) HandleStreamClose(closeErr error) {
+	var writer PacketWriter
 	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
+		if c.dataClosed {
+			return
+		}
 		if closeErr != nil && c.remoteErr == nil {
 			c.remoteErr = closeErr
 		}
 		c.dataClosed = true
 		c.ctxCancel()
-		_ = c.writer.Close()
+		writer = c.writer
 		broadcast()
 	})
+	if writer != nil {
+		_ = writer.Close()
+	}
 }
 
 // HandleCallCancel handles the call cancel packet.
@@ -210,6 +217,9 @@ func (c *commonRPC) WriteCallCancel() error {
 
 // closeLocked releases resources held by the RPC.
 func (c *commonRPC) closeLocked(broadcast func()) {
+	if c.dataClosed {
+		return
+	}
 	c.dataClosed = true
 	c.localCompleted.Store(true)
 	if c.remoteErr == nil {
