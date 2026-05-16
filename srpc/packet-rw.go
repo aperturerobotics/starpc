@@ -25,8 +25,16 @@ var (
 			return new([readBufferSize]byte)
 		},
 	}
-	writeBufferPool sync.Pool
+	writeBufferPool = sync.Pool{
+		New: func() any {
+			return new(writeBuffer)
+		},
+	}
 )
+
+type writeBuffer struct {
+	data []byte
+}
 
 // PacketReadWriter reads and writes packets from a io.ReadWriter.
 // Uses a LittleEndian uint32 length prefix.
@@ -61,8 +69,9 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 		return errors.Errorf("message size %v greater than maximum %v", msgSize, maxMessageSize)
 	}
 
-	data := getWriteBuffer(4 + msgSize)
-	defer putWriteBuffer(data)
+	writeBuf := getWriteBuffer(4 + msgSize)
+	defer putWriteBuffer(writeBuf)
+	data := writeBuf.data
 	binary.LittleEndian.PutUint32(data, uint32(msgSize)) //nolint:gosec
 
 	_, err := p.MarshalToSizedBufferVT(data[4:])
@@ -171,24 +180,23 @@ func (r *PacketReadWriter) readLengthPrefix(b []byte) uint32 {
 	return binary.LittleEndian.Uint32(b)
 }
 
-func getWriteBuffer(size int) []byte {
+func getWriteBuffer(size int) *writeBuffer {
 	if size > pooledWriteBufferMaxSize {
-		return make([]byte, size)
+		return &writeBuffer{data: make([]byte, size)}
 	}
-	if poolValue := writeBufferPool.Get(); poolValue != nil {
-		buf := poolValue.([]byte)
-		if cap(buf) >= size {
-			return buf[:size]
-		}
-		writeBufferPool.Put(buf[:0])
+	buf := writeBufferPool.Get().(*writeBuffer)
+	if cap(buf.data) < size {
+		buf.data = make([]byte, size)
 	}
-	return make([]byte, size)
+	buf.data = buf.data[:size]
+	return buf
 }
 
-func putWriteBuffer(buf []byte) {
-	if cap(buf) <= pooledWriteBufferMaxSize {
-		clear(buf)
-		writeBufferPool.Put(buf[:0])
+func putWriteBuffer(buf *writeBuffer) {
+	if cap(buf.data) <= pooledWriteBufferMaxSize {
+		clear(buf.data)
+		buf.data = buf.data[:0]
+		writeBufferPool.Put(buf)
 	}
 }
 
