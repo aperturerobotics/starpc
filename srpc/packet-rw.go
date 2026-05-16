@@ -10,8 +10,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-// maxMessageSize is the max message size in bytes
-const maxMessageSize = 10_000_000
+const (
+	// maxMessageSize is the max message size in bytes.
+	maxMessageSize = 10_000_000
+	// readBufferSize is the packet read scratch buffer size.
+	readBufferSize = 2048
+	// pooledWriteBufferMaxSize is the largest outbound frame buffer to pool.
+	pooledWriteBufferMaxSize = 64 * 1024
+)
+
+var (
+	readBufferPool = sync.Pool{
+		New: func() any {
+			return new([readBufferSize]byte)
+		},
+	}
+	writeBufferPool sync.Pool
+)
 
 // PacketReadWriter reads and writes packets from a io.ReadWriter.
 // Uses a LittleEndian uint32 length prefix.
@@ -46,7 +61,8 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 		return errors.Errorf("message size %v greater than maximum %v", msgSize, maxMessageSize)
 	}
 
-	data := make([]byte, 4+msgSize)
+	data := getWriteBuffer(4 + msgSize)
+	defer putWriteBuffer(data)
 	binary.LittleEndian.PutUint32(data, uint32(msgSize)) //nolint:gosec
 
 	_, err := p.MarshalToSizedBufferVT(data[4:])
@@ -56,9 +72,12 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 
 	var written, n int
 	for written < len(data) {
-		n, err = r.rw.Write(data)
+		n, err = r.rw.Write(data[written:])
 		if err != nil {
 			return err
+		}
+		if n == 0 {
+			return io.ErrShortWrite
 		}
 		written += n
 	}
@@ -81,7 +100,9 @@ func (r *PacketReadWriter) ReadPump(cb PacketDataHandler, closed CloseHandler) {
 // Does not handle closing the stream, use ReadPump instead.
 func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 	var currLen uint32
-	buf := make([]byte, 2048)
+	bufPtr := readBufferPool.Get().(*[readBufferSize]byte)
+	defer readBufferPool.Put(bufPtr)
+	buf := bufPtr[:]
 	isOpen := true
 
 	for isOpen {
@@ -148,6 +169,27 @@ func (r *PacketReadWriter) readLengthPrefix(b []byte) uint32 {
 		return 0
 	}
 	return binary.LittleEndian.Uint32(b)
+}
+
+func getWriteBuffer(size int) []byte {
+	if size > pooledWriteBufferMaxSize {
+		return make([]byte, size)
+	}
+	if poolValue := writeBufferPool.Get(); poolValue != nil {
+		buf := poolValue.([]byte)
+		if cap(buf) >= size {
+			return buf[:size]
+		}
+		writeBufferPool.Put(buf[:0])
+	}
+	return make([]byte, size)
+}
+
+func putWriteBuffer(buf []byte) {
+	if cap(buf) <= pooledWriteBufferMaxSize {
+		clear(buf)
+		writeBufferPool.Put(buf[:0])
+	}
 }
 
 // _ is a type assertion
