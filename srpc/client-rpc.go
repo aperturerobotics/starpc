@@ -38,22 +38,22 @@ func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []by
 
 	var firstMsgEmpty bool
 	var err error
-	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		r.writer = writer
+	locked := r.bcast.Lock()
+	r.writer = writer
 
-		if writeFirstMsg {
-			firstMsgEmpty = len(firstMsg) == 0
-		}
+	if writeFirstMsg {
+		firstMsgEmpty = len(firstMsg) == 0
+	}
 
-		pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
-		err = writer.WritePacket(pkt)
-		if err != nil {
-			r.ctxCancel()
-			_ = writer.Close()
-		}
+	pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
+	err = writer.WritePacket(pkt)
+	if err != nil {
+		r.ctxCancel()
+		_ = writer.Close()
+	}
 
-		broadcast()
-	})
+	locked.Broadcast()
+	locked.Unlock()
 
 	return err
 }
@@ -69,14 +69,14 @@ func (r *ClientRPC) HandlePacketData(data []byte) error {
 
 // HandleStreamClose handles the stream closing optionally w/ an error.
 func (r *ClientRPC) HandleStreamClose(closeErr error) {
-	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		if closeErr != nil && r.remoteErr == nil {
-			r.remoteErr = closeErr
-		}
-		r.dataClosed = true
-		r.ctxCancel()
-		broadcast()
-	})
+	locked := r.bcast.Lock()
+	if closeErr != nil && r.remoteErr == nil {
+		r.remoteErr = closeErr
+	}
+	r.dataClosed = true
+	r.ctxCancel()
+	locked.Broadcast()
+	locked.Unlock()
 }
 
 // HandlePacket handles an incoming parsed message packet.
@@ -108,11 +108,11 @@ func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
 
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
-	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		// call did not start yet if writer is nil.
-		if r.writer != nil {
-			_ = r.WriteCallCancel()
-			r.closeLocked(broadcast)
-		}
-	})
+	locked := r.bcast.Lock()
+	// call did not start yet if writer is nil.
+	if r.writer != nil {
+		_ = r.WriteCallCancel()
+		r.closeLocked(&locked)
+	}
+	locked.Unlock()
 }

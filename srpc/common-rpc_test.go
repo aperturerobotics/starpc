@@ -1,6 +1,7 @@
 package srpc
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"sync/atomic"
@@ -52,7 +53,11 @@ func TestCommonRPCHandleStreamCloseClosesWriterOutsideBroadcastLock(t *testing.T
 	writerClosedOutsideLock := false
 	writer := &closeCallbackPacketWriter{
 		closeFn: func() {
-			writerClosedOutsideLock = rpc.bcast.TryHoldLock(func(func(), func() <-chan struct{}) {})
+			locked, ok := rpc.bcast.TryLock()
+			if ok {
+				locked.Unlock()
+			}
+			writerClosedOutsideLock = ok
 		},
 	}
 	rpc = NewServerRPC(context.Background(), InvokerFunc(nil), writer)
@@ -61,5 +66,28 @@ func TestCommonRPCHandleStreamCloseClosesWriterOutsideBroadcastLock(t *testing.T
 
 	if !writerClosedOutsideLock {
 		t.Fatal("expected writer close outside broadcast lock")
+	}
+}
+
+func TestCommonRPCReadOneQueuedDoesNotAllocate(t *testing.T) {
+	msg := []byte("message")
+	queue := make([][]byte, 1)
+	rpc := NewServerRPC(context.Background(), InvokerFunc(nil), &closeCountingPacketWriter{})
+
+	allocs := testing.AllocsPerRun(1000, func() {
+		queue[0] = msg
+		rpc.dataQueue = queue
+
+		got, err := rpc.ReadOne()
+		if err != nil {
+			t.Fatalf("read one: %v", err)
+		}
+		if !bytes.Equal(got, msg) {
+			t.Fatalf("expected %q, got %q", msg, got)
+		}
+	})
+
+	if allocs != 0 {
+		t.Fatalf("expected queued ReadOne to avoid allocations, got %f", allocs)
 	}
 }

@@ -52,10 +52,12 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 		var err error
 		var waitCh <-chan struct{}
 		var rpcCtx context.Context
-		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-			rpcCtx, err = c.ctx, c.remoteErr
-			waitCh = getWaitCh()
-		})
+		locked := c.bcast.Lock()
+		rpcCtx, err = c.ctx, c.remoteErr
+		if err == nil && rpcCtx.Err() == nil {
+			waitCh = locked.WaitCh()
+		}
+		locked.Unlock()
 
 		if err != nil {
 			return err
@@ -78,42 +80,36 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 //
 // returns io.EOF if the stream ended without a packet.
 func (c *commonRPC) ReadOne() ([]byte, error) {
-	var hasMsg bool
-	var msg []byte
-	var err error
 	var ctxDone bool
 	for {
 		var waitCh <-chan struct{}
-		c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-			if ctxDone && !c.dataClosed {
-				// context must have been canceled locally
-				c.closeLocked(broadcast)
-				err = context.Canceled
-				return
-			}
+		locked := c.bcast.Lock()
+		if ctxDone && !c.dataClosed {
+			// context must have been canceled locally
+			c.closeLocked(&locked)
+			locked.Unlock()
+			return nil, context.Canceled
+		}
 
-			if len(c.dataQueue) != 0 {
-				msg = c.dataQueue[0]
-				hasMsg = true
-				c.dataQueue[0] = nil
-				c.dataQueue = c.dataQueue[1:]
-			} else if c.dataClosed || c.remoteErr != nil {
-				err = c.remoteErr
-				if err == nil {
-					err = io.EOF
-				}
-			}
-
-			waitCh = getWaitCh()
-		})
-
-		if hasMsg {
+		if len(c.dataQueue) != 0 {
+			msg := c.dataQueue[0]
+			c.dataQueue[0] = nil
+			c.dataQueue = c.dataQueue[1:]
+			locked.Unlock()
 			return msg, nil
 		}
 
-		if err != nil {
+		if c.dataClosed || c.remoteErr != nil {
+			err := c.remoteErr
+			if err == nil {
+				err = io.EOF
+			}
+			locked.Unlock()
 			return nil, err
 		}
+
+		waitCh = locked.WaitCh()
+		locked.Unlock()
 
 		select {
 		case <-c.ctx.Done():
@@ -147,18 +143,19 @@ func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err er
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (c *commonRPC) HandleStreamClose(closeErr error) {
 	var writer PacketWriter
-	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		if c.dataClosed {
-			return
-		}
-		if closeErr != nil && c.remoteErr == nil {
-			c.remoteErr = closeErr
-		}
-		c.dataClosed = true
-		c.ctxCancel()
-		writer = c.writer
-		broadcast()
-	})
+	locked := c.bcast.Lock()
+	if c.dataClosed {
+		locked.Unlock()
+		return
+	}
+	if closeErr != nil && c.remoteErr == nil {
+		c.remoteErr = closeErr
+	}
+	c.dataClosed = true
+	c.ctxCancel()
+	writer = c.writer
+	locked.Broadcast()
+	locked.Unlock()
 	if writer != nil {
 		_ = writer.Close()
 	}
@@ -173,34 +170,33 @@ func (c *commonRPC) HandleCallCancel() error {
 // HandleCallData handles the call data packet.
 func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	var err error
-	c.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		if c.dataClosed {
-			// If the packet is just indicating the call is complete, ignore it.
-			if pkt.GetComplete() {
-				return
-			}
-
+	locked := c.bcast.Lock()
+	if c.dataClosed {
+		// If the packet is just indicating the call is complete, ignore it.
+		if !pkt.GetComplete() {
 			// Otherwise, return ErrCompleted (unexpected packet).
 			err = ErrCompleted
-			return
 		}
+		locked.Unlock()
+		return err
+	}
 
-		if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
-			c.dataQueue = append(c.dataQueue, data)
-		}
+	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
+		c.dataQueue = append(c.dataQueue, data)
+	}
 
-		complete := pkt.GetComplete()
-		if err := pkt.GetError(); len(err) != 0 {
-			complete = true
-			c.remoteErr = errors.New(err)
-		}
+	complete := pkt.GetComplete()
+	if pktErr := pkt.GetError(); len(pktErr) != 0 {
+		complete = true
+		c.remoteErr = errors.New(pktErr)
+	}
 
-		if complete {
-			c.dataClosed = true
-		}
+	if complete {
+		c.dataClosed = true
+	}
 
-		broadcast()
-	})
+	locked.Broadcast()
+	locked.Unlock()
 
 	return err
 }
@@ -216,7 +212,7 @@ func (c *commonRPC) WriteCallCancel() error {
 }
 
 // closeLocked releases resources held by the RPC.
-func (c *commonRPC) closeLocked(broadcast func()) {
+func (c *commonRPC) closeLocked(locked *broadcast.Locked) {
 	if c.dataClosed {
 		return
 	}
@@ -226,6 +222,6 @@ func (c *commonRPC) closeLocked(broadcast func()) {
 		c.remoteErr = context.Canceled
 	}
 	_ = c.writer.Close()
-	broadcast()
+	locked.Broadcast()
 	c.ctxCancel()
 }

@@ -59,29 +59,31 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 	var err error
 
-	r.bcast.HoldLock(func(broadcast func(), getWaitCh func() <-chan struct{}) {
-		// process start: method and service
-		if r.method != "" || r.service != "" {
-			err = errors.New("call start must be sent only once")
-			return
-		}
-		if r.dataClosed {
-			err = ErrCompleted
-			return
-		}
+	locked := r.bcast.Lock()
+	// process start: method and service
+	if r.method != "" || r.service != "" {
+		err = errors.New("call start must be sent only once")
+		locked.Unlock()
+		return err
+	}
+	if r.dataClosed {
+		err = ErrCompleted
+		locked.Unlock()
+		return err
+	}
 
-		service, method := pkt.GetRpcService(), pkt.GetRpcMethod()
-		r.service, r.method = service, method
+	service, method := pkt.GetRpcService(), pkt.GetRpcMethod()
+	r.service, r.method = service, method
 
-		// process first data packet, if included
-		if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
-			r.dataQueue = append(r.dataQueue, data)
-		}
+	// process first data packet, if included
+	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
+		r.dataQueue = append(r.dataQueue, data)
+	}
 
-		// invoke the rpc
-		broadcast()
-		go r.invokeRPC(service, method)
-	})
+	// invoke the rpc
+	locked.Broadcast()
+	go r.invokeRPC(service, method)
+	locked.Unlock()
 
 	return err
 }
