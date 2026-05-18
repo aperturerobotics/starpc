@@ -143,5 +143,9 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	// handle the rpc
 	serverRPC := srpc.NewServerRPC(ctx, mux, NewRpcStreamWriter(stream))
 	go ReadPump(stream, serverRPC.HandlePacketData, serverRPC.HandleStreamClose)
-	return serverRPC.Wait(ctx)
+	err = serverRPC.Wait(ctx)
+	if err == context.Canceled && ctx.Err() == nil {
+		return nil
+	}
+	return err
 }

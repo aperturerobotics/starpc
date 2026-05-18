@@ -28,8 +28,6 @@ export type OpenStreamFunc = () => Promise<PacketStream>
 export type HandleStreamFunc = (ch: PacketStream) => Promise<void>
 
 // streamToPacketStream converts a Stream into a PacketStream using length-prefix framing.
-//
-// The stream is closed when the source writing to the sink ends.
 export function streamToPacketStream(stream: Stream): PacketStream {
   return {
     source: pipe(
@@ -38,9 +36,14 @@ export function streamToPacketStream(stream: Stream): PacketStream {
       combineUint8ArrayListTransform(),
     ),
     sink: async (source: Source<Uint8Array>): Promise<void> => {
-      await pipe(source, prependLengthPrefixTransform(), stream)
-        .catch((err) => stream.close(err))
-        .then(() => stream.close())
+      try {
+        await pipe(source, prependLengthPrefixTransform(), stream)
+        await stream.closeWrite()
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err))
+        stream.abort(error)
+        throw error
+      }
     },
   }
 }

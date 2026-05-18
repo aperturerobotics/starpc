@@ -9,6 +9,7 @@ import {
   ChannelStream,
   combineUint8ArrayListTransform,
   ChannelStreamOpts,
+  Packet,
 } from '../srpc/index.js'
 import {
   EchoerDefinition,
@@ -77,6 +78,67 @@ describe('srpc server', () => {
     await runRpcStreamTest(client)
   })
 
+  it('keeps detached server-streaming responses open after request source completes', async () => {
+    const mux = createMux()
+    const response = new TextEncoder().encode('delayed init')
+    mux.registerLookupMethod(async (service, method) => {
+      if (service !== 'test.ResourceService' || method !== 'ResourceClient') {
+        return null
+      }
+      return async (_dataSource, dataSink) => {
+        await dataSink(
+          (async function* () {
+            await new Promise((resolve) => setTimeout(resolve, 10))
+            yield response
+          })(),
+        )
+      }
+    })
+
+    const server = new Server(mux.lookupMethod)
+    const firstResponse = new Promise<Packet>((resolve, reject) => {
+      server.handlePacketStream({
+        source: (async function* () {
+          yield Packet.toBinary({
+            body: {
+              case: 'callStart',
+              value: {
+                rpcService: 'test.ResourceService',
+                rpcMethod: 'ResourceClient',
+                data: new Uint8Array(0),
+                dataIsZero: true,
+              },
+            },
+          })
+        })(),
+        sink: async (source) => {
+          try {
+            for await (const packetData of source) {
+              const packet = Packet.fromBinary(packetData)
+              if (packet.body.case === 'callData') {
+                resolve(packet)
+                return
+              }
+            }
+            reject(new Error('server response stream ended before call data'))
+          } catch (err) {
+            reject(err as Error)
+          }
+        },
+      })
+    })
+
+    const packet = await promiseWithTimeout(
+      firstResponse,
+      'detached server-streaming response',
+    )
+    expect(packet.body.case).toBe('callData')
+    if (packet.body.case !== 'callData') {
+      throw new Error('expected callData packet')
+    }
+    expect([...packet.body.value.data]).toEqual([...response])
+  })
+
   it('removes abort listeners after a request completes', async () => {
     const controller = new AbortController()
     const removeEventListener = vi.spyOn(
@@ -114,3 +176,12 @@ describe('srpc server', () => {
     expect(port2.onmessage).toBe(null)
   })
 })
+
+function promiseWithTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(`timed out waiting for ${label}`)), 100)
+    }),
+  ])
+}

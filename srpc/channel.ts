@@ -13,6 +13,8 @@ export interface ChannelStreamMessage<T> {
   opened?: true
   // closed indicates the stream is closed.
   closed?: true
+  // teardown indicates the whole channel should be torn down.
+  teardown?: true
   // error indicates the stream has an error.
   error?: Error
   // data is any message data.
@@ -82,6 +84,10 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
   private idleWatchdog?: Watchdog
   // closed indicates the local channel has been torn down.
   private closed = false
+  // localWriteClosed indicates the local sink finished normally.
+  private localWriteClosed = false
+  // remoteWriteClosed indicates the remote sink finished normally.
+  private remoteWriteClosed = false
 
   // isAcked checks if the stream is acknowledged by the remote.
   public get isAcked() {
@@ -207,12 +213,14 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
     }
     if (notifyRemote) {
       try {
-        this.postMessage({ closed: true, error })
+        this.postMessage({ closed: true, error, teardown: true })
       } catch {
         // Ignore close races while tearing down the local channel.
       }
     }
     this.closed = true
+    this.localWriteClosed = true
+    this.remoteWriteClosed = true
     // close channels
     if (this.channel instanceof MessagePort) {
       this.channel.onmessage = null
@@ -239,6 +247,29 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
       delete this.keepAlive
     }
     this._source.end(error)
+  }
+
+  // finishIfBothDirectionsClosed tears down after a clean bidirectional EOF.
+  private finishIfBothDirectionsClosed() {
+    if (this.localWriteClosed && this.remoteWriteClosed) {
+      this.finish(undefined, false)
+    }
+  }
+
+  // clearKeepAlive stops local write keep-alives after the write side closes.
+  private clearKeepAlive() {
+    if (this.keepAlive) {
+      this.keepAlive.clear()
+      delete this.keepAlive
+    }
+  }
+
+  // clearIdleWatchdog stops receive watchdogs after the peer write side closes.
+  private clearIdleWatchdog() {
+    if (this.idleWatchdog) {
+      this.idleWatchdog.clear()
+      delete this.idleWatchdog
+    }
   }
 
   // close closes the broadcast channels.
@@ -297,9 +328,15 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
         for await (const msg of source) {
           this.postMessage({ data: msg })
         }
+        this.localWriteClosed = true
+        this.clearKeepAlive()
         this.postMessage({ closed: true })
+        this.finishIfBothDirectionsClosed()
       } catch (error) {
-        this.postMessage({ closed: true, error: error as Error })
+        this.finish(
+          error instanceof Error ? error : new Error(String(error)),
+          true,
+        )
       }
     }
   }
@@ -316,16 +353,19 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
     if (msg.opened) {
       this.onRemoteOpened()
     }
-    const { data, closed, error: err } = msg
-    if (data) {
+    const { data, closed, error: err, teardown } = msg
+    if (data !== undefined) {
       this._source.push(data)
     }
-    if (err) {
+    if (err || teardown) {
       this.finish(err, false)
       return
     }
     if (closed) {
-      this.finish(undefined, false)
+      this.remoteWriteClosed = true
+      this.clearIdleWatchdog()
+      this._source.end()
+      this.finishIfBothDirectionsClosed()
     }
   }
 }
