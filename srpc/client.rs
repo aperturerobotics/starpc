@@ -262,6 +262,10 @@ pub mod transport {
 
     /// Re-export TransportPacketWriter for direct use.
     pub use crate::transport::TransportPacketWriter;
+
+    /// Re-export YamuxStreamOpener for multiplexed transports.
+    #[cfg(feature = "yamux")]
+    pub use crate::yamux::YamuxStreamOpener;
 }
 
 #[cfg(test)]

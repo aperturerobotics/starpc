@@ -104,7 +104,7 @@ impl<I: Invoker + 'static> Server<I> {
     }
 
     /// Reports an error through the error handler, if configured.
-    fn report_error(&self, err: Error) {
+    pub(crate) fn report_error(&self, err: Error) {
         if let Some(ref handler) = self.error_handler {
             handler(err);
         }
@@ -214,6 +214,44 @@ impl<I: Invoker + 'static> Server<I> {
         Ok(())
     }
 
+    /// handle_yamux handles a yamux connection by routing each accepted substream as a
+    /// Starpc stream.
+    #[cfg(feature = "yamux")]
+    pub async fn handle_yamux<T>(&self, transport: T) -> Result<()>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        self.handle_yamux_with_config(transport, yamux::Config::default())
+            .await
+    }
+
+    /// handle_yamux_with_config handles a yamux connection with the provided yamux
+    /// configuration.
+    #[cfg(feature = "yamux")]
+    pub async fn handle_yamux_with_config<T>(
+        &self,
+        transport: T,
+        config: yamux::Config,
+    ) -> Result<()>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        crate::yamux::handle_server_connection(self, transport, config).await
+    }
+
+    /// handle_websocket_yamux handles a WebSocket connection carrying yamux substreams.
+    #[cfg(all(feature = "websocket", feature = "yamux"))]
+    pub async fn handle_websocket_yamux<T>(
+        &self,
+        socket: tokio_tungstenite::WebSocketStream<T>,
+    ) -> Result<()>
+    where
+        T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
+    {
+        self.handle_yamux(crate::websocket::websocket_byte_stream(socket))
+            .await
+    }
+
     /// Accepts and handles connections in a loop.
     ///
     /// This is a convenience method that accepts connections from a listener
@@ -246,7 +284,7 @@ impl<I: Invoker + 'static> Server<I> {
     }
 
     /// Creates a clone of the server for spawning tasks.
-    fn clone_for_spawn(&self) -> Server<I> {
+    pub(crate) fn clone_for_spawn(&self) -> Server<I> {
         Server {
             invoker: self.invoker.clone(),
             config: self.config.clone(),

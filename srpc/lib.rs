@@ -75,6 +75,10 @@ pub mod transport;
 
 #[cfg(feature = "build")]
 pub mod build;
+#[cfg(feature = "websocket")]
+pub mod websocket;
+#[cfg(feature = "yamux")]
+pub mod yamux;
 
 // Re-exports for convenience.
 pub use client::{BoxClient, Client, OpenStream, SrpcClient};
@@ -91,6 +95,10 @@ pub use stream::{ArcStream, BoxStream, Context, Stream, StreamExt};
 pub use transport::{
     create_packet_channel, decode_optional_data, encode_optional_data, TransportPacketWriter,
 };
+#[cfg(feature = "websocket")]
+pub use websocket::websocket_byte_stream;
+#[cfg(feature = "yamux")]
+pub use yamux::YamuxStreamOpener;
 
 // Re-export async_trait for use in generated code.
 pub use async_trait::async_trait;

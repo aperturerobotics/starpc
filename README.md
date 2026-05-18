@@ -232,7 +232,7 @@ import { WebSocketConn } from 'starpc'
 import { EchoerClient } from './echo/index.js'
 
 const ws = new WebSocket('ws://localhost:8080/api')
-const conn = new WebSocketConn(ws)
+const conn = new WebSocketConn(ws, 'outbound')
 const client = conn.buildClient()
 const echoer = new EchoerClient(client)
 

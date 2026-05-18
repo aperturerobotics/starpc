@@ -161,7 +161,7 @@ import { EchoerClient } from './echo_srpc.pb.js'
 
 // Connect to a WebSocket server
 const ws = new WebSocket('ws://localhost:8080/api')
-const conn = new WebSocketConn(ws)
+const conn = new WebSocketConn(ws, 'outbound')
 const client = conn.buildClient()
 const echoer = new EchoerClient(client)
 

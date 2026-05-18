@@ -473,8 +473,14 @@ starpc Rust supports:
 | `TcpStream` | Network connections |
 | `tokio::io::duplex` | In-memory testing |
 | `SingleStreamOpener` | Single-stream client transport |
+| `YamuxStreamOpener` | Multiplexed client transport with the `yamux` feature |
+| `websocket_byte_stream` | Binary WebSocket byte transport with the `websocket` feature |
 
-For multiplexed connections (multiple concurrent streams), consider using yamux or similar.
+For multiplexed connections, enable the `yamux` feature and use
+`YamuxStreamOpener`. For browser-compatible WebSocket endpoints, enable
+`websocket-yamux`; servers can pass a `tokio_tungstenite::WebSocketStream` to
+`Server::handle_websocket_yamux`, and clients can use
+`YamuxStreamOpener::client_websocket`.
 
 ## Next Steps
 

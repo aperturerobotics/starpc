@@ -8,11 +8,14 @@ repository = "https://github.com/aperturerobotics/starpc"
 description = "Streaming protobuf RPC framework"
 keywords = ["rpc", "protobuf", "streaming", "grpc"]
 categories = ["network-programming", "asynchronous"]
-include = ["srpc/**/*.rs", "rpcstream/*.rs", "Cargo.toml", "LICENSE", "!node_modules/**", "!vendor/**"]
+include = ["srpc/**/*.rs", "rpcstream/*.rs", "tests/**/*.rs", "Cargo.toml", "LICENSE", "!node_modules/**", "!vendor/**"]
 
 [features]
 default = []
 build = ["dep:prost-build", "dep:protoc-bin-vendored"]
+websocket = ["dep:tokio-tungstenite"]
+yamux = ["dep:yamux", "tokio-util/compat"]
+websocket-yamux = ["websocket", "yamux"]
 
 [lib]
 path = "srpc/lib.rs"
@@ -51,3 +54,5 @@ pin-project-lite = { workspace = true }
 scopeguard = { workspace = true }
 prost-build = { version = "0.14", optional = true }
 protoc-bin-vendored = { version = "3.2", optional = true }
+tokio-tungstenite = { version = "0.29", optional = true }
+yamux = { version = "0.13.10", optional = true }
