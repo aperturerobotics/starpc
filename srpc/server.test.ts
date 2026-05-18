@@ -115,7 +115,7 @@ describe('srpc server', () => {
           try {
             for await (const packetData of source) {
               const packet = Packet.fromBinary(packetData)
-              if (packet.body.case === 'callData') {
+              if (packet.body?.case === 'callData') {
                 resolve(packet)
                 return
               }
@@ -132,11 +132,12 @@ describe('srpc server', () => {
       firstResponse,
       'detached server-streaming response',
     )
-    expect(packet.body.case).toBe('callData')
-    if (packet.body.case !== 'callData') {
+    const body = packet.body
+    expect(body?.case).toBe('callData')
+    if (body?.case !== 'callData' || !body.value?.data) {
       throw new Error('expected callData packet')
     }
-    expect([...packet.body.value.data]).toEqual([...response])
+    expect([...body.value.data]).toEqual([...response])
   })
 
   it('removes abort listeners after a request completes', async () => {

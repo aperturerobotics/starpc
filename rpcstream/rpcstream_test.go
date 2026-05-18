@@ -13,7 +13,7 @@ import (
 )
 
 func TestHandleRpcStreamReturnsNilAfterInnerSuccess(t *testing.T) {
-	client, server := newMemoryRpcStreamPair()
+	client, server := newMemoryRpcStreamPair(t)
 	done := make(chan error, 1)
 	go func() {
 		done <- HandleRpcStream(server, func(ctx context.Context, componentID string, released func()) (srpc.Invoker, func(), error) {
@@ -41,7 +41,7 @@ func TestHandleRpcStreamReturnsNilAfterInnerSuccess(t *testing.T) {
 
 func TestHandleRpcStreamReturnsNilAfterInnerMethodError(t *testing.T) {
 	methodErr := errors.New("method failed")
-	client, server := newMemoryRpcStreamPair()
+	client, server := newMemoryRpcStreamPair(t)
 	done := make(chan error, 1)
 	go func() {
 		done <- HandleRpcStream(server, func(ctx context.Context, componentID string, released func()) (srpc.Invoker, func(), error) {
@@ -60,7 +60,7 @@ func TestHandleRpcStreamReturnsNilAfterInnerMethodError(t *testing.T) {
 
 func TestHandleRpcStreamReturnsGetterError(t *testing.T) {
 	getterErr := errors.New("lookup failed")
-	client, server := newMemoryRpcStreamPair()
+	client, server := newMemoryRpcStreamPair(t)
 	done := make(chan error, 1)
 	go func() {
 		done <- HandleRpcStream(server, func(ctx context.Context, componentID string, released func()) (srpc.Invoker, func(), error) {
@@ -85,22 +85,29 @@ type memoryRpcStream struct {
 	cancelLocal sync.Once
 }
 
-func newMemoryRpcStreamPair() (*memoryRpcStream, *memoryRpcStream) {
+func newMemoryRpcStreamPair(t *testing.T) (*memoryRpcStream, *memoryRpcStream) {
+	t.Helper()
 	aCtx, aCancel := context.WithCancel(context.Background())
 	bCtx, bCancel := context.WithCancel(context.Background())
 	aToB := make(chan *RpcStreamPacket, 16)
 	bToA := make(chan *RpcStreamPacket, 16)
-	return &memoryRpcStream{
-			ctx:    aCtx,
-			cancel: aCancel,
-			recv:   bToA,
-			send:   aToB,
-		}, &memoryRpcStream{
-			ctx:    bCtx,
-			cancel: bCancel,
-			recv:   aToB,
-			send:   bToA,
-		}
+	a := &memoryRpcStream{
+		ctx:    aCtx,
+		cancel: aCancel,
+		recv:   bToA,
+		send:   aToB,
+	}
+	b := &memoryRpcStream{
+		ctx:    bCtx,
+		cancel: bCancel,
+		recv:   aToB,
+		send:   bToA,
+	}
+	t.Cleanup(func() {
+		_ = a.Close()
+		_ = b.Close()
+	})
+	return a, b
 }
 
 func (m *memoryRpcStream) Context() context.Context {
