@@ -69,6 +69,44 @@ func TestCommonRPCHandleStreamCloseClosesWriterOutsideBroadcastLock(t *testing.T
 	}
 }
 
+func TestClientRPCCloseAfterRemoteCompleteClosesWriter(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	if err := rpc.HandleCallData(NewCallDataPacket([]byte("ok"), false, true, nil).GetCallData()); err != nil {
+		t.Fatalf("handle call data: %v", err)
+	}
+
+	rpc.Close()
+
+	if got := writer.closed.Load(); got != 1 {
+		t.Fatalf("expected writer closed once, got %d", got)
+	}
+}
+
+func TestClientRPCCloseClosesWriterOutsideBroadcastLock(t *testing.T) {
+	var rpc *ClientRPC
+	writerClosedOutsideLock := false
+	writer := &closeCallbackPacketWriter{
+		closeFn: func() {
+			ok := rpc.bcast.TryHoldLock(func(func(), func() <-chan struct{}) {})
+			writerClosedOutsideLock = ok
+		},
+	}
+	rpc = NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	rpc.Close()
+
+	if !writerClosedOutsideLock {
+		t.Fatal("expected writer close outside broadcast lock")
+	}
+}
+
 func TestCommonRPCReadOneQueuedDoesNotAllocate(t *testing.T) {
 	msg := []byte("message")
 	queue := make([][]byte, 1)

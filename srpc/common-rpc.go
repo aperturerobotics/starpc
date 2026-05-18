@@ -26,6 +26,8 @@ type commonRPC struct {
 	bcast broadcast.Broadcast
 	// writer is the writer to write messages to
 	writer PacketWriter
+	// writerClosed is set after writer has been closed locally.
+	writerClosed bool
 	// dataQueue contains incoming data packets.
 	// note: packets may be len() == 0
 	dataQueue [][]byte
@@ -86,8 +88,11 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 		locked := c.bcast.Lock()
 		if ctxDone && !c.dataClosed {
 			// context must have been canceled locally
-			c.closeLocked(&locked)
+			writer := c.closeLocked(&locked)
 			locked.Unlock()
+			if writer != nil {
+				_ = writer.Close()
+			}
 			return nil, context.Canceled
 		}
 
@@ -144,7 +149,7 @@ func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err er
 func (c *commonRPC) HandleStreamClose(closeErr error) {
 	var writer PacketWriter
 	locked := c.bcast.Lock()
-	if c.dataClosed {
+	if c.dataClosed && c.writerClosed {
 		locked.Unlock()
 		return
 	}
@@ -153,7 +158,7 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 	}
 	c.dataClosed = true
 	c.ctxCancel()
-	writer = c.writer
+	writer = c.closeWriterLocked()
 	locked.Broadcast()
 	locked.Unlock()
 	if writer != nil {
@@ -212,16 +217,22 @@ func (c *commonRPC) WriteCallCancel() error {
 }
 
 // closeLocked releases resources held by the RPC.
-func (c *commonRPC) closeLocked(locked *broadcast.Locked) {
-	if c.dataClosed {
-		return
-	}
+func (c *commonRPC) closeLocked(locked *broadcast.Locked) PacketWriter {
 	c.dataClosed = true
 	c.localCompleted.Store(true)
 	if c.remoteErr == nil {
 		c.remoteErr = context.Canceled
 	}
-	_ = c.writer.Close()
+	writer := c.closeWriterLocked()
 	locked.Broadcast()
 	c.ctxCancel()
+	return writer
+}
+
+func (c *commonRPC) closeWriterLocked() PacketWriter {
+	if c.writerClosed || c.writer == nil {
+		return nil
+	}
+	c.writerClosed = true
+	return c.writer
 }

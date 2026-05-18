@@ -109,10 +109,14 @@ func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
 	locked := r.bcast.Lock()
+	var writer PacketWriter
 	// call did not start yet if writer is nil.
 	if r.writer != nil {
 		_ = r.WriteCallCancel()
-		r.closeLocked(&locked)
+		writer = r.closeLocked(&locked)
 	}
 	locked.Unlock()
+	if writer != nil {
+		_ = writer.Close()
+	}
 }

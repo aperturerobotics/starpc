@@ -140,6 +140,94 @@ describe('srpc server', () => {
     expect([...body.value.data]).toEqual([...response])
   })
 
+  it('keeps StreamConn server-streaming responses open after Go-style request close', async () => {
+    const mux = createMux()
+    const response = new TextEncoder().encode('streamconn init')
+    mux.registerLookupMethod(async (service, method) => {
+      if (service !== 'test.ResourceService' || method !== 'ResourceClient') {
+        return null
+      }
+      return async (_dataSource, dataSink) => {
+        await dataSink(
+          (async function* () {
+            await new Promise((resolve) => setTimeout(resolve, 10))
+            yield response
+          })(),
+        )
+      }
+    })
+
+    const server = new Server(mux.lookupMethod)
+    const clientConn = new StreamConn()
+    const serverConn = new StreamConn(server, { direction: 'inbound' })
+    const { port1: clientPort, port2: serverPort } = new MessageChannel()
+    const clientChannelStream = new ChannelStream('client', clientPort)
+    const serverChannelStream = new ChannelStream('server', serverPort)
+
+    pipe(
+      clientChannelStream,
+      clientConn,
+      combineUint8ArrayListTransform(),
+      clientChannelStream,
+    )
+      .catch((err: Error) => clientConn.close(err))
+      .then(() => clientConn.close())
+
+    pipe(
+      serverChannelStream,
+      serverConn,
+      combineUint8ArrayListTransform(),
+      serverChannelStream,
+    )
+      .catch((err: Error) => serverConn.close(err))
+      .then(() => serverConn.close())
+
+    try {
+      const stream = await clientConn.openStream()
+      const firstResponse = (async () => {
+        for await (const packetData of stream.source) {
+          const packet = Packet.fromBinary(packetData)
+          if (packet.body?.case === 'callData') {
+            return packet
+          }
+        }
+        throw new Error('server response stream ended before call data')
+      })()
+
+      await stream.sink(
+        (async function* () {
+          yield Packet.toBinary({
+            body: {
+              case: 'callStart',
+              value: {
+                rpcService: 'test.ResourceService',
+                rpcMethod: 'ResourceClient',
+                data: new Uint8Array(0),
+                dataIsZero: true,
+              },
+            },
+          })
+        })(),
+      )
+
+      const packet = await promiseWithTimeout(
+        firstResponse,
+        'StreamConn server-streaming response',
+      )
+      const body = packet.body
+      expect(body?.case).toBe('callData')
+      if (body?.case !== 'callData' || !body.value?.data) {
+        throw new Error('expected callData packet')
+      }
+      expect([...body.value.data]).toEqual([...response])
+    } finally {
+      clientConn.close()
+      serverConn.close()
+      clientChannelStream.close()
+      serverChannelStream.close()
+    }
+  })
+
   it('removes abort listeners after a request completes', async () => {
     const controller = new AbortController()
     const removeEventListener = vi.spyOn(
