@@ -78,7 +78,7 @@ func TestHandleRpcStreamReturnsGetterError(t *testing.T) {
 
 type memoryRpcStream struct {
 	ctx         context.Context
-	cancel      context.CancelFunc
+	cancel      func()
 	recv        <-chan *RpcStreamPacket
 	send        chan<- *RpcStreamPacket
 	closeSend   sync.Once
@@ -87,8 +87,8 @@ type memoryRpcStream struct {
 
 func newMemoryRpcStreamPair(t *testing.T) (*memoryRpcStream, *memoryRpcStream) {
 	t.Helper()
-	aCtx, aCancel := context.WithCancel(context.Background())
-	bCtx, bCancel := context.WithCancel(context.Background())
+	aCtx, aCancel := newMemoryRpcContext()
+	bCtx, bCancel := newMemoryRpcContext()
 	aToB := make(chan *RpcStreamPacket, 16)
 	bToA := make(chan *RpcStreamPacket, 16)
 	a := &memoryRpcStream{
@@ -108,6 +108,43 @@ func newMemoryRpcStreamPair(t *testing.T) (*memoryRpcStream, *memoryRpcStream) {
 		_ = b.Close()
 	})
 	return a, b
+}
+
+type memoryRpcContext struct {
+	done chan struct{}
+	once sync.Once
+}
+
+func newMemoryRpcContext() (*memoryRpcContext, func()) {
+	ctx := &memoryRpcContext{
+		done: make(chan struct{}),
+	}
+	return ctx, func() {
+		ctx.once.Do(func() {
+			close(ctx.done)
+		})
+	}
+}
+
+func (m *memoryRpcContext) Deadline() (time.Time, bool) {
+	return time.Time{}, false
+}
+
+func (m *memoryRpcContext) Done() <-chan struct{} {
+	return m.done
+}
+
+func (m *memoryRpcContext) Err() error {
+	select {
+	case <-m.done:
+		return context.Canceled
+	default:
+		return nil
+	}
+}
+
+func (m *memoryRpcContext) Value(key any) any {
+	return context.Background().Value(key)
 }
 
 func (m *memoryRpcStream) Context() context.Context {
