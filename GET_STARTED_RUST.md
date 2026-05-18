@@ -482,6 +482,83 @@ For multiplexed connections, enable the `yamux` feature and use
 `Server::handle_websocket_yamux`, and clients can use
 `YamuxStreamOpener::client_websocket`.
 
+### TypeScript WebSocket Interop
+
+TypeScript `WebSocketConn` speaks Starpc packets inside yamux streams inside
+binary WebSocket messages. A Rust server must accept the WebSocket upgrade and
+then call `Server::handle_websocket_yamux`; do not pass a browser WebSocket
+connection to `Server::handle_stream`, which expects one raw Starpc packet
+stream.
+
+Enable the Rust transport features and add `tokio-tungstenite` for the HTTP
+upgrade:
+
+```toml
+[dependencies]
+starpc = { version = "0.49", features = ["websocket-yamux"] }
+tokio = { version = "1", features = ["rt", "macros", "net", "io-util", "time"] }
+tokio-tungstenite = "0.29"
+```
+
+Accept WebSocket connections on the Rust side and route each yamux substream to
+the registered Starpc handlers:
+
+```rust
+use std::sync::Arc;
+
+use starpc::{Mux, Server};
+use tokio::net::TcpListener;
+use tokio_tungstenite::accept_async;
+
+use gen::EchoerHandler;
+
+async fn run_websocket_server(
+    addr: &str,
+) -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let listener = TcpListener::bind(addr).await?;
+
+    let mux = Arc::new(Mux::new());
+    mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
+
+    loop {
+        let (tcp, _) = listener.accept().await?;
+        let socket = accept_async(tcp).await?;
+        let server = Server::with_arc(mux.clone());
+
+        tokio::spawn(async move {
+            if let Err(err) = server.handle_websocket_yamux(socket).await {
+                eprintln!("Starpc WebSocket error: {err}");
+            }
+        });
+    }
+}
+```
+
+Then connect with the TypeScript WebSocket transport in outbound/client mode:
+
+```typescript
+import { WebSocketConn } from 'starpc'
+import { EchoerClient } from './echo_srpc.pb.js'
+
+const ws = new WebSocket('ws://127.0.0.1:8080')
+const conn = new WebSocketConn(ws, 'outbound')
+const client = conn.buildClient()
+const echoer = new EchoerClient(client)
+
+const result = await echoer.Echo({ body: 'hello from TypeScript' })
+console.log(result.body)
+```
+
+The resulting transport stack is:
+
+```text
+TypeScript WebSocketConn
+  -> WebSocket binary messages
+  -> yamux connection
+  -> one Starpc packet stream per RPC
+  -> Rust Server::handle_stream
+```
+
 ## Next Steps
 
 - [Echo example](./echo/main.rs) - Complete working example
