@@ -11,9 +11,9 @@ import (
 
 // commonRPC contains common logic between server/client rpc.
 type commonRPC struct {
-	// ctx is the context, canceled when the rpc ends.
+	// ctx is the RPC context, canceled when the RPC is canceled.
 	ctx context.Context
-	// ctxCancel is called when the rpc ends.
+	// ctxCancel cancels ctx.
 	ctxCancel context.CancelFunc
 	// ctxCanceled tracks whether ctxCancel has already been called.
 	ctxCanceled atomic.Bool
@@ -30,6 +30,8 @@ type commonRPC struct {
 	writer PacketWriter
 	// writerClosed is set after writer has been closed locally.
 	writerClosed bool
+	// localDone is set after the local handler has completed normally.
+	localDone bool
 	// dataQueue contains incoming data packets.
 	// note: packets may be len() == 0
 	dataQueue [][]byte
@@ -62,10 +64,13 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 	for {
 		var err error
 		var waitCh <-chan struct{}
-		var rpcCtx context.Context
+		var rpcCanceled bool
+		var localDone bool
 		locked := c.bcast.Lock()
-		rpcCtx, err = c.ctx, c.remoteErr
-		if err == nil && rpcCtx.Err() == nil {
+		err = c.remoteErr
+		rpcCanceled = c.ctx.Err() != nil
+		localDone = c.localDone
+		if err == nil && !rpcCanceled && !localDone {
 			waitCh = locked.WaitCh()
 		}
 		locked.Unlock()
@@ -73,15 +78,16 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		if rpcCtx.Err() != nil {
-			// rpc must have ended w/o an error being set
+		if localDone {
+			return nil
+		}
+		if rpcCanceled {
 			return context.Canceled
 		}
 
 		select {
 		case <-ctx.Done():
 			return context.Canceled
-		case <-rpcCtx.Done():
 		case <-waitCh:
 		}
 	}
@@ -244,4 +250,12 @@ func (c *commonRPC) closeWriterLocked() PacketWriter {
 	}
 	c.writerClosed = true
 	return c.writer
+}
+
+func (c *commonRPC) completeLocal() {
+	locked := c.bcast.Lock()
+	c.localCompleted.Store(true)
+	c.localDone = true
+	locked.Broadcast()
+	locked.Unlock()
 }

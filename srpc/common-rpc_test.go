@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 type closeCountingPacketWriter struct {
@@ -14,6 +16,12 @@ type closeCountingPacketWriter struct {
 
 type closeCallbackPacketWriter struct {
 	closeFn func()
+}
+
+type packetRecordingWriter struct {
+	packets chan *Packet
+	closed  chan struct{}
+	once    sync.Once
 }
 
 func (w *closeCountingPacketWriter) WritePacket(*Packet) error {
@@ -33,6 +41,25 @@ func (w *closeCallbackPacketWriter) Close() error {
 	if w.closeFn != nil {
 		w.closeFn()
 	}
+	return nil
+}
+
+func newPacketRecordingWriter() *packetRecordingWriter {
+	return &packetRecordingWriter{
+		packets: make(chan *Packet, 1),
+		closed:  make(chan struct{}),
+	}
+}
+
+func (w *packetRecordingWriter) WritePacket(pkt *Packet) error {
+	w.packets <- pkt
+	return nil
+}
+
+func (w *packetRecordingWriter) Close() error {
+	w.once.Do(func() {
+		close(w.closed)
+	})
 	return nil
 }
 
@@ -83,6 +110,61 @@ func TestCommonRPCHandleStreamCloseClosesWriterOutsideBroadcastLock(t *testing.T
 
 	if !writerClosedOutsideLock {
 		t.Fatal("expected writer close outside broadcast lock")
+	}
+}
+
+func TestServerRPCWaitReturnsAfterLocalInvokeCompletion(t *testing.T) {
+	writer := newPacketRecordingWriter()
+	streamCtxCh := make(chan context.Context, 1)
+	invokeErrCh := make(chan string, 1)
+	rpc := NewServerRPC(context.Background(), InvokerFunc(func(serviceID, methodID string, strm Stream) (bool, error) {
+		if serviceID != "service" || methodID != "method" {
+			invokeErrCh <- serviceID + "/" + methodID
+		}
+		streamCtxCh <- strm.Context()
+		return true, nil
+	}), writer)
+
+	if err := rpc.HandleCallStart(NewCallStartPacket("service", "method", nil, false).GetCallStart()); err != nil {
+		t.Fatalf("handle call start: %v", err)
+	}
+
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), time.Second)
+	defer waitCancel()
+	if err := rpc.Wait(waitCtx); err != nil {
+		t.Fatalf("wait: %v", err)
+	}
+
+	select {
+	case got := <-invokeErrCh:
+		t.Fatalf("unexpected invoke target: %s", got)
+	default:
+	}
+
+	var streamCtx context.Context
+	select {
+	case streamCtx = <-streamCtxCh:
+	case <-time.After(time.Second):
+		t.Fatal("invoker did not receive stream context")
+	}
+	if err := streamCtx.Err(); err != nil {
+		t.Fatalf("normal invoke completion canceled stream context: %v", err)
+	}
+
+	select {
+	case pkt := <-writer.packets:
+		callData := pkt.GetCallData()
+		if callData == nil || !callData.GetComplete() || callData.GetError() != "" {
+			t.Fatalf("expected successful completion packet, got %#v", pkt.GetBody())
+		}
+	default:
+		t.Fatal("expected completion packet")
+	}
+
+	select {
+	case <-writer.closed:
+	default:
+		t.Fatal("expected writer closed")
 	}
 }
 
