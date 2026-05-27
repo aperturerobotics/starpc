@@ -31,7 +31,7 @@ func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []by
 	}
 
 	if err := r.ctx.Err(); err != nil {
-		r.ctxCancel()
+		r.cancelContext()
 		_ = writer.Close()
 		return context.Canceled
 	}
@@ -48,7 +48,7 @@ func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []by
 	pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
 	err = writer.WritePacket(pkt)
 	if err != nil {
-		r.ctxCancel()
+		r.cancelContext()
 		_ = writer.Close()
 	}
 
@@ -74,7 +74,7 @@ func (r *ClientRPC) HandleStreamClose(closeErr error) {
 		r.remoteErr = closeErr
 	}
 	r.dataClosed = true
-	r.ctxCancel()
+	r.cancelContext()
 	locked.Broadcast()
 	locked.Unlock()
 }

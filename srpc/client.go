@@ -91,7 +91,7 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 	}
 
 	return NewMsgStream(ctx, clientRPC, func() {
-		clientRPC.ctxCancel()
+		clientRPC.cancelContext()
 		_ = writer.Close()
 	}), nil
 }

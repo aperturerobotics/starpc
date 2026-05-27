@@ -48,6 +48,23 @@ func TestCommonRPCHandleStreamCloseIdempotent(t *testing.T) {
 	}
 }
 
+func TestCommonRPCCancelContextIdempotent(t *testing.T) {
+	var calls atomic.Int32
+	rpc := &commonRPC{
+		ctx: context.Background(),
+		ctxCancel: func() {
+			calls.Add(1)
+		},
+	}
+
+	rpc.cancelContext()
+	rpc.cancelContext()
+
+	if got := calls.Load(); got != 1 {
+		t.Fatalf("expected context cancel once, got %d", got)
+	}
+}
+
 func TestCommonRPCHandleStreamCloseClosesWriterOutsideBroadcastLock(t *testing.T) {
 	var rpc *ServerRPC
 	writerClosedOutsideLock := false

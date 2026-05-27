@@ -15,6 +15,8 @@ type commonRPC struct {
 	ctx context.Context
 	// ctxCancel is called when the rpc ends.
 	ctxCancel context.CancelFunc
+	// ctxCanceled tracks whether ctxCancel has already been called.
+	ctxCanceled atomic.Bool
 	// service is the rpc service
 	service string
 	// method is the rpc method
@@ -41,6 +43,13 @@ type commonRPC struct {
 // initCommonRPC initializes the commonRPC.
 func initCommonRPC(ctx context.Context, rpc *commonRPC) {
 	rpc.ctx, rpc.ctxCancel = context.WithCancel(ctx)
+}
+
+func (c *commonRPC) cancelContext() {
+	if c.ctxCanceled.Swap(true) {
+		return
+	}
+	c.ctxCancel()
 }
 
 // Context is canceled when the rpc has finished.
@@ -157,7 +166,7 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 		c.remoteErr = closeErr
 	}
 	c.dataClosed = true
-	c.ctxCancel()
+	c.cancelContext()
 	writer = c.closeWriterLocked()
 	locked.Broadcast()
 	locked.Unlock()
@@ -225,7 +234,7 @@ func (c *commonRPC) closeLocked(locked *broadcast.Locked) PacketWriter {
 	}
 	writer := c.closeWriterLocked()
 	locked.Broadcast()
-	c.ctxCancel()
+	c.cancelContext()
 	return writer
 }
 
