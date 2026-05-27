@@ -96,8 +96,8 @@ func (r *ServerRPC) invokeRPC(serviceID, methodID string) {
 	if err == nil && !ok {
 		err = ErrUnimplemented
 	}
+	r.beginLocalCompletion()
 	outPkt := NewCallDataPacket(nil, false, true, err)
 	_ = r.writer.WritePacket(outPkt)
-	_ = r.writer.Close()
-	r.completeLocal()
+	r.finishLocalCompletion()
 }

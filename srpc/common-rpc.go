@@ -30,6 +30,9 @@ type commonRPC struct {
 	writer PacketWriter
 	// writerClosed is set after writer has been closed locally.
 	writerClosed bool
+	// localCompleting is set while the local handler is publishing its terminal
+	// packet and closing the writer.
+	localCompleting bool
 	// localDone is set after the local handler has completed normally.
 	localDone bool
 	// dataQueue contains incoming data packets.
@@ -168,12 +171,15 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 		locked.Unlock()
 		return
 	}
+	normalRemoteCloseAfterLocalComplete := closeErr == nil && (c.localCompleting || c.localDone)
 	if closeErr != nil && c.remoteErr == nil {
 		c.remoteErr = closeErr
 	}
 	c.dataClosed = true
-	c.cancelContext()
-	writer = c.closeWriterLocked()
+	if !normalRemoteCloseAfterLocalComplete {
+		c.cancelContext()
+		writer = c.closeWriterLocked()
+	}
 	locked.Broadcast()
 	locked.Unlock()
 	if writer != nil {
@@ -252,9 +258,23 @@ func (c *commonRPC) closeWriterLocked() PacketWriter {
 	return c.writer
 }
 
-func (c *commonRPC) completeLocal() {
+func (c *commonRPC) beginLocalCompletion() {
 	locked := c.bcast.Lock()
 	c.localCompleted.Store(true)
+	c.localCompleting = true
+	locked.Unlock()
+}
+
+func (c *commonRPC) finishLocalCompletion() {
+	locked := c.bcast.Lock()
+	c.localCompleted.Store(true)
+	writer := c.closeWriterLocked()
+	locked.Unlock()
+	if writer != nil {
+		_ = writer.Close()
+	}
+	locked = c.bcast.Lock()
+	c.localCompleting = false
 	c.localDone = true
 	locked.Broadcast()
 	locked.Unlock()
