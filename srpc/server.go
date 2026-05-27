@@ -3,6 +3,8 @@ package srpc
 import (
 	"context"
 	"io"
+
+	"github.com/aperturerobotics/starpc/internal/contextutil"
 )
 
 // Server handles incoming RPC streams with a mux.
@@ -26,7 +28,7 @@ func (s *Server) GetInvoker() Invoker {
 // HandleStream handles an incoming stream and runs the read loop.
 // Uses length-prefixed packets.
 func (s *Server) HandleStream(ctx context.Context, rwc io.ReadWriteCloser) {
-	subCtx, subCtxCancel := context.WithCancel(ctx)
+	subCtx, subCtxCancel := contextutil.WithCancel(ctx)
 	defer subCtxCancel()
 	prw := NewPacketReadWriter(rwc)
 	serverRPC := NewServerRPC(subCtx, s.invoker, prw)

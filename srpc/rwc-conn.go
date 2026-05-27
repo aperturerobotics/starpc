@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/aperturerobotics/starpc/internal/contextutil"
 )
 
 // connPktSize is the size of the buffers to use for packets for the RwcConn.
@@ -68,7 +70,7 @@ func NewRwcConn(
 	laddr, raddr net.Addr,
 	bufferPacketN int,
 ) *RwcConn {
-	ctx, ctxCancel := context.WithCancel(ctx)
+	ctx, ctxCancel := contextutil.WithCancel(ctx)
 	if bufferPacketN <= 0 {
 		bufferPacketN = 10
 	}

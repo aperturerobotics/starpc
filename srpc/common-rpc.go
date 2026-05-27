@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync/atomic"
 
+	"github.com/aperturerobotics/starpc/internal/contextutil"
 	"github.com/aperturerobotics/util/broadcast"
 	"github.com/pkg/errors"
 )
@@ -47,7 +48,7 @@ type commonRPC struct {
 
 // initCommonRPC initializes the commonRPC.
 func initCommonRPC(ctx context.Context, rpc *commonRPC) {
-	rpc.ctx, rpc.ctxCancel = context.WithCancel(ctx)
+	rpc.ctx, rpc.ctxCancel = contextutil.WithCancel(ctx)
 }
 
 func (c *commonRPC) cancelContext() {

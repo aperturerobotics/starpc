@@ -3,6 +3,7 @@ package rpcstream
 import (
 	"context"
 
+	"github.com/aperturerobotics/starpc/internal/contextutil"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
 )
@@ -107,7 +108,7 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 		return ErrUnexpectedPacket
 	}
 
-	ctx, ctxCancel := context.WithCancel(stream.Context())
+	ctx, ctxCancel := contextutil.WithCancel(stream.Context())
 	defer ctxCancel()
 
 	// lookup the server for this component id

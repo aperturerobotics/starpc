@@ -4,6 +4,8 @@ import (
 	"context"
 	"io"
 	"sync"
+
+	"github.com/aperturerobotics/starpc/internal/contextutil"
 )
 
 // pipeStream implements an in-memory stream.
@@ -22,9 +24,9 @@ type pipeStream struct {
 // NewPipeStream constructs a new in-memory stream.
 func NewPipeStream(ctx context.Context) (Stream, Stream) {
 	s1 := &pipeStream{dataCh: make(chan []byte, 5)}
-	s1.ctx, s1.ctxCancel = context.WithCancel(ctx)
+	s1.ctx, s1.ctxCancel = contextutil.WithCancel(ctx)
 	s2 := &pipeStream{other: s1, dataCh: make(chan []byte, 5)}
-	s2.ctx, s2.ctxCancel = context.WithCancel(ctx)
+	s2.ctx, s2.ctxCancel = contextutil.WithCancel(ctx)
 	s1.other = s2
 	return s1, s2
 }
