@@ -274,6 +274,43 @@ func TestServerRPCRemoteCloseDuringLocalCompletionDoesNotCancelStreamContext(t *
 	}
 }
 
+func TestServerRPCRemoteErrorDuringLocalCompletionCancelsStreamContext(t *testing.T) {
+	writer := newBlockingPacketWriter()
+	streamCtxCh := make(chan context.Context, 1)
+	rpc := NewServerRPC(context.Background(), InvokerFunc(func(serviceID, methodID string, strm Stream) (bool, error) {
+		streamCtxCh <- strm.Context()
+		return true, nil
+	}), writer)
+
+	if err := rpc.HandleCallStart(NewCallStartPacket("service", "method", nil, false).GetCallStart()); err != nil {
+		t.Fatalf("handle call start: %v", err)
+	}
+
+	var streamCtx context.Context
+	select {
+	case streamCtx = <-streamCtxCh:
+	case <-time.After(time.Second):
+		t.Fatal("invoker did not receive stream context")
+	}
+	select {
+	case <-writer.packets:
+	case <-time.After(time.Second):
+		t.Fatal("terminal packet write did not start")
+	}
+
+	rpc.HandleStreamClose(context.Canceled)
+
+	if err := streamCtx.Err(); err != context.Canceled {
+		t.Fatalf("remote error during local completion context error = %v want %v", err, context.Canceled)
+	}
+	close(writer.releaseWrite)
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), time.Second)
+	defer waitCancel()
+	if err := rpc.Wait(waitCtx); err != context.Canceled {
+		t.Fatalf("wait = %v want %v", err, context.Canceled)
+	}
+}
+
 func TestClientRPCCloseAfterRemoteCompleteClosesWriter(t *testing.T) {
 	writer := &closeCountingPacketWriter{}
 	rpc := NewClientRPC(context.Background(), "service", "method")
