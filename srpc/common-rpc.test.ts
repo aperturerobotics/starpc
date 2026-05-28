@@ -191,6 +191,7 @@ describe('CommonRPC', () => {
     await expectPending(secondYield.promise, 'second upload chunk')
     expect(yielded.count).toBe(1)
     expect(sinkConsumed.count).toBe(0)
+    await expectPending(request, 'client-stream request')
 
     sinkGate.resolve()
     responseGate.resolve()
@@ -220,7 +221,7 @@ function promiseWithTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   ])
 }
 
-async function expectPending(promise: Promise<void>, label: string) {
+async function expectPending<T>(promise: Promise<T>, label: string) {
   await expect(
     Promise.race([
       promise.then(() => 'settled'),
