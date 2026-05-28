@@ -8,18 +8,23 @@ describe('CommonRPC', () => {
   it('backpressures call-data sources until outbound packets drain', async () => {
     const rpc = new CommonRPC()
     const yielded = { count: 0 }
+    const secondYield = deferred()
+    const thirdYield = deferred()
 
     const writeDone = rpc.writeCallDataFromSource(
-      (async function* () {
-        for (const i of Array.from({ length: 32 }, (_, index) => index)) {
-          yielded.count++
-          yield new Uint8Array([i])
-        }
-      })(),
+      chunkSource(
+        yielded,
+        new Map([
+          [1, secondYield],
+          [2, thirdYield],
+        ]),
+      ),
     )
 
-    await waitForWriterToRun()
-    expect(yielded.count).toBeLessThanOrEqual(2)
+    await promiseWithTimeout(secondYield.promise, 'second call-data chunk')
+    expect(yielded.count).toBe(2)
+    await expectPending(thirdYield.promise, 'third call-data chunk')
+    expect(yielded.count).toBe(2)
 
     const received = new Array<number>()
     const readComplete = (async () => {
@@ -54,18 +59,23 @@ describe('CommonRPC', () => {
   it('wakes call-data writers when the rpc closes while waiting for drain', async () => {
     const rpc = new CommonRPC()
     const yielded = { count: 0 }
+    const secondYield = deferred()
+    const thirdYield = deferred()
 
     const writeDone = rpc.writeCallDataFromSource(
-      (async function* () {
-        for (const i of Array.from({ length: 32 }, (_, index) => index)) {
-          yielded.count++
-          yield new Uint8Array([i])
-        }
-      })(),
+      chunkSource(
+        yielded,
+        new Map([
+          [1, secondYield],
+          [2, thirdYield],
+        ]),
+      ),
     )
 
-    await waitForWriterToRun()
-    expect(yielded.count).toBeLessThanOrEqual(2)
+    await promiseWithTimeout(secondYield.promise, 'second call-data chunk')
+    expect(yielded.count).toBe(2)
+    await expectPending(thirdYield.promise, 'third call-data chunk')
+    expect(yielded.count).toBe(2)
 
     await rpc.close()
     await expect(
@@ -77,11 +87,23 @@ describe('CommonRPC', () => {
   it('wakes call-data writers when an error closes the rpc while waiting for drain', async () => {
     const rpc = new CommonRPC()
     const yielded = { count: 0 }
+    const secondYield = deferred()
+    const thirdYield = deferred()
 
-    const writeDone = rpc.writeCallDataFromSource(chunkSource(yielded))
+    const writeDone = rpc.writeCallDataFromSource(
+      chunkSource(
+        yielded,
+        new Map([
+          [1, secondYield],
+          [2, thirdYield],
+        ]),
+      ),
+    )
 
-    await waitForWriterToRun()
-    expect(yielded.count).toBeLessThanOrEqual(2)
+    await promiseWithTimeout(secondYield.promise, 'second call-data chunk')
+    expect(yielded.count).toBe(2)
+    await expectPending(thirdYield.promise, 'third call-data chunk')
+    expect(yielded.count).toBe(2)
 
     await rpc.close(new Error('boom'))
     await expect(
@@ -93,10 +115,22 @@ describe('CommonRPC', () => {
   it('does not backpressure call-cancel packets behind queued call data', async () => {
     const rpc = new CommonRPC()
     const yielded = { count: 0 }
-    const writeDone = rpc.writeCallDataFromSource(chunkSource(yielded))
+    const secondYield = deferred()
+    const thirdYield = deferred()
+    const writeDone = rpc.writeCallDataFromSource(
+      chunkSource(
+        yielded,
+        new Map([
+          [1, secondYield],
+          [2, thirdYield],
+        ]),
+      ),
+    )
 
-    await waitForWriterToRun()
-    expect(yielded.count).toBeLessThanOrEqual(2)
+    await promiseWithTimeout(secondYield.promise, 'second call-data chunk')
+    expect(yielded.count).toBe(2)
+    await expectPending(thirdYield.promise, 'third call-data chunk')
+    expect(yielded.count).toBe(2)
 
     const cancelDone = rpc.writeCallCancel()
     await rpc.close(new Error('abort'))
@@ -111,6 +145,8 @@ describe('CommonRPC', () => {
 
   it('backpressures client-stream sources through the Client request path', async () => {
     const yielded = { count: 0 }
+    const firstYield = deferred()
+    const secondYield = deferred()
     const sinkConsumed = { count: 0 }
     const sinkGate = deferred()
     const responseGate = deferred()
@@ -141,11 +177,19 @@ describe('CommonRPC', () => {
     const request = client.clientStreamingRequest(
       'test.Service',
       'Upload',
-      chunkSource(yielded),
+      chunkSource(
+        yielded,
+        new Map([
+          [0, firstYield],
+          [1, secondYield],
+        ]),
+      ),
     )
 
-    await waitForWriterToRun()
-    expect(yielded.count).toBeLessThanOrEqual(1)
+    await promiseWithTimeout(firstYield.promise, 'first upload chunk')
+    expect(yielded.count).toBe(1)
+    await expectPending(secondYield.promise, 'second upload chunk')
+    expect(yielded.count).toBe(1)
     expect(sinkConsumed.count).toBe(0)
 
     sinkGate.resolve()
@@ -156,15 +200,15 @@ describe('CommonRPC', () => {
   })
 })
 
-async function* chunkSource(yielded: { count: number }) {
+async function* chunkSource(
+  yielded: { count: number },
+  yieldMarks?: Map<number, Deferred>,
+) {
   for (const i of Array.from({ length: 32 }, (_, index) => index)) {
     yielded.count++
+    yieldMarks?.get(i)?.resolve()
     yield new Uint8Array([i])
   }
-}
-
-async function waitForWriterToRun() {
-  await new Promise((resolve) => setTimeout(resolve, 10))
 }
 
 function promiseWithTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
@@ -175,6 +219,20 @@ function promiseWithTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
     }),
   ])
 }
+
+async function expectPending(promise: Promise<void>, label: string) {
+  await expect(
+    Promise.race([
+      promise.then(() => 'settled'),
+      new Promise<'pending'>((resolve) => {
+        setTimeout(() => resolve('pending'), 50)
+      }),
+    ]),
+    `${label} should not be requested while outbound packets are blocked`,
+  ).resolves.toBe('pending')
+}
+
+type Deferred = ReturnType<typeof deferred>
 
 function deferred() {
   const callbacks: {
