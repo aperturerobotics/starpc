@@ -128,9 +128,9 @@
     "vitest": "^4.1.5"
   },
   "dependencies": {
-    "@aptre/yamux": "^1.0.3",
     "@aptre/it-ws": "^1.1.2",
-    "@aptre/protobuf-es-lite": "^1.0.1",
+    "@aptre/protobuf-es-lite": "1.1.0",
+    "@aptre/yamux": "^1.0.3",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
     "it-first": "^3.0.11",
@@ -139,5 +139,11 @@
     "it-stream-types": "^2.0.4",
     "uint8arraylist": "^3.0.0",
     "ws": "^8.20.0"
+  },
+  "resolutions": {
+    "@aptre/protobuf-es-lite": "1.1.0"
+  },
+  "overrides": {
+    "@aptre/protobuf-es-lite": "1.1.0"
   }
 }
