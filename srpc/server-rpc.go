@@ -82,7 +82,9 @@ func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 
 	// invoke the rpc
 	locked.Broadcast()
-	go r.invokeRPC(service, method)
+	startServerRPCInvoke(func() {
+		r.invokeRPC(service, method)
+	})
 	locked.Unlock()
 
 	return err
