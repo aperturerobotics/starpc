@@ -34,6 +34,10 @@ type commonRPC struct {
 	// localCompleting is set while the local handler is publishing its terminal
 	// packet and closing the writer.
 	localCompleting bool
+	// localActive is set while the local handler goroutine may still be inside
+	// user code. Resource owners use Wait as a lifetime barrier, so cancellation
+	// must not make Wait return while a handler can still touch mux-owned state.
+	localActive bool
 	// localDone is set after the local handler has completed normally.
 	localDone bool
 	// dataQueue contains incoming data packets.
@@ -73,6 +77,21 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 		locked := c.bcast.Lock()
 		err = c.remoteErr
 		rpcCanceled = c.ctx.Err() != nil
+		// A canceled stream tells the handler to stop, but it is not proof that
+		// the handler has returned. Keep waiting while localActive is true so a
+		// caller that releases resources after Wait cannot race in-flight user
+		// code still running on the canceled Stream context.
+		if c.localActive {
+			waitCh = locked.WaitCh()
+			locked.Unlock()
+
+			select {
+			case <-ctx.Done():
+				return context.Canceled
+			case <-waitCh:
+				continue
+			}
+		}
 		localDone = c.localDone
 		if err == nil && !rpcCanceled && !localDone {
 			waitCh = locked.WaitCh()
@@ -276,6 +295,7 @@ func (c *commonRPC) finishLocalCompletion() {
 	}
 	locked = c.bcast.Lock()
 	c.localCompleting = false
+	c.localActive = false
 	c.localDone = true
 	locked.Broadcast()
 	locked.Unlock()

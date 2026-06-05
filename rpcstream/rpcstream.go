@@ -144,7 +144,11 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	// handle the rpc
 	serverRPC := srpc.NewServerRPC(ctx, mux, NewRpcStreamWriter(stream))
 	go ReadPump(stream, serverRPC.HandlePacketData, serverRPC.HandleStreamClose)
-	err = serverRPC.Wait(ctx)
+	// ctx is also the cancellation signal handed to component owners through the
+	// released callback. If we use it as the wait-abort context, releasing a
+	// component can make HandleRpcStream return before the invoked method exits,
+	// and callers may free mux-owned resources while that method is still active.
+	err = serverRPC.Wait(context.WithoutCancel(stream.Context()))
 	if err == context.Canceled && ctx.Err() == nil {
 		return nil
 	}

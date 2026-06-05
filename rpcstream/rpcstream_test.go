@@ -76,6 +76,60 @@ func TestHandleRpcStreamReturnsGetterError(t *testing.T) {
 	requireHandleRpcStreamDone(t, done, getterErr)
 }
 
+func TestHandleRpcStreamReleaseWaitsForActiveInvoke(t *testing.T) {
+	client, server := newMemoryRpcStreamPair(t)
+	releaseCh := make(chan func(), 1)
+	invoked := make(chan struct{})
+	ctxCanceled := make(chan struct{})
+	releaseInvoke := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- HandleRpcStream(server, func(ctx context.Context, componentID string, released func()) (srpc.Invoker, func(), error) {
+			releaseCh <- released
+			return srpc.InvokerFunc(func(serviceID, methodID string, strm srpc.Stream) (bool, error) {
+				close(invoked)
+				<-strm.Context().Done()
+				close(ctxCanceled)
+				<-releaseInvoke
+				return true, nil
+			}), nil, nil
+		})
+	}()
+
+	sendRpcStreamInit(t, client, "component-a")
+	requireRpcStreamAck(t, client)
+	sendCallStart(t, client, "test.Service", "Do")
+
+	var release func()
+	select {
+	case release = <-releaseCh:
+	case <-timeAfterTestTimeout():
+		t.Fatal("getter did not receive release callback")
+	}
+	select {
+	case <-invoked:
+	case <-timeAfterTestTimeout():
+		t.Fatal("invoker did not start")
+	}
+
+	release()
+	select {
+	case <-ctxCanceled:
+	case <-timeAfterTestTimeout():
+		t.Fatal("release did not cancel invoke context")
+	}
+
+	select {
+	case err := <-done:
+		t.Fatalf("HandleRpcStream returned before invoke exited: %v", err)
+	default:
+	}
+
+	close(releaseInvoke)
+	requireCallData(t, client, "")
+	requireHandleRpcStreamDone(t, done, nil)
+}
+
 type memoryRpcStream struct {
 	ctx         context.Context
 	cancel      func()

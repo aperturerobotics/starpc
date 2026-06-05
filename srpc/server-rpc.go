@@ -80,6 +80,11 @@ func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 		r.dataQueue = append(r.dataQueue, data)
 	}
 
+	// Wait is used as a resource lifetime barrier by rpcstream components.
+	// Mark the method active before scheduling it so cancellation cannot make
+	// Wait return and release a mux while invokeRPC is still running user code.
+	r.localActive = true
+
 	// invoke the rpc
 	locked.Broadcast()
 	startServerRPCInvoke(func() {

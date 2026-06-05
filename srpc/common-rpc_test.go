@@ -232,6 +232,58 @@ func TestServerRPCRemoteCloseAfterLocalCompletionDoesNotCancelStreamContext(t *t
 	}
 }
 
+func TestServerRPCWaitDoesNotReturnUntilCanceledInvokeExits(t *testing.T) {
+	writer := newPacketRecordingWriter()
+	invoked := make(chan struct{})
+	ctxCanceled := make(chan struct{})
+	releaseInvoke := make(chan struct{})
+	rpc := NewServerRPC(context.Background(), InvokerFunc(func(serviceID, methodID string, strm Stream) (bool, error) {
+		close(invoked)
+		<-strm.Context().Done()
+		close(ctxCanceled)
+		<-releaseInvoke
+		return true, nil
+	}), writer)
+
+	if err := rpc.HandleCallStart(NewCallStartPacket("service", "method", nil, false).GetCallStart()); err != nil {
+		t.Fatalf("handle call start: %v", err)
+	}
+
+	select {
+	case <-invoked:
+	case <-time.After(time.Second):
+		t.Fatal("invoker did not start")
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- rpc.Wait(context.Background())
+	}()
+
+	rpc.cancelContext()
+	select {
+	case <-ctxCanceled:
+	case <-time.After(time.Second):
+		t.Fatal("invoke context was not canceled")
+	}
+
+	select {
+	case err := <-done:
+		t.Fatalf("wait returned before canceled invoke exited: %v", err)
+	default:
+	}
+
+	close(releaseInvoke)
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("wait after invoke exit: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("wait did not return after invoke exited")
+	}
+}
+
 func TestServerRPCRemoteCloseDuringLocalCompletionDoesNotCancelStreamContext(t *testing.T) {
 	writer := newBlockingPacketWriter()
 	streamCtxCh := make(chan context.Context, 1)
