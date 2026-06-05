@@ -3,26 +3,32 @@ package starpc
 import (
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"testing"
 )
 
 func TestNoRawPrintlnDebugInstrumentation(t *testing.T) {
 	for _, root := range []string{"srpc", "rpcstream"} {
-		err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		srcRoot, err := os.OpenRoot(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer srcRoot.Close()
+
+		err = fs.WalkDir(srcRoot.FS(), ".", func(name string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			if d.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
 				return nil
 			}
-			data, err := os.ReadFile(path)
+			data, err := srcRoot.ReadFile(name)
 			if err != nil {
 				return err
 			}
 			if strings.Contains(string(data), "println(") {
-				t.Errorf("%s contains raw println debug output", path)
+				t.Errorf("%s contains raw println debug output", path.Join(root, name))
 			}
 			return nil
 		})
