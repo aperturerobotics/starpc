@@ -3,14 +3,12 @@
 [![npm](https://img.shields.io/npm/v/starpc?style=flat-square)](https://www.npmjs.com/package/starpc)
 [![crates.io](https://img.shields.io/crates/v/starpc.svg?style=flat-square)](https://crates.io/crates/starpc)
 [![Build status](https://img.shields.io/github/actions/workflow/status/aperturerobotics/starpc/tests.yml?style=flat-square&branch=master)](https://github.com/aperturerobotics/starpc/actions)
-[![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
+[![GoDoc Widget]][GoDoc]
 
 > Streaming Protobuf RPC with bidirectional streaming over any multiplexed transport.
 
 [GoDoc]: https://godoc.org/github.com/aperturerobotics/starpc
 [GoDoc Widget]: https://godoc.org/github.com/aperturerobotics/starpc?status.svg
-[Go Report Card Widget]: https://goreportcard.com/badge/github.com/aperturerobotics/starpc
-[Go Report Card]: https://goreportcard.com/report/github.com/aperturerobotics/starpc
 
 ## Table of Contents
 
