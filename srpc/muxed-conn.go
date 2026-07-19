@@ -9,8 +9,7 @@ import (
 	yamux "github.com/libp2p/go-yamux/v4"
 )
 
-// NewYamuxConfig builds the default yamux configuration.
-func NewYamuxConfig() *yamux.Config {
+var yamuxConfigTemplate = func() yamux.Config {
 	config := yamux.DefaultConfig()
 	config.MaxStreamWindowSize = 16 * 1024 * 1024
 	config.LogOutput = io.Discard
@@ -18,7 +17,13 @@ func NewYamuxConfig() *yamux.Config {
 	config.MaxIncomingStreams = math.MaxUint32
 	config.AcceptBacklog = 512
 	config.EnableKeepAlive = false
-	return config
+	return *config
+}()
+
+// NewYamuxConfig returns a fresh copy of the default yamux configuration.
+func NewYamuxConfig() *yamux.Config {
+	config := yamuxConfigTemplate
+	return &config
 }
 
 // NewMuxedConn constructs a new MuxedConn from a net.Conn.
