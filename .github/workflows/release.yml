@@ -9,7 +9,22 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify release commit is reviewed, merged, and green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun scripts/release-verify-commit.ts ${{ github.sha }}
+
   publish:
+    needs: verify
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -20,13 +35,10 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile --ignore-scripts
       - run: bun run build
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '25'
-          registry-url: 'https://registry.npmjs.org'
-      - run: npm publish --ignore-scripts
+      - run: bun scripts/release-publish.ts
 
   cargo-publish:
+    needs: verify
     runs-on: ubuntu-latest
     environment: cargo
     permissions:
@@ -39,6 +51,7 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   github-release:
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: write
