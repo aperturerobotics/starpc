@@ -118,14 +118,14 @@ check_receipt_events() {
     local event_log="$2"
     awk -v expected="$expected" '
         $0 == "SERVER_RECEIPT_TERMINAL " expected { terminal = NR; next }
-        $0 == "SERVER_RECEIPT_ACK " expected { ack = NR; next }
+        $0 == "SERVER_RECEIPT_ACK_WRITE " expected { ack_write = NR; next }
         $0 == "CLIENT_RECEIPT_RESOLVED " expected { client = NR; next }
         END {
             if (!terminal || !client) {
                 exit 1
             }
             if (expected == "committed" &&
-                (!ack || terminal >= ack || ack >= client)) {
+                (!ack_write || terminal >= ack_write || ack_write >= client)) {
                 exit 1
             }
         }
