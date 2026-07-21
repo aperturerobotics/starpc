@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 
 	"github.com/aperturerobotics/starpc/echo"
 	"github.com/aperturerobotics/starpc/srpc"
@@ -39,6 +41,7 @@ func main() {
 	}
 	var receiptDone <-chan struct{}
 	var finishReceipt func()
+	var receiptCommitted atomic.Bool
 	if receiptMode {
 		done := make(chan struct{})
 		var doneOnce sync.Once
@@ -73,16 +76,16 @@ func main() {
 			if markerErr != nil {
 				return true, markerErr
 			}
-			if kind != srpc.TerminalCommitted {
+			if kind == srpc.TerminalKind_TERMINAL_KIND_COMMITTED {
+				receiptCommitted.Store(true)
+			}
+			if kind != srpc.TerminalKind_TERMINAL_KIND_COMMITTED {
 				finishReceipt()
 			}
 			return true, nil
 		})
 	}
-	var server *srpc.Server
-	if !receiptMode {
-		server = srpc.NewServer(invoker)
-	}
+	server := srpc.NewServer(invoker)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "listen error: %v\n", err)
@@ -101,7 +104,7 @@ func main() {
 
 	go func() {
 		<-ctx.Done()
-		ln.Close()
+		_ = ln.Close()
 	}()
 
 	for {
@@ -109,63 +112,82 @@ func main() {
 		if err != nil {
 			return
 		}
+		var stream net.Conn
+		stream = conn
 		if receiptMode {
-			go handleReceiptStream(ctx, conn, invoker, finishReceipt)
-		} else {
-			go server.HandleStream(ctx, conn)
+			stream = &receiptConn{
+				Conn:          conn,
+				finishReceipt: finishReceipt,
+				committed:     &receiptCommitted,
+			}
+		}
+		go server.HandleStream(ctx, stream)
+	}
+}
+
+type receiptConn struct {
+	net.Conn
+	finishReceipt func()
+	committed     *atomic.Bool
+	inspect       []byte
+	ackPending    bool
+}
+
+func (c *receiptConn) Write(p []byte) (int, error) {
+	if !c.ackPending {
+		if err := c.observeReceiptPackets(p); err != nil {
+			return 0, err
 		}
 	}
-}
-
-func handleReceiptStream(
-	ctx context.Context,
-	conn net.Conn,
-	invoker srpc.Invoker,
-	finishReceipt func(),
-) {
-	prw := srpc.NewPacketReadWriter(conn)
-	writer := &receiptPacketWriter{
-		inner:         prw,
-		finishReceipt: finishReceipt,
+	n, err := c.Conn.Write(p)
+	if err != nil {
+		return n, err
 	}
-	rpc := srpc.NewServerRPC(ctx, invoker, writer)
-	prw.ReadPump(rpc.HandlePacketData, rpc.HandleStreamClose)
-}
-
-type receiptPacketWriter struct {
-	inner         srpc.PacketWriter
-	finishReceipt func()
-}
-
-func (w *receiptPacketWriter) WritePacket(pkt *srpc.Packet) error {
-	if err := w.inner.WritePacket(pkt); err != nil {
-		return err
+	if c.ackPending && n == len(p) {
+		c.finishReceipt()
+		c.ackPending = false
 	}
-	data := pkt.GetCallData()
-	if data != nil && data.GetComplete() && data.GetError() == "" {
-		if err := emitReceiptEvent("SERVER_RECEIPT_ACK committed"); err != nil {
+	return n, nil
+}
+
+func (c *receiptConn) observeReceiptPackets(p []byte) error {
+	c.inspect = append(c.inspect, p...)
+	for len(c.inspect) >= 4 {
+		size := int(binary.LittleEndian.Uint32(c.inspect[:4]))
+		if len(c.inspect) < 4+size {
+			break
+		}
+		pkt := &srpc.Packet{}
+		if err := pkt.UnmarshalVT(c.inspect[4 : 4+size]); err != nil {
 			return err
 		}
-		w.finishReceipt()
+		c.inspect = c.inspect[4+size:]
+		data := pkt.GetCallData()
+		if !c.committed.Load() {
+			continue
+		}
+		if data == nil || !data.GetComplete() || data.GetError() != "" {
+			continue
+		}
+		if err := emitReceiptEvent("SERVER_RECEIPT_ACK_WRITE committed"); err != nil {
+			return err
+		}
+		c.ackPending = true
 	}
 	return nil
 }
 
-func (w *receiptPacketWriter) Close() error {
-	return w.inner.Close()
-}
-
 func terminalName(kind srpc.TerminalKind) string {
 	switch kind {
-	case srpc.TerminalCommitted:
+	case srpc.TerminalKind_TERMINAL_KIND_COMMITTED:
 		return "committed"
-	case srpc.TerminalCanceled:
+	case srpc.TerminalKind_TERMINAL_KIND_CANCELED:
 		return "canceled"
-	case srpc.TerminalLost:
+	case srpc.TerminalKind_TERMINAL_KIND_TRANSPORT_LOST:
 		return "transportLost"
-	case srpc.TerminalClosed:
+	case srpc.TerminalKind_TERMINAL_KIND_CLOSED:
 		return "closed"
-	case srpc.TerminalAbandoned:
+	case srpc.TerminalKind_TERMINAL_KIND_ABANDONED:
 		return "abandoned"
 	default:
 		return "unknown"

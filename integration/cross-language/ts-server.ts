@@ -2,6 +2,8 @@ import net from 'net'
 import { closeSync, openSync, writeSync } from 'node:fs'
 import { pipe } from 'it-pipe'
 import { pushable } from 'it-pushable'
+import type { Source } from 'it-stream-types'
+
 import { createMux, createHandler, Server } from '../../srpc/index.js'
 import {
   parseLengthPrefixTransform,
@@ -12,7 +14,7 @@ import { EchoerServer, EchoMsg } from '../../echo/index.js'
 import { EchoerDefinition } from '../../echo/echo_srpc.pb.js'
 import { Packet, TerminalKind } from '../../srpc/rpcproto.pb.js'
 import type { PacketStream } from '../../srpc/stream.js'
-import type { Source } from 'it-stream-types'
+
 function emitReceiptEvent(line: string): void {
   console.log(line)
   const fifo = process.env.RECEIPT_EVENT_FIFO
@@ -57,15 +59,15 @@ function tcpSocketToPacketStream(socket: net.Socket): PacketStream {
           packet.body?.case === 'callData' &&
           packet.body.value.complete &&
           !packet.body.value.error
+        if (receiptCompletion) {
+          emitReceiptEvent('SERVER_RECEIPT_ACK_WRITE committed')
+        }
         const writeDone = new Promise<void>((resolve, reject) => {
           socket.write(data, (err) => {
             if (err) reject(err)
             else resolve()
           })
         })
-        if (receiptCompletion) {
-          emitReceiptEvent('SERVER_RECEIPT_ACK committed')
-        }
         await writeDone
         if (receiptCompletion) {
           finishReceiptServer()
@@ -147,6 +149,7 @@ function terminalName(terminal: TerminalKind): string {
       return 'unknown'
   }
 }
+
 const server = new Server(mux.lookupMethod)
 if (!receiptMode) {
   const echoer = new EchoerServer(server)
