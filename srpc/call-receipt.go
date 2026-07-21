@@ -62,7 +62,7 @@ func (r *CallReceipt) Commit() error {
 		receipt, ok := r.strm.(receiptTerminalStream)
 		if ok {
 			terminal, terminalOK := receipt.receiptTerminalKind()
-			if terminalOK && terminal == TerminalCommitted {
+			if terminalOK && terminal == TerminalKind_TERMINAL_KIND_COMMITTED {
 				return nil
 			}
 		}

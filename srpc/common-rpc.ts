@@ -3,10 +3,13 @@ import type { Sink, Source } from 'it-stream-types'
 import { pushable, type Pushable } from 'it-pushable'
 import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
-import type { CallData, CallStart } from './rpcproto.pb.js'
-import { Packet } from './rpcproto.pb.js'
+import {
+  Packet,
+  TerminalKind,
+  type CallData,
+  type CallStart,
+} from './rpcproto.pb.js'
 import { ERR_RPC_ABORT, RemoteRPCError } from './errors.js'
-import type { TerminalKind } from './server-invocation.js'
 
 const maxBufferedOutgoingPackets = 1
 
@@ -86,7 +89,7 @@ export class CommonRPC {
         const terminal = this.getTerminalKind()
         if (terminal !== undefined) {
           if (
-            terminal === 'closed' &&
+            terminal === TerminalKind.CLOSED &&
             this.remoteSourceClosed &&
             !this.closed
           ) {
@@ -95,7 +98,7 @@ export class CommonRPC {
           return terminal
         }
         if (ownerAborted) {
-          return 'abandoned'
+          return TerminalKind.ABANDONED
         }
         await Promise.race([this.terminalPromise, ownerDone])
         ownerAborted = ownerSignal.aborted
@@ -274,11 +277,11 @@ export class CommonRPC {
     if (remoteError) {
       this.remoteError ??= remoteError
       this.invocationController.abort()
-      this.recordRemoteTerminal('transportLost')
+      this.recordRemoteTerminal(TerminalKind.TRANSPORT_LOST)
     }
     if (packet.complete && !remoteError) {
       this.remoteCompleted = true
-      this.recordRemoteTerminal('committed')
+      this.recordRemoteTerminal(TerminalKind.COMMITTED)
       this._rpcDataSource.end(remoteError)
     } else if (remoteError) {
       this._rpcDataSource.end(remoteError)
@@ -287,7 +290,7 @@ export class CommonRPC {
 
   // handleCallCancel handles a CallCancel packet.
   public async handleCallCancel() {
-    this.recordRemoteTerminal('canceled')
+    this.recordRemoteTerminal(TerminalKind.CANCELED)
     await this.close(new Error(ERR_RPC_ABORT))
   }
 
@@ -300,7 +303,9 @@ export class CommonRPC {
     if (!this.remoteError && err) {
       this.remoteError = err
     }
-    this.recordRemoteTerminal(err ? 'transportLost' : 'closed')
+    this.recordRemoteTerminal(
+      err ? TerminalKind.TRANSPORT_LOST : TerminalKind.CLOSED,
+    )
     this.invocationController.abort()
     // note: this does nothing if _source is already ended.
     if (err && err.message) {
@@ -314,23 +319,20 @@ export class CommonRPC {
     this._rpcDataSource.end(err)
   }
 
-  // _createSink returns a value for the sink field.
   private _createSink(): Sink<Source<Packet>> {
     return async (source: Source<Packet>) => {
       try {
         if (Symbol.asyncIterator in source) {
-          // Handle async source
           for await (const msg of source) {
             await this.handlePacket(msg)
           }
         } else {
-          // Handle sync source
           for (const msg of source) {
             await this.handlePacket(msg)
           }
         }
         this.remoteSourceClosed = true
-        this.recordRemoteTerminal('closed')
+        this.recordRemoteTerminal(TerminalKind.CLOSED)
       } catch (err) {
         this.close(err as Error)
       }

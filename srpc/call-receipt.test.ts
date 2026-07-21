@@ -9,9 +9,9 @@ import { Client } from './client.js'
 import { ClientRPC } from './client-rpc.js'
 import { Server } from './server.js'
 import { CallReceipt } from './call-receipt.js'
-import { Packet } from './rpcproto.pb.js'
+import { Packet, TerminalKind } from './rpcproto.pb.js'
 import { ServerRPC } from './server-rpc.js'
-import { ServerInvocation, type TerminalKind } from './server-invocation.js'
+import { ServerInvocation } from './server-invocation.js'
 
 const response = new Uint8Array([1, 2, 3])
 
@@ -68,7 +68,7 @@ describe('held unary receipt', () => {
   })
 
   it('commits through a real TypeScript server', async () => {
-    const terminal = Promise.withResolvers<string>()
+    const terminal = Promise.withResolvers<TerminalKind>()
     const server = new Server(async () => {
       return async (_source, dataSink, invocation) => {
         await dataSink(
@@ -113,7 +113,7 @@ describe('held unary receipt', () => {
       response,
     )
     await expect(held.receipt.commit()).resolves.toBeUndefined()
-    await expect(terminal.promise).resolves.toBe('committed')
+    await expect(terminal.promise).resolves.toBe(TerminalKind.COMMITTED)
   })
 
   it('rejects commit after a bare remote close', async () => {
@@ -292,12 +292,12 @@ describe('held unary receipt', () => {
 
 describe('server invocation terminal', () => {
   it.each([
-    ['explicit completion', 'committed'],
-    ['cancel', 'canceled'],
-    ['transport loss', 'transportLost'],
-    ['remote error packet', 'transportLost'],
-    ['bare close', 'closed'],
-    ['remote error packet with completion', 'transportLost'],
+    ['explicit completion', TerminalKind.COMMITTED],
+    ['cancel', TerminalKind.CANCELED],
+    ['transport loss', TerminalKind.TRANSPORT_LOST],
+    ['remote error packet', TerminalKind.TRANSPORT_LOST],
+    ['bare close', TerminalKind.CLOSED],
+    ['remote error packet with completion', TerminalKind.TRANSPORT_LOST],
   ] as const)('%s is classified distinctly', async (_name, expected) => {
     const captured = Promise.withResolvers<ServerInvocation>()
     const owner = new AbortController()
@@ -318,11 +318,11 @@ describe('server invocation terminal', () => {
       dataIsZero: true,
     })
     const invocation = await captured.promise
-    if (expected === 'committed') {
+    if (expected === TerminalKind.COMMITTED) {
       await rpc.handleCallData({ complete: true })
-    } else if (expected === 'canceled') {
+    } else if (expected === TerminalKind.CANCELED) {
       await rpc.handleCallCancel()
-    } else if (expected === 'transportLost') {
+    } else if (expected === TerminalKind.TRANSPORT_LOST) {
       if (
         _name === 'remote error packet' ||
         _name === 'remote error packet with completion'
@@ -346,7 +346,10 @@ describe('server invocation terminal', () => {
       }
       expect(rpcState.remoteCompleted).toBe(false)
     }
-    if (expected === 'closed' || expected === 'transportLost') {
+    if (
+      expected === TerminalKind.CLOSED ||
+      expected === TerminalKind.TRANSPORT_LOST
+    ) {
       expect(invocation.signal.aborted).toBe(true)
     }
   })
@@ -379,7 +382,7 @@ describe('server invocation terminal', () => {
         await rpc.handleCallCancel()
       }
       await expect(invocation.waitTerminal(owner.signal)).resolves.toBe(
-        'committed',
+        TerminalKind.COMMITTED,
       )
       owner.abort()
     },
@@ -406,7 +409,7 @@ describe('server invocation terminal', () => {
     const invocation = await captured.promise
     owner.abort()
     await expect(invocation.waitTerminal(owner.signal)).resolves.toBe(
-      'abandoned',
+      TerminalKind.ABANDONED,
     )
   })
 })

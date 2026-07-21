@@ -105,7 +105,7 @@ func TestCallReceiptGoGo(t *testing.T) {
 		t.Fatal("generated handler context lost server invocation")
 	}
 	kind := <-terminal
-	if kind != srpc.TerminalCommitted {
+	if kind != srpc.TerminalKind_TERMINAL_KIND_COMMITTED {
 		t.Fatalf("terminal = %v, want committed", kind)
 	}
 }

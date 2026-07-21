@@ -120,8 +120,8 @@ struct PacketDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PacketDefaultTypeInternal _Packet_default_instance_;
 }  // namespace srpc
-static constexpr const ::_pb::EnumDescriptor* PROTOBUF_NONNULL* PROTOBUF_NULLABLE
-    file_level_enum_descriptors_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto = nullptr;
+static const ::_pb::EnumDescriptor* PROTOBUF_NONNULL
+    file_level_enum_descriptors_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto[1];
 static constexpr const ::_pb::ServiceDescriptor* PROTOBUF_NONNULL* PROTOBUF_NULLABLE
     file_level_service_descriptors_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto = nullptr;
 const ::uint32_t
@@ -178,13 +178,18 @@ const char descriptor_table_protodef_github_2ecom_2faperturerobotics_2fstarpc_2f
     "service\030\001 \001(\t\022\022\n\nrpc_method\030\002 \001(\t\022\014\n\004dat"
     "a\030\003 \001(\014\022\024\n\014data_is_zero\030\004 \001(\010\"O\n\010CallDat"
     "a\022\014\n\004data\030\001 \001(\014\022\024\n\014data_is_zero\030\002 \001(\010\022\020\n"
-    "\010complete\030\003 \001(\010\022\r\n\005error\030\004 \001(\tb\006proto3"
+    "\010complete\030\003 \001(\010\022\r\n\005error\030\004 \001(\t*\277\001\n\014Termi"
+    "nalKind\022\035\n\031TERMINAL_KIND_UNSPECIFIED\020\000\022\033"
+    "\n\027TERMINAL_KIND_COMMITTED\020\001\022\032\n\026TERMINAL_"
+    "KIND_CANCELED\020\002\022 \n\034TERMINAL_KIND_TRANSPO"
+    "RT_LOST\020\003\022\030\n\024TERMINAL_KIND_CLOSED\020\004\022\033\n\027T"
+    "ERMINAL_KIND_ABANDONED\020\005b\006proto3"
 };
 static ::absl::once_flag descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto = {
     false,
     false,
-    358,
+    552,
     descriptor_table_protodef_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto,
     "github.com/aperturerobotics/starpc/srpc/rpcproto.proto",
     &descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto_once,
@@ -198,6 +203,12 @@ PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_github_2ecom_2
     file_level_service_descriptors_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto,
 };
 namespace srpc {
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL TerminalKind_descriptor() {
+  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto);
+  return file_level_enum_descriptors_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto[0];
+}
+PROTOBUF_CONSTINIT const uint32_t TerminalKind_internal_data_[] = {
+    393216u, 0u, };
 // ===================================================================
 
 class Packet::_Internal {

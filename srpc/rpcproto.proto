@@ -1,6 +1,22 @@
 syntax = "proto3";
 package srpc;
 
+// TerminalKind is the terminal state of a held unary invocation.
+enum TerminalKind {
+  // TERMINAL_KIND_UNSPECIFIED is not a valid terminal state.
+  TERMINAL_KIND_UNSPECIFIED = 0;
+  // TERMINAL_KIND_COMMITTED identifies an explicit remote CallData completion.
+  TERMINAL_KIND_COMMITTED = 1;
+  // TERMINAL_KIND_CANCELED identifies a remote CallCancel packet.
+  TERMINAL_KIND_CANCELED = 2;
+  // TERMINAL_KIND_TRANSPORT_LOST identifies a remote error or transport failure.
+  TERMINAL_KIND_TRANSPORT_LOST = 3;
+  // TERMINAL_KIND_CLOSED identifies a bare remote close without completion.
+  TERMINAL_KIND_CLOSED = 4;
+  // TERMINAL_KIND_ABANDONED identifies owner-context expiry without a remote terminal.
+  TERMINAL_KIND_ABANDONED = 5;
+}
+
 // Packet is a message sent over a srpc packet connection.
 message Packet {
   // Body is the packet body.

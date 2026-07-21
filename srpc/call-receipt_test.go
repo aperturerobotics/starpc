@@ -97,7 +97,7 @@ func TestCallReceiptCommitWaitsForServerAcknowledgment(t *testing.T) {
 		t.Fatalf("close send count = %d, want 1", got)
 	}
 
-	stream.terminal = TerminalCommitted
+	stream.terminal = TerminalKind_TERMINAL_KIND_COMMITTED
 	stream.terminalOkay = true
 	ack <- io.EOF
 	select {
@@ -117,7 +117,7 @@ func TestCallReceiptRejectsBareCloseAfterCloseSend(t *testing.T) {
 	stream := &receiptTestStream{
 		ctx:          context.Background(),
 		ackErr:       io.EOF,
-		terminal:     TerminalClosed,
+		terminal:     TerminalKind_TERMINAL_KIND_CLOSED,
 		terminalOkay: true,
 	}
 	receipt, err := ExecCallReceipt(
@@ -139,7 +139,7 @@ func TestCallReceiptCommitIgnoresCleanupError(t *testing.T) {
 	stream := &receiptTestStream{
 		ctx:          context.Background(),
 		ackErr:       io.EOF,
-		terminal:     TerminalCommitted,
+		terminal:     TerminalKind_TERMINAL_KIND_COMMITTED,
 		terminalOkay: true,
 		closeErr:     ErrCompleted,
 	}
@@ -195,7 +195,7 @@ func TestCallReceiptCommitAbortExclusion(t *testing.T) {
 		stream := &receiptTestStream{
 			ctx:          context.Background(),
 			ackErr:       io.EOF,
-			terminal:     TerminalCommitted,
+			terminal:     TerminalKind_TERMINAL_KIND_COMMITTED,
 			terminalOkay: true,
 		}
 		receipt, err := ExecCallReceipt(
@@ -286,7 +286,7 @@ func newReceiptClient() *receiptTestClient {
 		stream: &receiptTestStream{
 			ctx:          context.Background(),
 			ackErr:       io.EOF,
-			terminal:     TerminalCommitted,
+			terminal:     TerminalKind_TERMINAL_KIND_COMMITTED,
 			terminalOkay: true,
 		},
 	}
@@ -305,7 +305,7 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 					t.Fatalf("handle complete: %v", err)
 				}
 			},
-			want: TerminalCommitted,
+			want: TerminalKind_TERMINAL_KIND_COMMITTED,
 		},
 		{
 			name: "cancel",
@@ -314,14 +314,14 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 					t.Fatalf("handle cancel: %v", err)
 				}
 			},
-			want: TerminalCanceled,
+			want: TerminalKind_TERMINAL_KIND_CANCELED,
 		},
 		{
 			name: "loss",
 			act: func(rpc *ServerRPC) {
 				rpc.HandleStreamClose(errors.New("transport loss"))
 			},
-			want: TerminalLost,
+			want: TerminalKind_TERMINAL_KIND_TRANSPORT_LOST,
 		},
 
 		{
@@ -329,7 +329,7 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 			act: func(rpc *ServerRPC) {
 				rpc.HandleStreamClose(context.Canceled)
 			},
-			want: TerminalLost,
+			want: TerminalKind_TERMINAL_KIND_TRANSPORT_LOST,
 		},
 		{
 			name: "remote error packet",
@@ -338,7 +338,7 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 					t.Fatalf("handle remote error: %v", err)
 				}
 			},
-			want: TerminalLost,
+			want: TerminalKind_TERMINAL_KIND_TRANSPORT_LOST,
 		},
 		{
 			name: "remote error completion packet",
@@ -350,7 +350,7 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 					t.Fatalf("handle remote error completion: %v", err)
 				}
 			},
-			want: TerminalLost,
+			want: TerminalKind_TERMINAL_KIND_TRANSPORT_LOST,
 		},
 
 		{
@@ -358,7 +358,7 @@ func TestServerInvocationTerminalClassification(t *testing.T) {
 			act: func(rpc *ServerRPC) {
 				rpc.HandleStreamClose(nil)
 			},
-			want: TerminalClosed,
+			want: TerminalKind_TERMINAL_KIND_CLOSED,
 		},
 	}
 	for _, tc := range cases {
@@ -429,7 +429,7 @@ func TestServerInvocationTerminalIsMonotonic(t *testing.T) {
 			if err != nil {
 				t.Fatalf("wait terminal: %v", err)
 			}
-			if kind != TerminalCommitted {
+			if kind != TerminalKind_TERMINAL_KIND_COMMITTED {
 				t.Fatalf("terminal = %v, want committed", kind)
 			}
 		})
@@ -450,8 +450,8 @@ func TestServerInvocationGenuineAbandonment(t *testing.T) {
 	ownerCancel()
 	select {
 	case got := <-result:
-		if got != TerminalAbandoned {
-			t.Fatalf("terminal = %v, want %v", got, TerminalAbandoned)
+		if got != TerminalKind_TERMINAL_KIND_ABANDONED {
+			t.Fatalf("terminal = %v, want %v", got, TerminalKind_TERMINAL_KIND_ABANDONED)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("wait terminal did not return on owner cancellation")
@@ -471,7 +471,7 @@ func TestServerInvocationTerminalPrecedesOwnerCancellation(t *testing.T) {
 					t.Fatalf("handle complete: %v", err)
 				}
 			},
-			want: TerminalCommitted,
+			want: TerminalKind_TERMINAL_KIND_COMMITTED,
 		},
 		{
 			name: "cancel",
@@ -480,21 +480,21 @@ func TestServerInvocationTerminalPrecedesOwnerCancellation(t *testing.T) {
 					t.Fatalf("handle cancel: %v", err)
 				}
 			},
-			want: TerminalCanceled,
+			want: TerminalKind_TERMINAL_KIND_CANCELED,
 		},
 		{
 			name: "loss",
 			act: func(rpc *ServerRPC) {
 				rpc.HandleStreamClose(errors.New("transport loss"))
 			},
-			want: TerminalLost,
+			want: TerminalKind_TERMINAL_KIND_TRANSPORT_LOST,
 		},
 		{
 			name: "bare close",
 			act: func(rpc *ServerRPC) {
 				rpc.HandleStreamClose(nil)
 			},
-			want: TerminalClosed,
+			want: TerminalKind_TERMINAL_KIND_CLOSED,
 		},
 	}
 	for _, tc := range cases {

@@ -59,4 +59,49 @@ pub struct CallData {
     #[prost(string, tag="4")]
     pub error: ::prost::alloc::string::String,
 }
+/// TerminalKind is the terminal state of a held unary invocation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum TerminalKind {
+    /// TERMINAL_KIND_UNSPECIFIED is not a valid terminal state.
+    Unspecified = 0,
+    /// TERMINAL_KIND_COMMITTED identifies an explicit remote CallData completion.
+    Committed = 1,
+    /// TERMINAL_KIND_CANCELED identifies a remote CallCancel packet.
+    Canceled = 2,
+    /// TERMINAL_KIND_TRANSPORT_LOST identifies a remote error or transport failure.
+    TransportLost = 3,
+    /// TERMINAL_KIND_CLOSED identifies a bare remote close without completion.
+    Closed = 4,
+    /// TERMINAL_KIND_ABANDONED identifies owner-context expiry without a remote terminal.
+    Abandoned = 5,
+}
+impl TerminalKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "TERMINAL_KIND_UNSPECIFIED",
+            Self::Committed => "TERMINAL_KIND_COMMITTED",
+            Self::Canceled => "TERMINAL_KIND_CANCELED",
+            Self::TransportLost => "TERMINAL_KIND_TRANSPORT_LOST",
+            Self::Closed => "TERMINAL_KIND_CLOSED",
+            Self::Abandoned => "TERMINAL_KIND_ABANDONED",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "TERMINAL_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "TERMINAL_KIND_COMMITTED" => Some(Self::Committed),
+            "TERMINAL_KIND_CANCELED" => Some(Self::Canceled),
+            "TERMINAL_KIND_TRANSPORT_LOST" => Some(Self::TransportLost),
+            "TERMINAL_KIND_CLOSED" => Some(Self::Closed),
+            "TERMINAL_KIND_ABANDONED" => Some(Self::Abandoned),
+            _ => None,
+        }
+    }
+}
 // @@protoc_insertion_point(module)

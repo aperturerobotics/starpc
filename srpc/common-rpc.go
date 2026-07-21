@@ -138,7 +138,7 @@ func (c *commonRPC) WaitTerminal(ownerCtx context.Context) (TerminalKind, error)
 		if ownerDone {
 			err := ownerCtx.Err()
 			locked.Unlock()
-			return TerminalAbandoned, err
+			return TerminalKind_TERMINAL_KIND_ABANDONED, err
 		}
 		waitCh := locked.WaitCh()
 		locked.Unlock()
@@ -277,11 +277,11 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	if complete {
 		c.dataClosed = true
 		if len(pktErr) == 0 {
-			if c.recordRemoteTerminalLocked(TerminalCommitted) {
+			if c.recordRemoteTerminalLocked(TerminalKind_TERMINAL_KIND_COMMITTED) {
 				c.remoteCompleted = true
 			}
 		} else {
-			c.recordRemoteTerminalLocked(TerminalLost)
+			c.recordRemoteTerminalLocked(TerminalKind_TERMINAL_KIND_TRANSPORT_LOST)
 		}
 	}
 
@@ -312,11 +312,11 @@ func (c *commonRPC) handleStreamCloseLocked(
 		c.remoteErr = closeErr
 	}
 	if !normalRemoteCloseAfterLocalComplete && !c.remoteTerminalSet {
-		terminal := TerminalClosed
+		terminal := TerminalKind_TERMINAL_KIND_CLOSED
 		if closeErr != nil {
-			terminal = TerminalLost
+			terminal = TerminalKind_TERMINAL_KIND_TRANSPORT_LOST
 			if c.remoteCanceled {
-				terminal = TerminalCanceled
+				terminal = TerminalKind_TERMINAL_KIND_CANCELED
 			}
 		}
 		c.recordRemoteTerminalLocked(terminal)

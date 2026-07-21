@@ -10,7 +10,7 @@ import {
 import { combineUint8ArrayListTransform } from '../../srpc/array-list.js'
 import { EchoerServer, EchoMsg } from '../../echo/index.js'
 import { EchoerDefinition } from '../../echo/echo_srpc.pb.js'
-import { Packet } from '../../srpc/rpcproto.pb.js'
+import { Packet, TerminalKind } from '../../srpc/rpcproto.pb.js'
 import type { PacketStream } from '../../srpc/stream.js'
 import type { Source } from 'it-stream-types'
 function emitReceiptEvent(line: string): void {
@@ -121,14 +121,31 @@ if (receiptMode) {
           const terminal = await invocation.waitTerminal(
             new AbortController().signal,
           )
-          emitReceiptEvent(`SERVER_RECEIPT_TERMINAL ${terminal}`)
-          if (terminal !== 'committed') {
+          emitReceiptEvent(`SERVER_RECEIPT_TERMINAL ${terminalName(terminal)}`)
+          if (terminal !== TerminalKind.COMMITTED) {
             finishReceiptServer()
           }
         })(),
       )
     }
   })
+}
+
+function terminalName(terminal: TerminalKind): string {
+  switch (terminal) {
+    case TerminalKind.COMMITTED:
+      return 'committed'
+    case TerminalKind.CANCELED:
+      return 'canceled'
+    case TerminalKind.TRANSPORT_LOST:
+      return 'transportLost'
+    case TerminalKind.CLOSED:
+      return 'closed'
+    case TerminalKind.ABANDONED:
+      return 'abandoned'
+    default:
+      return 'unknown'
+  }
 }
 const server = new Server(mux.lookupMethod)
 if (!receiptMode) {

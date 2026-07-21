@@ -16,6 +16,58 @@ import (
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
 )
 
+// TerminalKind is the terminal state of a held unary invocation.
+type TerminalKind int32
+
+const (
+	// TERMINAL_KIND_UNSPECIFIED is not a valid terminal state.
+	TerminalKind_TERMINAL_KIND_UNSPECIFIED TerminalKind = 0
+	// TERMINAL_KIND_COMMITTED identifies an explicit remote CallData completion.
+	TerminalKind_TERMINAL_KIND_COMMITTED TerminalKind = 1
+	// TERMINAL_KIND_CANCELED identifies a remote CallCancel packet.
+	TerminalKind_TERMINAL_KIND_CANCELED TerminalKind = 2
+	// TERMINAL_KIND_TRANSPORT_LOST identifies a remote error or transport failure.
+	TerminalKind_TERMINAL_KIND_TRANSPORT_LOST TerminalKind = 3
+	// TERMINAL_KIND_CLOSED identifies a bare remote close without completion.
+	TerminalKind_TERMINAL_KIND_CLOSED TerminalKind = 4
+	// TERMINAL_KIND_ABANDONED identifies owner-context expiry without a remote terminal.
+	TerminalKind_TERMINAL_KIND_ABANDONED TerminalKind = 5
+)
+
+// Enum value maps for TerminalKind.
+var (
+	TerminalKind_name = map[int32]string{
+		0: "TERMINAL_KIND_UNSPECIFIED",
+		1: "TERMINAL_KIND_COMMITTED",
+		2: "TERMINAL_KIND_CANCELED",
+		3: "TERMINAL_KIND_TRANSPORT_LOST",
+		4: "TERMINAL_KIND_CLOSED",
+		5: "TERMINAL_KIND_ABANDONED",
+	}
+	TerminalKind_value = map[string]int32{
+		"TERMINAL_KIND_UNSPECIFIED":    0,
+		"TERMINAL_KIND_COMMITTED":      1,
+		"TERMINAL_KIND_CANCELED":       2,
+		"TERMINAL_KIND_TRANSPORT_LOST": 3,
+		"TERMINAL_KIND_CLOSED":         4,
+		"TERMINAL_KIND_ABANDONED":      5,
+	}
+)
+
+func (x TerminalKind) Enum() *TerminalKind {
+	p := new(TerminalKind)
+	*p = x
+	return p
+}
+
+func (x TerminalKind) String() string {
+	name, valid := TerminalKind_name[int32(x)]
+	if valid {
+		return name
+	}
+	return strconv.Itoa(int(x))
+}
+
 // Packet is a message sent over a srpc packet connection.
 type Packet struct {
 	unknownFields []byte
@@ -435,6 +487,46 @@ func (this *CallData) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+// MarshalProtoJSON marshals the TerminalKind to JSON.
+func (x TerminalKind) MarshalProtoJSON(s *json.MarshalState) {
+	s.WriteEnum(int32(x), TerminalKind_name)
+}
+
+// MarshalText marshals the TerminalKind to text.
+func (x TerminalKind) MarshalText() ([]byte, error) {
+	return []byte(json.GetEnumString(int32(x), TerminalKind_name)), nil
+}
+
+// MarshalJSON marshals the TerminalKind to JSON.
+func (x TerminalKind) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the TerminalKind from JSON.
+func (x *TerminalKind) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	v := s.ReadEnum(TerminalKind_value)
+	if err := s.Err(); err != nil {
+		s.SetErrorf("could not read TerminalKind enum: %v", err)
+		return
+	}
+	*x = TerminalKind(v)
+}
+
+// UnmarshalText unmarshals the TerminalKind from text.
+func (x *TerminalKind) UnmarshalText(b []byte) error {
+	i, err := json.ParseEnumString(string(b), TerminalKind_value)
+	if err != nil {
+		return err
+	}
+	*x = TerminalKind(i)
+	return nil
+}
+
+// UnmarshalJSON unmarshals the TerminalKind from JSON.
+func (x *TerminalKind) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
 // MarshalProtoJSON marshals the Packet message to JSON.
@@ -981,6 +1073,10 @@ func (m *CallData) SizeVT() (n int) {
 	}
 	n += len(m.unknownFields)
 	return n
+}
+
+func (x TerminalKind) MarshalProtoText() string {
+	return x.String()
 }
 
 func (x *Packet) MarshalProtoText() string {

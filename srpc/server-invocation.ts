@@ -1,10 +1,4 @@
-// TerminalKind is the terminal state of a held unary invocation.
-export type TerminalKind =
-  | 'committed'
-  | 'canceled'
-  | 'transportLost'
-  | 'closed'
-  | 'abandoned'
+import type { TerminalKind } from './rpcproto.pb.js'
 
 // ServerInvocation exposes the invocation signal and terminal wait.
 export class ServerInvocation implements AbortSignal {
