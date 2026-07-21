@@ -94,13 +94,13 @@
     "prepare": "husky && go mod vendor",
     "go:aptre": "go run -mod=mod github.com/aperturerobotics/common/cmd/aptre",
     "precommit": "lint-staged",
-    "release": "npm run release:version && npm run release:commit",
-    "release:minor": "npm run release:version:minor && npm run release:commit",
-    "release:version": "npm version patch -m \"release: v%s\" --no-git-tag-version && npm run release:sync-cargo",
-    "release:version:minor": "npm version minor -m \"release: v%s\" --no-git-tag-version && npm run release:sync-cargo",
-    "release:sync-cargo": "node -e \"const v=require('./package.json').version,f='Cargo.toml',c=require('fs').readFileSync(f,'utf8');require('fs').writeFileSync(f,c.replace(/^version = \\\".*?\\\"/m,'version = \\\"'+v+'\\\"'))\"",
-    "release:commit": "git reset && git add package.json Cargo.toml && git commit -s -m \"release: v$(node -p \"require('./package.json').version\")\" && git tag v$(node -p \"require('./package.json').version\")",
-    "release:publish": "git push && git push --tags"
+    "release": "bun run release:prepare",
+    "release:minor": "bun run release:prepare -- minor",
+    "release:prepare": "bun scripts/release-prepare.ts",
+    "release:version": "bun scripts/release-version.ts patch",
+    "release:version:minor": "bun scripts/release-version.ts minor",
+    "release:verify-commit": "bun scripts/release-verify-commit.ts",
+    "release:tag": "bun scripts/release-tag.ts"
   },
   "preferUnplugged": true,
   "lint-staged": {
