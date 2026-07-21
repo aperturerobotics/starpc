@@ -11,12 +11,16 @@ import { writeToPushable } from './pushable.js'
 import type { MessageType, Message } from '@aptre/protobuf-es-lite'
 import { MethodIdempotency, MethodKind } from '@aptre/protobuf-es-lite'
 
+import type { ServerInvocation } from './server-invocation.js'
 // MethodProto is a function which matches one of the RPC signatures.
 export type MethodProto<R extends Message<R>, O extends Message<O>> =
-  | ((request: R) => Promise<O>)
-  | ((request: R) => AsyncIterable<O>)
-  | ((request: AsyncIterable<R>) => Promise<O>)
-  | ((request: AsyncIterable<R>) => AsyncIterable<O>)
+  | ((request: R, invocation?: ServerInvocation) => Promise<O>)
+  | ((request: R, invocation?: ServerInvocation) => AsyncIterable<O>)
+  | ((request: AsyncIterable<R>, invocation?: ServerInvocation) => Promise<O>)
+  | ((
+      request: AsyncIterable<R>,
+      invocation?: ServerInvocation,
+    ) => AsyncIterable<O>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
@@ -32,6 +36,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
   return async (
     dataSource: Source<Uint8Array>,
     dataSink: Sink<Source<Uint8Array>>,
+    invocation?: ServerInvocation,
   ) => {
     // responseSink is a Sink for response messages.
     const responseSink = pushable<O>({
@@ -66,7 +71,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
 
     // Call the implementation.
     try {
-      const responseObj = methodProto(requestArg)
+      const responseObj = methodProto(requestArg, invocation)
       if (!responseObj) {
         throw new Error('return value was undefined')
       }

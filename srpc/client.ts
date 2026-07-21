@@ -8,9 +8,10 @@ import { ClientRPC } from './client-rpc.js'
 import { writeToPushable } from './pushable.js'
 import { decodePacketSource, encodePacketSource } from './packet.js'
 import { OpenStreamCtr } from './open-stream-ctr.js'
-
+import { CallReceipt } from './call-receipt.js'
+import type { HeldCall, ReceiptRpc } from './call-receipt.js'
 // Client implements the ts-proto Rpc interface with the drpcproto protocol.
-export class Client implements ProtoRpc {
+export class Client implements ProtoRpc, ReceiptRpc {
   // openStreamCtr contains the OpenStreamFunc.
   private openStreamCtr: OpenStreamCtr
 
@@ -38,6 +39,32 @@ export class Client implements ProtoRpc {
     const err = new Error('empty response')
     call.close(err)
     throw err
+  }
+
+  // requestWithReceipt reads one response and retains the call terminal.
+  public async requestWithReceipt(
+    service: string,
+    method: string,
+    data: Uint8Array,
+    abortSignal?: AbortSignal,
+  ): Promise<HeldCall> {
+    const call = await this.startRpc(service, method, data, abortSignal)
+    const iterator = call.rpcDataSource[Symbol.asyncIterator]()
+    try {
+      const result = await iterator.next()
+      if (result.done) {
+        throw new Error('empty response')
+      }
+      return {
+        response: result.value,
+        receipt: new CallReceipt(call, iterator),
+      }
+    } catch (err) {
+      await call.close(
+        err instanceof Error ? err : new Error('receipt read failed'),
+      )
+      throw err
+    }
   }
 
   // clientStreamingRequest starts a client side streaming request.

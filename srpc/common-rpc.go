@@ -48,6 +48,14 @@ type commonRPC struct {
 	dataClosed bool
 	// remoteErr is an error set by the remote.
 	remoteErr error
+	// remoteCanceled distinguishes a received CallCancel from transport loss.
+	remoteCanceled bool
+	// remoteCompleted is set only by an explicit remote CallData completion.
+	remoteCompleted bool
+	// remoteTerminal is the first valid remote terminal.
+	remoteTerminal TerminalKind
+	// remoteTerminalSet records whether remoteTerminal is valid.
+	remoteTerminalSet bool
 }
 
 // initCommonRPC initializes the commonRPC.
@@ -116,6 +124,41 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 	}
 }
 
+// WaitTerminal waits for and classifies the remote terminal of a held unary
+// invocation.
+func (c *commonRPC) WaitTerminal(ownerCtx context.Context) (TerminalKind, error) {
+	var ownerDone bool
+	for {
+		locked := c.bcast.Lock()
+		if c.remoteTerminalSet {
+			terminal := c.remoteTerminal
+			locked.Unlock()
+			return terminal, nil
+		}
+		if ownerDone {
+			err := ownerCtx.Err()
+			locked.Unlock()
+			return TerminalAbandoned, err
+		}
+		waitCh := locked.WaitCh()
+		locked.Unlock()
+
+		select {
+		case <-ownerCtx.Done():
+			ownerDone = true
+		case <-waitCh:
+		}
+	}
+}
+
+// receiptTerminalKind returns the first valid remote terminal.
+func (c *commonRPC) receiptTerminalKind() (TerminalKind, bool) {
+	locked := c.bcast.Lock()
+	terminal, ok := c.remoteTerminal, c.remoteTerminalSet
+	locked.Unlock()
+	return terminal, ok
+}
+
 // ReadOne reads a single message and returns.
 //
 // returns io.EOF if the stream ended without a packet.
@@ -164,19 +207,16 @@ func (c *commonRPC) ReadOne() ([]byte, error) {
 
 // WriteCallData writes a call data packet.
 func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err error) error {
-	// Check if already completed
-	if c.localCompleted.Load() {
-		// If we're just marking completion and already completed, allow it (no-op)
-		if complete && len(data) == 0 && !dataIsZero {
-			return nil
-		}
-		// Otherwise, return error for trying to send data after completion
-		return ErrCompleted
-	}
-
-	// Mark as completed if this call completes the RPC
 	if complete || err != nil {
-		c.localCompleted.Store(true)
+		if c.localCompleted.Swap(true) {
+			// Repeated completion is an idempotent no-op.
+			if complete && len(data) == 0 && !dataIsZero {
+				return nil
+			}
+			return ErrCompleted
+		}
+	} else if c.localCompleted.Load() {
+		return ErrCompleted
 	}
 
 	outPkt := NewCallDataPacket(data, len(data) == 0 && dataIsZero, complete, err)
@@ -185,22 +225,8 @@ func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err er
 
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (c *commonRPC) HandleStreamClose(closeErr error) {
-	var writer PacketWriter
 	locked := c.bcast.Lock()
-	if c.dataClosed && c.writerClosed {
-		locked.Unlock()
-		return
-	}
-	normalRemoteCloseAfterLocalComplete := closeErr == nil && (c.localCompleting || c.localDone)
-	if closeErr != nil && c.remoteErr == nil {
-		c.remoteErr = closeErr
-	}
-	c.dataClosed = true
-	if !normalRemoteCloseAfterLocalComplete {
-		c.cancelContext()
-		writer = c.closeWriterLocked()
-	}
-	locked.Broadcast()
+	writer := c.handleStreamCloseLocked(&locked, closeErr)
 	locked.Unlock()
 	if writer != nil {
 		_ = writer.Close()
@@ -209,7 +235,15 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 
 // HandleCallCancel handles the call cancel packet.
 func (c *commonRPC) HandleCallCancel() error {
-	c.HandleStreamClose(context.Canceled)
+	locked := c.bcast.Lock()
+	if (!c.dataClosed || !c.writerClosed) && !c.remoteTerminalSet {
+		c.remoteCanceled = true
+	}
+	writer := c.handleStreamCloseLocked(&locked, context.Canceled)
+	locked.Unlock()
+	if writer != nil {
+		_ = writer.Close()
+	}
 	return nil
 }
 
@@ -231,20 +265,71 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 		c.dataQueue = append(c.dataQueue, data)
 	}
 
+	pktErr := pkt.GetError()
 	complete := pkt.GetComplete()
-	if pktErr := pkt.GetError(); len(pktErr) != 0 {
+	if len(pktErr) != 0 {
 		complete = true
-		c.remoteErr = errors.New(pktErr)
+		if c.remoteErr == nil {
+			c.remoteErr = errors.New(pktErr)
+		}
 	}
 
 	if complete {
 		c.dataClosed = true
+		if len(pktErr) == 0 {
+			if c.recordRemoteTerminalLocked(TerminalCommitted) {
+				c.remoteCompleted = true
+			}
+		} else {
+			c.recordRemoteTerminalLocked(TerminalLost)
+		}
 	}
 
 	locked.Broadcast()
 	locked.Unlock()
 
 	return err
+}
+
+func (c *commonRPC) recordRemoteTerminalLocked(kind TerminalKind) bool {
+	if c.remoteTerminalSet {
+		return false
+	}
+	c.remoteTerminal = kind
+	c.remoteTerminalSet = true
+	return true
+}
+
+func (c *commonRPC) handleStreamCloseLocked(
+	locked *broadcast.Locked,
+	closeErr error,
+) PacketWriter {
+	if c.dataClosed && c.writerClosed {
+		return nil
+	}
+	normalRemoteCloseAfterLocalComplete := closeErr == nil && (c.localCompleting || c.localDone)
+	if closeErr != nil && c.remoteErr == nil {
+		c.remoteErr = closeErr
+	}
+	if !normalRemoteCloseAfterLocalComplete && !c.remoteTerminalSet {
+		terminal := TerminalClosed
+		if closeErr != nil {
+			terminal = TerminalLost
+			if c.remoteCanceled {
+				terminal = TerminalCanceled
+			}
+		}
+		c.recordRemoteTerminalLocked(terminal)
+	}
+	c.dataClosed = true
+	if !normalRemoteCloseAfterLocalComplete {
+		c.cancelContext()
+		writer := c.closeWriterLocked()
+		locked.Broadcast()
+		return writer
+	}
+	locked.Broadcast()
+	return nil
 }
 
 // WriteCallCancel writes a call cancel packet.

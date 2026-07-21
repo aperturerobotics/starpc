@@ -2,8 +2,10 @@
 // @generated from file github.com/aperturerobotics/starpc/rpcstream/rpcstream.proto (package rpcstream, syntax proto3)
 /* eslint-disable */
 
-import type { MessageType, PartialFieldInfo } from '@aptre/protobuf-es-lite'
-import { createMessageType, ScalarType } from '@aptre/protobuf-es-lite'
+import type { MessageType } from '@aptre/protobuf-es-lite/message'
+import { createMessageType } from '@aptre/protobuf-es-lite/message'
+import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
+import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
 
 export const protobufPackage = 'rpcstream'
 
@@ -21,14 +23,14 @@ export interface RpcStreamInit {
   componentId?: string
 }
 
-// RpcStreamInit contains the message type declaration for RpcStreamInit.
-export const RpcStreamInit: MessageType<RpcStreamInit> = createMessageType({
-  typeName: 'rpcstream.RpcStreamInit',
-  fields: [
-    { no: 1, name: 'component_id', kind: 'scalar', T: ScalarType.STRING },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+export const RpcStreamInit: MessageType<RpcStreamInit> =
+  /* @__PURE__ */ createMessageType({
+    typeName: 'rpcstream.RpcStreamInit',
+    fields: [
+      { no: 1, name: 'component_id', kind: 'scalar', T: ScalarType.STRING },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+  })
 
 /**
  * RpcAck is the ack message in a RPC stream.
@@ -44,12 +46,11 @@ export interface RpcAck {
   error?: string
 }
 
-// RpcAck contains the message type declaration for RpcAck.
-export const RpcAck: MessageType<RpcAck> = createMessageType({
+export const RpcAck: MessageType<RpcAck> = /* @__PURE__ */ createMessageType({
   typeName: 'rpcstream.RpcAck',
   fields: [
     { no: 1, name: 'error', kind: 'scalar', T: ScalarType.STRING },
-  ] as readonly PartialFieldInfo[],
+  ] satisfies readonly PartialFieldInfo[],
   packedByDefault: true,
 })
 
@@ -98,19 +99,25 @@ export interface RpcStreamPacket {
       }
 }
 
-// RpcStreamPacket contains the message type declaration for RpcStreamPacket.
-export const RpcStreamPacket: MessageType<RpcStreamPacket> = createMessageType({
-  typeName: 'rpcstream.RpcStreamPacket',
-  fields: [
-    {
-      no: 1,
-      name: 'init',
-      kind: 'message',
-      T: () => RpcStreamInit,
-      oneof: 'body',
-    },
-    { no: 2, name: 'ack', kind: 'message', T: () => RpcAck, oneof: 'body' },
-    { no: 3, name: 'data', kind: 'scalar', T: ScalarType.BYTES, oneof: 'body' },
-  ] as readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+export const RpcStreamPacket: MessageType<RpcStreamPacket> =
+  /* @__PURE__ */ createMessageType({
+    typeName: 'rpcstream.RpcStreamPacket',
+    fields: [
+      {
+        no: 1,
+        name: 'init',
+        kind: 'message',
+        T: () => RpcStreamInit,
+        oneof: 'body',
+      },
+      { no: 2, name: 'ack', kind: 'message', T: () => RpcAck, oneof: 'body' },
+      {
+        no: 3,
+        name: 'data',
+        kind: 'scalar',
+        T: ScalarType.BYTES,
+        oneof: 'body',
+      },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+  })

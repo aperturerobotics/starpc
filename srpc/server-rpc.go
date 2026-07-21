@@ -98,7 +98,7 @@ func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 // invokeRPC invokes the RPC after CallStart is received.
 func (r *ServerRPC) invokeRPC(serviceID, methodID string) {
 	// on the server side, the writer is closed by invokeRPC.
-	strm := NewMsgStream(r.ctx, r, r.cancelContext)
+	strm := NewMsgStream(withServerInvocation(r.ctx, r), r, r.cancelContext)
 	ok, err := r.invoker.InvokeMethod(serviceID, methodID, strm)
 	if err == nil && !ok {
 		err = ErrUnimplemented

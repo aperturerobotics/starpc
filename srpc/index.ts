@@ -6,6 +6,10 @@ export {
   castToError,
 } from './errors.js'
 export { Client } from './client.js'
+export { CallReceipt } from './call-receipt.js'
+export type { HeldCall, ReceiptRpc } from './call-receipt.js'
+export { ServerInvocation } from './server-invocation.js'
+export type { TerminalKind } from './server-invocation.js'
 export { Server } from './server.js'
 export { StreamConn } from './conn.js'
 export type { StreamConnParams, StreamHandler } from './conn.js'

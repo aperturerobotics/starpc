@@ -69,14 +69,7 @@ func (r *ClientRPC) HandlePacketData(data []byte) error {
 
 // HandleStreamClose handles the stream closing optionally w/ an error.
 func (r *ClientRPC) HandleStreamClose(closeErr error) {
-	locked := r.bcast.Lock()
-	if closeErr != nil && r.remoteErr == nil {
-		r.remoteErr = closeErr
-	}
-	r.dataClosed = true
-	r.cancelContext()
-	locked.Broadcast()
-	locked.Unlock()
+	r.commonRPC.HandleStreamClose(closeErr)
 }
 
 // HandlePacket handles an incoming parsed message packet.

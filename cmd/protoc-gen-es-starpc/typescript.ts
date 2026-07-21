@@ -26,6 +26,14 @@ import {
 } from '@aptre/protobuf-es-lite/protoplugin/ecmascript'
 
 const MessageStream = createImportSymbol('MessageStream', 'starpc')
+const RuntimeMethodKind = createImportSymbol(
+  'MethodKind',
+  '@aptre/protobuf-es-lite',
+)
+const RuntimeMethodIdempotency = createImportSymbol(
+  'MethodIdempotency',
+  '@aptre/protobuf-es-lite',
+)
 // const Message = createImportSymbol('Message', '@aptre/protobuf-es-lite')
 
 export function generateTs(schema: Schema) {
@@ -33,19 +41,16 @@ export function generateTs(schema: Schema) {
     const file = schema.generateFile(protoFile.name + '_srpc.pb.ts')
     file.preamble(protoFile)
     for (const service of protoFile.services) {
-      generateService(schema, file, service)
+      generateService(file, service)
     }
   }
 }
 
 // prettier-ignore
 function generateService(
-  schema: Schema,
   f: GeneratedFile,
   service: DescService
 ) {
-  const { MethodKind: rtMethodKind, MethodIdempotency: rtMethodIdempotency } =
-    schema.runtime;
 
 // NOTE: This matches generateService from @connectrpc/protoc-gen-connect-es.
   f.print(f.jsDoc(service));
@@ -60,7 +65,7 @@ function generateService(
     f.print("      O: ", method.output, ",");
     f.print(
       "      kind: ",
-      rtMethodKind,
+      RuntimeMethodKind,
       ".",
       MethodKind[method.methodKind],
       ","
@@ -68,7 +73,7 @@ function generateService(
     if (method.idempotency !== undefined) {
       f.print(
         "      idempotency: ",
-        rtMethodIdempotency,
+        RuntimeMethodIdempotency,
         ".",
         MethodIdempotency[method.idempotency],
         ","

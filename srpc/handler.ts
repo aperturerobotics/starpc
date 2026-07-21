@@ -1,11 +1,13 @@
 import type { Sink, Source } from 'it-stream-types'
 import { ServiceDefinition, ServiceMethodDefinitions } from './definition.js'
 import { createInvokeFn } from './invoker.js'
+import type { ServerInvocation } from './server-invocation.js'
 
 // InvokeFn describes an SRPC call method invoke function.
 export type InvokeFn = (
   dataSource: Source<Uint8Array>,
   dataSink: Sink<Source<Uint8Array>>,
+  invocation?: ServerInvocation,
 ) => Promise<void>
 
 // Handler describes a SRPC call handler implementation.

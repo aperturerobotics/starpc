@@ -23,6 +23,10 @@ type Stream interface {
 	Close() error
 }
 
+type receiptTerminalStream interface {
+	receiptTerminalKind() (TerminalKind, bool)
+}
+
 // StreamRecv is a stream that can receive typed messages.
 //
 // T is the response type.
@@ -69,6 +73,14 @@ func (s *streamWithClose) Close() error {
 	return err2
 }
 
+func (s *streamWithClose) receiptTerminalKind() (TerminalKind, bool) {
+	receipt, ok := s.Stream.(receiptTerminalStream)
+	if !ok {
+		return 0, false
+	}
+	return receipt.receiptTerminalKind()
+}
+
 // streamWithContext is a Stream with a wrapped Context function.
 type streamWithContext struct {
 	Stream
@@ -83,6 +95,14 @@ func NewStreamWithContext(strm Stream, ctx context.Context) Stream {
 // Context returns the stream context.
 func (s *streamWithContext) Context() context.Context {
 	return s.ctx
+}
+
+func (s *streamWithContext) receiptTerminalKind() (TerminalKind, bool) {
+	receipt, ok := s.Stream.(receiptTerminalStream)
+	if !ok {
+		return 0, false
+	}
+	return receipt.receiptTerminalKind()
 }
 
 // _ is a type assertion

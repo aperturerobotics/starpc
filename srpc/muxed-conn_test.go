@@ -29,9 +29,7 @@ func TestNewMuxedConnConcurrentConfigIsolation(t *testing.T) {
 
 	stopReplacingStderr := make(chan struct{})
 	var replaceStderr sync.WaitGroup
-	replaceStderr.Add(1)
-	go func() {
-		defer replaceStderr.Done()
+	replaceStderr.Go(func() {
 		for {
 			select {
 			case <-stopReplacingStderr:
@@ -41,7 +39,7 @@ func TestNewMuxedConnConcurrentConfigIsolation(t *testing.T) {
 				os.Stderr = originalStderr
 			}
 		}
-	}()
+	})
 
 	const iterations = 100
 	start := make(chan struct{})

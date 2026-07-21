@@ -1,3 +1,4 @@
+/// <reference lib="es2024.promise" />
 import type { Sink, Source } from 'it-stream-types'
 import { pushable, type Pushable } from 'it-pushable'
 import { CompleteMessage } from '@aptre/protobuf-es-lite'
@@ -5,6 +6,7 @@ import { CompleteMessage } from '@aptre/protobuf-es-lite'
 import type { CallData, CallStart } from './rpcproto.pb.js'
 import { Packet } from './rpcproto.pb.js'
 import { ERR_RPC_ABORT, RemoteRPCError } from './errors.js'
+import type { TerminalKind } from './server-invocation.js'
 
 const maxBufferedOutgoingPackets = 1
 
@@ -34,10 +36,27 @@ export class CommonRPC {
 
   // closed indicates this rpc has been closed already.
   private closed?: true | Error
+  // remoteCompleted is set only by an explicit remote CallData completion.
+  private remoteCompleted = false
+  // remoteError records a remote error or transport failure.
+  private remoteError?: Error
+  // remoteSourceClosed records an incoming source ending without a packet error.
+  private remoteSourceClosed = false
+  // remoteTerminal is the first valid remote terminal.
+  private remoteTerminal?: TerminalKind
+  // invocationController cancels the server invocation on a remote terminal.
+  private readonly invocationController = new AbortController()
+  // terminalPromise resolves when a remote terminal is recorded.
+  private readonly terminalPromise: Promise<void>
+  private resolveTerminal!: () => void
+
   // writeDrainAbort wakes writers waiting for outbound stream drain on close.
   private readonly writeDrainAbort = new AbortController()
 
   constructor() {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    this.terminalPromise = promise
+    this.resolveTerminal = resolve
     this.sink = this._createSink()
     this.source = this._source
     this.rpcDataSource = this._rpcDataSource
@@ -46,6 +65,57 @@ export class CommonRPC {
   // isClosed returns one of: true (closed w/o error), Error (closed w/ error), or false (not closed).
   public get isClosed(): boolean | Error {
     return this.closed ?? false
+  }
+
+  // invocationSignal is canceled when the RPC reaches a terminal.
+  protected get invocationSignal(): AbortSignal {
+    return this.invocationController.signal
+  }
+
+  // waitTerminal waits for the remote terminal or external owner cancellation.
+  protected async waitTerminal(
+    ownerSignal: AbortSignal,
+  ): Promise<TerminalKind> {
+    const { promise: ownerDone, resolve: resolveOwnerDone } =
+      Promise.withResolvers<void>()
+    const onAbort = () => resolveOwnerDone()
+    ownerSignal.addEventListener('abort', onAbort, { once: true })
+    let ownerAborted = ownerSignal.aborted
+    try {
+      for (;;) {
+        const terminal = this.getTerminalKind()
+        if (terminal !== undefined) {
+          if (
+            terminal === 'closed' &&
+            this.remoteSourceClosed &&
+            !this.closed
+          ) {
+            await this.close()
+          }
+          return terminal
+        }
+        if (ownerAborted) {
+          return 'abandoned'
+        }
+        await Promise.race([this.terminalPromise, ownerDone])
+        ownerAborted = ownerSignal.aborted
+      }
+    } finally {
+      ownerSignal.removeEventListener('abort', onAbort)
+    }
+  }
+
+  // getTerminalKind returns the observed remote terminal, if any.
+  public getTerminalKind(): TerminalKind | undefined {
+    return this.remoteTerminal
+  }
+
+  private recordRemoteTerminal(kind: TerminalKind) {
+    if (this.remoteTerminal !== undefined) {
+      return
+    }
+    this.remoteTerminal = kind
+    this.resolveTerminal()
   }
 
   // writeCallData writes the call data packet.
@@ -82,7 +152,7 @@ export class CommonRPC {
   }
 
   // writeCallCancel writes the call cancel packet.
-  public async writeCallCancel() {
+  public async writeCallCancel(waitForDrain = false) {
     await this.writePacket(
       {
         body: {
@@ -92,6 +162,9 @@ export class CommonRPC {
       },
       { waitForDrain: false },
     )
+    if (waitForDrain) {
+      await this._source.onEmpty({ signal: this.writeDrainAbort.signal })
+    }
   }
 
   // writeCallDataFromSource writes all call data from the iterable.
@@ -194,18 +267,28 @@ export class CommonRPC {
     }
 
     this.pushRpcData(packet.data, packet.dataIsZero)
-    if (packet.error) {
-      this._rpcDataSource.end(
-        new RemoteRPCError(this.service, this.method, packet.error),
-      )
-    } else if (packet.complete) {
-      this._rpcDataSource.end()
+    const remoteError =
+      packet.error ?
+        new RemoteRPCError(this.service, this.method, packet.error)
+      : undefined
+    if (remoteError) {
+      this.remoteError ??= remoteError
+      this.invocationController.abort()
+      this.recordRemoteTerminal('transportLost')
+    }
+    if (packet.complete && !remoteError) {
+      this.remoteCompleted = true
+      this.recordRemoteTerminal('committed')
+      this._rpcDataSource.end(remoteError)
+    } else if (remoteError) {
+      this._rpcDataSource.end(remoteError)
     }
   }
 
   // handleCallCancel handles a CallCancel packet.
   public async handleCallCancel() {
-    this.close(new Error(ERR_RPC_ABORT))
+    this.recordRemoteTerminal('canceled')
+    await this.close(new Error(ERR_RPC_ABORT))
   }
 
   // close closes the call, optionally with an error.
@@ -214,6 +297,11 @@ export class CommonRPC {
       return
     }
     this.closed = err ?? true
+    if (!this.remoteError && err) {
+      this.remoteError = err
+    }
+    this.recordRemoteTerminal(err ? 'transportLost' : 'closed')
+    this.invocationController.abort()
     // note: this does nothing if _source is already ended.
     if (err && err.message) {
       await this.writeCallDataPacket(undefined, true, err.message, {
@@ -241,6 +329,8 @@ export class CommonRPC {
             await this.handlePacket(msg)
           }
         }
+        this.remoteSourceClosed = true
+        this.recordRemoteTerminal('closed')
       } catch (err) {
         this.close(err as Error)
       }

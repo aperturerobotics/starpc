@@ -86,5 +86,13 @@ func (r *MsgStream) Close() error {
 	return err
 }
 
+func (r *MsgStream) receiptTerminalKind() (TerminalKind, bool) {
+	receipt, ok := r.rw.(receiptTerminalStream)
+	if !ok {
+		return 0, false
+	}
+	return receipt.receiptTerminalKind()
+}
+
 // _ is a type assertion
 var _ Stream = ((*MsgStream)(nil))
