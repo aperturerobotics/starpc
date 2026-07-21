@@ -1,6 +1,7 @@
 /// <reference lib="es2024.promise" />
 import { ERR_RPC_ABORT } from './errors.js'
 import { ClientRPC } from './client-rpc.js'
+import { TerminalKind } from './rpcproto.pb.js'
 
 // ReceiptRpc exposes held unary calls without widening ProtoRpc.
 export interface ReceiptRpc {
@@ -49,7 +50,7 @@ export class CallReceipt {
       }
       const terminal = this.#call.getTerminalKind()
       if (
-        terminal !== 'committed' ||
+        terminal !== TerminalKind.COMMITTED ||
         !this.#requestCommitted ||
         this.#terminal !== 'committed'
       ) {

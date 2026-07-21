@@ -2,12 +2,74 @@
 // @generated from file github.com/aperturerobotics/starpc/srpc/rpcproto.proto (package srpc, syntax proto3)
 /* eslint-disable */
 
+import { createEnumType } from '@aptre/protobuf-es-lite/enum'
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
 import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
 import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
 
 export const protobufPackage = 'srpc'
+
+/**
+ * TerminalKind is the terminal state of a held unary invocation.
+ *
+ * @generated from enum srpc.TerminalKind
+ */
+export enum TerminalKind {
+  /**
+   * TERMINAL_KIND_UNSPECIFIED is not a valid terminal state.
+   *
+   * @generated from enum value: TERMINAL_KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * TERMINAL_KIND_COMMITTED identifies an explicit remote CallData completion.
+   *
+   * @generated from enum value: TERMINAL_KIND_COMMITTED = 1;
+   */
+  COMMITTED = 1,
+
+  /**
+   * TERMINAL_KIND_CANCELED identifies a remote CallCancel packet.
+   *
+   * @generated from enum value: TERMINAL_KIND_CANCELED = 2;
+   */
+  CANCELED = 2,
+
+  /**
+   * TERMINAL_KIND_TRANSPORT_LOST identifies a remote error or transport failure.
+   *
+   * @generated from enum value: TERMINAL_KIND_TRANSPORT_LOST = 3;
+   */
+  TRANSPORT_LOST = 3,
+
+  /**
+   * TERMINAL_KIND_CLOSED identifies a bare remote close without completion.
+   *
+   * @generated from enum value: TERMINAL_KIND_CLOSED = 4;
+   */
+  CLOSED = 4,
+
+  /**
+   * TERMINAL_KIND_ABANDONED identifies owner-context expiry without a remote terminal.
+   *
+   * @generated from enum value: TERMINAL_KIND_ABANDONED = 5;
+   */
+  ABANDONED = 5,
+}
+
+export const TerminalKind_Enum = /* @__PURE__ */ createEnumType(
+  'srpc.TerminalKind',
+  [
+    [0, 'TERMINAL_KIND_UNSPECIFIED'],
+    [1, 'TERMINAL_KIND_COMMITTED'],
+    [2, 'TERMINAL_KIND_CANCELED'],
+    [3, 'TERMINAL_KIND_TRANSPORT_LOST'],
+    [4, 'TERMINAL_KIND_CLOSED'],
+    [5, 'TERMINAL_KIND_ABANDONED'],
+  ],
+)
 
 /**
  * CallStart requests starting a new RPC call.

@@ -1,24 +1,6 @@
 package srpc
 
-import (
-	"context"
-)
-
-// TerminalKind is the terminal state of a held unary invocation.
-type TerminalKind int
-
-const (
-	// TerminalCommitted identifies an explicit remote CallData completion.
-	TerminalCommitted TerminalKind = iota
-	// TerminalCanceled identifies a remote CallCancel packet.
-	TerminalCanceled
-	// TerminalLost identifies a remote error or transport failure.
-	TerminalLost
-	// TerminalClosed identifies a bare remote close without completion.
-	TerminalClosed
-	// TerminalAbandoned identifies owner-context expiry without a remote terminal.
-	TerminalAbandoned
-)
+import "context"
 
 // ServerInvocation exposes the terminal of a held unary server invocation.
 type ServerInvocation interface {

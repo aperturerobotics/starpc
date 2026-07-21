@@ -30,6 +30,7 @@
 #include "google/protobuf/message_lite.h"
 #include "google/protobuf/repeated_field.h"  // IWYU pragma: export
 #include "google/protobuf/extension_set.h"  // IWYU pragma: export
+#include "google/protobuf/generated_enum_reflection.h"
 #include "google/protobuf/unknown_field_set.h"
 // @@protoc_insertion_point(includes)
 
@@ -55,6 +56,8 @@ extern "C" {
 extern const ::google::protobuf::internal::DescriptorTable descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto;
 }  // extern "C"
 namespace srpc {
+enum TerminalKind : int;
+extern const uint32_t TerminalKind_internal_data_[];
 class CallData;
 struct CallDataDefaultTypeInternal;
 extern CallDataDefaultTypeInternal _CallData_default_instance_;
@@ -70,10 +73,53 @@ extern const ::google::protobuf::internal::ClassDataFull Packet_class_data_;
 }  // namespace srpc
 namespace google {
 namespace protobuf {
+template <>
+internal::EnumTraitsT<::srpc::TerminalKind_internal_data_>
+    internal::EnumTraitsImpl::value<::srpc::TerminalKind>;
 }  // namespace protobuf
 }  // namespace google
 
 namespace srpc {
+enum TerminalKind : int {
+  TERMINAL_KIND_UNSPECIFIED = 0,
+  TERMINAL_KIND_COMMITTED = 1,
+  TERMINAL_KIND_CANCELED = 2,
+  TERMINAL_KIND_TRANSPORT_LOST = 3,
+  TERMINAL_KIND_CLOSED = 4,
+  TERMINAL_KIND_ABANDONED = 5,
+  TerminalKind_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::min(),
+  TerminalKind_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::max(),
+};
+
+extern const uint32_t TerminalKind_internal_data_[];
+inline constexpr TerminalKind TerminalKind_MIN =
+    static_cast<TerminalKind>(0);
+inline constexpr TerminalKind TerminalKind_MAX =
+    static_cast<TerminalKind>(5);
+inline bool TerminalKind_IsValid(int value) {
+  return 0 <= value && value <= 5;
+}
+inline constexpr int TerminalKind_ARRAYSIZE = 5 + 1;
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL TerminalKind_descriptor();
+template <typename T>
+const ::std::string& TerminalKind_Name(T value) {
+  static_assert(::std::is_same<T, TerminalKind>::value ||
+                    ::std::is_integral<T>::value,
+                "Incorrect type passed to TerminalKind_Name().");
+  return TerminalKind_Name(static_cast<TerminalKind>(value));
+}
+template <>
+inline const ::std::string& TerminalKind_Name(TerminalKind value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<TerminalKind_descriptor, 0, 5>(
+      static_cast<int>(value));
+}
+inline bool TerminalKind_Parse(
+    ::absl::string_view name, TerminalKind* PROTOBUF_NONNULL value) {
+  return ::google::protobuf::internal::ParseNamedEnum<TerminalKind>(TerminalKind_descriptor(), name,
+                                           value);
+}
 
 // ===================================================================
 
@@ -1443,6 +1489,19 @@ inline void CallData::set_allocated_error(::std::string* PROTOBUF_NULLABLE value
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace srpc
 
+
+namespace google {
+namespace protobuf {
+
+template <>
+struct is_proto_enum<::srpc::TerminalKind> : std::true_type {};
+template <>
+inline const EnumDescriptor* PROTOBUF_NONNULL GetEnumDescriptor<::srpc::TerminalKind>() {
+  return ::srpc::TerminalKind_descriptor();
+}
+
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 
