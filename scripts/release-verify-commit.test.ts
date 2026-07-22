@@ -4,10 +4,21 @@ import {
   DEFAULT_RELEASE_REQUIRED_CHECKS,
   evaluateReleaseCommit,
   fetchReleaseCommitInfo,
+  type CommitCheck,
   type ReleaseCommitInfo,
 } from './release-verify-commit.js'
 
 const commit = 'deadbeefcafebabe0000000000000000deadbeef'
+
+function commitCheck(
+  id: number,
+  name: string,
+  startedAt: string,
+  conclusion: string | null = 'success',
+  status = 'completed',
+): CommitCheck {
+  return { id, name, status, conclusion, started_at: startedAt }
+}
 
 function reviewedInfo(
   overrides: Partial<ReleaseCommitInfo> = {},
@@ -26,13 +37,13 @@ function reviewedInfo(
       },
     ],
     checks: [
-      { name: 'Go', status: 'completed', conclusion: 'success' },
-      { name: 'JavaScript', status: 'completed', conclusion: 'success' },
-      {
-        name: 'Cross-language (go:ts)',
-        status: 'completed',
-        conclusion: 'success',
-      },
+      commitCheck(1001, 'Go', '2026-07-21T18:00:01Z'),
+      commitCheck(1002, 'JavaScript', '2026-07-21T18:00:02Z'),
+      commitCheck(
+        1003,
+        'Cross-language (go:ts)',
+        '2026-07-21T18:00:03Z',
+      ),
     ],
     ...overrides,
   }
@@ -78,16 +89,16 @@ describe('release commit information', () => {
       return [
         {
           check_runs: [
-            { name: 'JavaScript', status: 'completed', conclusion: 'success' },
+            commitCheck(2001, 'JavaScript', '2026-07-21T18:01:01Z'),
           ],
         },
         {
           check_runs: [
-            {
-              name: 'Cross-language (cpp:cpp)',
-              status: 'completed',
-              conclusion: 'success',
-            },
+            commitCheck(
+              2002,
+              'Cross-language (cpp:cpp)',
+              '2026-07-21T18:01:02Z',
+            ),
           ],
         },
       ] as T
@@ -205,16 +216,103 @@ describe('evaluateReleaseCommit', () => {
       commit,
       reviewedInfo({
         checks: [
-          { name: 'Go', status: 'completed', conclusion: 'failure' },
-          { name: 'JavaScript', status: 'completed', conclusion: 'success' },
-          {
-            name: 'Cross-language (go:ts)',
-            status: 'completed',
-            conclusion: 'success',
-          },
+          commitCheck(
+            3001,
+            'Go',
+            '2026-07-21T18:02:01Z',
+            'failure',
+          ),
+          commitCheck(3002, 'JavaScript', '2026-07-21T18:02:02Z'),
+          commitCheck(
+            3003,
+            'Cross-language (go:ts)',
+            '2026-07-21T18:02:03Z',
+          ),
         ],
       }),
     )
+    expect(verdict.ok).toBe(false)
+    expect(verdict.reasons.join(' ')).toContain('Go concluded failure')
+  })
+
+  it('rejects a newer failed run in either API order', () => {
+    const older = commitCheck(4001, 'Go', '2026-07-21T18:03:01Z')
+    const newer = commitCheck(
+      4002,
+      'Go',
+      '2026-07-21T18:03:02Z',
+      'failure',
+    )
+
+    for (const checks of [
+      [older, newer],
+      [newer, older],
+    ]) {
+      const verdict = evaluateReleaseCommit(
+        commit,
+        reviewedInfo({ requiredChecks: ['Go'], checks }),
+      )
+      expect(verdict.ok).toBe(false)
+      expect(verdict.reasons.join(' ')).toContain('Go concluded failure')
+    }
+  })
+
+  it('rejects a newer in-progress run over an older success', () => {
+    const verdict = evaluateReleaseCommit(
+      commit,
+      reviewedInfo({
+        requiredChecks: ['Go'],
+        checks: [
+          commitCheck(4051, 'Go', '2026-07-21T18:03:01Z'),
+          commitCheck(
+            4052,
+            'Go',
+            '2026-07-21T18:03:02Z',
+            null,
+            'in_progress',
+          ),
+        ],
+      }),
+    )
+
+    expect(verdict.ok).toBe(false)
+    expect(verdict.reasons.join(' ')).toContain('Go concluded in_progress')
+  })
+
+  it('accepts a newer successful run in either API order', () => {
+    const older = commitCheck(
+      4101,
+      'Go',
+      '2026-07-21T18:03:03Z',
+      'failure',
+    )
+    const newer = commitCheck(4102, 'Go', '2026-07-21T18:03:04Z')
+
+    for (const checks of [
+      [older, newer],
+      [newer, older],
+    ]) {
+      const verdict = evaluateReleaseCommit(
+        commit,
+        reviewedInfo({ requiredChecks: ['Go'], checks }),
+      )
+      expect(verdict).toEqual({ ok: true, reasons: [] })
+    }
+  })
+
+  it('uses the largest check-run id when start times tie', () => {
+    const startedAt = '2026-07-21T18:03:05Z'
+    const verdict = evaluateReleaseCommit(
+      commit,
+      reviewedInfo({
+        requiredChecks: ['Go'],
+        checks: [
+          commitCheck(4202, 'Go', startedAt, 'failure'),
+          commitCheck(4201, 'Go', startedAt),
+        ],
+      }),
+    )
+
     expect(verdict.ok).toBe(false)
     expect(verdict.reasons.join(' ')).toContain('Go concluded failure')
   })
@@ -224,7 +322,7 @@ describe('evaluateReleaseCommit', () => {
       commit,
       reviewedInfo({
         checks: [
-          { name: 'JavaScript', status: 'completed', conclusion: 'success' },
+          commitCheck(5001, 'JavaScript', '2026-07-21T18:04:01Z'),
         ],
       }),
     )

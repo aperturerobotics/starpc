@@ -36,9 +36,11 @@ export interface AssociatedPullRequest {
 
 // CommitCheck is one CI check run reported against the release commit.
 export interface CommitCheck {
+  id: number
   name: string
   status: string
   conclusion: string | null
+  started_at: string
 }
 
 // ReleaseCommitInfo is the GitHub state gathered for a candidate release commit.
@@ -89,11 +91,17 @@ export function evaluateReleaseCommit(
   }
 
   for (const required of info.requiredChecks) {
-    const check = info.checks.find((c) => c.name === required)
-    if (!check) {
+    const checks = info.checks.filter((check) => check.name === required)
+    if (checks.length === 0) {
       reasons.push(`required check ${required} is missing for ${commit}`)
       continue
     }
+    const check = checks.reduce((latest, candidate) =>
+      candidate.started_at > latest.started_at ||
+      (candidate.started_at === latest.started_at && candidate.id > latest.id)
+        ? candidate
+        : latest,
+    )
     if (check.conclusion !== 'success') {
       reasons.push(
         `required check ${required} concluded ${check.conclusion ?? check.status}, not success`,
