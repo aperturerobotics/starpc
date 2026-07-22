@@ -122,13 +122,13 @@
     "prettier": "^3.8.3",
     "rimraf": "^6.1.3",
     "tsx": "^4.20.4",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.0",
     "@typescript/native-preview": "^7.0.0-dev.20260422.1",
     "vitest": "^4.1.5"
   },
   "dependencies": {
     "@aptre/it-ws": "^1.1.2",
-    "@aptre/protobuf-es-lite": "1.1.0",
+    "@aptre/protobuf-es-lite": "1.1.1",
     "@aptre/yamux": "^1.0.3",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
@@ -140,9 +140,9 @@
     "ws": "^8.20.0"
   },
   "resolutions": {
-    "@aptre/protobuf-es-lite": "1.1.0"
+    "@aptre/protobuf-es-lite": "1.1.1"
   },
   "overrides": {
-    "@aptre/protobuf-es-lite": "1.1.0"
+    "@aptre/protobuf-es-lite": "1.1.1"
   }
 }
