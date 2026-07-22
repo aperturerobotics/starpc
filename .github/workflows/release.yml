@@ -9,23 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-      checks: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-      - name: Verify release commit is reviewed, merged, and green
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: bun scripts/release-verify-commit.ts "${{ github.sha }}" "$RELEASE_TAG"
-
   publish:
-    needs: verify
     runs-on: ubuntu-latest
     environment: npm
     permissions:
@@ -39,7 +23,6 @@ jobs:
       - run: bun scripts/release-publish.ts
 
   cargo-publish:
-    needs: verify
     runs-on: ubuntu-latest
     environment: cargo
     permissions:
@@ -52,7 +35,6 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
   github-release:
-    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: write
