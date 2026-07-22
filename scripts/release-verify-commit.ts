@@ -5,6 +5,11 @@
 
 import { execFileSync } from 'node:child_process'
 
+import {
+  releaseTagFromCommit,
+  type CommitFileReader,
+} from './release-tag.js'
+
 // DEFAULT_RELEASE_REQUIRED_CHECKS is the complete CI contract for a release.
 export const DEFAULT_RELEASE_REQUIRED_CHECKS = [
   'JavaScript',
@@ -55,6 +60,25 @@ export interface ReleaseCommitInfo {
 export interface ReleaseCommitVerdict {
   ok: boolean
   reasons: string[]
+}
+
+// evaluateReleaseTag rejects a tag that does not name the version committed at
+// the release SHA.
+export function evaluateReleaseTag(
+  commit: string,
+  tag: string,
+  readCommitFile?: CommitFileReader,
+): ReleaseCommitVerdict {
+  const expected = releaseTagFromCommit(commit, readCommitFile)
+  if (tag === expected) {
+    return { ok: true, reasons: [] }
+  }
+  return {
+    ok: false,
+    reasons: [
+      `release tag ${tag} does not match committed version tag ${expected} at ${commit}`,
+    ],
+  }
 }
 
 // evaluateReleaseCommit rejects any commit that did not enter the protected
@@ -159,7 +183,8 @@ export function fetchReleaseCommitInfo(
   return { protectedBranch, requiredChecks, pullRequests, checks }
 }
 
-// main verifies the commit named on the command line, GITHUB_SHA, or HEAD.
+// main verifies the commit named on the command line, GITHUB_SHA, or HEAD. When
+// supplied, the tag must match the version committed at that SHA.
 function main(): void {
   const repo =
     process.env.GITHUB_REPOSITORY ??
@@ -169,6 +194,17 @@ function main(): void {
     process.argv[2] ??
     process.env.GITHUB_SHA ??
     execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  const tag = process.argv[3]
+  if (tag !== undefined) {
+    const tagVerdict = evaluateReleaseTag(commit, tag)
+    if (!tagVerdict.ok) {
+      console.error(`release commit ${commit} rejected:`)
+      for (const reason of tagVerdict.reasons) {
+        console.error(`  - ${reason}`)
+      }
+      process.exit(1)
+    }
+  }
   const protectedBranch = process.env.RELEASE_PROTECTED_BRANCH ?? 'master'
   const requiredChecks =
     process.env.RELEASE_REQUIRED_CHECKS === undefined

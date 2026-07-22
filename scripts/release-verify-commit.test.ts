@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_RELEASE_REQUIRED_CHECKS,
   evaluateReleaseCommit,
+  evaluateReleaseTag,
   fetchReleaseCommitInfo,
   type CommitCheck,
   type ReleaseCommitInfo,
@@ -328,5 +329,28 @@ describe('evaluateReleaseCommit', () => {
     )
     expect(verdict.ok).toBe(false)
     expect(verdict.reasons.join(' ')).toContain('missing')
+  })
+})
+
+describe('evaluateReleaseTag', () => {
+  const readCommitFile = (_commit: string, path: string): string =>
+    path === 'package.json' ?
+      JSON.stringify({ version: '1.2.3' })
+    : '[package]\nversion = "1.2.3"\n'
+
+  it('accepts the tag derived from the supplied commit', () => {
+    expect(evaluateReleaseTag(commit, 'v1.2.3', readCommitFile)).toEqual({
+      ok: true,
+      reasons: [],
+    })
+  })
+
+  it('rejects a stale or mistyped tag for the supplied commit', () => {
+    const verdict = evaluateReleaseTag(commit, 'v9.9.9', readCommitFile)
+
+    expect(verdict.ok).toBe(false)
+    expect(verdict.reasons).toEqual([
+      `release tag v9.9.9 does not match committed version tag v1.2.3 at ${commit}`,
+    ])
   })
 })

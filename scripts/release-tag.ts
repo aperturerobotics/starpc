@@ -4,6 +4,8 @@ interface PackageManifest {
   version: string
 }
 
+export type CommitFileReader = (commit: string, path: string) => string
+
 function run(cmd: string, args: string[]): void {
   execFileSync(cmd, args, { stdio: 'inherit' })
 }
@@ -16,7 +18,7 @@ function gitShow(commit: string, path: string): string {
 
 export function releaseVersionFromCommit(
   commit: string,
-  readCommitFile: (commit: string, path: string) => string = gitShow,
+  readCommitFile: CommitFileReader = gitShow,
 ): string {
   const manifest = JSON.parse(
     readCommitFile(commit, 'package.json'),
@@ -36,13 +38,20 @@ export function releaseVersionFromCommit(
   return manifest.version
 }
 
+export function releaseTagFromCommit(
+  commit: string,
+  readCommitFile: CommitFileReader = gitShow,
+): string {
+  return `v${releaseVersionFromCommit(commit, readCommitFile)}`
+}
+
 function main(): void {
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], {
     encoding: 'utf8',
   }).trim()
-  run('bun', ['scripts/release-verify-commit.ts', commit])
+  const tag = releaseTagFromCommit(commit)
+  run('bun', ['scripts/release-verify-commit.ts', commit, tag])
 
-  const tag = `v${releaseVersionFromCommit(commit)}`
   run('git', ['tag', tag, commit])
   run('git', ['push', 'origin', tag])
 }
