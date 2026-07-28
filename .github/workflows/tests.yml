@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run build
@@ -34,13 +34,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - name: Cache tools
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ./.tools
           key: ${{ runner.os }}-aptre-tools-${{ hashFiles('**/go.sum') }}
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - run: cargo test --all-features
 
@@ -63,15 +63,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - name: Install native build cache/tools
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
       - name: Cache C++ compiler outputs
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ccache
           key: ${{ runner.os }}-ccache-${{ hashFiles('go.sum', 'CMakeLists.txt', 'srpc/CMakeLists.txt', 'srpc/**/*.cpp', 'srpc/**/*.hpp', 'srpc/**/*.cc', 'srpc/**/*.h', 'echo/**/*.cpp', 'echo/**/*.hpp', 'integration/cross-language/*.cpp', 'rpcstream/**/*.cpp', 'rpcstream/**/*.hpp', '**/*.pb.cc', '**/*.pb.h') }}
@@ -104,9 +104,9 @@ jobs:
           - 'rust:cpp'
           - 'cpp:cpp'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -114,7 +114,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
       - run: bun install
       - name: Cache C++ compiler outputs
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ccache
           key: ${{ runner.os }}-ccache-${{ hashFiles('go.sum', 'CMakeLists.txt', 'srpc/CMakeLists.txt', 'srpc/**/*.cpp', 'srpc/**/*.hpp', 'srpc/**/*.cc', 'srpc/**/*.h', 'echo/**/*.cpp', 'echo/**/*.hpp', 'integration/cross-language/*.cpp', 'rpcstream/**/*.cpp', 'rpcstream/**/*.hpp', '**/*.pb.cc', '**/*.pb.h') }}
