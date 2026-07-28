@@ -94,13 +94,12 @@
     "prepare": "husky && go mod vendor",
     "go:aptre": "go run -mod=mod github.com/aperturerobotics/common/cmd/aptre",
     "precommit": "lint-staged",
-    "release": "bun run release:prepare",
-    "release:minor": "bun run release:prepare -- minor",
-    "release:prepare": "bun scripts/release-prepare.ts",
+    "release": "bun run release:version && bun run release:commit",
+    "release:minor": "bun run release:version:minor && bun run release:commit",
     "release:version": "bun scripts/release-version.ts patch",
     "release:version:minor": "bun scripts/release-version.ts minor",
-    "release:verify-commit": "bun scripts/release-verify-commit.ts",
-    "release:tag": "bun scripts/release-tag.ts"
+    "release:commit": "version=$(bun -e 'console.log(require(\"./package.json\").version)') && git reset && git add package.json Cargo.toml && git commit -s -m \"release: v$version\" && git tag \"v$version\"",
+    "release:publish": "git push && git push --tags"
   },
   "preferUnplugged": true,
   "lint-staged": {
