@@ -6,7 +6,7 @@ import (
 	"net"
 	"testing"
 
-	yamux "github.com/libp2p/go-yamux/v4"
+	yamux "github.com/libp2p/go-yamux/v5"
 
 	"github.com/aperturerobotics/starpc/srpc"
 )

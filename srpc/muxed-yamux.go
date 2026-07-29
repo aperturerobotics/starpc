@@ -3,7 +3,7 @@ package srpc
 import (
 	"context"
 
-	yamux "github.com/libp2p/go-yamux/v4"
+	yamux "github.com/libp2p/go-yamux/v5"
 )
 
 // yamuxConn wraps a yamux.Session to implement MuxedConn.

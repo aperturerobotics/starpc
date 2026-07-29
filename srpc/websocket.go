@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aperturerobotics/go-websocket"
-	"github.com/libp2p/go-yamux/v4"
+	"github.com/libp2p/go-yamux/v5"
 )
 
 // NewWebSocketConn wraps a websocket into a MuxedConn.

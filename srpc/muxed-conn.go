@@ -6,7 +6,7 @@ import (
 	"math"
 	"net"
 
-	yamux "github.com/libp2p/go-yamux/v4"
+	yamux "github.com/libp2p/go-yamux/v5"
 )
 
 var yamuxConfigTemplate = func() yamux.Config {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	yamux "github.com/libp2p/go-yamux/v4"
+	yamux "github.com/libp2p/go-yamux/v5"
 )
 
 // yamuxStream wraps a yamux.Stream to implement MuxedStream.

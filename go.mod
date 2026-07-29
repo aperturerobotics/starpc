@@ -19,10 +19,11 @@ require (
 )
 
 require (
-	github.com/libp2p/go-yamux/v4 v4.0.2 // latest
 	github.com/pkg/errors v0.9.1 // latest
 	github.com/sirupsen/logrus v1.9.5-0.20260508084601-d4a50659cfd6 // latest
 )
+
+require github.com/libp2p/go-yamux/v5 v5.1.0
 
 require (
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect

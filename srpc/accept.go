@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/libp2p/go-yamux/v4"
+	"github.com/libp2p/go-yamux/v5"
 )
 
 // AcceptMuxedListener accepts incoming connections from a net.Listener.
