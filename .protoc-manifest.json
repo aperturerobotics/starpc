@@ -17,9 +17,7 @@
         "echo/echo_srpc.pb.rs",
         "echo/echo_srpc.pb.ts"
       ],
-      "protoFiles": [
-        "echo/echo.proto"
-      ]
+      "protoFiles": ["echo/echo.proto"]
     },
     "github.com/aperturerobotics/starpc/mock": {
       "hash": "06310ac85dca81e8ae5ad3b0d07fa5d51a067571d22c637ece49640ca10435f0",
@@ -35,9 +33,7 @@
         "mock/mock_srpc.pb.rs",
         "mock/mock_srpc.pb.ts"
       ],
-      "protoFiles": [
-        "mock/mock.proto"
-      ]
+      "protoFiles": ["mock/mock.proto"]
     },
     "github.com/aperturerobotics/starpc/rpcstream": {
       "hash": "c1408c8d74074e5f5e49b114030b0ce59bed70074f80c6397ba4d625e84ddcd5",
@@ -48,9 +44,7 @@
         "rpcstream/rpcstream.pb.rs",
         "rpcstream/rpcstream.pb.ts"
       ],
-      "protoFiles": [
-        "rpcstream/rpcstream.proto"
-      ]
+      "protoFiles": ["rpcstream/rpcstream.proto"]
     },
     "github.com/aperturerobotics/starpc/srpc": {
       "hash": "8d7285abeb6d294ff730039dcc87c566bfc5822c46bbb7ecd5e7707d126d5052",
@@ -61,9 +55,7 @@
         "srpc/rpcproto.pb.rs",
         "srpc/rpcproto.pb.ts"
       ],
-      "protoFiles": [
-        "srpc/rpcproto.proto"
-      ]
+      "protoFiles": ["srpc/rpcproto.proto"]
     }
   }
 }

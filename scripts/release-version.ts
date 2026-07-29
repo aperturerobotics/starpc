@@ -16,8 +16,8 @@ function nextVersion(version: string, bump: Bump): string {
   const major = Number(match[1])
   const minor = Number(match[2])
   const patch = Number(match[3])
-  return bump === 'minor' ?
-      `${major}.${minor + 1}.0`
+  return bump === 'minor'
+    ? `${major}.${minor + 1}.0`
     : `${major}.${minor}.${patch + 1}`
 }
 

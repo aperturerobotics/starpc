@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "dist",
+    "build",
+    "vendor",
+    ".tools",
+    ".tmp",
+    ".#*",
+    ".*.swp",
+    ".vs"
+  ]
+}

@@ -270,9 +270,8 @@ export class CommonRPC {
     }
 
     this.pushRpcData(packet.data, packet.dataIsZero)
-    const remoteError =
-      packet.error ?
-        new RemoteRPCError(this.service, this.method, packet.error)
+    const remoteError = packet.error
+      ? new RemoteRPCError(this.service, this.method, packet.error)
       : undefined
     if (remoteError) {
       this.remoteError ??= remoteError

@@ -11,11 +11,7 @@
   "packageRules": [
     {
       "matchManagers": ["gomod"],
-      "matchDepTypes": [
-        "replace",
-        "toolchain",
-        "go"
-      ],
+      "matchDepTypes": ["replace", "toolchain", "go"],
       "enabled": false
     },
     {
