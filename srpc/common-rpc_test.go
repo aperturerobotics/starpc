@@ -3,6 +3,7 @@ package srpc
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -421,5 +422,88 @@ func TestCommonRPCReadOneQueuedDoesNotAllocate(t *testing.T) {
 
 	if allocs != 0 {
 		t.Fatalf("expected queued ReadOne to avoid allocations, got %f", allocs)
+	}
+}
+
+func TestRemoteCloseWithoutCompletionNamesTheMissingCompletion(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	// the transport ends the stream in good order with nothing behind it,
+	// which is what a dropped completion packet looks like from here.
+	rpc.HandleStreamClose(nil)
+
+	_, err := rpc.ReadOne()
+	if !errors.Is(err, ErrClosedBeforeCompletion) {
+		t.Fatalf("read after a truncated stream reported %v, want the missing completion", err)
+	}
+	if errors.Is(err, io.EOF) {
+		t.Fatalf("read after a truncated stream claims the call ended in good order: %v", err)
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("read after a truncated stream stopped satisfying a cancellation check: %v", err)
+	}
+	if got := err.Error(); got == context.Canceled.Error() {
+		t.Fatalf("read after a truncated stream still claims a cancellation happened: %q", got)
+	}
+	if err := rpc.Wait(context.Background()); !errors.Is(err, ErrClosedBeforeCompletion) {
+		t.Fatalf("wait after a truncated stream reported %v, want the missing completion", err)
+	}
+}
+
+func TestRemoteCloseReportingEOFNamesTheMissingCompletion(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	// rpcstream surfaces the peer's close as io.EOF rather than as no error.
+	rpc.HandleStreamClose(io.EOF)
+
+	_, err := rpc.ReadOne()
+	if !errors.Is(err, ErrClosedBeforeCompletion) {
+		t.Fatalf("read after an EOF close reported %v, want the missing completion", err)
+	}
+	if terminal, ok := rpc.receiptTerminalKind(); !ok || terminal != TerminalKind_TERMINAL_KIND_CLOSED {
+		t.Fatalf("an EOF close recorded terminal %v, want a clean close", terminal)
+	}
+}
+
+func TestRemoteCloseAfterCompletionStillEndsTheStream(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	if err := rpc.HandleCallData(&CallData{Complete: true}); err != nil {
+		t.Fatalf("handle completion: %v", err)
+	}
+	rpc.HandleStreamClose(nil)
+
+	if _, err := rpc.ReadOne(); !errors.Is(err, io.EOF) {
+		t.Fatalf("read after a completed call reported %v, want the end of the stream", err)
+	}
+}
+
+func TestClientRPCCloseReportsALocalCancellation(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	rpc.Close()
+
+	_, err := rpc.ReadOne()
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("read after a local close reported %v, want a cancellation", err)
+	}
+	if errors.Is(err, ErrClosedBeforeCompletion) {
+		t.Fatalf("a close this side performed was blamed on the remote: %v", err)
 	}
 }

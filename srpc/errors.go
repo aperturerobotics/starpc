@@ -1,6 +1,9 @@
 package srpc
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 var (
 	// ErrReset is returned when a stream is reset.
@@ -24,3 +27,25 @@ var (
 	// ErrNilWriter is returned if the rpc writer is nil.
 	ErrNilWriter = errors.New("writer cannot be nil")
 )
+
+// ErrClosedBeforeCompletion is the error a call reports when its stream closed
+// without the remote sending a completion or an error. The call has no verdict:
+// the handler may have finished with its answer lost in the transport, or it may
+// never have run. Anything read from the call after that point fails with this.
+//
+// It unwraps to context.Canceled, which is what this case reported before the
+// distinction existed, so a caller that tests for cancellation keeps working.
+var ErrClosedBeforeCompletion error = closedBeforeCompletion{}
+
+// closedBeforeCompletion carries ErrClosedBeforeCompletion.
+type closedBeforeCompletion struct{}
+
+// Error returns the error message.
+func (closedBeforeCompletion) Error() string {
+	return "stream closed before the remote reported completion"
+}
+
+// Unwrap returns the cancellation this case reported historically.
+func (closedBeforeCompletion) Unwrap() error {
+	return context.Canceled
+}
