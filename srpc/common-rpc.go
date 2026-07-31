@@ -307,9 +307,22 @@ func (c *commonRPC) handleStreamCloseLocked(
 	if c.dataClosed && c.writerClosed {
 		return nil
 	}
+	// A peer that closes its side reports the end of the stream. Transports
+	// disagree on whether they surface that as io.EOF or as no error at all,
+	// and it means the same thing either way, so settle it here rather than in
+	// each transport. It says nothing about whether a completion preceded it.
+	if errors.Is(closeErr, io.EOF) {
+		closeErr = nil
+	}
 	normalRemoteCloseAfterLocalComplete := closeErr == nil && (c.localCompleting || c.localDone)
 	if closeErr != nil && c.remoteErr == nil {
 		c.remoteErr = closeErr
+	}
+	// A clean close that arrives with no completion behind it leaves the call
+	// without a verdict. Reading io.EOF there says the stream ended in good
+	// order, which is the one thing we do not know.
+	if closeErr == nil && !normalRemoteCloseAfterLocalComplete && !c.remoteCompleted && c.remoteErr == nil {
+		c.remoteErr = ErrClosedBeforeCompletion
 	}
 	if !normalRemoteCloseAfterLocalComplete && !c.remoteTerminalSet {
 		terminal := TerminalKind_TERMINAL_KIND_CLOSED
