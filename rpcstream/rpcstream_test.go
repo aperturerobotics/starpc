@@ -345,4 +345,4 @@ func timeAfterTestTimeout() <-chan time.Time {
 }
 
 // _ is a type assertion.
-var _ RpcStream = ((*memoryRpcStream)(nil))
+var _ RpcStream = (*memoryRpcStream)(nil)

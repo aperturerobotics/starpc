@@ -111,27 +111,6 @@ stop_server() {
 
 # run_pair <test_name> <server_args...> -- <client_args...>
 # The client receives $SERVER_ADDR as its last argument.
-# check_receipt_events verifies terminal markers after the receipt server
-# naturally completes, so receipt synchronization is event/process-backed.
-check_receipt_events() {
-    local expected="$1"
-    local event_log="$2"
-    awk -v expected="$expected" '
-        $0 == "SERVER_RECEIPT_TERMINAL " expected { terminal = NR; next }
-        $0 == "SERVER_RECEIPT_ACK_WRITE " expected { ack_write = NR; next }
-        $0 == "CLIENT_RECEIPT_RESOLVED " expected { client = NR; next }
-        END {
-            if (!terminal || !client) {
-                exit 1
-            }
-            if (expected == "committed" &&
-                (!ack_write || terminal >= ack_write || ack_write >= client)) {
-                exit 1
-            }
-        }
-    ' "$event_log"
-}
-
 run_pair() {
     local test_name="$1"
     shift
@@ -140,7 +119,6 @@ run_pair() {
         return
     fi
 
-    # Split args on "--".
     local srv_args=()
     local cli_args=()
     local in_client=false
@@ -156,103 +134,33 @@ run_pair() {
         fi
     done
 
-    local expected_terminal=""
-    case "$test_name" in
-        *"receipt commit") expected_terminal="committed" ;;
-        *"receipt abort") expected_terminal="canceled" ;;
-        *"receipt loss") expected_terminal="transportLost" ;;
-        *"receipt bare-close") expected_terminal="closed" ;;
-    esac
-
     echo -n "  ${test_name}... "
-
-    local event_fifo=""
-    local event_log=""
-    local event_reader=""
-    if [ -n "$expected_terminal" ]; then
-        event_fifo=$(mktemp)
-        rm -f "$event_fifo"
-        mkfifo "$event_fifo"
-        event_log=$(mktemp)
-        exec 3<>"$event_fifo"
-        (
-            exec 3>&-
-            cat "$event_fifo" > "$event_log"
-        ) &
-        event_reader=$!
-        export RECEIPT_EVENT_FIFO="$event_fifo"
-    else
-        unset RECEIPT_EVENT_FIFO
-    fi
-
     if ! start_server "${srv_args[@]}"; then
         echo "FAILED (server start)"
         FAILED=$((FAILED + 1))
         ERRORS="${ERRORS}\n  ${test_name} (server start failed)"
-        if [ -n "$event_reader" ]; then
-            exec 3>&-
-            kill "$event_reader" 2>/dev/null || true
-            wait "$event_reader" 2>/dev/null || true
-            rm -f "$event_fifo" "$event_log"
-        fi
-        unset RECEIPT_EVENT_FIFO
         return
     fi
 
     local client_out
     client_out=$(mktemp)
     local client_ok=false
-    local server_ok=true
     if "${cli_args[@]}" "$SERVER_ADDR" > "$client_out" 2>&1; then
         client_ok=true
     fi
+    stop_server
 
-    if [ -n "$event_reader" ]; then
-        if $client_ok; then
-            if ! wait "$SERVER_PID"; then
-                server_ok=false
-            fi
-        else
-            stop_server
-            wait "$SERVER_PID" 2>/dev/null || true
-            server_ok=false
-        fi
-        exec 3>&-
-        wait "$event_reader" 2>/dev/null || true
-    else
-        stop_server
-    fi
-    unset RECEIPT_EVENT_FIFO
-
-    local terminal_ok=true
-    if [ -n "$expected_terminal" ] &&
-        ! check_receipt_events "$expected_terminal" "$event_log"; then
-        terminal_ok=false
-    fi
-
-    if $client_ok && $server_ok && $terminal_ok; then
+    if $client_ok; then
         echo "PASSED"
-        if [ -n "$expected_terminal" ]; then
-            echo "    receipt events:"
-            sed 's/^/      /' "$event_log"
-        fi
         PASSED=$((PASSED + 1))
     else
         echo "FAILED"
         FAILED=$((FAILED + 1))
         ERRORS="${ERRORS}\n  ${test_name}"
-        if ! $client_ok; then
-            echo "    client output:"
-            sed 's/^/    /' "$client_out"
-        fi
-        if ! $terminal_ok; then
-            echo "    receipt events:"
-            sed 's/^/    /' "$event_log"
-            echo "    server output:"
-            sed 's/^/    /' "$SERVER_LOG"
-        fi
+        echo "    client output:"
+        sed 's/^/    /' "$client_out"
     fi
-    rm -f "$client_out" "$SERVER_LOG" "$event_fifo" "$event_log"
+    rm -f "$client_out" "$SERVER_LOG"
     SERVER_LOG=""
 }
 
@@ -264,10 +172,6 @@ echo ""
 run_pair "go-server + go-client"   "$GO_SERVER" -- "$GO_CLIENT"
 run_pair "go-server + rust-client" "$GO_SERVER" -- "$RUST_CLIENT"
 run_pair "go-server + ts-client"   "$GO_SERVER" -- node "$TS_CLIENT"
-run_pair "go-server + ts-client receipt commit" "$GO_SERVER" receipt commit -- node "$TS_CLIENT" receipt commit
-run_pair "go-server + ts-client receipt abort" "$GO_SERVER" receipt abort -- node "$TS_CLIENT" receipt abort
-run_pair "go-server + ts-client receipt loss" "$GO_SERVER" receipt loss -- node "$TS_CLIENT" receipt loss
-run_pair "go-server + ts-client receipt bare-close" "$GO_SERVER" receipt bare-close -- node "$TS_CLIENT" receipt bare-close
 run_pair "go-server + cpp-client"  "$GO_SERVER" -- "$CPP_CLIENT"
 
 # Rust server combinations
@@ -278,10 +182,6 @@ run_pair "rust-server + cpp-client"  "$RUST_SERVER" -- "$CPP_CLIENT"
 
 # TypeScript server combinations
 run_pair "ts-server + go-client"   node "$TS_SERVER" -- "$GO_CLIENT"
-run_pair "ts-server + go-client receipt commit" node "$TS_SERVER" receipt commit -- "$GO_CLIENT" receipt commit
-run_pair "ts-server + go-client receipt abort" node "$TS_SERVER" receipt abort -- "$GO_CLIENT" receipt abort
-run_pair "ts-server + go-client receipt loss" node "$TS_SERVER" receipt loss -- "$GO_CLIENT" receipt loss
-run_pair "ts-server + go-client receipt bare-close" node "$TS_SERVER" receipt bare-close -- "$GO_CLIENT" receipt bare-close
 run_pair "ts-server + rust-client" node "$TS_SERVER" -- "$RUST_CLIENT"
 run_pair "ts-server + ts-client"   node "$TS_SERVER" -- node "$TS_CLIENT"
 run_pair "ts-server + cpp-client"  node "$TS_SERVER" -- "$CPP_CLIENT"

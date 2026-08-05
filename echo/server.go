@@ -94,4 +94,4 @@ func (s *EchoServer) DoNothing(ctx context.Context, empty *emptypb.Empty) (*empt
 }
 
 // _ is a type assertion
-var _ SRPCEchoerServer = ((*EchoServer)(nil))
+var _ SRPCEchoerServer = (*EchoServer)(nil)

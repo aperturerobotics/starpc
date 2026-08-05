@@ -26,4 +26,4 @@ func (e *MockServer) MockRequest(ctx context.Context, msg *MockMsg) (*MockMsg, e
 }
 
 // _ is a type assertion
-var _ SRPCMockServer = ((*MockServer)(nil))
+var _ SRPCMockServer = (*MockServer)(nil)

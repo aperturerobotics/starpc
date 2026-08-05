@@ -37,4 +37,4 @@ func (i *PrefixInvoker) InvokeMethod(serviceID, methodID string, strm Stream) (b
 }
 
 // _ is a type assertion
-var _ Invoker = ((*PrefixInvoker)(nil))
+var _ Invoker = (*PrefixInvoker)(nil)

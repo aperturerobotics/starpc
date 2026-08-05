@@ -37,7 +37,7 @@ func (s InvokerSlice) InvokeMethod(serviceID, methodID string, strm Stream) (boo
 }
 
 // _ is a type assertion
-var _ Invoker = (InvokerSlice)(nil)
+var _ Invoker = InvokerSlice(nil)
 
 // InvokerFunc is a function implementing InvokeMethod.
 type InvokerFunc func(serviceID, methodID string, strm Stream) (bool, error)
@@ -52,4 +52,4 @@ func (f InvokerFunc) InvokeMethod(serviceID, methodID string, strm Stream) (bool
 	return f(serviceID, methodID, strm)
 }
 
-var _ Invoker = (InvokerFunc)(nil)
+var _ Invoker = InvokerFunc(nil)

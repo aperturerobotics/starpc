@@ -55,4 +55,4 @@ func (i *PrefixClient) stripCheckServiceIDPrefix(service string) (string, error)
 }
 
 // _ is a type assertion
-var _ Client = ((*PrefixClient)(nil))
+var _ Client = (*PrefixClient)(nil)

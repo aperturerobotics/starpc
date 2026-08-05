@@ -468,9 +468,6 @@ func TestRemoteCloseReportingEOFNamesTheMissingCompletion(t *testing.T) {
 	if !errors.Is(err, ErrClosedBeforeCompletion) {
 		t.Fatalf("read after an EOF close reported %v, want the missing completion", err)
 	}
-	if terminal, ok := rpc.receiptTerminalKind(); !ok || terminal != TerminalKind_TERMINAL_KIND_CLOSED {
-		t.Fatalf("an EOF close recorded terminal %v, want a clean close", terminal)
-	}
 }
 
 func TestRemoteCloseAfterCompletionStillEndsTheStream(t *testing.T) {

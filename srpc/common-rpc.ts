@@ -3,12 +3,7 @@ import type { Sink, Source } from 'it-stream-types'
 import { pushable, type Pushable } from 'it-pushable'
 import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
-import {
-  Packet,
-  TerminalKind,
-  type CallData,
-  type CallStart,
-} from './rpcproto.pb.js'
+import { Packet, type CallData, type CallStart } from './rpcproto.pb.js'
 import { ERR_RPC_ABORT, RemoteRPCError } from './errors.js'
 
 const maxBufferedOutgoingPackets = 1
@@ -39,27 +34,15 @@ export class CommonRPC {
 
   // closed indicates this rpc has been closed already.
   private closed?: true | Error
-  // remoteCompleted is set only by an explicit remote CallData completion.
-  private remoteCompleted = false
   // remoteError records a remote error or transport failure.
   private remoteError?: Error
-  // remoteSourceClosed records an incoming source ending without a packet error.
-  private remoteSourceClosed = false
-  // remoteTerminal is the first valid remote terminal.
-  private remoteTerminal?: TerminalKind
-  // invocationController cancels the server invocation on a remote terminal.
+  // invocationController cancels the server invocation when the RPC closes.
   private readonly invocationController = new AbortController()
-  // terminalPromise resolves when a remote terminal is recorded.
-  private readonly terminalPromise: Promise<void>
-  private resolveTerminal!: () => void
 
   // writeDrainAbort wakes writers waiting for outbound stream drain on close.
   private readonly writeDrainAbort = new AbortController()
 
   constructor() {
-    const { promise, resolve } = Promise.withResolvers<void>()
-    this.terminalPromise = promise
-    this.resolveTerminal = resolve
     this.sink = this._createSink()
     this.source = this._source
     this.rpcDataSource = this._rpcDataSource
@@ -70,55 +53,9 @@ export class CommonRPC {
     return this.closed ?? false
   }
 
-  // invocationSignal is canceled when the RPC reaches a terminal.
+  // invocationSignal is canceled when the RPC closes.
   protected get invocationSignal(): AbortSignal {
     return this.invocationController.signal
-  }
-
-  // waitTerminal waits for the remote terminal or external owner cancellation.
-  protected async waitTerminal(
-    ownerSignal: AbortSignal,
-  ): Promise<TerminalKind> {
-    const { promise: ownerDone, resolve: resolveOwnerDone } =
-      Promise.withResolvers<void>()
-    const onAbort = () => resolveOwnerDone()
-    ownerSignal.addEventListener('abort', onAbort, { once: true })
-    let ownerAborted = ownerSignal.aborted
-    try {
-      for (;;) {
-        const terminal = this.getTerminalKind()
-        if (terminal !== undefined) {
-          if (
-            terminal === TerminalKind.CLOSED &&
-            this.remoteSourceClosed &&
-            !this.closed
-          ) {
-            await this.close()
-          }
-          return terminal
-        }
-        if (ownerAborted) {
-          return TerminalKind.ABANDONED
-        }
-        await Promise.race([this.terminalPromise, ownerDone])
-        ownerAborted = ownerSignal.aborted
-      }
-    } finally {
-      ownerSignal.removeEventListener('abort', onAbort)
-    }
-  }
-
-  // getTerminalKind returns the observed remote terminal, if any.
-  public getTerminalKind(): TerminalKind | undefined {
-    return this.remoteTerminal
-  }
-
-  private recordRemoteTerminal(kind: TerminalKind) {
-    if (this.remoteTerminal !== undefined) {
-      return
-    }
-    this.remoteTerminal = kind
-    this.resolveTerminal()
   }
 
   // writeCallData writes the call data packet.
@@ -276,20 +213,15 @@ export class CommonRPC {
     if (remoteError) {
       this.remoteError ??= remoteError
       this.invocationController.abort()
-      this.recordRemoteTerminal(TerminalKind.TRANSPORT_LOST)
     }
     if (packet.complete && !remoteError) {
-      this.remoteCompleted = true
-      this.recordRemoteTerminal(TerminalKind.COMMITTED)
       this._rpcDataSource.end(remoteError)
     } else if (remoteError) {
       this._rpcDataSource.end(remoteError)
     }
   }
-
-  // handleCallCancel handles a CallCancel packet.
+  // handleCallCancel aborts the invocation and closes the call.
   public async handleCallCancel() {
-    this.recordRemoteTerminal(TerminalKind.CANCELED)
     await this.close(new Error(ERR_RPC_ABORT))
   }
 
@@ -302,9 +234,6 @@ export class CommonRPC {
     if (!this.remoteError && err) {
       this.remoteError = err
     }
-    this.recordRemoteTerminal(
-      err ? TerminalKind.TRANSPORT_LOST : TerminalKind.CLOSED,
-    )
     this.invocationController.abort()
     // note: this does nothing if _source is already ended.
     if (err && err.message) {
@@ -330,8 +259,6 @@ export class CommonRPC {
             await this.handlePacket(msg)
           }
         }
-        this.remoteSourceClosed = true
-        this.recordRemoteTerminal(TerminalKind.CLOSED)
       } catch (err) {
         this.close(err as Error)
       }

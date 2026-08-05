@@ -82,4 +82,4 @@ func (s *StreamRwc) Write(p []byte) (n int, err error) {
 }
 
 // _ is a type assertion
-var _ io.ReadWriteCloser = ((*StreamRwc)(nil))
+var _ io.ReadWriteCloser = (*StreamRwc)(nil)
