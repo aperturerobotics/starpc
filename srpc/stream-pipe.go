@@ -85,4 +85,4 @@ func (p *pipeStream) closeRemote() {
 }
 
 // _ is a type assertion
-var _ Stream = ((*pipeStream)(nil))
+var _ Stream = (*pipeStream)(nil)

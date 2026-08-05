@@ -15,13 +15,14 @@ import {
   EchoerDefinition,
   EchoerServer,
   EchoerServiceName,
+  EchoMsg,
   runClientTest,
 } from '../echo/index.js'
 import {
   runAbortControllerTest,
   runRpcStreamTest,
 } from '../echo/client-test.js'
-
+import type { EchoMsg as EchoMsgType } from '../echo/echo.pb.js'
 describe('srpc server', () => {
   let client: Client
 
@@ -76,6 +77,37 @@ describe('srpc server', () => {
 
   it('should pass rpc stream tests', async () => {
     await runRpcStreamTest(client)
+  })
+  it('passes the exact invocation signal after async request decode', async () => {
+    const controller = new AbortController()
+    let observedSignal: AbortSignal | undefined
+    const handler = createHandler(EchoerDefinition, {
+      Echo: async (request: EchoMsgType, signal?: AbortSignal) => {
+        observedSignal = signal
+        return request
+      },
+    })
+    const invokeFn = await handler.lookupMethod(EchoerServiceName, 'Echo')
+    if (!invokeFn) {
+      throw new Error('Echo method was not found')
+    }
+    const request = EchoMsg.create({ body: 'signal identity' })
+    const drained = Promise.withResolvers<void>()
+    await invokeFn(
+      (async function* () {
+        await Promise.resolve()
+        yield EchoMsg.toBinary(request)
+      })(),
+      async (source) => {
+        for await (const _data of source) {
+          // Drain the encoded response so the invocation pipeline completes.
+        }
+        drained.resolve()
+      },
+      controller.signal,
+    )
+    await drained.promise
+    expect(observedSignal).toBe(controller.signal)
   })
 
   it('keeps detached server-streaming responses open after request source completes', async () => {

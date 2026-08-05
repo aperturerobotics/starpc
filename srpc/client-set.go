@@ -75,4 +75,4 @@ func (c *ClientSet) execCall(ctx context.Context, doCall func(client Client) err
 }
 
 // _ is a type assertion
-var _ Client = ((*ClientSet)(nil))
+var _ Client = (*ClientSet)(nil)

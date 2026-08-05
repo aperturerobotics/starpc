@@ -93,4 +93,4 @@ func (v *VMux) HasServiceMethod(serviceID, methodID string) (has bool) {
 }
 
 // _ is a type assertion
-var _ Mux = ((*VMux)(nil))
+var _ Mux = (*VMux)(nil)

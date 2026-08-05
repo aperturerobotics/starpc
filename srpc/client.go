@@ -97,4 +97,4 @@ func (c *client) NewStream(ctx context.Context, service, method string, firstMsg
 }
 
 // _ is a type assertion
-var _ Client = ((*client)(nil))
+var _ Client = (*client)(nil)

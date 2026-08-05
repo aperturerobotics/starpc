@@ -134,4 +134,4 @@ func (m *mux) InvokeMethod(serviceID, methodID string, strm Stream) (bool, error
 }
 
 // _ is a type assertion
-var _ Mux = ((*mux)(nil))
+var _ Mux = (*mux)(nil)

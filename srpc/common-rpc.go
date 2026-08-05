@@ -31,8 +31,8 @@ type commonRPC struct {
 	writer PacketWriter
 	// writerClosed is set after writer has been closed locally.
 	writerClosed bool
-	// localCompleting is set while the local handler is publishing its terminal
-	// packet and closing the writer.
+	// localCompleting is set while the local handler is publishing its
+	// completion packet and closing the writer.
 	localCompleting bool
 	// localActive is set while the local handler goroutine may still be inside
 	// user code. Resource owners use Wait as a lifetime barrier, so cancellation
@@ -48,14 +48,8 @@ type commonRPC struct {
 	dataClosed bool
 	// remoteErr is an error set by the remote.
 	remoteErr error
-	// remoteCanceled distinguishes a received CallCancel from transport loss.
-	remoteCanceled bool
 	// remoteCompleted is set only by an explicit remote CallData completion.
 	remoteCompleted bool
-	// remoteTerminal is the first valid remote terminal.
-	remoteTerminal TerminalKind
-	// remoteTerminalSet records whether remoteTerminal is valid.
-	remoteTerminalSet bool
 }
 
 // initCommonRPC initializes the commonRPC.
@@ -122,41 +116,6 @@ func (c *commonRPC) Wait(ctx context.Context) error {
 		case <-waitCh:
 		}
 	}
-}
-
-// WaitTerminal waits for and classifies the remote terminal of a held unary
-// invocation.
-func (c *commonRPC) WaitTerminal(ownerCtx context.Context) (TerminalKind, error) {
-	var ownerDone bool
-	for {
-		locked := c.bcast.Lock()
-		if c.remoteTerminalSet {
-			terminal := c.remoteTerminal
-			locked.Unlock()
-			return terminal, nil
-		}
-		if ownerDone {
-			err := ownerCtx.Err()
-			locked.Unlock()
-			return TerminalKind_TERMINAL_KIND_ABANDONED, err
-		}
-		waitCh := locked.WaitCh()
-		locked.Unlock()
-
-		select {
-		case <-ownerCtx.Done():
-			ownerDone = true
-		case <-waitCh:
-		}
-	}
-}
-
-// receiptTerminalKind returns the first valid remote terminal.
-func (c *commonRPC) receiptTerminalKind() (TerminalKind, bool) {
-	locked := c.bcast.Lock()
-	terminal, ok := c.remoteTerminal, c.remoteTerminalSet
-	locked.Unlock()
-	return terminal, ok
 }
 
 // ReadOne reads a single message and returns.
@@ -236,9 +195,6 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 // HandleCallCancel handles the call cancel packet.
 func (c *commonRPC) HandleCallCancel() error {
 	locked := c.bcast.Lock()
-	if (!c.dataClosed || !c.writerClosed) && !c.remoteTerminalSet {
-		c.remoteCanceled = true
-	}
 	writer := c.handleStreamCloseLocked(&locked, context.Canceled)
 	locked.Unlock()
 	if writer != nil {
@@ -277,11 +233,7 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	if complete {
 		c.dataClosed = true
 		if len(pktErr) == 0 {
-			if c.recordRemoteTerminalLocked(TerminalKind_TERMINAL_KIND_COMMITTED) {
-				c.remoteCompleted = true
-			}
-		} else {
-			c.recordRemoteTerminalLocked(TerminalKind_TERMINAL_KIND_TRANSPORT_LOST)
+			c.remoteCompleted = true
 		}
 	}
 
@@ -289,15 +241,6 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 	locked.Unlock()
 
 	return err
-}
-
-func (c *commonRPC) recordRemoteTerminalLocked(kind TerminalKind) bool {
-	if c.remoteTerminalSet {
-		return false
-	}
-	c.remoteTerminal = kind
-	c.remoteTerminalSet = true
-	return true
 }
 
 func (c *commonRPC) handleStreamCloseLocked(
@@ -323,16 +266,6 @@ func (c *commonRPC) handleStreamCloseLocked(
 	// order, which is the one thing we do not know.
 	if closeErr == nil && !normalRemoteCloseAfterLocalComplete && !c.remoteCompleted && c.remoteErr == nil {
 		c.remoteErr = ErrClosedBeforeCompletion
-	}
-	if !normalRemoteCloseAfterLocalComplete && !c.remoteTerminalSet {
-		terminal := TerminalKind_TERMINAL_KIND_CLOSED
-		if closeErr != nil {
-			terminal = TerminalKind_TERMINAL_KIND_TRANSPORT_LOST
-			if c.remoteCanceled {
-				terminal = TerminalKind_TERMINAL_KIND_CANCELED
-			}
-		}
-		c.recordRemoteTerminalLocked(terminal)
 	}
 	c.dataClosed = true
 	if !normalRemoteCloseAfterLocalComplete {

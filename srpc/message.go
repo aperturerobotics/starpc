@@ -86,4 +86,4 @@ func (m *RawMessage) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 }
 
 // _ is a type assertion
-var _ Message = ((*RawMessage)(nil))
+var _ Message = (*RawMessage)(nil)
