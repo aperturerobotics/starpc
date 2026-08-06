@@ -10,6 +10,10 @@ import {
   combineUint8ArrayListTransform,
   ChannelStreamOpts,
   Packet,
+  createContextKey,
+  serverContextValue,
+  withServerContextValue,
+  type ServerContext,
 } from '../srpc/index.js'
 import {
   EchoerDefinition,
@@ -78,12 +82,21 @@ describe('srpc server', () => {
   it('should pass rpc stream tests', async () => {
     await runRpcStreamTest(client)
   })
-  it('passes the exact invocation signal after async request decode', async () => {
+  it('passes the exact invocation context after async request decode', async () => {
     const controller = new AbortController()
-    let observedSignal: AbortSignal | undefined
+    const callerKey = createContextKey<string>()
+    let observedAbortSignal: AbortSignal | undefined
+    let observedContextSignal: AbortSignal | undefined
+    let observedCaller: string | undefined
     const handler = createHandler(EchoerDefinition, {
-      Echo: async (request: EchoMsgType, signal?: AbortSignal) => {
-        observedSignal = signal
+      Echo: async (
+        request: EchoMsgType,
+        abortSignal: AbortSignal,
+        context: ServerContext,
+      ) => {
+        observedAbortSignal = abortSignal
+        observedContextSignal = context.signal
+        observedCaller = serverContextValue(context, callerKey)
         return request
       },
     })
@@ -104,9 +117,41 @@ describe('srpc server', () => {
         }
         drained.resolve()
       },
-      controller.signal,
+      withServerContextValue(
+        { signal: controller.signal },
+        callerKey,
+        'caller-1',
+      ),
     )
     await drained.promise
+    expect(observedAbortSignal).toBe(controller.signal)
+    expect(observedContextSignal).toBe(controller.signal)
+    expect(observedCaller).toBe('caller-1')
+  })
+
+  it('keeps two-argument server handlers compatible', async () => {
+    const controller = new AbortController()
+    let observedSignal: AbortSignal | undefined
+    const handler = createHandler(EchoerDefinition, {
+      Echo: async (request: EchoMsgType, abortSignal?: AbortSignal) => {
+        observedSignal = abortSignal
+        return request
+      },
+    })
+    const invokeFn = await handler.lookupMethod(EchoerServiceName, 'Echo')
+    if (!invokeFn) throw new Error('Echo method was not found')
+    const request = EchoMsg.create({ body: 'legacy handler' })
+    await invokeFn(
+      (async function* () {
+        yield EchoMsg.toBinary(request)
+      })(),
+      async (source) => {
+        for await (const _data of source) {
+          // Drain the response.
+        }
+      },
+      { signal: controller.signal },
+    )
     expect(observedSignal).toBe(controller.signal)
   })
 

@@ -4,6 +4,7 @@ import type { CallData, CallStart } from './rpcproto.pb.js'
 import { CommonRPC } from './common-rpc.js'
 import { InvokeFn } from './handler.js'
 import { LookupMethod } from './mux.js'
+import type { ServerContext } from './server-context.js'
 
 // ServerRPC is an ongoing RPC from the server side.
 export class ServerRPC extends CommonRPC {
@@ -47,7 +48,9 @@ export class ServerRPC extends CommonRPC {
   private async invokeRPC(invokeFn: InvokeFn) {
     const dataSink = this._createDataSink()
     try {
-      await invokeFn(this.rpcDataSource, dataSink, this.invocationSignal)
+      await invokeFn(this.rpcDataSource, dataSink, {
+        signal: this.invocationSignal,
+      } satisfies ServerContext)
     } catch (err) {
       this.close(err as Error)
     }

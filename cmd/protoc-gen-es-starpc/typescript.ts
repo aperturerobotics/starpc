@@ -26,6 +26,7 @@ import {
 } from '@aptre/protobuf-es-lite/protoplugin/ecmascript'
 
 const MessageStream = createImportSymbol('MessageStream', 'starpc')
+const ServerContext = createImportSymbol('ServerContext', 'starpc')
 const RuntimeMethodKind = createImportSymbol(
   'MethodKind',
   '@aptre/protobuf-es-lite',
@@ -124,6 +125,42 @@ function generateService(
     if (i < service.methods.length - 1) {
       f.print();
     }
+  }
+  f.print("}");
+  f.print();
+
+  // Generate the server implementation interface.
+  f.print(f.jsDoc(service));
+  f.print("export interface ", localName(service), "Handler {");
+  for (let i = 0; i < service.methods.length; i++) {
+    const method = service.methods[i];
+    f.print(f.jsDoc(method, "  "));
+    if (method.methodKind === MethodKind.Unary) {
+      f.print(
+        "  ", method.name,
+        "(request: ", method.input, ", abortSignal: AbortSignal, context: ", ServerContext, "): ",
+        "Promise<", method.output, ">;"
+      );
+    } else if (method.methodKind === MethodKind.ServerStreaming) {
+      f.print(
+        "  ", method.name,
+        "(request: ", method.input, ", abortSignal: AbortSignal, context: ", ServerContext, "): ",
+        MessageStream, "<", method.output, ">;"
+      );
+    } else if (method.methodKind === MethodKind.ClientStreaming) {
+      f.print(
+        "  ", method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal: AbortSignal, context: ", ServerContext, "): ",
+        "Promise<", method.output, ">;"
+      );
+    } else if (method.methodKind === MethodKind.BiDiStreaming) {
+      f.print(
+        "  ", method.name,
+        "(request: ", MessageStream, "<", method.input, ">, abortSignal: AbortSignal, context: ", ServerContext, "): ",
+        MessageStream, "<", method.output, ">;"
+      );
+    }
+    if (i < service.methods.length - 1) f.print();
   }
   f.print("}");
   f.print();

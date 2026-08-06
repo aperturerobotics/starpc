@@ -4,7 +4,7 @@
 
 import { MockMsg } from './mock.pb.js'
 import { MethodKind } from '@aptre/protobuf-es-lite'
-import { ProtoRpc } from 'starpc'
+import { ProtoRpc, ServerContext } from 'starpc'
 
 /**
  * Mock service mocks some RPCs for the e2e tests.
@@ -40,6 +40,24 @@ export interface Mock {
    * @generated from rpc e2e.mock.Mock.MockRequest
    */
   MockRequest(request: MockMsg, abortSignal?: AbortSignal): Promise<MockMsg>
+}
+
+/**
+ * Mock service mocks some RPCs for the e2e tests.
+ *
+ * @generated from service e2e.mock.Mock
+ */
+export interface MockHandler {
+  /**
+   * MockRequest runs a mock unary request.
+   *
+   * @generated from rpc e2e.mock.Mock.MockRequest
+   */
+  MockRequest(
+    request: MockMsg,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): Promise<MockMsg>
 }
 
 export const MockServiceName = MockDefinition.typeName

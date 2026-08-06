@@ -11,6 +11,7 @@ import {
   buildEncodeMessageTransform,
   MessageStream,
   ProtoRpc,
+  ServerContext,
 } from 'starpc'
 
 /**
@@ -149,6 +150,79 @@ export interface Echoer {
    * @generated from rpc echo.Echoer.DoNothing
    */
   DoNothing(request: Empty, abortSignal?: AbortSignal): Promise<Empty>
+}
+
+/**
+ * Echoer service returns the given message.
+ *
+ * @generated from service echo.Echoer
+ */
+export interface EchoerHandler {
+  /**
+   * Echo returns the given message.
+   *
+   * @generated from rpc echo.Echoer.Echo
+   */
+  Echo(
+    request: EchoMsg,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): Promise<EchoMsg>
+
+  /**
+   * EchoServerStream is an example of a server -> client one-way stream.
+   *
+   * @generated from rpc echo.Echoer.EchoServerStream
+   */
+  EchoServerStream(
+    request: EchoMsg,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): MessageStream<EchoMsg>
+
+  /**
+   * EchoClientStream is an example of client->server one-way stream.
+   *
+   * @generated from rpc echo.Echoer.EchoClientStream
+   */
+  EchoClientStream(
+    request: MessageStream<EchoMsg>,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): Promise<EchoMsg>
+
+  /**
+   * EchoBidiStream is an example of a two-way stream.
+   *
+   * @generated from rpc echo.Echoer.EchoBidiStream
+   */
+  EchoBidiStream(
+    request: MessageStream<EchoMsg>,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): MessageStream<EchoMsg>
+
+  /**
+   * RpcStream opens a nested rpc call stream.
+   *
+   * @generated from rpc echo.Echoer.RpcStream
+   */
+  RpcStream(
+    request: MessageStream<RpcStreamPacket>,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): MessageStream<RpcStreamPacket>
+
+  /**
+   * DoNothing does nothing.
+   *
+   * @generated from rpc echo.Echoer.DoNothing
+   */
+  DoNothing(
+    request: Empty,
+    abortSignal: AbortSignal,
+    context: ServerContext,
+  ): Promise<Empty>
 }
 
 export const EchoerServiceName = EchoerDefinition.typeName
