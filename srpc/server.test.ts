@@ -281,6 +281,22 @@ describe('srpc server', () => {
     )
   })
 
+  it('settles a late abort after the call has already closed', async () => {
+    const controller = new AbortController()
+    vi.spyOn(controller.signal, 'removeEventListener').mockImplementation(
+      () => undefined,
+    )
+
+    await client.request(
+      EchoerServiceName,
+      'Echo',
+      new TextEncoder().encode('late abort'),
+      controller.signal,
+    )
+    controller.abort()
+    await Promise.resolve()
+  })
+
   it('tears down passive channel close state', async () => {
     const { port1, port2 } = new MessageChannel()
     const opts: ChannelStreamOpts = { idleTimeoutMs: 1000, keepAliveMs: 1000 }
