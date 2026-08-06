@@ -7,6 +7,7 @@ describe('Watchdog', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 

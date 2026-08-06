@@ -2,6 +2,7 @@ import { Sink, Source } from 'it-stream-types'
 import { pushable } from 'it-pushable'
 import { pipe } from 'it-pipe'
 import type { MethodDefinition } from './definition.js'
+import type { ServerContext } from './server-context.js'
 import { InvokeFn } from './handler.js'
 import {
   buildDecodeMessageTransform,
@@ -13,10 +14,26 @@ import { MethodIdempotency, MethodKind } from '@aptre/protobuf-es-lite'
 
 // MethodProto is a function which matches one of the RPC signatures.
 export type MethodProto<R extends Message<R>, O extends Message<O>> =
-  | ((request: R, invocation?: AbortSignal) => Promise<O>)
-  | ((request: R, invocation?: AbortSignal) => AsyncIterable<O>)
-  | ((request: AsyncIterable<R>, invocation?: AbortSignal) => Promise<O>)
-  | ((request: AsyncIterable<R>, invocation?: AbortSignal) => AsyncIterable<O>)
+  | ((
+      request: R,
+      abortSignal: AbortSignal,
+      context: ServerContext,
+    ) => Promise<O>)
+  | ((
+      request: R,
+      abortSignal: AbortSignal,
+      context: ServerContext,
+    ) => AsyncIterable<O>)
+  | ((
+      request: AsyncIterable<R>,
+      abortSignal: AbortSignal,
+      context: ServerContext,
+    ) => Promise<O>)
+  | ((
+      request: AsyncIterable<R>,
+      abortSignal: AbortSignal,
+      context: ServerContext,
+    ) => AsyncIterable<O>)
 
 // createInvokeFn builds an InvokeFn from a method definition and a function prototype.
 export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
@@ -32,7 +49,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
   return async (
     dataSource: Source<Uint8Array>,
     dataSink: Sink<Source<Uint8Array>>,
-    invocation?: AbortSignal,
+    context: ServerContext,
   ) => {
     // responseSink is a Sink for response messages.
     const responseSink = pushable<O>({
@@ -67,7 +84,7 @@ export function createInvokeFn<R extends Message<R>, O extends Message<O>>(
 
     // Call the implementation.
     try {
-      const responseObj = methodProto(requestArg, invocation)
+      const responseObj = methodProto(requestArg, context.signal, context)
       if (!responseObj) {
         throw new Error('return value was undefined')
       }

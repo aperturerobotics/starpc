@@ -83,3 +83,10 @@ export {
 } from './pushable.js'
 export { Watchdog } from './watchdog.js'
 export type { ProtoRpc } from './proto-rpc.js'
+
+export {
+  createContextKey,
+  serverContextValue,
+  withServerContextValue,
+} from './server-context.js'
+export type { ContextKey, ServerContext } from './server-context.js'

@@ -1,12 +1,58 @@
 import type { Sink, Source } from 'it-stream-types'
-import { ServiceDefinition, ServiceMethodDefinitions } from './definition.js'
+import { MethodKind, type MessageType } from '@aptre/protobuf-es-lite'
+import type { MessageStream } from './message.js'
+import {
+  type MethodDefinition,
+  ServiceDefinition,
+  ServiceMethodDefinitions,
+} from './definition.js'
 import { createInvokeFn } from './invoker.js'
+import type { ServerContext } from './server-context.js'
+
+type MessageOf<T> = T extends MessageType<infer M> ? M : never
+
+type ServerMethod<T> =
+  T extends MethodDefinition<
+    infer Request,
+    infer Response,
+    infer Kind,
+    infer _Idempotency
+  >
+    ? Kind extends MethodKind.Unary
+      ? (
+          request: MessageOf<Request>,
+          abortSignal: AbortSignal,
+          context: ServerContext,
+        ) => Promise<MessageOf<Response>>
+      : Kind extends MethodKind.ServerStreaming
+        ? (
+            request: MessageOf<Request>,
+            abortSignal: AbortSignal,
+            context: ServerContext,
+          ) => MessageStream<MessageOf<Response>>
+        : Kind extends MethodKind.ClientStreaming
+          ? (
+              request: MessageStream<MessageOf<Request>>,
+              abortSignal: AbortSignal,
+              context: ServerContext,
+            ) => Promise<MessageOf<Response>>
+          : (
+              request: MessageStream<MessageOf<Request>>,
+              abortSignal: AbortSignal,
+              context: ServerContext,
+            ) => MessageStream<MessageOf<Response>>
+    : never
+
+export type HandlerImplementation<T extends ServiceMethodDefinitions> =
+  Partial<{
+    [Method in keyof T]: ServerMethod<T[Method]>
+  }>
 
 // InvokeFn describes an SRPC call method invoke function.
 export type InvokeFn = (
   dataSource: Source<Uint8Array>,
   dataSink: Sink<Source<Uint8Array>>,
-  invocation?: AbortSignal,
+  context: ServerContext,
 ) => Promise<void>
 
 // Handler describes a SRPC call handler implementation.
@@ -62,7 +108,11 @@ export class StaticHandler implements Handler {
 // if serviceID is not set, uses the fullName of the service as the identifier.
 export function createHandler<
   T extends ServiceMethodDefinitions = ServiceMethodDefinitions,
->(definition: ServiceDefinition<T>, impl: any, serviceID?: string): Handler {
+>(
+  definition: ServiceDefinition<T>,
+  impl: HandlerImplementation<T>,
+  serviceID?: string,
+): Handler {
   // serviceID defaults to the full name of the service from Protobuf.
   serviceID = serviceID || definition.typeName
 
@@ -70,7 +120,7 @@ export function createHandler<
   const methodMap: MethodMap = {}
   for (const methodInfo of Object.values(definition.methods)) {
     const methodName = methodInfo.name
-    let methodProto = impl[methodName]
+    let methodProto = impl[methodName as keyof T] as any
     if (!methodProto) {
       continue
     }

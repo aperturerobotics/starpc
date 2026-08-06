@@ -1,9 +1,29 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pushable } from 'it-pushable'
 
 import { ChannelStream } from './channel.js'
 
 describe('ChannelStream', () => {
+  it('recognizes MessagePort implementations from another realm', () => {
+    const port = {
+      close: vi.fn(),
+      onmessage: null,
+      postMessage: vi.fn(),
+      start: vi.fn(),
+    } as unknown as MessagePort
+
+    const stream = new ChannelStream<Uint8Array>('client', port)
+    try {
+      expect(port.start).toHaveBeenCalledOnce()
+      expect(port.postMessage).toHaveBeenCalledWith({
+        ack: true,
+        from: 'client',
+      })
+    } finally {
+      stream.close()
+    }
+  })
+
   it('keeps MessagePort peer writes open after local source completes normally', async () => {
     const { port1, port2 } = new MessageChannel()
     const client = new ChannelStream<Uint8Array>('client', port1)

@@ -26,6 +26,10 @@ export type ChannelPort =
   | MessagePort
   | { tx: BroadcastChannel; rx: BroadcastChannel }
 
+function isMessagePort(channel: ChannelPort): channel is MessagePort {
+  return 'postMessage' in channel && 'start' in channel
+}
+
 // ChannelStreamOpts are options for ChannelStream.
 export interface ChannelStreamOpts {
   // remoteOpen indicates that the remote already knows the channel is open.
@@ -149,7 +153,7 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
 
     // wire up the message handlers
     const onMessage = this.onMessage.bind(this)
-    if (channel instanceof MessagePort) {
+    if (isMessagePort(channel)) {
       // MessagePort
       channel.onmessage = onMessage
       channel.start()
@@ -180,7 +184,7 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
       return
     }
     msg.from = this.localId
-    if (this.channel instanceof MessagePort) {
+    if (isMessagePort(this.channel)) {
       this.channel.postMessage(msg)
     } else {
       this.channel.tx.postMessage(msg)
@@ -222,7 +226,7 @@ export class ChannelStream<T = Uint8Array> implements Duplex<
     this.localWriteClosed = true
     this.remoteWriteClosed = true
     // close channels
-    if (this.channel instanceof MessagePort) {
+    if (isMessagePort(this.channel)) {
       this.channel.onmessage = null
       this.channel.close()
     } else {

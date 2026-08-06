@@ -3,14 +3,15 @@ import { Message } from '@aptre/protobuf-es-lite'
 import { Empty } from '@aptre/protobuf-es-lite/google/protobuf/empty'
 import { EchoMsg } from './echo.pb.js'
 import { Server } from '../srpc/server.js'
+import type { ServerContext } from '../srpc/server-context.js'
 import { messagePushable, writeToPushable } from '../srpc/pushable.js'
 import { RpcStreamPacket } from '../rpcstream/rpcstream.pb.js'
 import { MessageStream } from '../srpc/message.js'
 import { handleRpcStream, RpcStreamHandler } from '../rpcstream/rpcstream.js'
-import { Echoer } from './echo_srpc.pb.js'
+import type { EchoerHandler } from './echo_srpc.pb.js'
 
 // EchoServer implements the Echoer server.
-export class EchoerServer implements Echoer {
+export class EchoerServer implements EchoerHandler {
   // proxyServer is the server used for RpcStream requests.
   private proxyServer?: Server
 
@@ -18,11 +19,19 @@ export class EchoerServer implements Echoer {
     this.proxyServer = proxyServer
   }
 
-  public async Echo(request: EchoMsg): Promise<Message<EchoMsg>> {
+  public async Echo(
+    request: EchoMsg,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
+  ): Promise<Message<EchoMsg>> {
     return request
   }
 
-  public async *EchoServerStream(request: EchoMsg): MessageStream<EchoMsg> {
+  public async *EchoServerStream(
+    request: EchoMsg,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
+  ): MessageStream<EchoMsg> {
     for (let i = 0; i < 5; i++) {
       yield request
       await new Promise((resolve) => setTimeout(resolve, 200))
@@ -31,6 +40,8 @@ export class EchoerServer implements Echoer {
 
   public async EchoClientStream(
     request: MessageStream<EchoMsg>,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
   ): Promise<Message<EchoMsg>> {
     // return the first message sent by the client.
     const message = await first(request)
@@ -42,6 +53,8 @@ export class EchoerServer implements Echoer {
 
   public EchoBidiStream(
     request: MessageStream<EchoMsg>,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
   ): MessageStream<EchoMsg> {
     // build result observable
     const result = messagePushable<EchoMsg>()
@@ -52,6 +65,8 @@ export class EchoerServer implements Echoer {
 
   public RpcStream(
     request: MessageStream<RpcStreamPacket>,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
   ): MessageStream<RpcStreamPacket> {
     return handleRpcStream(
       request[Symbol.asyncIterator](),
@@ -64,7 +79,11 @@ export class EchoerServer implements Echoer {
     )
   }
 
-  public async DoNothing(): Promise<Empty> {
+  public async DoNothing(
+    _request: Empty,
+    _abortSignal: AbortSignal,
+    _context: ServerContext,
+  ): Promise<Empty> {
     return {}
   }
 }
