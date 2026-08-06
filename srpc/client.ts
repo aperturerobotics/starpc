@@ -117,8 +117,8 @@ export class Client implements ProtoRpc {
     const stream = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     const onAbort = () => {
-      call.writeCallCancel()
-      call.close(new Error(ERR_RPC_ABORT))
+      void call.writeCallCancel().catch(() => undefined)
+      void call.close(new Error(ERR_RPC_ABORT)).catch(() => undefined)
     }
     abortSignal?.addEventListener('abort', onAbort, { once: true })
     pipe(stream, decodePacketSource, call, encodePacketSource, stream)
