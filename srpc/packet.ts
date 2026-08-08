@@ -7,6 +7,8 @@ import {
   buildEncodeMessageTransform,
 } from './message.js'
 
+const MAX_MESSAGE_SIZE = 10_000_000
+
 // decodePacketSource decodes packets from a binary data stream.
 export const decodePacketSource = buildDecodeMessageTransform<Packet>(Packet)
 
@@ -39,6 +41,9 @@ export async function* lengthPrefixEncode(
   for await (const chunk of source) {
     // Encode the length of the chunk.
     const length = chunk instanceof Uint8Array ? chunk.length : chunk.byteLength
+    if (length === 0 || length > MAX_MESSAGE_SIZE) {
+      throw RangeError(`invalid packet length: ${length}`)
+    }
     const lengthEncoded = lengthEncoder(length)
 
     // Concatenate the length prefix and the data.
@@ -50,7 +55,7 @@ export async function* lengthPrefixEncode(
 export async function* lengthPrefixDecode(
   source: Source<Uint8Array | Uint8ArrayList>,
   lengthDecoder: typeof uint32LEDecode,
-) {
+): AsyncGenerator<Uint8ArrayList> {
   const buffer = new Uint8ArrayList()
 
   for await (const chunk of source) {
@@ -59,17 +64,25 @@ export async function* lengthPrefixDecode(
     // Continue extracting messages while buffer contains enough data for decoding.
     while (buffer.length >= lengthDecoder.bytes) {
       const messageLength = lengthDecoder(buffer)
+      if (messageLength === 0 || messageLength > MAX_MESSAGE_SIZE) {
+        throw RangeError(`invalid packet length: ${messageLength}`)
+      }
       const totalLength = lengthDecoder.bytes + messageLength
 
       if (buffer.length < totalLength) break // Wait for more data if the full message hasn't arrived.
 
       // Extract the message excluding the length prefix.
-      const message = buffer.sublist(lengthDecoder.bytes, totalLength)
+      const message = new Uint8ArrayList(
+        buffer.slice(lengthDecoder.bytes, totalLength),
+      )
       yield message
 
       // Remove the processed message from the buffer.
       buffer.consume(totalLength)
     }
+  }
+  if (buffer.length !== 0) {
+    throw new RangeError('truncated packet frame')
   }
 }
 

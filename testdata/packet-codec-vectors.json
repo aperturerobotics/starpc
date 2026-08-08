@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "max_message_size": 10000000,
+  "frame_prefix": "uint32 little-endian",
+  "cases": [
+    {
+      "name": "call_start_data",
+      "packet_hex": "0a120a0373766312066d6574686f641a03616263",
+      "frame_hex": "140000000a120a0373766312066d6574686f641a03616263"
+    },
+    {
+      "name": "call_start_absent_empty",
+      "packet_hex": "0a0d0a0373766312066d6574686f64",
+      "frame_hex": "0f0000000a0d0a0373766312066d6574686f64"
+    },
+    {
+      "name": "call_start_present_empty",
+      "packet_hex": "0a0f0a0373766312066d6574686f642001",
+      "frame_hex": "110000000a0f0a0373766312066d6574686f642001"
+    },
+    {
+      "name": "call_data_terminal",
+      "packet_hex": "12070a036f75741801",
+      "frame_hex": "0900000012070a036f75741801"
+    },
+    {
+      "name": "call_data_error",
+      "packet_hex": "120a180122066661696c6564",
+      "frame_hex": "0c000000120a180122066661696c6564"
+    },
+    {
+      "name": "call_cancel",
+      "packet_hex": "1801",
+      "frame_hex": "020000001801"
+    },
+    {
+      "name": "malformed_complete",
+      "frame_hex": "030000000a01ff",
+      "expect_error": "malformed_packet"
+    },
+    {
+      "name": "invalid_zero_length",
+      "frame_hex": "00000000",
+      "expect_error": "invalid_length"
+    },
+    {
+      "name": "invalid_oversized_prefix",
+      "frame_hex": "81969800",
+      "expect_error": "oversized_frame"
+    },
+    {
+      "name": "invalid_empty_packet",
+      "packet_hex": "",
+      "expect_error": "empty_packet"
+    },
+    { "name": "invalid_empty_service_id", "expect_error": "empty_service_id" },
+    { "name": "invalid_empty_method_id", "expect_error": "empty_method_id" },
+    {
+      "name": "truncated_body",
+      "frame_hex": "040000000a01",
+      "expect_error": "truncated_frame"
+    }
+  ]
+}

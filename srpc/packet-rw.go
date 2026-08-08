@@ -65,7 +65,10 @@ func (r *PacketReadWriter) WritePacket(p *Packet) error {
 	defer r.writeMtx.Unlock()
 
 	msgSize := p.SizeVT()
-	if msgSize < 0 || msgSize > maxMessageSize {
+	if msgSize <= 0 {
+		return errors.New("unexpected zero message size")
+	}
+	if msgSize > maxMessageSize {
 		return errors.Errorf("message size %v greater than maximum %v", msgSize, maxMessageSize)
 	}
 
@@ -163,7 +166,11 @@ func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 		}
 	}
 
-	// closed
+	// closed: a clean frame boundary has no buffered bytes; otherwise EOF
+	// ended a prefix or packet body before completion.
+	if currLen != 0 || r.buf.Len() != 0 {
+		return io.ErrUnexpectedEOF
+	}
 	return nil
 }
 

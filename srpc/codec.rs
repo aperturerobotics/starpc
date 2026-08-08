@@ -76,6 +76,9 @@ impl Encoder<Packet> for PacketCodec {
         let msg_size = item.encoded_len();
 
         // Validate message size.
+        if msg_size == 0 {
+            return Err(Error::MessageSizeZero);
+        }
         if msg_size > MAX_MESSAGE_SIZE {
             return Err(Error::MessageTooLarge(msg_size, MAX_MESSAGE_SIZE));
         }
@@ -96,6 +99,9 @@ impl Encoder<Packet> for PacketCodec {
 /// Encode a packet to bytes with length prefix.
 pub fn encode_packet(packet: &Packet) -> Result<Vec<u8>> {
     let msg_size = packet.encoded_len();
+    if msg_size == 0 {
+        return Err(Error::MessageSizeZero);
+    }
     if msg_size > MAX_MESSAGE_SIZE {
         return Err(Error::MessageTooLarge(msg_size, MAX_MESSAGE_SIZE));
     }
