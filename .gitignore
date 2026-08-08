@@ -44,3 +44,7 @@ integration/cross-language/*.mjs
 integration/cross-language/*.mjs.map
 /go-client
 /go-server
+# Python workspace
+.venv/
+**/__pycache__/
+*.egg-info/

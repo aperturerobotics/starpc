@@ -1,0 +1,31 @@
+[project]
+name = "starpc"
+version = "0.52.0"
+requires-python = ">=3.11,<3.12"
+dependencies = ["protobuf==6.33.5"]
+
+[tool.uv.workspace]
+members = ["python/plugin"]
+
+[dependency-groups]
+dev = [
+    "mypy==1.17.1",
+    "ruff==0.16.2",
+    "types-protobuf==7.34.1.20260518",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["starpc*", "srpc*", "rpcstream*"]
+exclude = ["python*", "echo*", "mock*", "integration*", "e2e*"]
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["srpc.rpcproto_pb2", "rpcstream.rpcstream_pb2"]
+disable_error_code = ["type-arg"]

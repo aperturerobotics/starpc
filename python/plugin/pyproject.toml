@@ -1,0 +1,15 @@
+[project]
+name = "starpc-python-plugin"
+version = "0.52.0"
+requires-python = ">=3.11,<3.12"
+dependencies = ["protobuf==6.33.5"]
+
+[project.scripts]
+protoc-gen-starpc-python = "starpc_plugin:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"

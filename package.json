@@ -72,8 +72,8 @@
     "format:config": "oxfmt '*.json' '.github/**/*.json' '.github/**/*.yml' '.oxfmtrc.json' 'tsconfig.json'",
     "format:go": "bun run go:aptre -- format",
     "format:js": "oxfmt './{srpc,echo,e2e,integration,rpcstream,cmd,mock,scripts}/**/*.{ts,tsx,js,mjs,html,css,scss}' '*.{ts,tsx,js,mjs}'",
-    "gen": "bun run go:aptre -- generate && bun run format",
-    "gen:force": "bun run go:aptre -- generate --force && bun run format",
+    "gen": "bun run build && bun run go:aptre -- generate && bun run format",
+    "gen:force": "bun run build && bun run go:aptre -- generate --force && bun run format",
     "test": "bun run test:js && bun run test:go",
     "test:go": "bun run go:aptre -- test",
     "test:cpp": "mkdir -p build && cd build && cmake -G Ninja .. -DCMAKE_BUILD_TYPE=Release && cmake --build . --parallel && ctest --output-on-failure",
@@ -138,5 +138,17 @@
   },
   "overrides": {
     "@aptre/protobuf-es-lite": "1.1.1"
+  },
+  "aptre": {
+    "languages": [
+      "go",
+      "ts",
+      "cpp",
+      "rust",
+      "python"
+    ],
+    "rpc": [
+      "starpc"
+    ]
   }
 }

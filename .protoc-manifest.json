@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "protocFlagsHash": "a7a4c5ed820f56fa1aebfc5d5bef04619f419bd153e482b6eb7ec38deb62f38f",
+  "protocFlagsHash": "8278c28539332dd122584e4599f13f02958a615a1750e6ea43e6d08c981613c6",
   "toolVersions": "protoc=embedded,protobuf-go-lite=v0.16.0,starpc=v0.49.21,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
@@ -11,6 +11,8 @@
         "echo/echo.pb.h",
         "echo/echo.pb.rs",
         "echo/echo.pb.ts",
+        "echo/echo_pb2.py",
+        "echo/echo_pb2.pyi",
         "echo/echo_srpc.pb.go",
         "echo/echo_srpc.pb.rs",
         "echo/echo_srpc.pb.ts"
@@ -25,6 +27,8 @@
         "mock/mock.pb.h",
         "mock/mock.pb.rs",
         "mock/mock.pb.ts",
+        "mock/mock_pb2.py",
+        "mock/mock_pb2.pyi",
         "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.rs",
         "mock/mock_srpc.pb.ts"
@@ -38,7 +42,9 @@
         "rpcstream/rpcstream.pb.go",
         "rpcstream/rpcstream.pb.h",
         "rpcstream/rpcstream.pb.rs",
-        "rpcstream/rpcstream.pb.ts"
+        "rpcstream/rpcstream.pb.ts",
+        "rpcstream/rpcstream_pb2.py",
+        "rpcstream/rpcstream_pb2.pyi"
       ],
       "protoFiles": ["rpcstream/rpcstream.proto"]
     },
@@ -49,7 +55,9 @@
         "srpc/rpcproto.pb.go",
         "srpc/rpcproto.pb.h",
         "srpc/rpcproto.pb.rs",
-        "srpc/rpcproto.pb.ts"
+        "srpc/rpcproto.pb.ts",
+        "srpc/rpcproto_pb2.py",
+        "srpc/rpcproto_pb2.pyi"
       ],
       "protoFiles": ["srpc/rpcproto.proto"]
     }
