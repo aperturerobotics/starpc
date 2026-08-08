@@ -144,6 +144,42 @@ class PluginTest(unittest.TestCase):
         self.assertIn("requests: AsyncIterable[_acme_common_pb2.Shared]", source)
         self.assertIn("requests: AsyncIterator[_acme_common_pb2.Shared]", stub)
 
+    def test_uninterpreted_method_option_is_preserved_and_not_interpreted(self) -> None:
+        request = self.request()
+        option = (
+            request.proto_file[-1]
+            .service[0]
+            .method[0]
+            .options.uninterpreted_option.add()
+        )
+        option.name.add(
+            name_part="compatibility.compatibility_method", is_extension=True
+        )
+        option.string_value = b"compatibility-v1"
+        before = request.proto_file[-1].service[0].method[0].options.SerializeToString()
+        response = generate(request)
+        after = request.proto_file[-1].service[0].method[0].options.SerializeToString()
+        self.assertEqual(after, before)
+        self.assertEqual(response.error, "")
+        self.assertEqual(
+            [file.name for file in response.file],
+            ["acme/echo_srpc.py", "acme/echo_srpc.pyi"],
+        )
+        self.assertNotIn("compatibility_method", response.file[0].content)
+        self.assertNotIn("compatibility_method", response.file[1].content)
+        self.assertIn('"acme.Echo"', response.file[0].content)
+        self.assertIn('"Unary"', response.file[0].content)
+
+    def test_interpreted_option_request_is_rejected_exactly(self) -> None:
+        request = self.request(
+            parameter="interpret_options=compatibility.compatibility_method"
+        )
+        response = generate(request)
+        self.assertEqual(
+            response.error,
+            "unsupported parameter: interpret_options=compatibility.compatibility_method",
+        )
+
     def test_multiple_services_share_one_output_pair(self) -> None:
         request = self.request()
         request.proto_file[-1].service.add(name="Aux")
