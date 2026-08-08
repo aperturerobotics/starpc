@@ -80,6 +80,8 @@ class Call:
         self._messages: deque[bytes] = deque()
         self._condition = asyncio.Condition()
         self._send_lock = asyncio.Lock()
+        self._close_lock = asyncio.Lock()
+        self._cleanup_done = False
         self._remote_terminal = False
         self._remote_error: CallError | None = None
         self._abort_error: CallError | None = None
@@ -348,22 +350,28 @@ class Call:
             raise self._abort_error
 
     async def aclose(self) -> None:
-        if self._closed:
-            return
-        if not self._local_terminal and not self._remote_terminal:
-            try:
-                await self.cancel()
-            except CallCompletedError:
-                pass
-        self._closed = True
-        async with self._condition:
-            self._condition.notify_all()
-        if self._receiver is not None:
-            if not self._receiver.done():
-                self._receiver.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._receiver
-        await self._io.stream.aclose()
+        async with self._close_lock:
+            if self._cleanup_done:
+                return
+            if (
+                not self._closed
+                and not self._local_terminal
+                and not self._remote_terminal
+            ):
+                try:
+                    await self.cancel()
+                except CallCompletedError:
+                    pass
+            self._closed = True
+            async with self._condition:
+                self._condition.notify_all()
+            if self._receiver is not None:
+                if not self._receiver.done():
+                    self._receiver.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._receiver
+            await self._io.stream.aclose()
+            self._cleanup_done = True
 
     async def _mark_closed(self) -> None:
         self._closed = True

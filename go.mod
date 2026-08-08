@@ -3,7 +3,7 @@ module github.com/aperturerobotics/starpc
 go 1.25.0
 
 require (
-	github.com/aperturerobotics/common v0.35.1-0.20260808102028-33a08259dd38 // latest
+	github.com/aperturerobotics/common v0.35.1-0.20260808123156-c77af26f63bd // latest
 	github.com/aperturerobotics/protobuf-go-lite v0.16.0 // latest
 	github.com/aperturerobotics/util v1.34.9 // latest
 )

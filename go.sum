@@ -16,6 +16,8 @@ github.com/aperturerobotics/common v0.35.1-0.20260808101203-caeb6303ba93 h1:JoER
 github.com/aperturerobotics/common v0.35.1-0.20260808101203-caeb6303ba93/go.mod h1:sPjrQZeS/yr9kBro4rN2BrYvG9TCn1eIGk7dMH/E2NQ=
 github.com/aperturerobotics/common v0.35.1-0.20260808102028-33a08259dd38 h1:c3IXUqJHt1EAlCyD0d0IrI7YYf4txwICtoh+ylQV6tU=
 github.com/aperturerobotics/common v0.35.1-0.20260808102028-33a08259dd38/go.mod h1:sPjrQZeS/yr9kBro4rN2BrYvG9TCn1eIGk7dMH/E2NQ=
+github.com/aperturerobotics/common v0.35.1-0.20260808123156-c77af26f63bd h1:BTfB1V2X+u3/56negSjrx+AWg+Uk84rFFryvpGTj7f4=
+github.com/aperturerobotics/common v0.35.1-0.20260808123156-c77af26f63bd/go.mod h1:sPjrQZeS/yr9kBro4rN2BrYvG9TCn1eIGk7dMH/E2NQ=
 github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260705010911-9f53feac967b h1:MMk+AbWPCMfqc2Lm2bJl8lCCsuvlM2+C0CP10fpE3bc=
 github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20260705010911-9f53feac967b/go.mod h1:OBb/beWmr/pDIZAUfi86j/4tBh2v5ctTxKMqSnh9c/4=
 github.com/aperturerobotics/go-protoc-wasi v0.0.0-20260712054757-d8078c296c17 h1:WT1YmZjJf8fUF1zKbeNNKXFA+t8Wtbr8AVMAmdKcrUU=

@@ -117,10 +117,14 @@ version = "0.52.0"
 source = { editable = "python/plugin" }
 dependencies = [
     { name = "protobuf" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "protobuf", specifier = "==6.33.5" }]
+requires-dist = [
+    { name = "protobuf", specifier = "==6.33.5" },
+    { name = "ruff", specifier = "==0.16.2" },
+]
 
 [[package]]
 name = "types-protobuf"

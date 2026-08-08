@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "protocFlagsHash": "8278c28539332dd122584e4599f13f02958a615a1750e6ea43e6d08c981613c6",
+  "protocFlagsHash": "419e57c4cdf58ca47e6bcf6a36700269735ecb032384094ba204ee76728161c4",
   "toolVersions": "protoc=embedded,protobuf-go-lite=v0.16.0,starpc=v0.49.21,protobuf-es-lite=bun run gen",
   "packages": {
     "github.com/aperturerobotics/starpc/echo": {
@@ -15,7 +15,9 @@
         "echo/echo_pb2.pyi",
         "echo/echo_srpc.pb.go",
         "echo/echo_srpc.pb.rs",
-        "echo/echo_srpc.pb.ts"
+        "echo/echo_srpc.pb.ts",
+        "echo/echo_srpc.py",
+        "echo/echo_srpc.pyi"
       ],
       "protoFiles": ["echo/echo.proto"]
     },
@@ -31,7 +33,9 @@
         "mock/mock_pb2.pyi",
         "mock/mock_srpc.pb.go",
         "mock/mock_srpc.pb.rs",
-        "mock/mock_srpc.pb.ts"
+        "mock/mock_srpc.pb.ts",
+        "mock/mock_srpc.py",
+        "mock/mock_srpc.pyi"
       ],
       "protoFiles": ["mock/mock.proto"]
     },

@@ -68,7 +68,7 @@
     "deps": "depcheck --ignores 'bufferutil,utf-8-validate,rimraf,starpc,@aptre/protobuf-es-lite,tsx'",
     "codegen": "bun run gen",
     "ci": "bun run build && bun run lint:js && bun run lint:go",
-    "format": "bun run format:js && bun run format:go && bun run format:config",
+    "format": "bun run format:js && bun run format:go && bun run format:python && bun run format:config",
     "format:config": "oxfmt '*.json' '.github/**/*.json' '.github/**/*.yml' '.oxfmtrc.json' 'tsconfig.json'",
     "format:go": "bun run go:aptre -- format",
     "format:js": "oxfmt './{srpc,echo,e2e,integration,rpcstream,cmd,mock,scripts}/**/*.{ts,tsx,js,mjs,html,css,scss}' '*.{ts,tsx,js,mjs}'",
@@ -100,7 +100,8 @@
     "release:version": "bun scripts/release-version.ts patch",
     "release:version:minor": "bun scripts/release-version.ts minor",
     "release:commit": "version=$(bun -e 'console.log(require(\"./package.json\").version)') && git reset && git add package.json Cargo.toml && git commit -s -m \"release: v$version\" && git tag \"v$version\"",
-    "release:publish": "git push && git push --tags"
+    "release:publish": "git push && git push --tags",
+    "format:python": "files=$(find echo mock -type f \\( -name '*_srpc.py' -o -name '*_srpc.pyi' \\)); if [ -n \"$files\" ]; then uv run ruff check --fix --ignore UP026 $files && uv run ruff format $files; fi"
   },
   "preferUnplugged": true,
   "lint-staged": {
@@ -148,7 +149,8 @@
       "python"
     ],
     "rpc": [
-      "starpc"
+      "starpc",
+      "starpc-python"
     ]
   }
 }

@@ -55,6 +55,13 @@ class ScriptedStream:
         self.closed = True
 
 
+class FailingWriteStream(ScriptedStream):
+    async def write(self, data: bytes) -> int:
+        if self.writes:
+            raise OSError("write failed")
+        return await super().write(data)
+
+
 class CallTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
         self.client_stream, self.peer_stream = memory_stream_pair(4096)
@@ -73,6 +80,14 @@ class CallTest(unittest.IsolatedAsyncioTestCase):
         task = asyncio.create_task(awaitable)
         self.tasks.add(task)
         return task
+
+    async def test_write_failure_still_closes_stream_and_receiver(self) -> None:
+        stream = FailingWriteStream([])
+        call = await Call.open(stream, "svc", "method")
+        with self.assertRaisesRegex(OSError, "write failed"):
+            await call.finish()
+        await call.aclose()
+        self.assertTrue(stream.closed)
 
     async def peer_send(self, packet: rpcproto_pb2.Packet) -> None:
         frame = encode_packet(packet)
