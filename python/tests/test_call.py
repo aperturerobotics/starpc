@@ -174,6 +174,27 @@ class CallTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(packet.call_cancel)
         await self.call.cancel()
 
+    async def test_cancel_full_inbound_queue_joins_receiver_and_emits_one_cancel(
+        self,
+    ) -> None:
+        frames = [
+            encode_packet(
+                rpcproto_pb2.Packet(call_data=rpcproto_pb2.CallData(data=data))
+            )
+            for data in (b"first", b"second")
+        ]
+        stream = ScriptedStream(frames)
+        call = await Call.open(stream, "svc", "method", inbound_capacity=1)
+        await stream.read_events[1].wait()
+        await call.cancel()
+        with self.assertRaises(CallCancelledError):
+            await call.wait_closed()
+        packets = [rpcproto_pb2.Packet.FromString(write[4:]) for write in stream.writes]
+        self.assertEqual(
+            sum(packet.WhichOneof("body") == "call_cancel" for packet in packets), 1
+        )
+        await call.aclose()
+
     async def test_client_finish_then_peer_eof_is_not_remote_completion(self) -> None:
         await self.assert_call_start()
         await self.call.finish()

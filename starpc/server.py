@@ -7,6 +7,7 @@ from collections.abc import Awaitable, Callable
 from starpc.call import (
     Call,
     CallCancelledError,
+    CallCompletedError,
     CallError,
     ClosedBeforeCompletionError,
     RemoteCallError,
@@ -77,7 +78,8 @@ class Server:
                 except CallError:
                     return
                 except Exception as exc:  # noqa: BLE001
-                    await call.finish(error=str(exc))
+                    with contextlib.suppress(CallCompletedError):
+                        await call.finish(error=str(exc))
                 else:
                     await call.finish()
             with contextlib.suppress(

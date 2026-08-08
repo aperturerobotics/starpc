@@ -146,6 +146,35 @@ class RpcRuntimeTest(unittest.IsolatedAsyncioTestCase):
         await server_task()
         self.assertCountEqual(seen, [b"first", b"second"])
 
+    async def test_handler_finish_then_raise_keeps_published_terminal(self) -> None:
+        async def handler(call: Call) -> None:
+            await call.finish(b"done")
+            raise RuntimeError("late handler failure")
+
+        client, server_task = await self.runtime(handler)
+        call = await client.open_call("svc", "method")
+        self.assertEqual(await call.receive(), b"done")
+        self.assertIsNone(await call.receive())
+        await call.aclose()
+        await server_task()
+
+    async def test_client_error_wakes_handler_without_abort_cancellation(self) -> None:
+        observed = asyncio.Event()
+
+        async def handler(call: Call) -> None:
+            try:
+                await call.receive()
+            except RemoteCallError:
+                observed.set()
+                await call.finish()
+
+        client, server_task = await self.runtime(handler)
+        call = await client.open_call("svc", "method")
+        await call.finish(error="client failed")
+        await observed.wait()
+        await call.aclose()
+        await server_task()
+
     async def test_handler_error_is_terminal_remote_error(self) -> None:
         async def handler(call: Call) -> None:
             raise ValueError("handler boom")

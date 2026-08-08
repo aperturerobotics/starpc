@@ -249,8 +249,9 @@ class Call:
                     return
                 self._messages.append(bytes(data.data))
             if data.error:
-                self._set_abort_locked(RemoteCallError(data.error))
+                self._remote_error = RemoteCallError(data.error)
                 self._remote_terminal = True
+                self._condition.notify_all()
             elif data.complete:
                 self._remote_terminal = True
             self._condition.notify_all()
@@ -322,10 +323,22 @@ class Call:
                 await self._io.stream.write_eof()
             except (StreamClosedError, OSError):
                 pass
+        await self._cancel_receiver()
+
+    async def _cancel_receiver(self) -> None:
+        receiver = self._receiver
+        if receiver is None or receiver is asyncio.current_task():
+            return
+        if not receiver.done():
+            receiver.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await receiver
 
     async def wait_closed(self) -> None:
-        if self._receiver is not None:
-            await self._receiver
+        receiver = self._receiver
+        if receiver is not None and receiver is not asyncio.current_task():
+            with contextlib.suppress(asyncio.CancelledError):
+                await receiver
         if self._remote_error is not None:
             raise self._remote_error
 
