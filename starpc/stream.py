@@ -141,7 +141,7 @@ def memory_stream_pair(
 
 
 class TCPByteStream:
-    """Adapt one asyncio TCP connection to the byte-stream contract."""
+    """Adapt one asyncio stream connection to the byte-stream contract."""
 
     def __init__(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
@@ -189,6 +189,13 @@ async def open_tcp_stream(host: str, port: int) -> TCPByteStream:
     """Open one independent TCP byte stream."""
 
     reader, writer = await asyncio.open_connection(host, port)
+    return TCPByteStream(reader, writer)
+
+
+async def open_unix_stream(path: str) -> ByteStream:
+    """Open one independent Unix byte stream."""
+
+    reader, writer = await asyncio.open_unix_connection(path)
     return TCPByteStream(reader, writer)
 
 
@@ -298,4 +305,5 @@ __all__ = [
     "TCPStreamServer",
     "memory_stream_pair",
     "open_tcp_stream",
+    "open_unix_stream",
 ]
