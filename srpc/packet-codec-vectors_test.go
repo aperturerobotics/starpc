@@ -84,8 +84,12 @@ func decodeHex(t *testing.T, value string) []byte {
 
 func framePacket(t *testing.T, packet *Packet) []byte {
 	t.Helper()
-	frame := make([]byte, 4+packet.SizeVT())
-	binary.LittleEndian.PutUint32(frame, uint32(packet.SizeVT()))
+	packetSize := packet.SizeVT()
+	if packetSize > maxMessageSize {
+		t.Fatalf("packet size %d exceeds maximum %d", packetSize, maxMessageSize)
+	}
+	frame := make([]byte, 4+packetSize)
+	binary.LittleEndian.PutUint32(frame, uint32(packetSize)) //nolint:gosec // bounded by maxMessageSize
 	if _, err := packet.MarshalToSizedBufferVT(frame[4:]); err != nil {
 		t.Fatal(err)
 	}
