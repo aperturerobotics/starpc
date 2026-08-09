@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from srpc import rpcproto_pb2
@@ -10,9 +12,11 @@ from starpc.codec import AsyncPacketWriter, PacketDecoder
 from starpc.stream import (
     ByteStream,
     StreamClosedError,
+    TCPByteStream,
     TCPStreamServer,
     memory_stream_pair,
     open_tcp_stream,
+    open_unix_stream,
 )
 
 
@@ -267,6 +271,72 @@ class StreamTest(unittest.IsolatedAsyncioTestCase):
             if client is not None:
                 await client.aclose()
             await server.aclose()
+
+
+class UnixStreamTest(unittest.IsolatedAsyncioTestCase):
+    async def assert_task_blocked(self, task: asyncio.Task[Any]) -> None:
+        with self.assertRaises(asyncio.TimeoutError):
+            await asyncio.wait_for(asyncio.shield(task), 0.01)
+
+    async def test_unix_connections_are_independent_and_half_close(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "starpc.sock"
+            accepted: asyncio.Queue[TCPByteStream] = asyncio.Queue()
+
+            def on_connection(
+                reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+            ) -> None:
+                accepted.put_nowait(TCPByteStream(reader, writer))
+
+            server = await asyncio.start_unix_server(on_connection, path)
+            try:
+                for value in (b"one", b"two"):
+                    client = await open_unix_stream(str(path))
+                    peer = await asyncio.wait_for(accepted.get(), 1)
+                    try:
+                        await client.write(value)
+                        await client.write_eof()
+                        self.assertEqual(await peer.read(100), value)
+                        self.assertEqual(await peer.read(1), b"")
+                        await peer.write(value.upper())
+                        await peer.write_eof()
+                        self.assertEqual(await client.read(100), value.upper())
+                        self.assertEqual(await client.read(1), b"")
+                    finally:
+                        await peer.aclose()
+                        await client.aclose()
+            finally:
+                server.close()
+                await server.wait_closed()
+
+    async def test_unix_close_wakes_read_and_missing_path_fails(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "starpc.sock"
+            accepted: asyncio.Queue[TCPByteStream] = asyncio.Queue()
+
+            def on_connection(
+                reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+            ) -> None:
+                accepted.put_nowait(TCPByteStream(reader, writer))
+
+            server = await asyncio.start_unix_server(on_connection, path)
+            client = await open_unix_stream(str(path))
+            peer = await asyncio.wait_for(accepted.get(), 1)
+            blocked_read = asyncio.create_task(client.read(1))
+            try:
+                await self.assert_task_blocked(blocked_read)
+                await client.aclose()
+                self.assertEqual(await asyncio.wait_for(blocked_read, 1), b"")
+            finally:
+                await cancel_task(blocked_read)
+                await peer.aclose()
+                await client.aclose()
+                server.close()
+                await server.wait_closed()
+
+            path.unlink()
+            with self.assertRaises(OSError):
+                await open_unix_stream(str(path))
 
 
 if __name__ == "__main__":
