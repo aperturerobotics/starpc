@@ -10,7 +10,6 @@ from starpc.codec import (
     AsyncPacketWriter,
     CodecError,
     PacketDecoder,
-    TruncatedFrameError,
 )
 from starpc.stream import ByteStream, StreamClosedError
 
@@ -175,7 +174,7 @@ class Call:
                         self._remote_terminal = True
                         self._condition.notify_all()
                     return
-                except (CodecError, TruncatedFrameError, ValueError) as exc:
+                except (CodecError, ValueError) as exc:
                     await self._set_protocol_error(exc)
                     return
                 except StreamClosedError:
@@ -289,10 +288,6 @@ class Call:
             except (OSError, StreamClosedError, CodecError):
                 await self._mark_closed()
                 raise
-            try:
-                await self._io.stream.write_eof()
-            except (OSError, StreamClosedError):
-                pass
 
     async def receive(self) -> bytes | None:
         async with self._condition:

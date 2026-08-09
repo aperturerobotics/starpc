@@ -77,7 +77,6 @@ class EchoerClient:
             self._service, "Echo", request.SerializeToString(deterministic=True)
         )
         try:
-            await call.finish()
             data = await call.receive()
             if data is None:
                 raise CallProtocolError("missing unary response")
@@ -98,7 +97,6 @@ class EchoerClient:
             request.SerializeToString(deterministic=True),
         )
         try:
-            await call.finish()
             while True:
                 data = await call.receive()
                 if data is None:
@@ -174,7 +172,6 @@ class EchoerClient:
             self._service, "DoNothing", request.SerializeToString(deterministic=True)
         )
         try:
-            await call.finish()
             data = await call.receive()
             if data is None:
                 raise CallProtocolError("missing unary response")
@@ -228,14 +225,10 @@ def register_echoer(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _github_com_aperturerobotics_starpc_echo_echo_pb2.EchoMsg()
         request.ParseFromString(first)
         response = await implementation.echo(request)
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "Echo", echo_handler)
 
@@ -243,14 +236,10 @@ def register_echoer(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _github_com_aperturerobotics_starpc_echo_echo_pb2.EchoMsg()
         request.ParseFromString(first)
         async for response in implementation.echo_server_stream(request):
             await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "EchoServerStream", echo_server_stream_handler)
 
@@ -268,7 +257,6 @@ def register_echoer(
 
         response = await implementation.echo_client_stream(requests())
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "EchoClientStream", echo_client_stream_handler)
 
@@ -286,7 +274,6 @@ def register_echoer(
 
         async for response in implementation.echo_bidi_stream(requests()):
             await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "EchoBidiStream", echo_bidi_stream_handler)
 
@@ -304,7 +291,6 @@ def register_echoer(
 
         async for response in implementation.rpc_stream(requests()):
             await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "RpcStream", rpc_stream_handler)
 
@@ -312,13 +298,9 @@ def register_echoer(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _google_protobuf_empty_pb2.Empty()
         request.ParseFromString(first)
         response = await implementation.do_nothing(request)
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "DoNothing", do_nothing_handler)

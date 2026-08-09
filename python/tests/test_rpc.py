@@ -8,7 +8,7 @@ from typing import Any, TypeVar
 
 T = TypeVar("T")
 
-from starpc.call import Call, RemoteCallError
+from starpc.call import Call, CallProtocolError, RemoteCallError
 from starpc.client import Client
 from starpc.server import Server, ServiceRegistry
 from starpc.stream import ByteStream, memory_stream_pair
@@ -62,6 +62,18 @@ class RpcRuntimeTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await call.receive())
         await call.aclose()
         await server_task()
+
+    async def test_server_closes_after_terminal_without_peer_eof(self) -> None:
+        async def handler(call: Call) -> None:
+            self.assertEqual(await call.receive(), b"request")
+            await call.send(b"response")
+
+        client, server_task = await self.runtime(handler)
+        call = await client.open_call("svc", "method", initial_data=b"request")
+        self.assertEqual(await call.receive(), b"response")
+        self.assertIsNone(await call.receive())
+        await asyncio.wait_for(server_task(), 1)
+        await call.aclose()
 
     async def test_server_streaming_emits_each_message_and_explicit_finish(
         self,
@@ -182,6 +194,17 @@ class RpcRuntimeTest(unittest.IsolatedAsyncioTestCase):
         client, server_task = await self.runtime(handler)
         call = await client.open_call("svc", "method")
         with self.assertRaisesRegex(RemoteCallError, "handler boom"):
+            await call.receive()
+        await call.aclose()
+        await server_task()
+
+    async def test_handler_protocol_error_is_terminal_remote_error(self) -> None:
+        async def handler(call: Call) -> None:
+            raise CallProtocolError("invalid request")
+
+        client, server_task = await self.runtime(handler)
+        call = await client.open_call("svc", "method")
+        with self.assertRaisesRegex(RemoteCallError, "invalid request"):
             await call.receive()
         await call.aclose()
         await server_task()

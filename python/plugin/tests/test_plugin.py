@@ -137,9 +137,9 @@ class PluginTest(unittest.TestCase):
         source, stub = expected
         self.assertEqual(source.count("class EchoServer"), 1)
         self.assertEqual(source.count("def register_echo"), 1)
-        self.assertIn("await call.finish()", source)
+        self.assertEqual(source.count("await call.finish()"), 1)
         self.assertNotIn("        await call.finish()\n        try:", source)
-        self.assertIn("extra = await call.receive()", source)
+        self.assertNotIn("extra = await call.receive()", source)
         self.assertIn("while True:", source)
         self.assertIn("requests: AsyncIterable[_acme_common_pb2.Shared]", source)
         self.assertIn("requests: AsyncIterator[_acme_common_pb2.Shared]", stub)
@@ -224,6 +224,30 @@ class PluginTest(unittest.TestCase):
         self.assertEqual(response.error, "unsupported parameter: unsupported=1")
         missing = self.run_plugin(self.request(target="acme/missing.proto"))
         self.assertEqual(missing.error, "descriptor not found: acme/missing.proto")
+
+    def test_root_proto_and_nested_message_types_use_python_module_shape(self) -> None:
+        request = self.request(target="echo.proto")
+        target = request.proto_file[-1]
+        target.name = "echo.proto"
+        del target.message_type[:]
+        outer = target.message_type.add(name="Outer")
+        outer.nested_type.add(name="Request")
+        outer.nested_type.add(name="Response")
+        del target.service[0].method[1:]
+        method = target.service[0].method[0]
+        method.input_type = ".acme.Outer.Request"
+        method.output_type = ".acme.Outer.Response"
+
+        response = self.require_implemented(self.run_plugin(request))
+        self.assertEqual(
+            [file.name for file in response.file],
+            ["echo_srpc.py", "echo_srpc.pyi"],
+        )
+        for file in response.file:
+            self.assertIn("import echo_pb2 as _echo_pb2", file.content)
+            self.assertIn("_echo_pb2.Outer.Request", file.content)
+            self.assertIn("_echo_pb2.Outer.Response", file.content)
+            compile(file.content, file.name, "exec")
 
     def test_missing_message_type_is_rejected(self) -> None:
         request = self.request()

@@ -164,6 +164,12 @@ class CallTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(packet.call_data.complete)
         self.assertFalse(packet.call_data.data_is_zero)
         await self.call.finish()
+        peer_read = self.track(self.peer_stream.read(1))
+        await asyncio.sleep(0)
+        self.assertFalse(peer_read.done())
+        peer_read.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await peer_read
 
     async def test_queued_data_is_drained_before_remote_error(self) -> None:
         await self.assert_call_start()

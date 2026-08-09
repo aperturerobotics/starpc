@@ -75,17 +75,17 @@ class Server:
                     await handler_task
                 except asyncio.CancelledError:
                     raise
-                except CallError:
+                except (
+                    CallCancelledError,
+                    ClosedBeforeCompletionError,
+                    RemoteCallError,
+                ):
                     return
                 except Exception as exc:  # noqa: BLE001
                     with contextlib.suppress(CallCompletedError):
                         await call.finish(error=str(exc))
                 else:
                     await call.finish()
-            with contextlib.suppress(
-                CallCancelledError, RemoteCallError, ClosedBeforeCompletionError
-            ):
-                await call.wait_closed()
         finally:
             if abort_task is not None and not abort_task.done():
                 abort_task.cancel()

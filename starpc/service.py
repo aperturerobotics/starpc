@@ -118,13 +118,6 @@ async def _send_requests(call: _ByteCall, requests: AsyncIterable[bytes]) -> Non
         raise
 
 
-async def _join_task(task: asyncio.Task[object] | None) -> None:
-    if task is None:
-        return
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
-
-
 async def _join_receiver(task: asyncio.Task[bytes | None] | None) -> None:
     if task is None:
         return

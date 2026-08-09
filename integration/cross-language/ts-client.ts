@@ -7,7 +7,11 @@ import {
   prependLengthPrefixTransform,
 } from '../../srpc/packet.js'
 import { combineUint8ArrayListTransform } from '../../srpc/array-list.js'
-import { runClientTest } from '../../echo/index.js'
+import {
+  runClientTest,
+  runAbortControllerTest,
+} from '../../echo/client-test.js'
+import { EchoerClient } from '../../echo/echo_srpc.pb.js'
 import type { OpenStreamFunc, PacketStream } from '../../srpc/stream.js'
 import type { Source } from 'it-stream-types'
 
@@ -45,15 +49,55 @@ function tcpSocketToPacketStream(socket: net.Socket): PacketStream {
   }
 }
 
+async function runEchoBidiStreamTest(client: Client): Promise<void> {
+  const request = pushable<{ body: string }>({ objectMode: true })
+  const stream = new EchoerClient(client).EchoBidiStream(request)
+  const iterator = stream[Symbol.asyncIterator]()
+
+  const initial = await iterator.next()
+  if (initial.done || initial.value.body !== 'hello from server') {
+    throw new Error('expected initial bidi message "hello from server"')
+  }
+
+  const body = 'hello from TypeScript bidi client'
+  request.push({ body })
+  request.end()
+
+  const echo = await iterator.next()
+  if (echo.done || echo.value.body !== body) {
+    throw new Error(`expected bidi echo ${JSON.stringify(body)}`)
+  }
+
+  const terminal = await iterator.next()
+  if (!terminal.done) {
+    throw new Error('expected bidi stream to terminate after input closes')
+  }
+}
+
+function parseAddr(addr: string): { host: string; port: number } {
+  const match = /^(?:\[([^\]]+)\]|([^:]+)):(\d+)$/.exec(addr)
+  if (!match) {
+    throw new Error(`invalid host:port address: ${addr}`)
+  }
+
+  const port = Number(match[3])
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`invalid port: ${match[3]}`)
+  }
+
+  return { host: match[1] ?? match[2], port }
+}
+
 async function main() {
-  const addr = process.argv[2]
+  const args = process.argv.slice(2)
+  const lifecycle = args.includes('lifecycle')
+  const addr = args.find((arg) => arg !== 'lifecycle')
   if (!addr) {
-    console.error('usage: ts-client <host:port>')
+    console.error('usage: ts-client [lifecycle] <host:port>')
     process.exit(1)
   }
 
-  const [host, portStr] = addr.split(':')
-  const port = parseInt(portStr, 10)
+  const { host, port } = parseAddr(addr)
   const openStream: OpenStreamFunc = async (): Promise<PacketStream> => {
     const { promise, resolve, reject } = Promise.withResolvers<PacketStream>()
     const socket = net.connect(port, host, () => {
@@ -66,6 +110,12 @@ async function main() {
   const client = new Client(openStream)
   console.log('Running client test via TCP...')
   await runClientTest(client)
+  console.log('Running EchoBidiStream test via TCP...')
+  await runEchoBidiStreamTest(client)
+  if (lifecycle) {
+    console.log('Running abort controller test via TCP...')
+    await runAbortControllerTest(client)
+  }
   console.log('All tests passed.')
 }
 

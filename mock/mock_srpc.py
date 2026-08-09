@@ -36,7 +36,6 @@ class MockClient:
             self._service, "MockRequest", request.SerializeToString(deterministic=True)
         )
         try:
-            await call.finish()
             data = await call.receive()
             if data is None:
                 raise CallProtocolError("missing unary response")
@@ -64,13 +63,9 @@ def register_mock(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _github_com_aperturerobotics_starpc_mock_mock_pb2.MockMsg()
         request.ParseFromString(first)
         response = await implementation.mock_request(request)
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "MockRequest", mock_request_handler)

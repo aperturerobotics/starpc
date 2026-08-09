@@ -79,7 +79,7 @@ class GeneratedEchoTest(unittest.IsolatedAsyncioTestCase):
             with contextlib.suppress(asyncio.CancelledError):
                 await task
 
-    async def test_finish_failure_closes_generated_unary_call(self) -> None:
+    async def test_finish_failure_closes_generated_client_stream_call(self) -> None:
         stream = FailingFinishStream()
 
         async def opener() -> ByteStream:
@@ -87,7 +87,7 @@ class GeneratedEchoTest(unittest.IsolatedAsyncioTestCase):
 
         echo = EchoerClient(Client(opener))
         with self.assertRaisesRegex(OSError, "finish failed"):
-            await echo.echo(echo_pb2.EchoMsg(body="request"))
+            await echo.echo_client_stream(_empty())
         self.assertTrue(stream.closed.is_set())
 
     async def test_unary_and_server_stream(self) -> None:
