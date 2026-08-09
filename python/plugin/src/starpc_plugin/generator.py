@@ -16,14 +16,24 @@ FEATURE_PROTO3_OPTIONAL = 1
 def _message_index(files: Iterable[FileDescriptorProto]) -> dict[str, tuple[str, str]]:
     result: dict[str, tuple[str, str]] = {}
 
-    def visit(file: FileDescriptorProto, prefix: str, messages: Iterable[Any]) -> None:
+    def visit(
+        file: FileDescriptorProto,
+        proto_prefix: str,
+        python_prefix: str,
+        messages: Iterable[Any],
+    ) -> None:
         for message in messages:
-            full = f"{prefix}.{message.name}" if prefix else message.name
-            result[f".{full}"] = (file.name, full)
-            visit(file, full, message.nested_type)
+            proto_name = (
+                f"{proto_prefix}.{message.name}" if proto_prefix else message.name
+            )
+            python_name = (
+                f"{python_prefix}.{message.name}" if python_prefix else message.name
+            )
+            result[f".{proto_name}"] = (file.name, python_name)
+            visit(file, proto_name, python_name, message.nested_type)
 
     for file in files:
-        visit(file, file.package, file.message_type)
+        visit(file, file.package, "", file.message_type)
     return result
 
 
@@ -49,8 +59,15 @@ def _stem(name: str) -> str:
 def _expr(
     type_name: str, index: dict[str, tuple[str, str]], aliases: dict[str, str]
 ) -> str:
-    file_name, full = index[type_name]
-    return f"{aliases[_module(file_name)]}.{full.rsplit('.', 1)[-1]}"
+    file_name, python_name = index[type_name]
+    return f"{aliases[_module(file_name)]}.{python_name}"
+
+
+def _import(module: str, alias: str) -> str:
+    package, separator, name = module.rpartition(".")
+    if not separator:
+        return f"import {name} as {alias}"
+    return f"from {package} import {name} as {alias}"
 
 
 def _imports(
@@ -62,10 +79,7 @@ def _imports(
             modules.add(_module(index[method.input_type][0]))
             modules.add(_module(index[method.output_type][0]))
     aliases = {module: _alias(module) for module in sorted(modules)}
-    lines = [
-        f"from {module.rsplit('.', 1)[0]} import {module.rsplit('.', 1)[1]} as {alias}"
-        for module, alias in aliases.items()
-    ]
+    lines = [_import(module, alias) for module, alias in aliases.items()]
     return "\n".join(lines), aliases
 
 
@@ -156,7 +170,6 @@ def _service_source(
                     f"    async def {n}(self, request: {i}) -> {o}:",
                     f"        call = await self._client.open_call(self._service, {method.name!r}, request.SerializeToString(deterministic=True))",
                     "        try:",
-                    "            await call.finish()",
                     "            data = await call.receive()",
                     "            if data is None:",
                     "                raise CallProtocolError('missing unary response')",
@@ -174,7 +187,6 @@ def _service_source(
                     f"    async def {n}(self, request: {i}) -> AsyncIterator[{o}]:",
                     f"        call = await self._client.open_call(self._service, {method.name!r}, request.SerializeToString(deterministic=True))",
                     "        try:",
-                    "            await call.finish()",
                     "            while True:",
                     "                data = await call.receive()",
                     "                if data is None:",
@@ -268,9 +280,6 @@ def _server_sources(
                     "        first = await call.receive()",
                     "        if first is None:",
                     "            raise CallProtocolError('missing initial request')",
-                    "        extra = await call.receive()",
-                    "        if extra is not None:",
-                    "            raise CallProtocolError('extra initial request')",
                     f"        request = {i}()",
                     "        request.ParseFromString(first)",
                 ]
@@ -305,10 +314,9 @@ def _server_sources(
                         f"        response = await implementation.{n}(requests())",
                         "        await call.send(response.SerializeToString(deterministic=True))",
                     ]
-            lines += [
-                "        await call.finish()",
-                f"    registry.register(service, {method.name!r}, {n}_handler)",
-            ]
+            lines.append(
+                f"    registry.register(service, {method.name!r}, {n}_handler)"
+            )
         lines.append("")
     return lines
 
@@ -319,7 +327,6 @@ def _pyi_source(
     index: dict[str, tuple[str, str]],
 ) -> str:
     imports, aliases = _imports(services, index)
-    imports = imports.replace("  # type: ignore[import-not-found]", "")
     lines = [
         "",
         "from collections.abc import AsyncIterable, AsyncIterator",

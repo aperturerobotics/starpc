@@ -3,6 +3,9 @@ name = "starpc"
 version = "0.52.0"
 requires-python = ">=3.11,<3.12"
 dependencies = ["protobuf==6.33.5"]
+readme = "python/README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 
 [tool.uv.workspace]
 members = ["python/plugin"]
@@ -15,7 +18,7 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

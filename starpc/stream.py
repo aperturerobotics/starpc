@@ -181,7 +181,8 @@ class TCPByteStream:
                 return
             self._closed = True
             self._writer.close()
-            await self._writer.wait_closed()
+            with contextlib.suppress(OSError):
+                await self._writer.wait_closed()
 
 
 async def open_tcp_stream(host: str, port: int) -> TCPByteStream:

@@ -3,6 +3,9 @@ name = "starpc-python-plugin"
 version = "0.52.0"
 requires-python = ">=3.11,<3.12"
 dependencies = ["protobuf==6.33.5", "ruff==0.16.2"]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.scripts]
 protoc-gen-starpc-python = "starpc_plugin:main"
@@ -11,5 +14,5 @@ protoc-gen-starpc-python = "starpc_plugin:main"
 where = ["src"]
 
 [build-system]
-requires = ["setuptools>=75"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"

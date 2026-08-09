@@ -29,6 +29,25 @@ jobs:
       - run: bun run lint:js
       - run: bun run deps
 
+  python:
+    name: Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.11'
+      - run: uv lock --check
+      - run: uv sync --all-packages --frozen
+      - run: uv run --frozen ruff check --ignore UP026 starpc python/plugin/src python/plugin/tests python/tests echo/echo_srpc.py echo/echo_srpc.pyi mock/mock_srpc.py mock/mock_srpc.pyi
+      - run: uv run --frozen ruff format --check starpc python/plugin/src python/plugin/tests python/tests echo/echo_srpc.py echo/echo_srpc.pyi mock/mock_srpc.py mock/mock_srpc.pyi
+      - run: uv run --frozen mypy starpc python/plugin/src python/plugin/tests/test_plugin.py python/tests echo/echo_srpc.py mock/mock_srpc.py
+      - run: uv run --frozen python -m unittest discover -s python/tests -v
+      - run: uv run --frozen python -m unittest discover -s python/plugin/tests -v
+      - run: uv build --out-dir .tmp/dist/runtime
+      - run: uv build --out-dir .tmp/dist/plugin python/plugin
+
   go:
     name: Go
     runs-on: ubuntu-latest
@@ -103,17 +122,30 @@ jobs:
           - 'rust:rust'
           - 'rust:cpp'
           - 'cpp:cpp'
+          - 'go:python'
+          - 'ts:python'
+          - 'python:python'
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+        if: contains(matrix.pair, 'ts')
+      - uses: astral-sh/setup-uv@v7
+        if: contains(matrix.pair, 'python')
+        with:
+          python-version: '3.11'
       - uses: actions/setup-go@v7
+        if: contains(matrix.pair, 'go') || contains(matrix.pair, 'cpp')
         with:
           go-version: '1.26'
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+        if: contains(matrix.pair, 'rust')
       - name: Install native build cache/tools
+        if: contains(matrix.pair, 'cpp')
         run: sudo apt-get update && sudo apt-get install -y ccache ninja-build
-      - run: bun install
+      - run: bun install --ignore-scripts
+        if: contains(matrix.pair, 'ts')
       - name: Cache C++ compiler outputs
+        if: contains(matrix.pair, 'cpp')
         uses: actions/cache@v6
         with:
           path: ~/.cache/ccache
@@ -121,8 +153,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-
       - name: Zero ccache stats
+        if: contains(matrix.pair, 'cpp')
         run: ccache --zero-stats || true
-      - run: bun run integration -- "${{ matrix.pair }}"
+      - run: ./integration/cross-language/run.bash "${{ matrix.pair }}"
       - name: Show ccache stats
-        if: always()
+        if: ${{ always() && contains(matrix.pair, 'cpp') }}
         run: ccache --show-stats || true

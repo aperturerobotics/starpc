@@ -40,7 +40,6 @@ class EchoClient:
             self._service, "Unary", request.SerializeToString(deterministic=True)
         )
         try:
-            await call.finish()
             data = await call.receive()
             if data is None:
                 raise CallProtocolError("missing unary response")
@@ -59,7 +58,6 @@ class EchoClient:
             self._service, "ServerStream", request.SerializeToString(deterministic=True)
         )
         try:
-            await call.finish()
             while True:
                 data = await call.receive()
                 if data is None:
@@ -126,14 +124,10 @@ def register_echo(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _acme_echo_pb2.Request()
         request.ParseFromString(first)
         response = await implementation.unary(request)
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "Unary", unary_handler)
 
@@ -141,14 +135,10 @@ def register_echo(
         first = await call.receive()
         if first is None:
             raise CallProtocolError("missing initial request")
-        extra = await call.receive()
-        if extra is not None:
-            raise CallProtocolError("extra initial request")
         request = _acme_echo_pb2.Request()
         request.ParseFromString(first)
         async for response in implementation.server_stream(request):
             await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "ServerStream", server_stream_handler)
 
@@ -164,7 +154,6 @@ def register_echo(
 
         response = await implementation.client_stream(requests())
         await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "ClientStream", client_stream_handler)
 
@@ -180,6 +169,5 @@ def register_echo(
 
         async for response in implementation.bidi(requests()):
             await call.send(response.SerializeToString(deterministic=True))
-        await call.finish()
 
     registry.register(service, "Bidi", bidi_handler)

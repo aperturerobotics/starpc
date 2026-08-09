@@ -1,11 +1,12 @@
 #!/bin/bash
 # Cross-language integration tests for starpc.
-# Runs all 12 server/client combinations across Go, TypeScript, Rust, and C++.
+# Runs all 21 server/client combinations across Go, TypeScript, Rust, C++, and Python.
 #
 # Usage:
-#   ./run.bash              # Run all pairs
-#   ./run.bash go:ts        # Run go-server+ts-client and ts-server+go-client
-#   ./run.bash go:ts go:rust # Run multiple pair filters
+#   ./run.bash                # Run all pairs
+#   ./run.bash go:ts          # Run go-server+ts-client and ts-server+go-client
+#   ./run.bash python:go      # Run python-server+go-client and go-server+python-client
+#   ./run.bash go:ts python:ts # Run multiple pair filters
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -16,23 +17,68 @@ ESM_BANNER='import{fileURLToPath}from"node:url";import{dirname}from"node:path";i
 
 FILTERS=("$@")
 
+needs_language() {
+    local language="$1"
+    if [ ${#FILTERS[@]} -eq 0 ]; then
+        return 0
+    fi
+    for filter in "${FILTERS[@]}"; do
+        if [[ ":${filter}:" == *":${language}:"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 PASSED=0
 FAILED=0
 ERRORS=""
 
+SERVER_PID=""
 SERVER_LOG=""
+CLIENT_PID=""
+CLIENT_OUT=""
 
-# should_run checks if a test name matches the active filters.
+cleanup() {
+    if [ -n "${CLIENT_PID:-}" ]; then
+        kill "$CLIENT_PID" 2>/dev/null || true
+        wait "$CLIENT_PID" 2>/dev/null || true
+        CLIENT_PID=""
+    fi
+    if [ -n "${SERVER_PID:-}" ]; then
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+        SERVER_PID=""
+    fi
+    if [ -n "${SERVER_LOG:-}" ]; then
+        rm -f "$SERVER_LOG"
+        SERVER_LOG=""
+    fi
+    if [ -n "${CLIENT_OUT:-}" ]; then
+        rm -f "$CLIENT_OUT"
+        CLIENT_OUT=""
+    fi
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# should_run checks if a server/client pair matches the active filters.
 # Returns 0 (true) if the test should run, 1 (false) otherwise.
 should_run() {
     local test_name="$1"
     if [ ${#FILTERS[@]} -eq 0 ]; then
         return 0
     fi
+    local server_language="${test_name%%-server*}"
+    local client_language="${test_name#*+ }"
+    client_language="${client_language%%-client*}"
     for filter in "${FILTERS[@]}"; do
         local lang1="${filter%%:*}"
         local lang2="${filter##*:}"
-        if [[ "$test_name" == *"${lang1}-"* && "$test_name" == *"${lang2}-"* ]]; then
+        if { [ "$server_language" = "$lang1" ] && [ "$client_language" = "$lang2" ]; } ||
+            { [ "$server_language" = "$lang2" ] && [ "$client_language" = "$lang1" ]; }; then
             return 0
         fi
     done
@@ -42,32 +88,39 @@ should_run() {
 # Build all binaries.
 echo "=== Building all integration binaries ==="
 
-echo "Building Go server/client..."
-go build -o "$SCRIPT_DIR/go-server/go-server" "$SCRIPT_DIR/go-server/"
-go build -o "$SCRIPT_DIR/go-client/go-client" "$SCRIPT_DIR/go-client/"
+if needs_language go; then
+    echo "Building Go server/client..."
+    go build -o "$SCRIPT_DIR/go-server/go-server" "$SCRIPT_DIR/go-server/"
+    go build -o "$SCRIPT_DIR/go-client/go-client" "$SCRIPT_DIR/go-client/"
+fi
 
-echo "Building TypeScript server/client..."
-"$REPO_DIR/node_modules/.bin/esbuild" "$SCRIPT_DIR/ts-server.ts" \
-    --bundle --sourcemap --platform=node --format=esm \
-    --banner:js="$ESM_BANNER" \
-    --outfile="$SCRIPT_DIR/ts-server.mjs"
-"$REPO_DIR/node_modules/.bin/esbuild" "$SCRIPT_DIR/ts-client.ts" \
-    --bundle --sourcemap --platform=node --format=esm \
-    --banner:js="$ESM_BANNER" \
-    --outfile="$SCRIPT_DIR/ts-client.mjs"
+if needs_language ts; then
+    echo "Building TypeScript server/client..."
+    "$REPO_DIR/node_modules/.bin/esbuild" "$SCRIPT_DIR/ts-server.ts" \
+        --bundle --sourcemap --platform=node --format=esm \
+        --banner:js="$ESM_BANNER" \
+        --outfile="$SCRIPT_DIR/ts-server.mjs"
+    "$REPO_DIR/node_modules/.bin/esbuild" "$SCRIPT_DIR/ts-client.ts" \
+        --bundle --sourcemap --platform=node --format=esm \
+        --banner:js="$ESM_BANNER" \
+        --outfile="$SCRIPT_DIR/ts-client.mjs"
+fi
 
-echo "Building Rust server/client..."
-cargo build --release -p echo-example --bin integration-server --bin integration-client
+if needs_language rust; then
+    echo "Building Rust server/client..."
+    cargo build --release -p echo-example --bin integration-server --bin integration-client
+fi
 
-echo "Vendoring Go dependencies (needed for C++ build)..."
-go mod vendor
-
-echo "Building C++ server/client..."
-mkdir -p "$REPO_DIR/build"
-pushd "$REPO_DIR/build" > /dev/null
-cmake "$REPO_DIR" -DCMAKE_BUILD_TYPE=Release > /dev/null 2>&1
-cmake --build . --target cpp-integration-server cpp-integration-client --parallel > /dev/null 2>&1
-popd > /dev/null
+if needs_language cpp; then
+    echo "Vendoring Go dependencies (needed for C++ build)..."
+    go mod vendor
+    echo "Building C++ server/client..."
+    mkdir -p "$REPO_DIR/build"
+    pushd "$REPO_DIR/build" > /dev/null
+    cmake "$REPO_DIR" -DCMAKE_BUILD_TYPE=Release > /dev/null 2>&1
+    cmake --build . --target cpp-integration-server cpp-integration-client --parallel > /dev/null 2>&1
+    popd > /dev/null
+fi
 
 # Binary paths.
 GO_SERVER="$SCRIPT_DIR/go-server/go-server"
@@ -78,6 +131,7 @@ RUST_SERVER="$REPO_DIR/target/release/integration-server"
 RUST_CLIENT="$REPO_DIR/target/release/integration-client"
 CPP_SERVER="$REPO_DIR/build/cpp-integration-server"
 CPP_CLIENT="$REPO_DIR/build/cpp-integration-client"
+PYTHON=(uv run --project "$REPO_DIR" python)
 
 start_server() {
     SERVER_LOG=$(mktemp)
@@ -95,8 +149,9 @@ start_server() {
     SERVER_ADDR=$(grep 'LISTENING' "$SERVER_LOG" 2>/dev/null | awk '{print $2}')
     if [ -z "$SERVER_ADDR" ]; then
         echo "FAILED: server did not start"
-        kill $SERVER_PID 2>/dev/null || true
-        wait $SERVER_PID 2>/dev/null || true
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+        SERVER_PID=""
         rm -f "$SERVER_LOG"
         SERVER_LOG=""
         return 1
@@ -105,8 +160,9 @@ start_server() {
 }
 
 stop_server() {
-    kill $SERVER_PID 2>/dev/null || true
-    wait $SERVER_PID 2>/dev/null || true
+    kill "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true
+    SERVER_PID=""
 }
 
 # run_pair <test_name> <server_args...> -- <client_args...>
@@ -142,12 +198,14 @@ run_pair() {
         return
     fi
 
-    local client_out
-    client_out=$(mktemp)
+    CLIENT_OUT=$(mktemp)
     local client_ok=false
-    if "${cli_args[@]}" "$SERVER_ADDR" > "$client_out" 2>&1; then
+    "${cli_args[@]}" "$SERVER_ADDR" > "$CLIENT_OUT" 2>&1 &
+    CLIENT_PID=$!
+    if wait "$CLIENT_PID"; then
         client_ok=true
     fi
+    CLIENT_PID=""
     stop_server
 
     if $client_ok; then
@@ -158,9 +216,10 @@ run_pair() {
         FAILED=$((FAILED + 1))
         ERRORS="${ERRORS}\n  ${test_name}"
         echo "    client output:"
-        sed 's/^/    /' "$client_out"
+        sed 's/^/    /' "$CLIENT_OUT"
     fi
-    rm -f "$client_out" "$SERVER_LOG"
+    rm -f "$CLIENT_OUT" "$SERVER_LOG"
+    CLIENT_OUT=""
     SERVER_LOG=""
 }
 
@@ -172,7 +231,8 @@ echo ""
 run_pair "go-server + go-client"   "$GO_SERVER" -- "$GO_CLIENT"
 run_pair "go-server + rust-client" "$GO_SERVER" -- "$RUST_CLIENT"
 run_pair "go-server + ts-client"   "$GO_SERVER" -- node "$TS_CLIENT"
-run_pair "go-server + cpp-client"  "$GO_SERVER" -- "$CPP_CLIENT"
+run_pair "go-server + cpp-client"    "$GO_SERVER" -- "$CPP_CLIENT"
+run_pair "go-server + python-client" "$GO_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
 
 # Rust server combinations
 run_pair "rust-server + go-client"   "$RUST_SERVER" -- "$GO_CLIENT"
@@ -184,7 +244,13 @@ run_pair "rust-server + cpp-client"  "$RUST_SERVER" -- "$CPP_CLIENT"
 run_pair "ts-server + go-client"   node "$TS_SERVER" -- "$GO_CLIENT"
 run_pair "ts-server + rust-client" node "$TS_SERVER" -- "$RUST_CLIENT"
 run_pair "ts-server + ts-client"   node "$TS_SERVER" -- node "$TS_CLIENT"
-run_pair "ts-server + cpp-client"  node "$TS_SERVER" -- "$CPP_CLIENT"
+run_pair "ts-server + cpp-client"    node "$TS_SERVER" -- "$CPP_CLIENT"
+run_pair "ts-server + python-client" node "$TS_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+
+# Python server combinations
+run_pair "python-server + go-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "$GO_CLIENT"
+run_pair "python-server + ts-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- node "$TS_CLIENT" lifecycle
+run_pair "python-server + python-client" "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
 
 # C++ server combinations
 run_pair "cpp-server + go-client"   "$CPP_SERVER" -- "$GO_CLIENT"
