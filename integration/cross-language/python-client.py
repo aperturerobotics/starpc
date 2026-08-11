@@ -18,9 +18,14 @@ from starpc.stream import open_tcp_stream
 
 
 async def main() -> None:
-    if len(sys.argv) != 2 or ":" not in sys.argv[1]:
-        raise ValueError("usage: python-client.py host:port")
-    host, port_text = sys.argv[1].rsplit(":", 1)
+    args = sys.argv[1:]
+    nested = args[:1] in (["--nested"], ["--nested-release"])
+    strict_nested = args[:1] == ["--nested-release"]
+    if nested:
+        args = args[1:]
+    if len(args) != 1 or ":" not in args[0]:
+        raise ValueError("usage: python-client.py [--nested] host:port")
+    host, port_text = args[0].rsplit(":", 1)
     port = int(port_text)
     raw_client = Client(lambda: open_tcp_stream(host, port))
     client = EchoerClient(raw_client)
@@ -76,7 +81,61 @@ async def main() -> None:
     except CallCancelledError:
         pass
     await cancelled.aclose()
+    if nested:
+        await run_nested_test(client, strict_nested)
     print("All tests passed.")
+
+
+async def run_nested_test(client: EchoerClient, strict: bool = False) -> None:
+    from starpc.rpcstream import (
+        RpcStreamRemoteError,
+        build_rpc_stream_open_stream,
+    )
+
+    nested_client = Client(build_rpc_stream_open_stream("test", client.rpc_stream))
+    nested_echo = EchoerClient(nested_client)
+    body = "hello world via nested python"
+    response = await nested_echo.echo(echo_pb2.EchoMsg(body=body))
+    if response.body != body:
+        raise RuntimeError(f"unexpected nested unary response: {response.body!r}")
+
+    if strict:
+        try:
+            await nested_echo.echo(echo_pb2.EchoMsg(body="__nested_error__"))
+        except RemoteCallError:
+            pass
+        else:
+            raise RuntimeError("terminal nested error unexpectedly succeeded")
+
+    if strict:
+        missing = Client(build_rpc_stream_open_stream("missing", client.rpc_stream))
+        try:
+            await missing.open_call("echo.Echoer", "Echo")
+        except RpcStreamRemoteError:
+            pass
+        else:
+            raise RuntimeError("unknown component unexpectedly succeeded")
+
+    terminal = await nested_client.open_call("missing.Service", "Missing")
+    try:
+        await terminal.receive()
+    except RemoteCallError:
+        pass
+    else:
+        raise RuntimeError("unknown nested method unexpectedly succeeded")
+    finally:
+        await terminal.aclose()
+
+    cancelled = await nested_client.open_call("echo.Echoer", "EchoBidiStream")
+    await cancelled.send(
+        echo_pb2.EchoMsg(body="nested later data").SerializeToString(deterministic=True)
+    )
+    await cancelled.cancel()
+    try:
+        await cancelled.wait_closed()
+    except CallCancelledError:
+        pass
+    await cancelled.aclose()
 
 
 async def _one_request(body: str) -> AsyncIterator[echo_pb2.EchoMsg]:

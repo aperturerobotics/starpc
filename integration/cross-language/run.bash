@@ -3,10 +3,11 @@
 # Runs all 21 server/client combinations across Go, TypeScript, Rust, C++, and Python.
 #
 # Usage:
-#   ./run.bash                # Run all pairs
-#   ./run.bash go:ts          # Run go-server+ts-client and ts-server+go-client
-#   ./run.bash python:go      # Run python-server+go-client and go-server+python-client
-#   ./run.bash go:ts python:ts # Run multiple pair filters
+#   ./run.bash                         # Run all pairs
+#   ./run.bash go:ts                   # Run go-server+ts-client and ts-server+go-client
+#   ./run.bash python:go               # Run python-server+go-client and go-server+python-client
+#   ./run.bash --nested ts:python      # Run nested TypeScript/Python pairs
+#   ./run.bash --nested go:ts go:python ts:python # Run nested Go/TypeScript/Python pairs
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -15,7 +16,15 @@ REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # Fixes errors with the generated esm using require()
 ESM_BANNER='import{fileURLToPath}from"node:url";import{dirname}from"node:path";import{createRequire as topLevelCreateRequire}from"node:module";const require=topLevelCreateRequire(import.meta.url);const __filename=fileURLToPath(import.meta.url);const __dirname=dirname(__filename);'
 
-FILTERS=("$@")
+NESTED=false
+FILTERS=()
+for arg in "$@"; do
+    if [ "$arg" = "--nested" ]; then
+        NESTED=true
+    else
+        FILTERS+=("$arg")
+    fi
+done
 
 needs_language() {
     local language="$1"
@@ -36,6 +45,7 @@ ERRORS=""
 
 SERVER_PID=""
 SERVER_LOG=""
+SERVER_EXIT_STATUS=0
 CLIENT_PID=""
 CLIENT_OUT=""
 
@@ -161,8 +171,35 @@ start_server() {
 
 stop_server() {
     kill "$SERVER_PID" 2>/dev/null || true
-    wait "$SERVER_PID" 2>/dev/null || true
+    if wait "$SERVER_PID" 2>/dev/null; then
+        SERVER_EXIT_STATUS=0
+    else
+        SERVER_EXIT_STATUS=$?
+    fi
     SERVER_PID=""
+}
+
+python_server_passed() {
+    local status="$1"
+    local log="$2"
+    [ "$status" -eq 0 ] && grep -qx "NESTED_CLEAN" "$log"
+}
+
+verify_python_server_guard() {
+    local log
+    log="$(mktemp)"
+    printf '%s\n' "NESTED_CLEAN" >"$log"
+    if python_server_passed 1 "$log"; then
+        rm -f "$log"
+        echo "runner guard accepted a nonzero Python server" >&2
+        return 1
+    fi
+    if ! python_server_passed 0 "$log"; then
+        rm -f "$log"
+        echo "runner guard rejected a clean Python server" >&2
+        return 1
+    fi
+    rm -f "$log"
 }
 
 # run_pair <test_name> <server_args...> -- <client_args...>
@@ -200,13 +237,23 @@ run_pair() {
 
     CLIENT_OUT=$(mktemp)
     local client_ok=false
-    "${cli_args[@]}" "$SERVER_ADDR" > "$CLIENT_OUT" 2>&1 &
+    timeout 60 "${cli_args[@]}" "$SERVER_ADDR" > "$CLIENT_OUT" 2>&1 &
     CLIENT_PID=$!
     if wait "$CLIENT_PID"; then
         client_ok=true
     fi
     CLIENT_PID=""
     stop_server
+    if $NESTED && [[ "$test_name" == python-server* ]]; then
+        if ! verify_python_server_guard; then
+            client_ok=false
+            echo "    Python server result guard regression failed"
+        elif ! python_server_passed "$SERVER_EXIT_STATUS" "$SERVER_LOG"; then
+            client_ok=false
+            echo "    Python server failed nested shutdown (status $SERVER_EXIT_STATUS):"
+            sed 's/^/    /' "$SERVER_LOG"
+        fi
+    fi
 
     if $client_ok; then
         echo "PASSED"
@@ -227,36 +274,48 @@ echo ""
 echo "=== Running cross-language integration tests ==="
 echo ""
 
-# Go server combinations
-run_pair "go-server + go-client"   "$GO_SERVER" -- "$GO_CLIENT"
-run_pair "go-server + rust-client" "$GO_SERVER" -- "$RUST_CLIENT"
-run_pair "go-server + ts-client"   "$GO_SERVER" -- node "$TS_CLIENT"
-run_pair "go-server + cpp-client"    "$GO_SERVER" -- "$CPP_CLIENT"
-run_pair "go-server + python-client" "$GO_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+if $NESTED; then
+    # Nested streams have maintained Go, TypeScript, and Python endpoints.
+    run_pair "go-server + ts-client" "$GO_SERVER" -- node "$TS_CLIENT" --nested
+    run_pair "go-server + python-client" "$GO_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py" --nested
 
-# Rust server combinations
-run_pair "rust-server + go-client"   "$RUST_SERVER" -- "$GO_CLIENT"
-run_pair "rust-server + rust-client" "$RUST_SERVER" -- "$RUST_CLIENT"
-run_pair "rust-server + ts-client"   "$RUST_SERVER" -- node "$TS_CLIENT"
-run_pair "rust-server + cpp-client"  "$RUST_SERVER" -- "$CPP_CLIENT"
+    run_pair "ts-server + go-client" node "$TS_SERVER" -- "$GO_CLIENT" --nested
+    run_pair "ts-server + python-client" node "$TS_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py" --nested
 
-# TypeScript server combinations
-run_pair "ts-server + go-client"   node "$TS_SERVER" -- "$GO_CLIENT"
-run_pair "ts-server + rust-client" node "$TS_SERVER" -- "$RUST_CLIENT"
-run_pair "ts-server + ts-client"   node "$TS_SERVER" -- node "$TS_CLIENT"
-run_pair "ts-server + cpp-client"    node "$TS_SERVER" -- "$CPP_CLIENT"
-run_pair "ts-server + python-client" node "$TS_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+    run_pair "python-server + go-client" "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "$GO_CLIENT" --nested-release
+    run_pair "python-server + ts-client" "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- node "$TS_CLIENT" --nested-release
+else
+    # Go server combinations
+    run_pair "go-server + go-client"   "$GO_SERVER" -- "$GO_CLIENT"
+    run_pair "go-server + rust-client" "$GO_SERVER" -- "$RUST_CLIENT"
+    run_pair "go-server + ts-client"   "$GO_SERVER" -- node "$TS_CLIENT"
+    run_pair "go-server + cpp-client"    "$GO_SERVER" -- "$CPP_CLIENT"
+    run_pair "go-server + python-client" "$GO_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
 
-# Python server combinations
-run_pair "python-server + go-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "$GO_CLIENT"
-run_pair "python-server + ts-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- node "$TS_CLIENT" lifecycle
-run_pair "python-server + python-client" "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+    # Rust server combinations
+    run_pair "rust-server + go-client"   "$RUST_SERVER" -- "$GO_CLIENT"
+    run_pair "rust-server + rust-client" "$RUST_SERVER" -- "$RUST_CLIENT"
+    run_pair "rust-server + ts-client"   "$RUST_SERVER" -- node "$TS_CLIENT"
+    run_pair "rust-server + cpp-client"  "$RUST_SERVER" -- "$CPP_CLIENT"
 
-# C++ server combinations
-run_pair "cpp-server + go-client"   "$CPP_SERVER" -- "$GO_CLIENT"
-run_pair "cpp-server + rust-client" "$CPP_SERVER" -- "$RUST_CLIENT"
-run_pair "cpp-server + ts-client"   "$CPP_SERVER" -- node "$TS_CLIENT"
-run_pair "cpp-server + cpp-client"  "$CPP_SERVER" -- "$CPP_CLIENT"
+    # TypeScript server combinations
+    run_pair "ts-server + go-client"   node "$TS_SERVER" -- "$GO_CLIENT"
+    run_pair "ts-server + rust-client" node "$TS_SERVER" -- "$RUST_CLIENT"
+    run_pair "ts-server + ts-client"   node "$TS_SERVER" -- node "$TS_CLIENT"
+    run_pair "ts-server + cpp-client"    node "$TS_SERVER" -- "$CPP_CLIENT"
+    run_pair "ts-server + python-client" node "$TS_SERVER" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+
+    # Python server combinations
+    run_pair "python-server + go-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "$GO_CLIENT"
+    run_pair "python-server + ts-client"     "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- node "$TS_CLIENT" lifecycle
+    run_pair "python-server + python-client" "${PYTHON[@]}" "$SCRIPT_DIR/python-server.py" -- "${PYTHON[@]}" "$SCRIPT_DIR/python-client.py"
+
+    # C++ server combinations
+    run_pair "cpp-server + go-client"   "$CPP_SERVER" -- "$GO_CLIENT"
+    run_pair "cpp-server + rust-client" "$CPP_SERVER" -- "$RUST_CLIENT"
+    run_pair "cpp-server + ts-client"   "$CPP_SERVER" -- node "$TS_CLIENT"
+    run_pair "cpp-server + cpp-client"  "$CPP_SERVER" -- "$CPP_CLIENT"
+fi
 
 echo ""
 echo "=== Results: ${PASSED} passed, ${FAILED} failed ==="

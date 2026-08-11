@@ -87,13 +87,15 @@ class Server:
                 else:
                     await call.finish()
         finally:
-            if abort_task is not None and not abort_task.done():
-                abort_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
+            if abort_task is not None:
+                if not abort_task.done():
+                    abort_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
                     await abort_task
-            if handler_task is not None and not handler_task.done():
-                handler_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError, CallError):
+            if handler_task is not None:
+                if not handler_task.done():
+                    handler_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
                     await handler_task
             if call is not None:
                 await call.aclose()
