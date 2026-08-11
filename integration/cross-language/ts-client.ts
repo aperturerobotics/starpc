@@ -10,6 +10,7 @@ import { combineUint8ArrayListTransform } from '../../srpc/array-list.js'
 import {
   runClientTest,
   runAbortControllerTest,
+  runRpcStreamTest,
 } from '../../echo/client-test.js'
 import { EchoerClient } from '../../echo/echo_srpc.pb.js'
 import type { OpenStreamFunc, PacketStream } from '../../srpc/stream.js'
@@ -91,9 +92,16 @@ function parseAddr(addr: string): { host: string; port: number } {
 async function main() {
   const args = process.argv.slice(2)
   const lifecycle = args.includes('lifecycle')
-  const addr = args.find((arg) => arg !== 'lifecycle')
+  const nested = args.includes('--nested') || args.includes('--nested-release')
+  const nestedRelease = args.includes('--nested-release')
+  const addr = args.find(
+    (arg) =>
+      arg !== 'lifecycle' && arg !== '--nested' && arg !== '--nested-release',
+  )
   if (!addr) {
-    console.error('usage: ts-client [lifecycle] <host:port>')
+    console.error(
+      'usage: ts-client [--nested] [--nested-release] [lifecycle] <host:port>',
+    )
     process.exit(1)
   }
 
@@ -115,6 +123,10 @@ async function main() {
   if (lifecycle) {
     console.log('Running abort controller test via TCP...')
     await runAbortControllerTest(client)
+  }
+  if (nested) {
+    console.log('Running RpcStream test via TCP...')
+    await runRpcStreamTest(client, nestedRelease)
   }
   console.log('All tests passed.')
 }
