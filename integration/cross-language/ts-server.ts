@@ -1,53 +1,9 @@
 import net from 'net'
-import { pipe } from 'it-pipe'
-import { pushable } from 'it-pushable'
-import type { Source } from 'it-stream-types'
 
 import { createMux, createHandler, Server } from '../../srpc/index.js'
-import {
-  parseLengthPrefixTransform,
-  prependLengthPrefixTransform,
-} from '../../srpc/packet.js'
-import { combineUint8ArrayListTransform } from '../../srpc/array-list.js'
 import { EchoerServer } from '../../echo/index.js'
 import { EchoerDefinition } from '../../echo/echo_srpc.pb.js'
-import type { PacketStream } from '../../srpc/stream.js'
-
-// tcpSocketToPacketStream wraps a Node.js TCP socket into a PacketStream.
-// Each Uint8Array in source/sink is one packet (no length prefix).
-function tcpSocketToPacketStream(socket: net.Socket): PacketStream {
-  // Source: read from socket, strip length prefix, yield individual packets.
-  const socketSource = async function* (): AsyncGenerator<Uint8Array> {
-    const source = pushable<Uint8Array>({ objectMode: true })
-    socket.on('data', (data: Buffer) => {
-      source.push(new Uint8Array(data))
-    })
-    socket.on('end', () => source.end())
-    socket.on('error', (err) => source.end(err))
-    socket.on('close', () => source.end())
-    yield* pipe(
-      source,
-      parseLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
-    )
-  }
-
-  return {
-    source: socketSource(),
-    sink: async (source: Source<Uint8Array>): Promise<void> => {
-      for await (const chunk of pipe(source, prependLengthPrefixTransform())) {
-        const data = chunk instanceof Uint8Array ? chunk : chunk.subarray()
-        await new Promise<void>((resolve, reject) => {
-          socket.write(data, (err) => {
-            if (err) reject(err)
-            else resolve()
-          })
-        })
-      }
-      socket.end()
-    },
-  }
-}
+import { tcpSocketToPacketStream } from './tcp-packet-stream.js'
 
 const mux = createMux()
 const server = new Server(mux.lookupMethod)

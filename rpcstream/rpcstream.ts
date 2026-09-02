@@ -9,6 +9,11 @@ import {
   HandleStreamFunc,
 } from '../srpc/stream.js'
 import { MessageStream } from '../srpc/message.js'
+import {
+  closeIterator,
+  sourceIterator,
+  TerminationGate,
+} from '../srpc/termination.js'
 
 // RpcStreamCaller is the RPC client function to start a RpcStream.
 export type RpcStreamCaller = (
@@ -57,7 +62,7 @@ export async function openRpcStream(
   }
 
   // build & return the data stream
-  return new RpcStream(packetTx, packetIt)
+  return new RpcStream(packetTx, packetIt, () => closeIterator(packetIt))
 }
 
 // buildRpcStreamOpenStream builds a OpenStream func with a RpcStream.
@@ -136,7 +141,9 @@ export async function* handleRpcStream(
   const packetTx: Pushable<RpcStreamPacket> = pushable({ objectMode: true })
 
   // start the handler
-  const rpcStream = new RpcStream(packetTx, packetRx)
+  const rpcStream = new RpcStream(packetTx, packetRx, () =>
+    closeIterator(packetRx),
+  )
   handler!(rpcStream)
     .catch((err) => packetTx.end(err))
     .then(() => packetTx.end())
@@ -163,60 +170,98 @@ export class RpcStream implements PacketStream {
     end: (err?: Error) => void
   }
 
+  private readonly _termination = new TerminationGate()
+  private readonly _cancelRpc: () => void
+
   // packetTx writes packets to the remote.
   // packetRx receives packets from the remote.
   constructor(
     packetTx: Pushable<Message<RpcStreamPacket>>,
     packetRx: AsyncIterator<Message<RpcStreamPacket>>,
+    cancelRpc: () => void = () => closeIterator(packetRx),
   ) {
     this._packetTx = packetTx
     this._packetRx = packetRx
+    this._cancelRpc = cancelRpc
     this.sink = this._createSink()
     this.source = this._createSource()
+  }
+
+  // close cleanly ends both directions of the stream.
+  public async close(): Promise<void> {
+    if (this._termination.terminate()) {
+      this._packetTx.end()
+      this._cancelRpc()
+    }
+  }
+
+  // abort ends both directions of the stream with err.
+  public abort(err: Error): void {
+    if (this._termination.terminate(err)) {
+      this._packetTx.end(err)
+      this._cancelRpc()
+    }
   }
 
   // _createSink initializes the sink field.
   private _createSink(): Sink<Source<Uint8Array>, Promise<void>> {
     return async (source: Source<Uint8Array>) => {
+      const iterator = sourceIterator(source)
       try {
-        for await (const arr of source) {
+        while (true) {
+          const next = await this._termination.next(iterator)
+          if ('terminated' in next) {
+            if (next.error) throw next.error
+            return
+          }
+          if ('error' in next) throw next.error
+          if (next.result.done) {
+            this._packetTx.end()
+            return
+          }
+          if (this._termination.terminated) return
           this._packetTx.push({
-            body: { case: 'data', value: arr },
+            body: { case: 'data', value: next.result.value },
           })
         }
-        this._packetTx.end()
       } catch (err) {
-        this._packetTx.end(err as Error)
+        const error = err instanceof Error ? err : new Error(String(err))
+        this.abort(error)
+        throw error
+      } finally {
+        closeIterator(iterator)
       }
     }
   }
 
   // _createSource initializes the source field.
   private _createSource(): AsyncGenerator<Uint8Array> {
-    return (async function* (
-      packetRx: AsyncIterator<Message<RpcStreamPacket>>,
-    ) {
-      while (true) {
-        const msgIt = await packetRx.next()
-        if (msgIt.done) {
-          return
+    const packetRx = this._packetRx
+    const termination = this._termination
+    return (async function* () {
+      try {
+        while (true) {
+          const next = await termination.next(packetRx)
+          if ('terminated' in next) {
+            if (next.error) throw next.error
+            return
+          }
+          if ('error' in next) throw next.error
+          if (next.result.done) return
+          const body = next.result.value?.body
+          if (!body) continue
+          switch (body.case) {
+            case 'ack':
+              if (body.value.error?.length) throw new Error(body.value.error)
+              break
+            case 'data':
+              yield body.value
+              break
+          }
         }
-        const value = msgIt.value
-        const body = value?.body
-        if (!body) {
-          continue
-        }
-        switch (body.case) {
-          case 'ack':
-            if (body.value.error?.length) {
-              throw new Error(body.value.error)
-            }
-            break
-          case 'data':
-            yield body.value
-            break
-        }
+      } finally {
+        closeIterator(packetRx)
       }
-    })(this._packetRx)
+    })()
   }
 }

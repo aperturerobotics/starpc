@@ -117,13 +117,29 @@ export class Client implements ProtoRpc {
     const stream = await openStreamFn()
     const call = new ClientRPC(rpcService, rpcMethod)
     const onAbort = () => {
+      if (call.isClosed) return
+      const error = new Error(ERR_RPC_ABORT)
       void call.writeCallCancel().catch(() => undefined)
-      void call.close(new Error(ERR_RPC_ABORT)).catch(() => undefined)
+      stream.abort(error)
+      void call.close(error).catch(() => undefined)
     }
     abortSignal?.addEventListener('abort', onAbort, { once: true })
-    pipe(stream, decodePacketSource, call, encodePacketSource, stream)
-      .catch((err) => call.close(err))
-      .then(() => call.close())
+    void pipe(stream, decodePacketSource, call, encodePacketSource, stream)
+      .then(
+        async () => {
+          if (call.isClosed instanceof Error) {
+            stream.abort(call.isClosed)
+            return
+          }
+          await stream.close()
+          await call.close()
+        },
+        async (err: unknown) => {
+          const error = err instanceof Error ? err : new Error(String(err))
+          stream.abort(error)
+          await call.close(error)
+        },
+      )
       .finally(() => {
         abortSignal?.removeEventListener('abort', onAbort)
       })

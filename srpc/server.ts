@@ -20,9 +20,7 @@ export class Server implements StreamHandler {
   public get rpcStreamHandler(): HandleStreamFunc {
     return async (stream: PacketStream) => {
       const rpc = this.startRpc()
-      return pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
-        .catch((err: Error) => rpc.close(err))
-        .then(() => rpc.close())
+      return runPacketStream(stream, rpc)
     }
   }
 
@@ -36,9 +34,27 @@ export class Server implements StreamHandler {
   // the stream has one Uint8Array per packet w/o length prefix.
   public handlePacketStream(stream: PacketStream): ServerRPC {
     const rpc = this.startRpc()
-    pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
-      .catch((err: Error) => rpc.close(err))
-      .then(() => rpc.close())
+    void runPacketStream(stream, rpc).catch(() => undefined)
     return rpc
+  }
+}
+
+async function runPacketStream(
+  stream: PacketStream,
+  rpc: ServerRPC,
+): Promise<void> {
+  try {
+    await pipe(stream, decodePacketSource, rpc, encodePacketSource, stream)
+    if (rpc.isClosed instanceof Error) {
+      stream.abort(rpc.isClosed)
+      throw rpc.isClosed
+    }
+    await stream.close()
+    await rpc.close()
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err))
+    stream.abort(error)
+    await rpc.close(error)
+    throw error
   }
 }

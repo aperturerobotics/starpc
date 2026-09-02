@@ -152,6 +152,8 @@ describe('CommonRPC', () => {
     const responseGate = deferred()
     const response = new Uint8Array([7])
     const client = new Client(async () => ({
+      close: async () => {},
+      abort: () => {},
       source: (async function* () {
         await responseGate.promise
         yield Packet.toBinary({
