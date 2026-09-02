@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { pipe } from 'it-pipe'
+import { pushable } from 'it-pushable'
+import type { Source } from 'it-stream-types'
+import type { Stream } from './stream-muxer.js'
+import { streamToPacketStream } from './stream.js'
 
 import {
   ChannelStream,
@@ -69,6 +73,133 @@ describe('StreamConn packet stream', () => {
 
     await serverDone
     expect(serverError).toBeUndefined()
+  })
+
+  it('settles a blocked packet source when closed', async () => {
+    const { clientConn, cleanup } = connectStreamConns({
+      handlePacketStream() {},
+    })
+
+    try {
+      const stream = await clientConn.openStream()
+      const pending = stream.source.next()
+
+      await stream.close()
+
+      await expect(pending).resolves.toEqual({ done: true, value: undefined })
+    } finally {
+      cleanup()
+    }
+  })
+
+  it('settles a blocked packet source when aborted', async () => {
+    const { clientConn, cleanup } = connectStreamConns({
+      handlePacketStream() {},
+    })
+
+    try {
+      const stream = await clientConn.openStream()
+      const pending = stream.source.next()
+      const error = new Error('stopped')
+
+      stream.abort(error)
+
+      await expect(pending).rejects.toBe(error)
+    } finally {
+      cleanup()
+    }
+  })
+
+  it('settles a blocked packet sink when closed', async () => {
+    const { clientConn, cleanup } = connectStreamConns({
+      handlePacketStream() {},
+    })
+
+    try {
+      const stream = await clientConn.openStream()
+      const input = pushable<Uint8Array>({ objectMode: true })
+      const pending = stream.sink(input)
+
+      await stream.close()
+
+      await expect(pending).resolves.toBeUndefined()
+    } finally {
+      cleanup()
+    }
+  })
+
+  it('settles a packet sink blocked in the underlying write', async () => {
+    const sinkStarted = Promise.withResolvers<void>()
+    const transport = {
+      source: (async function* () {})(),
+      sink: async (source: Source<Uint8Array>) => {
+        for await (const _chunk of source) {
+          sinkStarted.resolve()
+          await new Promise<void>(() => {})
+        }
+      },
+      close: vi.fn(async () => {}),
+      closeRead: vi.fn(async () => {}),
+      closeWrite: vi.fn(async () => {}),
+      abort: vi.fn(),
+    } satisfies Stream
+    const stream = streamToPacketStream(transport)
+    const input = pushable<Uint8Array>({ objectMode: true })
+    input.push(new Uint8Array([1]))
+    const pending = stream.sink(input)
+    await sinkStarted.promise
+
+    await stream.close()
+
+    await expect(pending).resolves.toBeUndefined()
+  })
+
+  it('rejects a blocked packet sink with the abort error', async () => {
+    const { clientConn, cleanup } = connectStreamConns({
+      handlePacketStream() {},
+    })
+
+    try {
+      const stream = await clientConn.openStream()
+      const input = pushable<Uint8Array>({ objectMode: true })
+      const pending = stream.sink(input)
+      const error = new Error('stopped')
+
+      stream.abort(error)
+
+      await expect(pending).rejects.toBe(error)
+    } finally {
+      cleanup()
+    }
+  })
+
+  it('does not write ready input after close', async () => {
+    const serverStream = Promise.withResolvers<PacketStream>()
+    const { clientConn, cleanup } = connectStreamConns({
+      handlePacketStream(stream) {
+        serverStream.resolve(stream)
+      },
+    })
+
+    try {
+      const stream = await clientConn.openStream()
+      const peer = await serverStream.promise
+      const input = pushable<Uint8Array>({ objectMode: true })
+      input.push(new Uint8Array([1]))
+
+      const pending = stream.sink(input)
+      await stream.close()
+
+      await expect(pending).resolves.toBeUndefined()
+      await expect(nextWithTimeout(peer.source, 'server eof')).resolves.toEqual(
+        {
+          done: true,
+          value: undefined,
+        },
+      )
+    } finally {
+      cleanup()
+    }
   })
 
   it('aborts the yamux stream when the packet source errors', async () => {

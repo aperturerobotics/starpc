@@ -1,12 +1,6 @@
 import net from 'net'
-import { pipe } from 'it-pipe'
 import { pushable } from 'it-pushable'
 import { Client } from '../../srpc/client.js'
-import {
-  parseLengthPrefixTransform,
-  prependLengthPrefixTransform,
-} from '../../srpc/packet.js'
-import { combineUint8ArrayListTransform } from '../../srpc/array-list.js'
 import {
   runClientTest,
   runAbortControllerTest,
@@ -14,41 +8,7 @@ import {
 } from '../../echo/client-test.js'
 import { EchoerClient } from '../../echo/echo_srpc.pb.js'
 import type { OpenStreamFunc, PacketStream } from '../../srpc/stream.js'
-import type { Source } from 'it-stream-types'
-
-// tcpSocketToPacketStream wraps a Node.js TCP socket into a PacketStream.
-function tcpSocketToPacketStream(socket: net.Socket): PacketStream {
-  const socketSource = async function* (): AsyncGenerator<Uint8Array> {
-    const source = pushable<Uint8Array>({ objectMode: true })
-    socket.on('data', (data: Buffer) => {
-      source.push(new Uint8Array(data))
-    })
-    socket.on('end', () => source.end())
-    socket.on('error', (err) => source.end(err))
-    socket.on('close', () => source.end())
-    yield* pipe(
-      source,
-      parseLengthPrefixTransform(),
-      combineUint8ArrayListTransform(),
-    )
-  }
-
-  return {
-    source: socketSource(),
-    sink: async (source: Source<Uint8Array>): Promise<void> => {
-      for await (const chunk of pipe(source, prependLengthPrefixTransform())) {
-        const data = chunk instanceof Uint8Array ? chunk : chunk.subarray()
-        await new Promise<void>((resolve, reject) => {
-          socket.write(data, (err) => {
-            if (err) reject(err)
-            else resolve()
-          })
-        })
-      }
-      socket.end()
-    },
-  }
-}
+import { tcpSocketToPacketStream } from './tcp-packet-stream.js'
 
 async function runEchoBidiStreamTest(client: Client): Promise<void> {
   const request = pushable<{ body: string }>({ objectMode: true })

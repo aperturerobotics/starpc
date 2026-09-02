@@ -1,5 +1,7 @@
 import { describe, it, beforeEach, expect, vi } from 'vitest'
 import { pipe } from 'it-pipe'
+import { pushable } from 'it-pushable'
+import type { Source } from 'it-stream-types'
 import {
   createHandler,
   createMux,
@@ -175,6 +177,8 @@ describe('srpc server', () => {
     const server = new Server(mux.lookupMethod)
     const firstResponse = new Promise<Packet>((resolve, reject) => {
       server.handlePacketStream({
+        close: async () => {},
+        abort: () => {},
         source: (async function* () {
           yield Packet.toBinary({
             body: {
@@ -340,6 +344,52 @@ describe('srpc server', () => {
     )
     controller.abort()
     await Promise.resolve()
+  })
+
+  it('closes the packet stream when the server pipeline completes', async () => {
+    const server = new Server(createMux().lookupMethod)
+    const close = vi.fn(async () => {})
+    const source = pushable<Uint8Array>({ objectMode: true })
+    const stream = {
+      close,
+      abort: vi.fn(),
+      source,
+      sink: async (output: Source<Uint8Array>) => {
+        for await (const _packet of output) {
+          // Drain the response pipeline.
+        }
+      },
+    }
+    const rpc = server.handlePacketStream(stream)
+
+    await rpc.close()
+    source.end()
+
+    await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+    expect(stream.abort).not.toHaveBeenCalled()
+  })
+
+  it('aborts the packet stream when the server pipeline fails', async () => {
+    const server = new Server(createMux().lookupMethod)
+    const error = new Error('input failed')
+    const abort = vi.fn()
+    const source = pushable<Uint8Array>({ objectMode: true })
+    const stream = {
+      close: vi.fn(async () => {}),
+      abort,
+      source,
+      sink: async (output: Source<Uint8Array>) => {
+        for await (const _packet of output) {
+          // Drain the response pipeline.
+        }
+      },
+    }
+
+    server.handlePacketStream(stream)
+    source.end(error)
+
+    await vi.waitFor(() => expect(abort).toHaveBeenCalledWith(error))
+    expect(stream.close).not.toHaveBeenCalled()
   })
 
   it('tears down passive channel close state', async () => {
