@@ -1,8 +1,8 @@
 [project]
 name = "starpc"
 version = "0.52.0"
-requires-python = ">=3.11,<3.12"
-dependencies = ["protobuf==6.33.5"]
+requires-python = ">=3.14,<3.15"
+dependencies = ["protobuf==7.36.1"]
 readme = "python/README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -12,9 +12,9 @@ members = ["python/plugin"]
 
 [dependency-groups]
 dev = [
-    "mypy==1.17.1",
-    "ruff==0.16.2",
-    "types-protobuf==7.34.1.20260518",
+    "mypy==2.3.1",
+    "ruff==0.16.6",
+    "types-protobuf==7.35.1.20260827",
 ]
 
 [build-system]
