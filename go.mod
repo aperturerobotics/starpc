@@ -3,8 +3,8 @@ module github.com/aperturerobotics/starpc
 go 1.25.0
 
 require (
-	github.com/aperturerobotics/common v0.35.1-0.20260808123156-c77af26f63bd // latest
-	github.com/aperturerobotics/protobuf-go-lite v0.16.0 // latest
+	github.com/aperturerobotics/common v0.35.3 // latest
+	github.com/aperturerobotics/protobuf-go-lite v0.18.0 // latest
 	github.com/aperturerobotics/util v1.34.9 // latest
 )
 
@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/pkg/errors v0.9.1 // latest
-	github.com/sirupsen/logrus v1.9.5-0.20260629095817-a23d315dfebb // latest
+	github.com/sirupsen/logrus v1.10.2 // latest
 )
 
 require github.com/libp2p/go-yamux/v5 v5.1.0

@@ -1,8 +1,8 @@
 [project]
 name = "starpc-python-plugin"
 version = "0.52.0"
-requires-python = ">=3.11,<3.12"
-dependencies = ["protobuf==6.33.5", "ruff==0.16.2"]
+requires-python = ">=3.14,<3.15"
+dependencies = ["protobuf==7.36.1", "ruff==0.16.6"]
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
