@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <string>
 
@@ -10,30 +11,33 @@
 namespace starpc {
 
 // MsgStreamRw is the read-write interface for MsgStream.
-// Matches Go MsgStreamRw interface in msg-stream.go
 class MsgStreamRw {
 public:
   virtual ~MsgStreamRw() = default;
+
+  // RemoteErrorMessage returns the peer's retained error text, if any.
+  virtual std::string RemoteErrorMessage() const { return {}; }
 
   // ReadOne reads a single message and returns.
   // Returns EOF_ if the stream ended.
   virtual Error ReadOne(std::string *out) = 0;
 
   // WriteCallData writes a call data packet.
-  virtual Error WriteCallData(const std::string &data, bool data_is_zero,
-                              bool complete, Error err) = 0;
+  virtual Error WriteCallData(const std::string &data, bool data_is_zero, bool complete,
+                              Error err) = 0;
 
   // WriteCallCancel writes a call cancel (close) packet.
   virtual Error WriteCallCancel() = 0;
 };
 
 // MsgStream implements the stream interface passed to implementations.
-// Matches Go MsgStream struct in msg-stream.go
 class MsgStream : public Stream {
 public:
-  // Constructor matching NewMsgStream in Go
-  MsgStream(MsgStreamRw *rw, std::function<void()> close_cb)
-      : rw_(rw), close_cb_(std::move(close_cb)) {}
+  MsgStream(MsgStreamRw *rw, std::function<void()> close_cb, std::stop_token stop = {})
+      : rw_(rw), close_cb_(std::move(close_cb)), stop_(stop) {}
+
+  std::stop_token StopToken() const override { return stop_; }
+  std::string RemoteErrorMessage() const override { return rw_->RemoteErrorMessage(); }
 
   // MsgSend sends the message to the remote.
   Error MsgSend(const Message &msg) override {
@@ -58,29 +62,30 @@ public:
   }
 
   // CloseSend signals to the remote that we will no longer send any messages.
-  Error CloseSend() override {
-    return rw_->WriteCallData("", false, true, Error::OK);
-  }
+  Error CloseSend() override { return rw_->WriteCallData("", false, true, Error::OK); }
 
   // Close closes the stream.
   Error Close() override {
-    Error err = rw_->WriteCallCancel();
+    if (closed_.exchange(true))
+      return Error::OK;
     if (close_cb_) {
       close_cb_();
+      return Error::OK;
     }
-    return err;
+    return rw_->WriteCallCancel();
   }
 
 private:
   MsgStreamRw *rw_;
   std::function<void()> close_cb_;
+  std::stop_token stop_;
+  std::atomic<bool> closed_{false};
 };
 
 // NewMsgStream constructs a new Stream with a MsgStreamRw.
-// Matches Go NewMsgStream function in msg-stream.go
-inline std::unique_ptr<MsgStream> NewMsgStream(MsgStreamRw *rw,
-                                               std::function<void()> close_cb) {
-  return std::make_unique<MsgStream>(rw, std::move(close_cb));
+inline std::unique_ptr<MsgStream> NewMsgStream(MsgStreamRw *rw, std::function<void()> close_cb,
+                                               std::stop_token stop = {}) {
+  return std::make_unique<MsgStream>(rw, std::move(close_cb), stop);
 }
 
 } // namespace starpc

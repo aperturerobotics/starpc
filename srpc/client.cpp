@@ -3,99 +3,71 @@
 #include "client.hpp"
 
 namespace starpc {
+namespace {
 
-Error ClientImpl::ExecCall(const std::string &service,
-                           const std::string &method, const Message &in,
+// ClientStream retains the RPC until transport callbacks have stopped. The
+// transport and stream share ClientRPC; destroying the writer joins its readers.
+class ClientStream final : public Stream {
+public:
+  ClientStream(std::shared_ptr<ClientRPC> rpc, std::unique_ptr<PacketWriter> writer)
+      : rpc_(std::move(rpc)), writer_(std::move(writer)),
+        messages_(rpc_.get(), [this] { rpc_->Close(); }, rpc_->StopToken()) {}
+  ~ClientStream() override { Close(); }
+
+  Error MsgSend(const Message &message) override { return messages_.MsgSend(message); }
+  Error MsgRecv(Message *message) override { return messages_.MsgRecv(message); }
+  Error CloseSend() override { return messages_.CloseSend(); }
+  std::stop_token StopToken() const override { return rpc_->StopToken(); }
+  std::string RemoteErrorMessage() const override { return rpc_->RemoteErrorMessage(); }
+  Error Close() override {
+    rpc_->Close();
+    return Error::OK;
+  }
+
+private:
+  std::shared_ptr<ClientRPC> rpc_;
+  std::unique_ptr<PacketWriter> writer_;
+  MsgStream messages_;
+};
+
+} // namespace
+
+Error ClientImpl::ExecCall(const std::string &service, const std::string &method, const Message &in,
                            Message *out) {
-  std::string first_msg;
-  if (!in.SerializeToString(&first_msg)) {
-    return Error::InvalidMessage;
-  }
-
-  auto client_rpc = NewClientRPC(service, method);
-
-  // Open the stream with handlers
-  auto [writer, err] = open_stream_(
-      [&client_rpc](const std::string &data) -> Error {
-        return client_rpc->HandlePacketData(data);
-      },
-      [&client_rpc](Error close_err) {
-        client_rpc->HandleStreamClose(close_err);
-      });
-
-  if (err != Error::OK) {
+  auto [stream, err] = NewStream(service, method, &in);
+  if (err != Error::OK)
     return err;
-  }
-
-  err = client_rpc->Start(writer.get(), true, first_msg);
-  if (err != Error::OK) {
-    client_rpc->Close();
-    return err;
-  }
-
-  std::string msg;
-  err = client_rpc->ReadOne(&msg);
-  if (err != Error::OK) {
-    client_rpc->Close();
-    return err;
-  }
-
-  if (!out->ParseFromString(msg)) {
-    client_rpc->Close();
-    return Error::InvalidMessage;
-  }
-
-  client_rpc->Close();
-  return Error::OK;
+  return stream->MsgRecv(out);
 }
 
-std::pair<std::unique_ptr<Stream>, Error>
-ClientImpl::NewStream(const std::string &service, const std::string &method,
-                      const Message *first_msg) {
-  std::string first_msg_data;
-  if (first_msg != nullptr) {
-    if (!first_msg->SerializeToString(&first_msg_data)) {
-      return {nullptr, Error::InvalidMessage};
-    }
+std::pair<std::unique_ptr<Stream>, Error> ClientImpl::NewStream(const std::string &service,
+                                                                const std::string &method,
+                                                                const Message *first_msg) {
+  if (service.empty())
+    return {nullptr, Error::EmptyServiceID};
+  if (method.empty())
+    return {nullptr, Error::EmptyMethodID};
+  std::string first_data;
+  if (first_msg != nullptr && !first_msg->SerializeToString(&first_data)) {
+    return {nullptr, Error::InvalidMessage};
   }
 
-  auto client_rpc = std::make_shared<ClientRPC>(service, method);
-
-  // Open the stream with handlers
-  auto [writer, err] = open_stream_(
-      [client_rpc](const std::string &data) -> Error {
-        return client_rpc->HandlePacketData(data);
-      },
-      [client_rpc](Error close_err) {
-        client_rpc->HandleStreamClose(close_err);
-      });
-
+  // Transport callbacks share the call, without referring to this stack frame.
+  auto rpc = std::make_shared<ClientRPC>(service, method);
+  auto [writer, err] =
+      open_stream_([rpc](const std::string &data) { return rpc->HandlePacketData(data); },
+                   [rpc](Error closed) { rpc->HandleStreamClose(closed); });
   if (err != Error::OK) {
+    if (writer)
+      (void)writer->Close();
     return {nullptr, err};
   }
-
-  err = client_rpc->Start(writer.get(), first_msg != nullptr, first_msg_data);
+  err = rpc->Start(writer.get(), first_msg != nullptr, first_data);
   if (err != Error::OK) {
+    rpc->Close();
     return {nullptr, err};
   }
-
-  // Create MsgStream with close callback
-  // Note: We need to capture writer to extend its lifetime
-  auto writer_ptr = writer.release();
-  auto stream =
-      std::make_unique<MsgStream>(client_rpc.get(), [client_rpc, writer_ptr]() {
-        client_rpc->Cancel();
-        if (writer_ptr) {
-          writer_ptr->Close();
-          delete writer_ptr;
-        }
-      });
-
-  // We need to keep client_rpc alive - in a real implementation
-  // we'd use a mechanism to tie its lifetime to the stream.
-  // For now, the shared_ptr in the lambda captures keeps it alive.
-
-  return {std::move(stream), Error::OK};
+  return {std::make_unique<ClientStream>(std::move(rpc), std::move(writer)), Error::OK};
 }
 
 } // namespace starpc

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <atomic>
+#include "errors.hpp"
+#include "writer.hpp"
+
 #include <condition_variable>
 #include <deque>
 #include <mutex>
+#include <stop_token>
 #include <string>
-
-#include "errors.hpp"
-#include "writer.hpp"
 
 namespace srpc {
 class CallData;
@@ -15,95 +15,64 @@ class CallData;
 
 namespace starpc {
 
-// CommonRPC contains common logic between server/client RPC.
-// Matches Go commonRPC struct in common-rpc.go
+// CommonRPC coordinates message delivery, half-close, and cancellation for one call.
+// Its packet writer must outlive the call and interrupt blocked writes when closed.
 class CommonRPC {
 public:
   CommonRPC();
   virtual ~CommonRPC();
 
-  // Init initializes the CommonRPC (matches initCommonRPC in Go).
-  void Init();
-
-  // Cancel cancels the RPC context.
+  // Cancel interrupts reads and transport writes. Repeated cancellation is safe.
   void Cancel();
-
-  // IsCanceled returns true if the RPC has been canceled.
   bool IsCanceled() const;
 
-  // GetService returns the service name.
-  const std::string &GetService() const { return service_; }
+  // StopToken lets handlers cancel work outside MsgRecv when the call ends.
+  std::stop_token StopToken() const { return stop_source_.get_token(); }
 
-  // GetMethod returns the method name.
+  // GetService and GetMethod remain stable after call startup.
+  const std::string &GetService() const { return service_; }
   const std::string &GetMethod() const { return method_; }
 
-  // ReadOne reads a single message and returns.
-  // Returns EOF_ if the stream ended without a packet.
-  // Matches Go ReadOne in common-rpc.go
+  // RemoteErrorMessage retains the peer's diagnostic when ReadOne returns RemoteError.
+  std::string RemoteErrorMessage() const;
+
+  // ReadOne drains messages preceding a normal completion. Local cancellation
+  // interrupts immediately; an abrupt peer disconnect is not a successful EOF.
   Error ReadOne(std::string *out);
-
-  // WriteCallData writes a call data packet.
-  // Matches Go WriteCallData in common-rpc.go
-  Error WriteCallData(const std::string &data, bool data_is_zero, bool complete,
-                      Error err);
-
-  // HandleStreamClose handles the incoming stream closing with optional error.
-  // Matches Go HandleStreamClose in common-rpc.go
+  Error WriteCallData(const std::string &data, bool data_is_zero, bool complete, Error err);
   void HandleStreamClose(Error close_err);
-
-  // HandleCallCancel handles the call cancel packet.
-  // Matches Go HandleCallCancel in common-rpc.go
   Error HandleCallCancel();
-
-  // HandleCallData handles the call data packet.
-  // Matches Go HandleCallData in common-rpc.go
   Error HandleCallData(const srpc::CallData &pkt);
-
-  // WriteCallCancel writes a call cancel packet.
-  // Matches Go WriteCallCancel in common-rpc.go
   Error WriteCallCancel();
 
-  // WriteCallCancelLocked is the same as WriteCallCancel but assumes mtx_ is
-  // held.
-  Error WriteCallCancelLocked();
-
 protected:
-  // CloseLocked releases resources held by the RPC.
-  // Must be called with mutex held.
-  // Matches Go closeLocked in common-rpc.go
-  void CloseLocked();
+  // Finish publishes the handler's terminal verdict before closing the writer.
+  void Finish(Error err);
 
-  // SetWriter sets the packet writer.
-  void SetWriter(PacketWriter *writer);
+  // CloseWriter releases the transport outside the state lock, once per call.
+  void CloseWriter();
 
-  // Mutex and condition variable for synchronization (replaces Go broadcast)
-  mutable std::mutex mtx_;
-  std::condition_variable cv_;
-
-  // Service and method names
+  // state_mutex_ guards call state. write_mutex_ orders outgoing packets and
+  // may precede state_mutex_; transport close never waits for write_mutex_.
+  mutable std::mutex state_mutex_;
+  std::mutex write_mutex_;
+  std::condition_variable state_changed_;
   std::string service_;
   std::string method_;
 
-  // localCompleted tracks if we have sent a completion or cancel locally.
-  // Note: not guarded by mutex (atomic)
-  std::atomic<bool> local_completed_{false};
-
-  // Writer to write messages to
+  // writer_ is borrowed until the call and transport callbacks have stopped.
   PacketWriter *writer_ = nullptr;
-
-  // dataQueue contains incoming data packets.
-  // Note: packets may be empty
-  std::deque<std::string> data_queue_;
-
-  // dataClosed is a flag set after dataQueue is closed.
-  // Controlled by HandlePacket.
+  bool writer_closed_ = false;
+  bool local_completed_ = false;
+  bool local_completing_ = false;
+  bool canceled_ = false;
   bool data_closed_ = false;
-
-  // remoteErr is an error set by the remote.
-  Error remote_err_ = Error::OK;
-
-  // canceled tracks if the context has been canceled
-  std::atomic<bool> canceled_{false};
+  bool remote_completed_ = false;
+  Error remote_error_ = Error::OK;
+  std::string remote_error_message_;
+  std::deque<std::string> data_queue_;
+  size_t queued_bytes_ = 0;
+  std::stop_source stop_source_;
 };
 
 } // namespace starpc

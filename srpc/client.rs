@@ -109,6 +109,12 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
             let _ = rpc_clone.handle_stream_close(None).await;
         });
 
+        // Every return path and cancellation drops the receive task and its RPC.
+        let _cleanup = scopeguard::guard(packet_handler, |handler| {
+            ctx.cancel();
+            handler.abort();
+        });
+
         // Send close to indicate we're done sending.
         rpc.close_send().await?;
 
@@ -122,9 +128,6 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
 
         // Close the RPC to signal completion.
         let _ = rpc.close().await;
-
-        // Clean up the packet handler.
-        packet_handler.abort();
 
         Ok(output)
     }
@@ -178,6 +181,15 @@ struct ClientStream {
     packet_handler: tokio::sync::Mutex<Option<tokio::task::JoinHandle<()>>>,
 }
 
+impl Drop for ClientStream {
+    fn drop(&mut self) {
+        self.rpc.context().cancel();
+        if let Some(handler) = self.packet_handler.get_mut().take() {
+            handler.abort();
+        }
+    }
+}
+
 #[async_trait]
 impl Stream for ClientStream {
     fn context(&self) -> &Context {
@@ -201,6 +213,7 @@ impl Stream for ClientStream {
         // Abort the background packet handler to ensure cleanup.
         if let Some(handle) = self.packet_handler.lock().await.take() {
             handle.abort();
+            let _ = handle.await;
         }
         Ok(())
     }
@@ -340,6 +353,9 @@ mod tests {
             .unwrap();
 
         assert!(!stream.context().is_cancelled());
+        let context = stream.context().clone();
+        drop(stream);
+        assert!(context.is_cancelled());
     }
 
     #[tokio::test]
@@ -356,5 +372,30 @@ mod tests {
         // Second open should fail
         let result2 = opener.open_stream().await;
         assert!(matches!(result2, Err(Error::StreamClosed)));
+    }
+
+    #[tokio::test]
+    async fn malformed_unary_response_releases_receiver() {
+        #[derive(Clone, PartialEq, prost::Message)]
+        struct Reply {
+            #[prost(string, tag = "1")]
+            text: String,
+        }
+
+        let (opener, sender) = MockOpener::new();
+        let client = SrpcClient::new(opener);
+        sender
+            .send(crate::packet::new_call_data_full(
+                Some(Bytes::from_static(&[0xff])),
+                false,
+                None,
+            ))
+            .await
+            .unwrap();
+        let result: Result<Reply> = client.exec_call("test", "call", &Reply::default()).await;
+        assert!(result.is_err());
+        tokio::time::timeout(std::time::Duration::from_secs(2), sender.closed())
+            .await
+            .expect("failed unary call retained its packet receiver");
     }
 }

@@ -8,10 +8,14 @@ import (
 	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 )
 
+// generator writes the C++ client and handler declarations for one proto file.
 type generator struct {
-	file    *descriptorpb.FileDescriptorProto
+	// file contains the services being generated.
+	file *descriptorpb.FileDescriptorProto
+	// fileMap resolves imported descriptors.
 	fileMap map[string]*descriptorpb.FileDescriptorProto
-	buf     strings.Builder
+	// buf accumulates the generated file.
+	buf strings.Builder
 }
 
 func (g *generator) P(args ...any) {
@@ -393,6 +397,8 @@ func (g *generator) generateStreamTypes(service *descriptorpb.ServiceDescriptorP
 
 	g.P("  starpc::Error CloseSend() { return strm_->CloseSend(); }")
 	g.P("  starpc::Error Close() { return strm_->Close(); }")
+	g.P("  std::stop_token StopToken() const { return strm_->StopToken(); }")
+	g.P("  std::string RemoteErrorMessage() const { return strm_->RemoteErrorMessage(); }")
 	g.P()
 	g.P(" private:")
 	g.P("  std::unique_ptr<starpc::Stream> strm_;")
@@ -404,6 +410,9 @@ func (g *generator) generateStreamTypes(service *descriptorpb.ServiceDescriptorP
 	g.P("class ", g.ServerStreamIface(service, method), " {")
 	g.P(" public:")
 	g.P("  explicit ", g.ServerStreamIface(service, method), "(starpc::Stream* strm) : strm_(strm) {}")
+	g.P("  std::stop_token StopToken() const { return strm_->StopToken(); }")
+	g.P("  starpc::Error Close() { return strm_->Close(); }")
+	g.P("  starpc::Error CloseSend() { return strm_->CloseSend(); }")
 	g.P()
 
 	if method.GetServerStreaming() {

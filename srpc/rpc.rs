@@ -118,6 +118,9 @@ impl CommonRpc {
     /// This matches the Go implementation's `Wait(ctx context.Context) error`.
     pub async fn wait(&self) -> Result<()> {
         loop {
+            // Capture the notification before reading state so a concurrent
+            // completion cannot fall between the check and the wait.
+            let changed = self.notify.notified();
             // Check current state
             {
                 let state = self.state.lock().await;
@@ -138,7 +141,7 @@ impl CommonRpc {
 
             // Wait for notification or cancellation
             tokio::select! {
-                _ = self.notify.notified() => continue,
+                _ = changed => continue,
                 _ = self.ctx.cancelled() => return Err(Error::Cancelled),
             }
         }
@@ -150,6 +153,8 @@ impl CommonRpc {
     /// This matches the Go implementation which returns `io.EOF`.
     pub async fn read_one(&self) -> Result<Bytes> {
         loop {
+            // notify_waiters preserves notifications from this future's creation.
+            let changed = self.notify.notified();
             // Try to get a message from the queue first, before checking cancellation.
             // This ensures we drain any pending messages even if the context is cancelled.
             {
@@ -185,7 +190,7 @@ impl CommonRpc {
 
             // Wait for notification or cancellation
             tokio::select! {
-                _ = self.notify.notified() => continue,
+                _ = changed => continue,
                 _ = self.ctx.cancelled() => {
                     // Loop will handle the cancellation
                     continue;
@@ -278,7 +283,8 @@ impl CommonRpc {
 
     /// Handles a CallCancel packet.
     pub async fn handle_call_cancel(&self) -> Result<()> {
-        self.handle_stream_close(Some("cancelled".to_string())).await
+        self.handle_stream_close(Some("cancelled".to_string()))
+            .await
     }
 
     /// Handles stream close from the transport.
@@ -440,9 +446,7 @@ impl Stream for ClientRpc {
     }
 
     async fn send_bytes(&self, data: Bytes) -> Result<()> {
-        self.common
-            .write_call_data(Some(data), false, None)
-            .await
+        self.common.write_call_data(Some(data), false, None).await
     }
 
     async fn recv_bytes(&self) -> Result<Bytes> {
@@ -536,9 +540,7 @@ impl Stream for ServerRpc {
     }
 
     async fn send_bytes(&self, data: Bytes) -> Result<()> {
-        self.common
-            .write_call_data(Some(data), false, None)
-            .await
+        self.common.write_call_data(Some(data), false, None).await
     }
 
     async fn recv_bytes(&self) -> Result<Bytes> {
@@ -617,7 +619,12 @@ mod tests {
     async fn test_client_rpc_start() {
         let writer = Arc::new(MockWriter::new());
         let ctx = Context::new();
-        let rpc = ClientRpc::new(ctx, "test.Service".into(), "TestMethod".into(), writer.clone());
+        let rpc = ClientRpc::new(
+            ctx,
+            "test.Service".into(),
+            "TestMethod".into(),
+            writer.clone(),
+        );
 
         rpc.start(Some(Bytes::from(vec![1, 2, 3]))).await.unwrap();
 
@@ -650,7 +657,12 @@ mod tests {
     async fn test_client_rpc_close_sends_cancel() {
         let writer = Arc::new(MockWriter::new());
         let ctx = Context::new();
-        let rpc = ClientRpc::new(ctx, "test.Service".into(), "TestMethod".into(), writer.clone());
+        let rpc = ClientRpc::new(
+            ctx,
+            "test.Service".into(),
+            "TestMethod".into(),
+            writer.clone(),
+        );
 
         rpc.start(None).await.unwrap();
         rpc.close().await;
@@ -754,7 +766,9 @@ mod tests {
         rpc.write_call_data(None, true, None).await.unwrap();
 
         // Trying to send more data should fail
-        let result = rpc.write_call_data(Some(Bytes::from(vec![1])), false, None).await;
+        let result = rpc
+            .write_call_data(Some(Bytes::from(vec![1])), false, None)
+            .await;
         assert!(matches!(result, Err(Error::Completed)));
     }
 

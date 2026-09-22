@@ -11,10 +11,8 @@ type ClientRPC struct {
 	commonRPC
 }
 
-// NewClientRPC constructs a new ClientRPC session and writes CallStart.
-// the writer will be closed when the ClientRPC completes.
-// service and method must be specified.
-// must call Start after creating the RPC object.
+// NewClientRPC constructs a call with the given service and method.
+// Start attaches its transport; Close releases it.
 func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 	rpc := &ClientRPC{}
 	initCommonRPC(ctx, &rpc.commonRPC)
@@ -23,39 +21,42 @@ func NewClientRPC(ctx context.Context, service, method string) *ClientRPC {
 	return rpc
 }
 
-// Start sets the writer and writes the MsgSend message.
-// must only be called once!
+// Start attaches one writer and sends CallStart without holding the state lock.
 func (r *ClientRPC) Start(writer PacketWriter, writeFirstMsg bool, firstMsg []byte) error {
+	// Validate the call before transferring the transport to it.
 	if writer == nil {
 		return ErrNilWriter
 	}
-
-	if err := r.ctx.Err(); err != nil {
-		r.cancelContext()
-		_ = writer.Close()
-		return context.Canceled
+	if !writeFirstMsg {
+		firstMsg = nil
+	}
+	pkt := NewCallStartPacket(r.service, r.method, firstMsg, writeFirstMsg && len(firstMsg) == 0)
+	if err := pkt.Validate(); err != nil {
+		return err
 	}
 
-	var firstMsgEmpty bool
-	var err error
+	// Publish the writer before transport callbacks can deliver a response.
 	locked := r.bcast.Lock()
+	if r.writer != nil {
+		locked.Unlock()
+		return ErrCompleted
+	}
 	r.writer = writer
-
-	if writeFirstMsg {
-		firstMsgEmpty = len(firstMsg) == 0
-	}
-
-	pkt := NewCallStartPacket(r.service, r.method, firstMsg, firstMsgEmpty)
-	err = writer.WritePacket(pkt)
-	if err != nil {
-		r.cancelContext()
-		_ = writer.Close()
-	}
-
 	locked.Broadcast()
 	locked.Unlock()
 
-	return err
+	// Cancellation closes the transport even when its first write is blocked.
+	stop := context.AfterFunc(r.ctx, r.Close)
+	defer stop()
+	if err := r.ctx.Err(); err != nil {
+		r.Close()
+		return err
+	}
+	if err := writer.WritePacket(pkt); err != nil {
+		r.Close()
+		return err
+	}
+	return nil
 }
 
 // HandlePacketData handles an incoming unparsed message packet.
@@ -95,20 +96,18 @@ func (r *ClientRPC) HandlePacket(msg *Packet) error {
 
 // HandleCallStart handles the call start packet.
 func (r *ClientRPC) HandleCallStart(pkt *CallStart) error {
-	// server-to-client calls not supported
 	return errors.Wrap(ErrUnrecognizedPacket, "call start packet unexpected")
 }
 
 // Close releases any resources held by the ClientRPC.
 func (r *ClientRPC) Close() {
+	// Settle the call before releasing a transport that can call back into it.
 	locked := r.bcast.Lock()
-	var writer PacketWriter
-	// call did not start yet if writer is nil.
-	if r.writer != nil {
-		_ = r.WriteCallCancel()
-		writer = r.closeLocked(&locked)
-	}
+	writer := r.closeLocked(&locked)
 	locked.Unlock()
+
+	// Closing the transport interrupts pending writes; sending cancellation first
+	// could itself block forever behind a peer that stopped reading.
 	if writer != nil {
 		_ = writer.Close()
 	}

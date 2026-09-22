@@ -5,151 +5,135 @@
 #include "srpc/rpcproto.pb.h"
 #include "srpc/server-rpc.hpp"
 
+#include <system_error>
+#include <thread>
+
 namespace rpcstream {
+namespace {
 
-RpcStreamWriter::RpcStreamWriter(std::shared_ptr<RpcStream> stream)
-    : stream_(std::move(stream)) {}
-
-starpc::Error RpcStreamWriter::WritePacket(const srpc::Packet &pkt) {
-  std::string data;
-  if (!pkt.SerializeToString(&data)) {
-    return starpc::Error::InvalidMessage;
+// ReadingWriter keeps transport cleanup outside the receive callback; only
+// destruction joins the thread, so Close is safe from that thread's callbacks.
+class ReadingWriter final : public starpc::PacketWriter {
+public:
+  ReadingWriter(std::shared_ptr<RpcStream> stream, starpc::PacketDataHandler handler,
+                starpc::CloseHandler closed)
+      : stream_(std::move(stream)), writer_(stream_),
+        reader_(
+            [this, handler = std::move(handler), closed = std::move(closed)](std::stop_token stop) {
+              std::stop_callback cancel(stop, [this] { stream_->Close(); });
+              ReadPump(stream_, handler, closed);
+            }) {}
+  ~ReadingWriter() override {
+    Close();
+    reader_.join();
   }
+  starpc::Error WritePacket(const srpc::Packet &packet) override {
+    return writer_.WritePacket(packet);
+  }
+  starpc::Error Close() override { return stream_->Close(); }
 
-  RpcStreamPacket rpc_pkt;
-  rpc_pkt.set_data(std::move(data));
-  return stream_->Send(rpc_pkt);
+private:
+  std::shared_ptr<RpcStream> stream_;
+  RpcStreamWriter writer_;
+  std::jthread reader_;
+};
+
+} // namespace
+
+RpcStreamWriter::RpcStreamWriter(std::shared_ptr<RpcStream> stream) : stream_(std::move(stream)) {}
+
+starpc::Error RpcStreamWriter::WritePacket(const srpc::Packet &packet) {
+  RpcStreamPacket outgoing;
+  if (!packet.SerializeToString(outgoing.mutable_data()))
+    return starpc::Error::InvalidMessage;
+  return stream_->Send(outgoing);
 }
 
 starpc::Error RpcStreamWriter::Close() { return stream_->CloseSend(); }
 
-starpc::Error ReadToHandler(RpcStream *stream,
-                            starpc::PacketDataHandler handler) {
+starpc::Error ReadToHandler(RpcStream *stream, starpc::PacketDataHandler handler) {
   while (true) {
-    RpcStreamPacket pkt;
-    starpc::Error err = stream->Recv(&pkt);
-    if (err != starpc::Error::OK) {
-      return err;
-    }
-
-    if (pkt.has_data()) {
-      err = handler(pkt.data());
-      if (err != starpc::Error::OK) {
-        return err;
-      }
-    }
-  }
-}
-
-void ReadPump(std::shared_ptr<RpcStream> stream,
-              starpc::PacketDataHandler handler,
-              starpc::CloseHandler close_handler) {
-  starpc::Error err = ReadToHandler(stream.get(), handler);
-  if (err == starpc::Error::EOF_) {
-    err = starpc::Error::OK;
-  }
-  close_handler(err);
-}
-
-starpc::Error OpenRpcStream(RpcStream *stream, const std::string &component_id,
-                            bool wait_ack) {
-  RpcStreamPacket init_pkt;
-  init_pkt.mutable_init()->set_component_id(component_id);
-  starpc::Error err = stream->Send(init_pkt);
-  if (err != starpc::Error::OK) {
-    return err;
-  }
-
-  if (wait_ack) {
-    RpcStreamPacket ack_pkt;
-    err = stream->Recv(&ack_pkt);
-    if (err != starpc::Error::OK) {
-      return err;
-    }
-
-    if (!ack_pkt.has_ack()) {
+    RpcStreamPacket packet;
+    const auto received = stream->Recv(&packet);
+    if (received != starpc::Error::OK)
+      return received;
+    if (!packet.has_data())
       return starpc::Error::InvalidMessage;
-    }
-
-    const std::string &ack_error = ack_pkt.ack().error();
-    if (!ack_error.empty()) {
-      return starpc::Error::Unimplemented;
-    }
+    const auto handled = handler(packet.data());
+    if (handled != starpc::Error::OK)
+      return handled;
   }
-
-  return starpc::Error::OK;
 }
 
-starpc::Error HandleRpcStream(std::shared_ptr<RpcStream> stream,
-                              RpcStreamGetter getter) {
-  // Read and validate init packet
-  RpcStreamPacket init_pkt;
-  starpc::Error err = stream->Recv(&init_pkt);
-  if (err != starpc::Error::OK) {
-    return err;
-  }
+void ReadPump(std::shared_ptr<RpcStream> stream, starpc::PacketDataHandler handler,
+              starpc::CloseHandler closed) {
+  const auto err = ReadToHandler(stream.get(), std::move(handler));
+  if (closed)
+    closed(err);
+}
 
-  if (!init_pkt.has_init()) {
+std::pair<std::unique_ptr<starpc::PacketWriter>, starpc::Error>
+StartReadPump(std::shared_ptr<RpcStream> stream, starpc::PacketDataHandler handler,
+              starpc::CloseHandler closed) {
+  try {
+    return {std::make_unique<ReadingWriter>(stream, std::move(handler), std::move(closed)),
+            starpc::Error::OK};
+  } catch (const std::system_error &) {
+    stream->Close();
+    return {nullptr, starpc::Error::ResourceExhausted};
+  }
+}
+
+starpc::Error OpenRpcStream(RpcStream *stream, const std::string &component_id, bool wait_ack) {
+  RpcStreamPacket init;
+  init.mutable_init()->set_component_id(component_id);
+  auto err = stream->Send(init);
+  if (err != starpc::Error::OK || !wait_ack)
+    return err;
+
+  RpcStreamPacket ack;
+  err = stream->Recv(&ack);
+  if (err != starpc::Error::OK)
+    return err;
+  if (!ack.has_ack())
     return starpc::Error::InvalidMessage;
-  }
+  return ack.ack().error().empty() ? starpc::Error::OK : starpc::Error::RemoteError;
+}
 
-  const std::string &component_id = init_pkt.init().component_id();
-
-  // Look up invoker for the component
-  auto [invoker, release_fn, lookup_err] = getter(component_id);
-
-  // Send ack with error if lookup failed
-  RpcStreamPacket ack_pkt;
-  auto *ack = ack_pkt.mutable_ack();
-  if (lookup_err != starpc::Error::OK) {
-    ack->set_error(starpc::ErrorString(lookup_err));
-    stream->Send(ack_pkt);
-    return lookup_err;
-  }
-  if (invoker == nullptr) {
-    ack->set_error("component not found");
-    stream->Send(ack_pkt);
-    return starpc::Error::Unimplemented;
-  }
-
-  // Send success ack
-  err = stream->Send(ack_pkt);
-  if (err != starpc::Error::OK) {
-    if (release_fn)
-      release_fn();
+starpc::Error HandleRpcStream(std::shared_ptr<RpcStream> stream, RpcStreamGetter getter) {
+  RpcStreamPacket init;
+  auto err = stream->Recv(&init);
+  if (err != starpc::Error::OK)
     return err;
-  }
+  if (!init.has_init())
+    return starpc::Error::InvalidMessage;
 
-  // Create writer and server RPC to handle the proxied packets
-  auto writer = std::make_unique<RpcStreamWriter>(stream);
-  auto server_rpc = starpc::NewServerRPC(invoker, writer.get());
-
-  // Forward data packets to the server RPC
-  while (true) {
-    RpcStreamPacket data_pkt;
-    err = stream->Recv(&data_pkt);
-    if (err == starpc::Error::EOF_) {
-      break;
+  auto [invoker, release, lookup_error] = getter(init.init().component_id());
+  // The nested call is destroyed inside this scope before its Invoker is released.
+  const auto result = [&]() {
+    RpcStreamPacket ack;
+    auto *body = ack.mutable_ack();
+    if (lookup_error == starpc::Error::OK && invoker == nullptr) {
+      lookup_error = starpc::Error::Unimplemented;
     }
-    if (err != starpc::Error::OK) {
-      if (release_fn)
-        release_fn();
-      return err;
-    }
+    if (lookup_error != starpc::Error::OK)
+      body->set_error(starpc::ErrorString(lookup_error));
+    const auto sent = stream->Send(ack);
+    if (sent != starpc::Error::OK)
+      return sent;
+    if (lookup_error != starpc::Error::OK)
+      return lookup_error;
 
-    if (data_pkt.has_data()) {
-      err = server_rpc->HandlePacketData(data_pkt.data());
-      if (err != starpc::Error::OK && err != starpc::Error::Completed) {
-        if (release_fn)
-          release_fn();
-        return err;
-      }
-    }
-  }
-
-  if (release_fn)
-    release_fn();
-  return starpc::Error::OK;
+    RpcStreamWriter writer(stream);
+    starpc::ServerRPC rpc(invoker, &writer);
+    const auto read = ReadToHandler(
+        stream.get(), [&](const std::string &data) { return rpc.HandlePacketData(data); });
+    rpc.HandleStreamClose(read);
+    return read == starpc::Error::EOF_ ? starpc::Error::OK : read;
+  }();
+  if (release)
+    release();
+  return result;
 }
 
 } // namespace rpcstream

@@ -7,14 +7,20 @@ import (
 	"github.com/libp2p/go-yamux/v5"
 )
 
-// AcceptMuxedListener accepts incoming connections from a net.Listener.
-//
-// Uses the default yamux muxer.
-// If yamux conf is nil, uses the defaults.
+// AcceptMuxedListener accepts connections until ctx is canceled or the listener
+// fails. Cancellation closes lis to interrupt Accept. A nil yamuxConf uses defaults.
 func AcceptMuxedListener(ctx context.Context, lis net.Listener, srv *Server, yamuxConf *yamux.Config) error {
+	// Interrupt a blocked Accept when its serving context ends.
+	stop := context.AfterFunc(ctx, func() { _ = lis.Close() })
+	defer stop()
+
+	// Transfer accepted connections to the server and release rejected ones.
 	for {
 		nc, err := lis.Accept()
 		if err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
 			return err
 		}
 
