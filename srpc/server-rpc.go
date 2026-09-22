@@ -6,15 +6,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ServerRPC represents the server side of an on-going RPC call message stream.
+// ServerRPC runs one remote method and retains its resources until the handler exits.
 type ServerRPC struct {
 	commonRPC
-	// invoker is the rpc call invoker
+
+	// invoker dispatches the selected service and method.
 	invoker Invoker
 }
 
-// NewServerRPC constructs a new ServerRPC session.
-// note: call SetWriter before handling any incoming messages.
+// NewServerRPC attaches the handler and transport for one incoming call.
 func NewServerRPC(ctx context.Context, invoker Invoker, writer PacketWriter) *ServerRPC {
 	rpc := &ServerRPC{invoker: invoker}
 	initCommonRPC(ctx, &rpc.commonRPC)
@@ -33,6 +33,7 @@ func (r *ServerRPC) HandlePacketData(data []byte) error {
 
 // HandlePacket handles an incoming parsed message packet.
 func (r *ServerRPC) HandlePacket(msg *Packet) error {
+	// Ignore an absent packet and reject malformed messages before dispatch.
 	if msg == nil {
 		return nil
 	}
@@ -40,6 +41,7 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 		return err
 	}
 
+	// Route each packet through the shared stream state.
 	switch b := msg.GetBody().(type) {
 	case *Packet_CallStart:
 		return r.HandleCallStart(b.CallStart)
@@ -57,25 +59,20 @@ func (r *ServerRPC) HandlePacket(msg *Packet) error {
 
 // HandleCallStart handles the call start packet.
 func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
-	var err error
-
+	// Accept one start before any terminal stream transition.
 	locked := r.bcast.Lock()
-	// process start: method and service
 	if r.method != "" || r.service != "" {
-		err = errors.New("call start must be sent only once")
 		locked.Unlock()
-		return err
+		return errors.New("call start must be sent only once")
 	}
 	if r.dataClosed {
-		err = ErrCompleted
 		locked.Unlock()
-		return err
+		return ErrCompleted
 	}
 
+	// Retain the request identity and optional first message for the handler.
 	service, method := pkt.GetRpcService(), pkt.GetRpcMethod()
 	r.service, r.method = service, method
-
-	// process first data packet, if included
 	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
 		r.dataQueue = append(r.dataQueue, data)
 	}
@@ -84,27 +81,32 @@ func (r *ServerRPC) HandleCallStart(pkt *CallStart) error {
 	// Mark the method active before scheduling it so cancellation cannot make
 	// Wait return and release a mux while invokeRPC is still running user code.
 	r.localActive = true
-
-	// invoke the rpc
 	locked.Broadcast()
 	startServerRPCInvoke(func() {
 		r.invokeRPC(service, method)
 	})
 	locked.Unlock()
 
-	return err
+	return nil
 }
 
 // invokeRPC invokes the RPC after CallStart is received.
 func (r *ServerRPC) invokeRPC(serviceID, methodID string) {
-	// on the server side, the writer is closed by invokeRPC.
+	// Run the selected handler before publishing its terminal result.
 	strm := NewMsgStream(r.ctx, r, r.cancelContext)
 	ok, err := r.invoker.InvokeMethod(serviceID, methodID, strm)
 	if err == nil && !ok {
 		err = ErrUnimplemented
 	}
-	r.beginLocalCompletion()
+
+	// Cancellation has its own packet; a text error would lose its identity.
 	outPkt := NewCallDataPacket(nil, false, true, err)
-	_ = r.writer.WritePacket(outPkt)
+	if errors.Is(err, context.Canceled) {
+		outPkt = NewCallCancelPacket()
+	}
+	r.beginLocalCompletion()
+	if err := r.writer.WritePacket(outPkt); err != nil {
+		r.HandleStreamClose(err)
+	}
 	r.finishLocalCompletion()
 }
