@@ -31,6 +31,9 @@ public:
   virtual Error MsgRecv(Message *msg) = 0;
 
   // CloseSend signals to the remote that we will no longer send any messages.
+  // Once the request is written, the half-close is only a notice: it fails when
+  // the call already ended, and MsgRecv then returns the buffered messages
+  // followed by the call's outcome.
   virtual Error CloseSend() = 0;
 
   // Close closes the stream for reading and writing.

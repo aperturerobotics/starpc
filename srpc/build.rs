@@ -17,7 +17,7 @@ pub fn configure() -> prost_build::Config {
         config.protoc_arg(format!("--proto_path={}", include.display()));
     }
     config.extern_path(".rpcstream", "::starpc::rpcstream");
-    config.service_generator(Box::new(StarpcServiceGenerator::default()));
+    config.service_generator(Box::new(StarpcServiceGenerator));
     config
 }
 
@@ -31,6 +31,14 @@ impl prost_build::ServiceGenerator for StarpcServiceGenerator {
         gen.generate();
     }
 }
+
+/// Precedes each generated `close_send` whose error is ignored.
+///
+/// A failed half-close means the call already ended; returning that error would
+/// discard responses the stream already received, and `msg_recv` reports the
+/// call's outcome after them.
+const HALF_CLOSE_COMMENT: &str =
+    "        // A failed half-close means the call ended; msg_recv reports its outcome.";
 
 struct Generator<'a> {
     service: prost_build::Service,
@@ -189,7 +197,8 @@ impl<'a> Generator<'a> {
                     "        let stream = self.client.new_stream({:?}, {:?}, Some(&data)).await?;",
                     service_id, method.proto_name
                 ));
-                self.line("        stream.close_send().await?;");
+                self.line(HALF_CLOSE_COMMENT);
+                self.line("        let _ = stream.close_send().await;");
                 self.line(&format!(
                     "        Ok(Box::new({}Impl {{ stream }}))",
                     stream_trait_name(&service_name, &method)
@@ -272,7 +281,8 @@ impl<'a> Generator<'a> {
                     "    async fn close_and_recv(&self) -> starpc::Result<{}> {{",
                     method.output_type
                 ));
-                self.line("        self.stream.close_send().await?;");
+                self.line(HALF_CLOSE_COMMENT);
+                self.line("        let _ = self.stream.close_send().await;");
                 self.line("        self.stream.msg_recv().await");
                 self.line("    }");
             } else {
@@ -587,6 +597,12 @@ message TestMsg {
         assert!(generated.contains("TestServiceServerStreamStream"));
         assert!(generated.contains("TestServiceClientStreamStream"));
         assert!(generated.contains("TestServiceBidiStream"));
+
+        // A failed half-close must not discard the stream; msg_recv reports
+        // the call's outcome.
+        assert!(!generated.contains("close_send().await?"));
+        assert!(generated.contains("let _ = stream.close_send().await;"));
+        assert!(generated.contains("let _ = self.stream.close_send().await;"));
 
         let _ = fs::remove_dir_all(&root);
     }

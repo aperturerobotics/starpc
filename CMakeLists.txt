@@ -74,6 +74,11 @@ if(STARPC_BUILD_TESTS)
   add_test(NAME rpc_lifecycle_test COMMAND rpc_lifecycle_test)
   set_tests_properties(rpc_lifecycle_test PROPERTIES TIMEOUT 30)
 
+  add_executable(client_half_close_test srpc/client_half_close_test.cc)
+  target_link_libraries(client_half_close_test PRIVATE echo_proto)
+  add_test(NAME client_half_close_test COMMAND client_half_close_test)
+  set_tests_properties(client_half_close_test PROPERTIES TIMEOUT 30)
+
   add_executable(cpp-pipe-server integration/cross-language/cpp-pipe-server.cpp)
   target_link_libraries(cpp-pipe-server PRIVATE echo_proto)
   find_program(STARPC_GO_EXECUTABLE go)

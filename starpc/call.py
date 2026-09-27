@@ -11,7 +11,7 @@ from starpc.codec import (
     CodecError,
     PacketDecoder,
 )
-from starpc.stream import ByteStream, StreamClosedError
+from starpc.stream import ByteStream
 
 
 class CallError(Exception):
@@ -163,7 +163,8 @@ class Call:
             while True:
                 try:
                     packet = await self._io.read_packet()
-                except EOFError:
+                except (EOFError, OSError):
+                    # The transport ended, cleanly or not.
                     async with self._condition:
                         if (
                             not (self._accepted and self._local_terminal)
@@ -176,17 +177,6 @@ class Call:
                     return
                 except (CodecError, ValueError) as exc:
                     await self._set_protocol_error(exc)
-                    return
-                except StreamClosedError:
-                    async with self._condition:
-                        if (
-                            not (self._accepted and self._local_terminal)
-                            and not self._remote_terminal
-                            and self._remote_error is None
-                        ):
-                            self._set_abort_locked(ClosedBeforeCompletionError())
-                        self._remote_terminal = True
-                        self._condition.notify_all()
                     return
                 try:
                     await self._handle_packet(packet)
@@ -269,6 +259,13 @@ class Call:
             )
 
     async def finish(self, data: bytes | None = None, error: str | None = None) -> None:
+        """Completes the local side of the call.
+
+        Without data or an error, finish is the half-close. Once the request is
+        written, the half-close is only a notice: it fails when the call already
+        ended, and receive then returns the buffered messages followed by the
+        call's outcome.
+        """
         async with self._send_lock:
             if self._local_terminal:
                 if data is None and error is None:
@@ -285,8 +282,11 @@ class Call:
             )
             try:
                 await self._io.write_packet(packet)
-            except (OSError, StreamClosedError, CodecError):
-                await self._mark_closed()
+            except (OSError, CodecError):
+                # The transport close settles a failed half-close, after any
+                # reply and completion it read but has not delivered.
+                if data is not None or error is not None:
+                    await self._mark_closed()
                 raise
 
     async def receive(self) -> bytes | None:
@@ -318,7 +318,7 @@ class Call:
             try:
                 await self._io.write_packet(rpcproto_pb2.Packet(call_cancel=True))
                 await self._io.stream.write_eof()
-            except (StreamClosedError, OSError):
+            except OSError:
                 pass
         await self._cancel_receiver()
 

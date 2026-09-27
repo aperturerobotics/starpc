@@ -51,8 +51,11 @@ this framing with a Go client and a C++ child process.
 
 ## Cancellation and completion
 
-`CloseSend` ends outgoing messages while allowing incoming replies. Explicit
-remote completion becomes EOF after queued messages are read. A disconnected
+`CloseSend` ends outgoing messages while allowing incoming replies. Once the
+request is written, the half-close is only a notice: it fails when the call
+already ended, so generated callers ignore its error and read the outcome with
+`MsgRecv`. Explicit remote completion becomes EOF after queued messages are
+read. A disconnected
 transport without completion returns `ClosedBeforeCompletion`. Remote errors
 return `RemoteError`; `CommonRPC::RemoteErrorMessage` retains the peer's text.
 

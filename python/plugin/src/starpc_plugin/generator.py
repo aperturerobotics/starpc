@@ -128,6 +128,7 @@ def _service_source(
     lines = [
         "from __future__ import annotations",
         "",
+        "import contextlib",
         "from collections.abc import AsyncIterable, AsyncIterator",
         "from typing import Protocol",
         "",
@@ -205,7 +206,9 @@ def _service_source(
                     "        try:",
                     "            async for request in requests:",
                     "                await call.send(request.SerializeToString(deterministic=True))",
-                    "            await call.finish()",
+                    "            # A failed half-close means the call ended; receive reports its outcome.",
+                    "            with contextlib.suppress(OSError):",
+                    "                await call.finish()",
                     "            data = await call.receive()",
                     "            if data is None:",
                     "                raise CallProtocolError('missing client-stream response')",

@@ -9,6 +9,12 @@ import (
 	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 )
 
+// halfCloseComment precedes each generated close_send whose error is ignored.
+// A failed half-close means the call already ended; returning that error would
+// discard responses the stream already received, and msg_recv reports the
+// call's outcome after them.
+const halfCloseComment = "// A failed half-close means the call ended; msg_recv reports its outcome."
+
 type generator struct {
 	file    *descriptorpb.FileDescriptorProto
 	fileMap map[string]*descriptorpb.FileDescriptorProto
@@ -290,7 +296,8 @@ func (g *generator) generateClientImpl(service *descriptorpb.ServiceDescriptorPr
 			g.P("        use starpc::ProstMessage;")
 			g.P("        let data = request.encode_to_vec();")
 			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodGoName(method), "\", Some(&data)).await?;")
-			g.P("        stream.close_send().await?;")
+			g.P("        ", halfCloseComment)
+			g.P("        let _ = stream.close_send().await;")
 			g.P("        Ok(Box::new(", g.ClientStreamIface(service, method), "Impl { stream }))")
 			g.P("    }")
 		} else if method.GetClientStreaming() {
@@ -346,7 +353,8 @@ func (g *generator) generateStreamImpls(service *descriptorpb.ServiceDescriptorP
 
 		if method.GetClientStreaming() && !method.GetServerStreaming() {
 			g.P("    async fn close_and_recv(&self) -> starpc::Result<", outputType, "> {")
-			g.P("        self.stream.close_send().await?;")
+			g.P("        ", halfCloseComment)
+			g.P("        let _ = self.stream.close_send().await;")
 			g.P("        self.stream.msg_recv().await")
 			g.P("    }")
 		} else {

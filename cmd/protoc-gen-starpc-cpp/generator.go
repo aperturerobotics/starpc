@@ -8,6 +8,12 @@ import (
 	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 )
 
+// halfCloseComment precedes each generated CloseSend whose error is ignored.
+// A failed half-close means the call already ended; returning that error would
+// discard responses the stream already received, and MsgRecv reports the
+// call's outcome after them.
+const halfCloseComment = "// A failed half-close means the call ended; MsgRecv reports its outcome."
+
 // generator writes the C++ client and handler declarations for one proto file.
 type generator struct {
 	// file contains the services being generated.
@@ -388,8 +394,8 @@ func (g *generator) generateStreamTypes(service *descriptorpb.ServiceDescriptorP
 	if method.GetClientStreaming() && !method.GetServerStreaming() {
 		// Client streaming - CloseAndRecv
 		g.P("  starpc::Error CloseAndRecv(", outType, "* msg) {")
-		g.P("    starpc::Error err = strm_->CloseSend();")
-		g.P("    if (err != starpc::Error::OK) return err;")
+		g.P("    ", halfCloseComment)
+		g.P("    (void)strm_->CloseSend();")
 		g.P("    return strm_->MsgRecv(msg);")
 		g.P("  }")
 		g.P()
@@ -502,10 +508,8 @@ func (g *generator) generateClientMethodImpl(service *descriptorpb.ServiceDescri
 		g.P("  if (err != starpc::Error::OK) {")
 		g.P("    return {nullptr, err};")
 		g.P("  }")
-		g.P("  err = strm->CloseSend();")
-		g.P("  if (err != starpc::Error::OK) {")
-		g.P("    return {nullptr, err};")
-		g.P("  }")
+		g.P("  ", halfCloseComment)
+		g.P("  (void)strm->CloseSend();")
 		g.P("  return {std::make_unique<", g.ClientStreamIface(service, method), ">(std::move(strm)), starpc::Error::OK};")
 		g.P("}")
 	} else if !method.GetServerStreaming() && method.GetClientStreaming() {

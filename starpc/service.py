@@ -109,7 +109,9 @@ async def _send_requests(call: _ByteCall, requests: AsyncIterable[bytes]) -> Non
     try:
         async for request in requests:
             await call.send(request)
-        await call.finish()
+        # A failed half-close means the call ended; receive reports its outcome.
+        with contextlib.suppress(OSError):
+            await call.finish()
     except asyncio.CancelledError:
         raise
     except Exception:
