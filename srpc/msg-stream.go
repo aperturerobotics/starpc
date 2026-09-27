@@ -72,6 +72,7 @@ func (r *MsgStream) MsgRecv(msg Message) error {
 }
 
 // CloseSend signals to the remote that we will no longer send any messages.
+// A write error leaves received messages and the call outcome to MsgRecv.
 func (r *MsgStream) CloseSend() error {
 	return r.rw.WriteCallData(nil, false, true, nil)
 }

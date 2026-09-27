@@ -17,6 +17,10 @@ type Stream interface {
 	MsgRecv(msg Message) error
 
 	// CloseSend signals to the remote that we will no longer send any messages.
+	//
+	// An error means the signal was not written, usually because the call
+	// already ended. MsgRecv still returns every message received before the
+	// end, then the call's outcome.
 	CloseSend() error
 
 	// Close closes the stream for reading and writing.
