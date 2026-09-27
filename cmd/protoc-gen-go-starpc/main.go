@@ -14,7 +14,15 @@ import (
 	pluginpb "github.com/aperturerobotics/protobuf-go-lite/types/pluginpb"
 )
 
-const SRPCPackage = "github.com/aperturerobotics/starpc/srpc"
+const (
+	// SRPCPackage is the import path of the StarPC runtime.
+	SRPCPackage = "github.com/aperturerobotics/starpc/srpc"
+	// halfCloseComment precedes each generated CloseSend whose error is
+	// ignored. A failed half-close means the call already ended; returning
+	// that error would discard responses the stream already received, and
+	// MsgRecv reports the call's outcome after them.
+	halfCloseComment = "// A failed half-close means the call ended; MsgRecv reports its outcome."
+)
 
 func main() {
 	opts := protogenlite.Options{}
@@ -336,7 +344,8 @@ func (s *srpc) generateClientMethod(p *protogenlite.Method) {
 	s.P("if err != nil { return nil, err }")
 	s.P("strm := &", s.ClientStreamImpl(p), "{stream}")
 	if !p.Desc.IsStreamingClient() {
-		s.P("if err := strm.CloseSend(); err != nil { return nil, err }")
+		s.P(halfCloseComment)
+		s.P("_ = strm.CloseSend()")
 	}
 	s.P("return strm, nil")
 	s.P("}")
@@ -389,7 +398,8 @@ func (s *srpc) generateClientMethod(p *protogenlite.Method) {
 	}
 	if genCloseAndRecv {
 		s.P("func (x *", s.ClientStreamImpl(p), ") CloseAndRecv() (*", outType, ", error) {")
-		s.P("if err := x.CloseSend(); err != nil { return nil, err }")
+		s.P(halfCloseComment)
+		s.P("_ = x.CloseSend()")
 		s.P("m := new(", outType, ")")
 		s.P("if err := x.MsgRecv(m); err != nil { return nil, err }")
 		s.P("return m, nil")
@@ -397,7 +407,8 @@ func (s *srpc) generateClientMethod(p *protogenlite.Method) {
 		s.P()
 
 		s.P("func (x *", s.ClientStreamImpl(p), ") CloseAndMsgRecv(m *", outType, ") error {")
-		s.P("if err := x.CloseSend(); err != nil { return err }")
+		s.P(halfCloseComment)
+		s.P("_ = x.CloseSend()")
 		s.P("return x.MsgRecv(m)")
 		s.P("}")
 		s.P()

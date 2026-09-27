@@ -63,9 +63,8 @@ func (c *srpcEchoerClient) EchoServerStream(ctx context.Context, in *EchoMsg) (S
 		return nil, err
 	}
 	strm := &srpcEchoer_EchoServerStreamClient{stream}
-	if err := strm.CloseSend(); err != nil {
-		return nil, err
-	}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = strm.CloseSend()
 	return strm, nil
 }
 
@@ -118,9 +117,8 @@ func (x *srpcEchoer_EchoClientStreamClient) Send(m *EchoMsg) error {
 }
 
 func (x *srpcEchoer_EchoClientStreamClient) CloseAndRecv() (*EchoMsg, error) {
-	if err := x.CloseSend(); err != nil {
-		return nil, err
-	}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = x.CloseSend()
 	m := new(EchoMsg)
 	if err := x.MsgRecv(m); err != nil {
 		return nil, err
@@ -129,9 +127,8 @@ func (x *srpcEchoer_EchoClientStreamClient) CloseAndRecv() (*EchoMsg, error) {
 }
 
 func (x *srpcEchoer_EchoClientStreamClient) CloseAndMsgRecv(m *EchoMsg) error {
-	if err := x.CloseSend(); err != nil {
-		return err
-	}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = x.CloseSend()
 	return x.MsgRecv(m)
 }
 
