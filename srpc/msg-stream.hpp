@@ -62,6 +62,7 @@ public:
   }
 
   // CloseSend signals to the remote that we will no longer send any messages.
+  // See Stream::CloseSend for why its failure leaves the outcome to MsgRecv.
   Error CloseSend() override { return rw_->WriteCallData("", false, true, Error::OK); }
 
   // Close closes the stream.

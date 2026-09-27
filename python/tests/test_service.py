@@ -22,12 +22,15 @@ class FakeCall:
         self.finished = asyncio.Event()
         self.cancelled = asyncio.Event()
         self.closed = asyncio.Event()
+        self.finish_error: Exception | None = None
 
     async def send(self, data: bytes) -> None:
         self.sent.append(data)
 
     async def finish(self, data: bytes | None = None, error: str | None = None) -> None:
         self.finished.set()
+        if self.finish_error is not None:
+            raise self.finish_error
 
     async def receive(self) -> bytes | None:
         if self.cancelled.is_set():
@@ -43,6 +46,11 @@ class FakeCall:
 
 async def next_item(stream: AsyncIterator[bytes]) -> bytes:
     return await anext(stream)
+
+
+async def empty_requests() -> AsyncIterator[bytes]:
+    if False:
+        yield b""
 
 
 class ServiceTest(unittest.IsolatedAsyncioTestCase):
@@ -90,6 +98,18 @@ class ServiceTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(StopAsyncIteration):
             await anext(stream)
         self.assertEqual(call.sent, [b"one", b"two"])
+        self.assertTrue(call.closed.is_set())
+
+    async def test_failed_half_close_reads_outcome(self) -> None:
+        # The remote answered and completed before the half-close.
+        call = FakeCall()
+        call.finish_error = ConnectionResetError("transport closed")
+        await call.responses.put(b"reply")
+        await call.responses.put(None)
+
+        stream = bidirectional_bytes(call, empty_requests())
+        self.assertEqual([response async for response in stream], [b"reply"])
+        self.assertFalse(call.cancelled.is_set())
         self.assertTrue(call.closed.is_set())
 
     async def test_sender_failure_cancels_call_and_propagates_original(self) -> None:

@@ -77,7 +77,10 @@ Error CommonRPC::WriteCallData(const std::string &data, bool data_is_zero, bool 
   const auto packet = NewCallDataPacket(data, data.empty() && data_is_zero, complete, err);
   const auto written = writer->WritePacket(*packet);
   writing.unlock();
-  if (written != Error::OK)
+  // A failed half-close leaves the verdict to the transport close, which
+  // follows any reply and completion the transport read but has not delivered.
+  const bool half_close = complete && data.empty() && !data_is_zero && err == Error::OK;
+  if (written != Error::OK && !half_close)
     HandleStreamClose(written);
   return written;
 }

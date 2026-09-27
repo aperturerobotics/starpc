@@ -39,6 +39,9 @@ public:
   // ReadOne drains messages preceding a normal completion. Local cancellation
   // interrupts immediately; an abrupt peer disconnect is not a successful EOF.
   Error ReadOne(std::string *out);
+
+  // WriteCallData ends the call when a write fails, except for a bare
+  // half-close, whose outcome the transport close settles.
   Error WriteCallData(const std::string &data, bool data_is_zero, bool complete, Error err);
   void HandleStreamClose(Error close_err);
   Error HandleCallCancel();

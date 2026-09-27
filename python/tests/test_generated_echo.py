@@ -8,32 +8,122 @@ from typing import Any
 
 from echo import echo_pb2
 from echo.echo_srpc import ECHOER_SERVICE, EchoerClient, EchoerServer, register_echoer
+from starpc.call import ClosedBeforeCompletionError
 from starpc.client import Client
 from starpc.server import Server, ServiceRegistry
 from starpc.stream import ByteStream, memory_stream_pair
 
+BODY = "hello world via starpc half-close test"
 
-class FailingFinishStream:
-    def __init__(self) -> None:
+
+class OnceEchoServer:
+    """Answers each call once and completes it."""
+
+    async def echo(self, request: echo_pb2.EchoMsg) -> echo_pb2.EchoMsg:
+        return request
+
+    async def echo_server_stream(
+        self, request: echo_pb2.EchoMsg
+    ) -> AsyncIterator[echo_pb2.EchoMsg]:
+        yield request
+
+    async def echo_client_stream(
+        self, requests: AsyncIterator[echo_pb2.EchoMsg]
+    ) -> echo_pb2.EchoMsg:
+        # Reply to the first message without waiting for the half-close.
+        return await anext(requests)
+
+    async def echo_bidi_stream(
+        self, requests: AsyncIterator[echo_pb2.EchoMsg]
+    ) -> AsyncIterator[echo_pb2.EchoMsg]:
+        async for request in requests:
+            yield request
+
+    async def rpc_stream(self, requests: AsyncIterator[Any]) -> AsyncIterator[Any]:
+        async for request in requests:
+            yield request
+
+    async def do_nothing(self, request: Any) -> Any:
+        return request
+
+
+class DrainedStream:
+    """Sets drained when the client reads the end of the server's output."""
+
+    def __init__(self, inner: ByteStream) -> None:
+        self._inner = inner
+        self.drained = asyncio.Event()
+
+    async def read(self, max_bytes: int) -> bytes:
+        data = await self._inner.read(max_bytes)
+        if not data:
+            self.drained.set()
+        return data
+
+    async def write(self, data: bytes) -> int:
+        return await self._inner.write(data)
+
+    async def write_eof(self) -> None:
+        await self._inner.write_eof()
+
+    async def aclose(self) -> None:
+        await self._inner.aclose()
+
+
+class LingeringCloseStream:
+    """Closes the server's side after the client drained its output.
+
+    The in-memory close discards unread data, so the server first ends its
+    output and waits for the client to read it. Closed is set once the client's
+    writes fail.
+    """
+
+    def __init__(self, inner: ByteStream, drained: asyncio.Event) -> None:
+        self._inner = inner
+        self._drained = drained
         self.closed = asyncio.Event()
+
+    async def read(self, max_bytes: int) -> bytes:
+        return await self._inner.read(max_bytes)
+
+    async def write(self, data: bytes) -> int:
+        return await self._inner.write(data)
+
+    async def write_eof(self) -> None:
+        await self._inner.write_eof()
+
+    async def aclose(self) -> None:
+        await self._inner.write_eof()
+        await self._drained.wait()
+        await self._inner.aclose()
+        self.closed.set()
+
+
+class DroppingStream:
+    """Accepts CallStart, then drops the transport at the half-close."""
+
+    def __init__(self) -> None:
+        self.closed = False
+        self._dropped = asyncio.Event()
         self._writes = 0
 
     async def read(self, max_bytes: int) -> bytes:
         del max_bytes
-        await self.closed.wait()
-        return b""
+        await self._dropped.wait()
+        raise ConnectionResetError("transport dropped")
 
     async def write(self, data: bytes) -> int:
         self._writes += 1
         if self._writes > 1:
-            raise OSError("finish failed")
+            self._dropped.set()
+            raise ConnectionResetError("transport dropped")
         return len(data)
 
     async def write_eof(self) -> None:
-        raise AssertionError("failed finish must not half-close")
+        raise AssertionError("a failed half-close must not end the output")
 
     async def aclose(self) -> None:
-        self.closed.set()
+        self.closed = True
 
 
 class GeneratedEchoTest(unittest.IsolatedAsyncioTestCase):
@@ -79,16 +169,39 @@ class GeneratedEchoTest(unittest.IsolatedAsyncioTestCase):
             with contextlib.suppress(asyncio.CancelledError):
                 await task
 
-    async def test_finish_failure_closes_generated_client_stream_call(self) -> None:
-        stream = FailingFinishStream()
+    async def test_client_stream_completed_before_finish(self) -> None:
+        registry = ServiceRegistry()
+        register_echoer(registry, OnceEchoServer())
+        client_stream, server_stream = memory_stream_pair(4096)
+        drained = DrainedStream(client_stream)
+        lingering = LingeringCloseStream(server_stream, drained.drained)
+        server = asyncio.create_task(Server(registry).serve(lingering))
+
+        async def opener() -> ByteStream:
+            return drained
+
+        # Send the one request and wait for the call to end.
+        async def requests() -> AsyncIterator[echo_pb2.EchoMsg]:
+            yield echo_pb2.EchoMsg(body=BODY)
+            await lingering.closed.wait()
+
+        # The half-close fails, but the reply is still readable.
+        echo = EchoerClient(Client(opener))
+        response = await echo.echo_client_stream(requests())
+        self.assertEqual(response.body, BODY)
+        await server
+
+    async def test_client_stream_transport_failure_before_finish(self) -> None:
+        stream = DroppingStream()
 
         async def opener() -> ByteStream:
             return stream
 
+        # Receive reports that the call ended without a verdict.
         echo = EchoerClient(Client(opener))
-        with self.assertRaisesRegex(OSError, "finish failed"):
+        with self.assertRaises(ClosedBeforeCompletionError):
             await echo.echo_client_stream(_empty())
-        self.assertTrue(stream.closed.is_set())
+        self.assertTrue(stream.closed)
 
     async def test_unary_and_server_stream(self) -> None:
         class Implementation:

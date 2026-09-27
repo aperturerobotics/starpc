@@ -52,6 +52,13 @@ pub enum Error {
     #[error("stream closed")]
     StreamClosed,
 
+    /// The stream closed without the remote sending a completion or an error.
+    ///
+    /// The call has no verdict: the handler may have finished with its answer
+    /// lost in the transport, or it may never have run.
+    #[error("stream closed before the remote reported completion")]
+    ClosedBeforeCompletion,
+
     /// The RPC was aborted.
     #[error("rpc aborted")]
     Aborted,
@@ -153,9 +160,19 @@ mod tests {
     #[test]
     fn test_error_display() {
         assert_eq!(Error::Unimplemented.to_string(), "method not implemented");
-        assert_eq!(Error::Completed.to_string(), "unexpected packet after rpc was completed");
+        assert_eq!(
+            Error::Completed.to_string(),
+            "unexpected packet after rpc was completed"
+        );
         assert_eq!(Error::EmptyMethodId.to_string(), "method id empty");
-        assert_eq!(Error::Remote("test error".into()).to_string(), "remote error: test error");
+        assert_eq!(
+            Error::ClosedBeforeCompletion.to_string(),
+            "stream closed before the remote reported completion"
+        );
+        assert_eq!(
+            Error::Remote("test error".into()).to_string(),
+            "remote error: test error"
+        );
     }
 
     #[test]

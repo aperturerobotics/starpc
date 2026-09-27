@@ -110,7 +110,7 @@ impl Context {
 ///
 /// - All methods are async and may block waiting for I/O or messages
 /// - `send_bytes` may return `Error::Completed` if `close_send` was already called
-/// - `recv_bytes` returns `Error::StreamClosed` when the remote closes
+/// - `recv_bytes` returns `Error::StreamClosed` when the remote completes
 /// - `close` cancels the context and releases all resources
 #[async_trait]
 pub trait Stream: Send + Sync {
@@ -133,8 +133,9 @@ pub trait Stream: Send + Sync {
     ///
     /// # Errors
     ///
-    /// - `Error::StreamClosed` if the remote closed the stream
+    /// - `Error::StreamClosed` if the remote completed the call
     /// - `Error::Remote` if the remote sent an error
+    /// - `Error::ClosedBeforeCompletion` if the transport closed first
     /// - `Error::Cancelled` if the context was cancelled
     async fn recv_bytes(&self) -> Result<Bytes>;
 
@@ -142,6 +143,10 @@ pub trait Stream: Send + Sync {
     ///
     /// After calling this, `send_bytes` will return `Error::Completed`.
     /// The receive side remains open until the remote closes.
+    ///
+    /// Once the request is written, the half-close is only a notice. It fails
+    /// when the call already ended, and `recv_bytes` then returns the buffered
+    /// messages followed by the call's outcome.
     async fn close_send(&self) -> Result<()>;
 
     /// Closes both sides of the stream.

@@ -115,8 +115,8 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
             handler.abort();
         });
 
-        // Send close to indicate we're done sending.
-        rpc.close_send().await?;
+        // A failed half-close means the call ended; msg_recv reports its outcome.
+        let _ = rpc.close_send().await;
 
         // Receive the response.
         let output: O = rpc.msg_recv().await?;

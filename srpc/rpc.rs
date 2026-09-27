@@ -63,11 +63,31 @@ struct RpcState {
     /// Note: messages may be len() == 0 (empty data with data_is_zero).
     data_queue: VecDeque<Bytes>,
 
-    /// Whether the remote side has closed the stream.
-    data_closed: bool,
+    /// How the incoming side ended, once it has.
+    end: Option<RpcEnd>,
+}
 
-    /// Error from the remote side, if any.
-    remote_err: Option<String>,
+/// How the incoming side of an RPC ended.
+enum RpcEnd {
+    /// The remote completed the call, or the local side closed it.
+    Complete,
+
+    /// The remote failed or cancelled the call.
+    Remote(String),
+
+    /// The transport closed without a remote completion or error.
+    ClosedBeforeCompletion,
+}
+
+impl RpcEnd {
+    /// Returns the error a read reports after the queued messages.
+    fn error(&self) -> Error {
+        match self {
+            RpcEnd::Complete => Error::StreamClosed,
+            RpcEnd::Remote(err) => Error::Remote(err.clone()),
+            RpcEnd::ClosedBeforeCompletion => Error::ClosedBeforeCompletion,
+        }
+    }
 }
 
 impl CommonRpc {
@@ -87,8 +107,7 @@ impl CommonRpc {
             notify: Notify::new(),
             state: Mutex::new(RpcState {
                 data_queue: VecDeque::new(),
-                data_closed: false,
-                remote_err: None,
+                end: None,
             }),
         }
     }
@@ -130,12 +149,10 @@ impl CommonRpc {
                     return Err(Error::Cancelled);
                 }
 
-                if let Some(ref err) = state.remote_err {
-                    return Err(Error::Remote(err.clone()));
-                }
-
-                if state.data_closed {
-                    return Ok(());
+                match state.end {
+                    Some(RpcEnd::Complete) => return Ok(()),
+                    Some(ref end) => return Err(end.error()),
+                    None => {}
                 }
             }
 
@@ -149,8 +166,9 @@ impl CommonRpc {
 
     /// Reads one message from the data queue, blocking until available.
     ///
-    /// Returns `Err(Error::StreamClosed)` if the stream ended without a packet.
-    /// This matches the Go implementation which returns `io.EOF`.
+    /// After the queued messages, returns `Err(Error::StreamClosed)` if the
+    /// call completed, matching `io.EOF` in the Go implementation, or the
+    /// error that ended it.
     pub async fn read_one(&self) -> Result<Bytes> {
         loop {
             // notify_waiters preserves notifications from this future's creation.
@@ -164,22 +182,18 @@ impl CommonRpc {
                     return Ok(data);
                 }
 
-                // Check if the stream is closed (graceful close from remote)
-                if state.data_closed {
-                    if let Some(ref err) = state.remote_err {
-                        return Err(Error::Remote(err.clone()));
-                    }
-                    return Err(Error::StreamClosed);
+                if let Some(ref end) = state.end {
+                    return Err(end.error());
                 }
             }
 
             // Now check for cancellation - only if no data is available
             // and the stream isn't properly closed.
             if self.ctx.is_cancelled() {
-                // If context cancelled and data not closed, close it now
+                // If context cancelled and the call has not ended, close it now
                 let mut state = self.state.lock().await;
-                if !state.data_closed {
-                    state.data_closed = true;
+                if state.end.is_none() {
+                    state.end = Some(RpcEnd::Complete);
                     drop(state);
                     let _ = self.writer.close().await;
                     self.ctx.cancel();
@@ -252,7 +266,7 @@ impl CommonRpc {
         let mut state = self.state.lock().await;
 
         // Check if already closed
-        if state.data_closed {
+        if state.end.is_some() {
             // If the packet is just indicating the call is complete, ignore it
             // This matches Go behavior
             if call_data.complete {
@@ -268,10 +282,9 @@ impl CommonRpc {
 
         // Handle completion or error
         if !call_data.error.is_empty() {
-            state.remote_err = Some(call_data.error);
-            state.data_closed = true;
+            state.end = Some(RpcEnd::Remote(call_data.error));
         } else if call_data.complete {
-            state.data_closed = true;
+            state.end = Some(RpcEnd::Complete);
         }
 
         // Notify waiters
@@ -288,16 +301,18 @@ impl CommonRpc {
     }
 
     /// Handles stream close from the transport.
+    ///
+    /// A clean close with no completion behind it leaves the call without a
+    /// verdict, so reads report `Error::ClosedBeforeCompletion` rather than the
+    /// clean end of the stream.
     pub async fn handle_stream_close(&self, err: Option<String>) -> Result<()> {
         let mut state = self.state.lock().await;
-
-        if let Some(e) = err {
-            if state.remote_err.is_none() {
-                state.remote_err = Some(e);
-            }
+        if state.end.is_none() {
+            state.end = Some(match err {
+                Some(err) => RpcEnd::Remote(err),
+                None => RpcEnd::ClosedBeforeCompletion,
+            });
         }
-        state.data_closed = true;
-
         drop(state);
 
         let _ = self.writer.close().await;
@@ -309,15 +324,14 @@ impl CommonRpc {
 
     /// Closes the RPC, releasing resources.
     ///
-    /// This is called internally and handles cleanup.
-    /// Note: We don't set remote_err here because local cancellation is signaled
-    /// via ctx.is_cancelled(), which is checked first in wait()/read_one().
+    /// This is called internally and handles cleanup. Local cancellation is
+    /// signaled via ctx.is_cancelled(), which wait() checks first.
     async fn close_locked(&self) {
         let mut state = self.state.lock().await;
-        state.data_closed = true;
+        if state.end.is_none() {
+            state.end = Some(RpcEnd::Complete);
+        }
         self.local_completed.store(true, Ordering::SeqCst);
-        // Don't set remote_err for local closure - rely on ctx.is_cancelled() instead
-        // to distinguish between local cancellation and remote errors.
         drop(state);
 
         let _ = self.writer.close().await;
