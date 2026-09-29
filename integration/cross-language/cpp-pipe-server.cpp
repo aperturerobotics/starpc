@@ -1,5 +1,10 @@
 //go:build deps_only
 
+/*
+ * C++ pipe integration server for cross-language testing: it serves one RPC
+ * session over length-prefixed packets on stdin and stdout.
+ */
+
 #include "echo/echo_srpc.pb.hpp"
 #include "srpc/rpcproto.pb.h"
 #include "srpc/server-rpc.hpp"
@@ -16,13 +21,18 @@
 
 namespace {
 
+/*
+ * PipeWriter writes length-prefixed packets to stdout. Close stops further
+ * writes; the process exits when stdin ends, so no destructor is needed.
+ */
 class PipeWriter final : public starpc::PacketWriter {
 public:
 	starpc::Error WritePacket(const srpc::Packet &packet) override
 	{
-		std::lock_guard lock(write_mutex_);
-		if (closed_)
+		std::lock_guard lock(write_mutex);
+		if (closed)
 			return starpc::Error::Canceled;
+
 		const auto data = packet.SerializeAsString();
 		const auto size = static_cast<uint32_t>(data.size());
 		const std::array<char, 4> header{static_cast<char>(size),
@@ -36,15 +46,16 @@ public:
 	}
 	starpc::Error Close() override
 	{
-		closed_ = true;
+		closed = true;
 		return starpc::Error::OK;
 	}
 
 private:
-	std::mutex write_mutex_;
-	std::atomic<bool> closed_{false};
+	std::mutex write_mutex;
+	std::atomic<bool> closed{false};
 };
 
+/* PipeEcho implements the echo service under test. */
 class PipeEcho final : public echo::SRPCEchoerServer {
 public:
 	starpc::Error Echo(const echo::EchoMsg &request,

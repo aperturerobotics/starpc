@@ -1,7 +1,13 @@
 //go:build deps_only
 
-// C++ TCP integration client for cross-language testing.
-// Connects to a TCP server, runs the echo test suite.
+/*
+ * C++ TCP integration client for cross-language testing: it connects to a
+ * TCP server and runs the echo test suite over length-prefixed packets.
+ */
+
+#include "echo/echo_srpc.pb.hpp"
+#include "srpc/rpcproto.pb.h"
+#include "srpc/starpc.hpp"
 
 #include <arpa/inet.h>
 #include <atomic>
@@ -15,15 +21,11 @@
 #include <thread>
 #include <unistd.h>
 
-#include "echo/echo_srpc.pb.hpp"
-#include "srpc/rpcproto.pb.h"
-#include "srpc/starpc.hpp"
-
 namespace {
 
-const char *kTestBody = "hello world via starpc cross-language e2e test";
+const char *test_body = "hello world via starpc cross-language e2e test";
 
-// ReadFull reads exactly n bytes from fd.
+/* ReadFull reads exactly n bytes from fd, reporting short reads as false. */
 bool ReadFull(int fd, void *buf, size_t n)
 {
 	size_t total = 0;
@@ -37,7 +39,7 @@ bool ReadFull(int fd, void *buf, size_t n)
 	return true;
 }
 
-// WriteFull writes exactly n bytes to fd.
+/* WriteFull writes exactly n bytes to fd, reporting short writes as false. */
 bool WriteFull(int fd, const void *buf, size_t n)
 {
 	size_t total = 0;
@@ -51,41 +53,46 @@ bool WriteFull(int fd, const void *buf, size_t n)
 	return true;
 }
 
-// TcpPacketWriter writes length-prefixed packets to a TCP socket.
+/*
+ * TcpPacketWriter writes length-prefixed packets to a TCP socket. The fd is
+ * borrowed and closed by the test, not the writer.
+ */
 class TcpPacketWriter : public starpc::PacketWriter {
 public:
 	explicit TcpPacketWriter(int fd)
-		: fd_(fd)
+		: fd(fd)
 	{
 	}
 
 	starpc::Error WritePacket(const srpc::Packet &pkt) override
 	{
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard<std::mutex> lock(mu);
+
 		std::string data;
 		if (!pkt.SerializeToString(&data))
 			return starpc::Error::InvalidMessage;
 
+		/* The length prefix is a little-endian uint32. */
 		uint32_t len = static_cast<uint32_t>(data.size());
-		if (!WriteFull(fd_, &len, 4))
+		if (!WriteFull(fd, &len, 4))
 			return starpc::Error::EOF_;
-		if (!WriteFull(fd_, data.data(), data.size()))
+		if (!WriteFull(fd, data.data(), data.size()))
 			return starpc::Error::EOF_;
 		return starpc::Error::OK;
 	}
 
 	starpc::Error Close() override
 	{
-		shutdown(fd_, SHUT_WR);
+		shutdown(fd, SHUT_WR);
 		return starpc::Error::OK;
 	}
 
 private:
-	int fd_;
-	std::mutex mtx_;
+	int fd;
+	std::mutex mu;
 };
 
-// Connect to TCP server, returns socket fd.
+/* TcpConnect opens a connection to host:port, or -1 on failure. */
 int TcpConnect(const std::string &host, int port)
 {
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -105,7 +112,10 @@ int TcpConnect(const std::string &host, int port)
 	return fd;
 }
 
-// ReadPacketLoop reads length-prefixed packets from fd and feeds them to rpc.
+/*
+ * ReadPacketLoop reads length-prefixed packets and feeds them to rpc until
+ * done is set, the socket ends, or the call fails.
+ */
 void ReadPacketLoop(int fd, starpc::ClientRPC *rpc, std::atomic<bool> *done)
 {
 	while (!done->load()) {
@@ -125,8 +135,10 @@ void ReadPacketLoop(int fd, starpc::ClientRPC *rpc, std::atomic<bool> *done)
 	}
 }
 
-// CleanupConn shuts down the socket, joins the reader thread, then closes fd.
-// Must be called to avoid fd reuse races between close() and the reader thread.
+/*
+ * CleanupConn shuts the socket down, joins the reader thread, then closes
+ * the fd. The join order avoids an fd reuse race with the reader.
+ */
 void CleanupConn(int fd, std::atomic<bool> &done, std::thread &reader)
 {
 	done.store(true);
@@ -135,7 +147,7 @@ void CleanupConn(int fd, std::atomic<bool> &done, std::thread &reader)
 	close(fd);
 }
 
-// ParseAddr parses "host:port" into host and port.
+/* ParseAddr splits "host:port" into host and port. */
 bool ParseAddr(const std::string &addr, std::string *host, int *port)
 {
 	auto pos = addr.rfind(':');
@@ -146,6 +158,7 @@ bool ParseAddr(const std::string &addr, std::string *host, int *port)
 	return true;
 }
 
+/* TestUnary pins one unary request/reply over TCP. */
 bool TestUnary(const std::string &host, int port)
 {
 	std::cout << "Testing Unary RPC... " << std::flush;
@@ -163,7 +176,7 @@ bool TestUnary(const std::string &host, int port)
 	std::thread reader(ReadPacketLoop, fd, rpc.get(), &done);
 
 	echo::EchoMsg req;
-	req.set_body(kTestBody);
+	req.set_body(test_body);
 	std::string reqData;
 	req.SerializeToString(&reqData);
 
@@ -186,7 +199,7 @@ bool TestUnary(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
+	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
 		std::cerr << "FAILED: body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
@@ -200,6 +213,7 @@ bool TestUnary(const std::string &host, int port)
 	return true;
 }
 
+/* TestServerStream pins five streamed responses over TCP. */
 bool TestServerStream(const std::string &host, int port)
 {
 	std::cout << "Testing ServerStream RPC... " << std::flush;
@@ -217,7 +231,7 @@ bool TestServerStream(const std::string &host, int port)
 	std::thread reader(ReadPacketLoop, fd, rpc.get(), &done);
 
 	echo::EchoMsg req;
-	req.set_body(kTestBody);
+	req.set_body(test_body);
 	std::string reqData;
 	req.SerializeToString(&reqData);
 
@@ -241,7 +255,7 @@ bool TestServerStream(const std::string &host, int port)
 		}
 		echo::EchoMsg resp;
 		if (!resp.ParseFromString(respData) ||
-		    resp.body() != kTestBody) {
+		    resp.body() != test_body) {
 			std::cerr << "FAILED: body mismatch at " << i
 				  << std::endl;
 			rpc->Close();
@@ -264,6 +278,7 @@ bool TestServerStream(const std::string &host, int port)
 	return true;
 }
 
+/* TestClientStream pins one reply to a streamed request over TCP. */
 bool TestClientStream(const std::string &host, int port)
 {
 	std::cout << "Testing ClientStream RPC... " << std::flush;
@@ -288,7 +303,7 @@ bool TestClientStream(const std::string &host, int port)
 	}
 
 	echo::EchoMsg req;
-	req.set_body(kTestBody);
+	req.set_body(test_body);
 	std::string reqData;
 	req.SerializeToString(&reqData);
 
@@ -317,7 +332,7 @@ bool TestClientStream(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
+	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
 		std::cerr << "FAILED: body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
@@ -331,6 +346,7 @@ bool TestClientStream(const std::string &host, int port)
 	return true;
 }
 
+/* TestBidiStream pins echo replies to each sent message over TCP. */
 bool TestBidiStream(const std::string &host, int port)
 {
 	std::cout << "Testing BidiStream RPC... " << std::flush;
@@ -354,7 +370,7 @@ bool TestBidiStream(const std::string &host, int port)
 		return false;
 	}
 
-	// Receive initial "hello from server" message.
+	/* Receive initial "hello from server" message. */
 	std::string initData;
 	err = rpc->ReadOne(&initData);
 	if (err != starpc::Error::OK) {
@@ -374,9 +390,9 @@ bool TestBidiStream(const std::string &host, int port)
 		return false;
 	}
 
-	// Send a message and expect echo.
+	/* Send a message and expect echo. */
 	echo::EchoMsg req;
-	req.set_body(kTestBody);
+	req.set_body(test_body);
 	std::string reqData;
 	req.SerializeToString(&reqData);
 
@@ -399,14 +415,14 @@ bool TestBidiStream(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != kTestBody) {
+	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
 		std::cerr << "FAILED: echo body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
 		return false;
 	}
 
-	// Close send.
+	/* Close send. */
 	err = rpc->WriteCallData("", false, true, starpc::Error::OK);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: close send" << std::endl;
@@ -423,9 +439,11 @@ bool TestBidiStream(const std::string &host, int port)
 
 int main(int argc, char *argv[])
 {
-	// Ignore SIGPIPE so writing to a closed socket returns EPIPE instead of
-	// killing the process. The server may close its side before we send
-	// cleanup packets.
+	/*
+	 * Ignore SIGPIPE so writing to a closed socket returns EPIPE instead
+	 * of killing the process: the server may close its side before the
+	 * cleanup packets are sent.
+	 */
 	signal(SIGPIPE, SIG_IGN);
 
 	if (argc < 2) {

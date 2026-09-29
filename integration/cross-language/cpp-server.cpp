@@ -1,7 +1,14 @@
 //go:build deps_only
 
-// C++ TCP integration server for cross-language testing.
-// Listens on TCP, handles one RPC per connection using length-prefixed packets.
+/*
+ * C++ TCP integration server for cross-language testing: it listens on TCP
+ * and serves one RPC per connection over length-prefixed packets.
+ */
+
+#include "echo/echo_srpc.pb.hpp"
+#include "rpcstream/rpcstream.hpp"
+#include "srpc/rpcproto.pb.h"
+#include "srpc/starpc.hpp"
 
 #include <arpa/inet.h>
 #include <csignal>
@@ -14,14 +21,9 @@
 #include <thread>
 #include <unistd.h>
 
-#include "echo/echo_srpc.pb.hpp"
-#include "rpcstream/rpcstream.hpp"
-#include "srpc/rpcproto.pb.h"
-#include "srpc/starpc.hpp"
-
 namespace {
 
-// ReadFull reads exactly n bytes from fd.
+/* ReadFull reads exactly n bytes from fd, reporting short reads as false. */
 bool ReadFull(int fd, void *buf, size_t n)
 {
 	size_t total = 0;
@@ -35,7 +37,7 @@ bool ReadFull(int fd, void *buf, size_t n)
 	return true;
 }
 
-// WriteFull writes exactly n bytes to fd.
+/* WriteFull writes exactly n bytes to fd, reporting short writes as false. */
 bool WriteFull(int fd, const void *buf, size_t n)
 {
 	size_t total = 0;
@@ -49,42 +51,46 @@ bool WriteFull(int fd, const void *buf, size_t n)
 	return true;
 }
 
-// TcpPacketWriter writes length-prefixed packets to a TCP socket.
+/*
+ * TcpPacketWriter writes length-prefixed packets to a TCP socket. The fd is
+ * borrowed and closed by the connection handler, not the writer.
+ */
 class TcpPacketWriter : public starpc::PacketWriter {
 public:
 	explicit TcpPacketWriter(int fd)
-		: fd_(fd)
+		: fd(fd)
 	{
 	}
 
 	starpc::Error WritePacket(const srpc::Packet &pkt) override
 	{
-		std::lock_guard<std::mutex> lock(mtx_);
+		std::lock_guard<std::mutex> lock(mu);
+
 		std::string data;
 		if (!pkt.SerializeToString(&data))
 			return starpc::Error::InvalidMessage;
 
+		/* The length prefix is a little-endian uint32. */
 		uint32_t len = static_cast<uint32_t>(data.size());
-		// Write LE uint32 length prefix.
-		if (!WriteFull(fd_, &len, 4))
+		if (!WriteFull(fd, &len, 4))
 			return starpc::Error::EOF_;
-		if (!WriteFull(fd_, data.data(), data.size()))
+		if (!WriteFull(fd, data.data(), data.size()))
 			return starpc::Error::EOF_;
 		return starpc::Error::OK;
 	}
 
 	starpc::Error Close() override
 	{
-		shutdown(fd_, SHUT_WR);
+		shutdown(fd, SHUT_WR);
 		return starpc::Error::OK;
 	}
 
 private:
-	int fd_;
-	std::mutex mtx_;
+	int fd;
+	std::mutex mu;
 };
 
-// EchoServerImpl implements the echo service.
+/* EchoServerImpl implements the echo service under test. */
 class EchoServerImpl : public echo::SRPCEchoerServer {
 public:
 	starpc::Error Echo(const echo::EchoMsg &req,
@@ -123,7 +129,7 @@ public:
 	starpc::Error
 	EchoBidiStream(echo::SRPCEchoer_EchoBidiStreamStream *strm) override
 	{
-		// Send initial message (matches Go server behavior).
+		/* Send the initial message the other clients expect. */
 		echo::EchoMsg init;
 		init.set_body("hello from server");
 		starpc::Error err = strm->Send(init);
@@ -156,24 +162,26 @@ public:
 	}
 };
 
-// HandleConnection handles one TCP connection (one RPC).
+/*
+ * HandleConnection serves one TCP connection: it reads length-prefixed
+ * packets until the socket ends, then closes the fd.
+ */
 void HandleConnection(int fd, starpc::Mux *mux)
 {
 	auto writer = std::make_unique<TcpPacketWriter>(fd);
-	auto serverRpc = starpc::NewServerRPC(mux, writer.get());
+	auto server_rpc = starpc::NewServerRPC(mux, writer.get());
 
 	while (true) {
-		// Read 4-byte LE uint32 length prefix.
+		/* The length prefix is a little-endian uint32. */
 		uint32_t len = 0;
 		if (!ReadFull(fd, &len, 4))
 			break;
 
-		// Read the packet data.
 		std::string data(len, '\0');
 		if (!ReadFull(fd, data.data(), len))
 			break;
 
-		starpc::Error err = serverRpc->HandlePacketData(data);
+		starpc::Error err = server_rpc->HandlePacketData(data);
 		if (err != starpc::Error::OK && err != starpc::Error::Completed)
 			break;
 	}
@@ -208,7 +216,7 @@ int main()
 
 	struct sockaddr_in addr{};
 	addr.sin_family = AF_INET;
-	addr.sin_port = 0; // OS-assigned port.
+	addr.sin_port = 0; /* OS-assigned port. */
 	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 	if (bind(sockfd, reinterpret_cast<struct sockaddr *>(&addr),
@@ -224,18 +232,18 @@ int main()
 		return 1;
 	}
 
-	// Get the assigned port.
-	socklen_t addrLen = sizeof(addr);
+	/* Report the assigned port so the test driver can connect. */
+	socklen_t addr_len = sizeof(addr);
 	getsockname(sockfd, reinterpret_cast<struct sockaddr *>(&addr),
-		    &addrLen);
+		    &addr_len);
 	std::cout << "LISTENING 127.0.0.1:" << ntohs(addr.sin_port)
 		  << std::endl;
 
 	while (true) {
-		int clientFd = accept(sockfd, nullptr, nullptr);
-		if (clientFd < 0)
+		int client_fd = accept(sockfd, nullptr, nullptr);
+		if (client_fd < 0)
 			break;
-		std::thread(HandleConnection, clientFd, mux.get()).detach();
+		std::thread(HandleConnection, client_fd, mux.get()).detach();
 	}
 
 	close(sockfd);
