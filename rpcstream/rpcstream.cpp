@@ -11,47 +11,52 @@
 namespace rpcstream {
 namespace {
 
-// ReadingWriter keeps transport cleanup outside the receive callback; only
-// destruction joins the thread, so Close is safe from that thread's callbacks.
+/*
+ * ReadingWriter owns one receive thread per opened call. Transport cleanup
+ * stays outside the receive callback: only destruction joins the thread, so
+ * Close is safe to call from that thread's callbacks.
+ */
 class ReadingWriter final : public starpc::PacketWriter {
 public:
 	ReadingWriter(std::shared_ptr<RpcStream> stream,
 		      starpc::PacketDataHandler handler,
 		      starpc::CloseHandler closed)
-		: stream_(std::move(stream)),
-		  writer_(stream_),
-		  reader_([this, handler = std::move(handler),
-			   closed = std::move(closed)](std::stop_token stop) {
+		: stream(std::move(stream)),
+		  writer(this->stream),
+		  reader([this, handler = std::move(handler),
+			  closed = std::move(closed)](std::stop_token stop) {
 			  std::stop_callback cancel(
-				  stop, [this] { stream_->Close(); });
-			  ReadPump(stream_, handler, closed);
+				  stop, [this] { this->stream->Close(); });
+			  ReadPump(this->stream, handler, closed);
 		  })
 	{
 	}
 	~ReadingWriter() override
 	{
 		Close();
-		reader_.join();
+		reader.join();
 	}
 	starpc::Error WritePacket(const srpc::Packet &packet) override
 	{
-		return writer_.WritePacket(packet);
+		return writer.WritePacket(packet);
 	}
 	starpc::Error Close() override
 	{
-		return stream_->Close();
+		return stream->Close();
 	}
 
 private:
-	std::shared_ptr<RpcStream> stream_;
-	RpcStreamWriter writer_;
-	std::jthread reader_;
+	std::shared_ptr<RpcStream> stream;
+	RpcStreamWriter writer;
+
+	/* reader is last so it stops before the state it reads. */
+	std::jthread reader;
 };
 
 } // namespace
 
 RpcStreamWriter::RpcStreamWriter(std::shared_ptr<RpcStream> stream)
-	: stream_(std::move(stream))
+	: stream(std::move(stream))
 {
 }
 
@@ -60,12 +65,12 @@ starpc::Error RpcStreamWriter::WritePacket(const srpc::Packet &packet)
 	RpcStreamPacket outgoing;
 	if (!packet.SerializeToString(outgoing.mutable_data()))
 		return starpc::Error::InvalidMessage;
-	return stream_->Send(outgoing);
+	return this->stream->Send(outgoing);
 }
 
 starpc::Error RpcStreamWriter::Close()
 {
-	return stream_->CloseSend();
+	return this->stream->CloseSend();
 }
 
 starpc::Error ReadToHandler(RpcStream *stream,
@@ -96,6 +101,10 @@ std::pair<std::unique_ptr<starpc::PacketWriter>, starpc::Error>
 StartReadPump(std::shared_ptr<RpcStream> stream,
 	      starpc::PacketDataHandler handler, starpc::CloseHandler closed)
 {
+	/*
+	 * Thread creation is the sole throwing runtime boundary here; a failed
+	 * start closes the stream so the caller sees the transport end.
+	 */
 	try {
 		return {std::make_unique<ReadingWriter>(
 				stream, std::move(handler), std::move(closed)),
@@ -137,14 +146,16 @@ starpc::Error HandleRpcStream(std::shared_ptr<RpcStream> stream,
 
 	auto [invoker, release, lookup_error] =
 		getter(init.init().component_id());
-	// The nested call is destroyed inside this scope before its Invoker is
-	// released.
+
+	/*
+	 * The nested call is destroyed inside this scope, before the Invoker
+	 * is released.
+	 */
 	const auto result = [&]() {
 		RpcStreamPacket ack;
 		auto *body = ack.mutable_ack();
-		if (lookup_error == starpc::Error::OK && invoker == nullptr) {
+		if (lookup_error == starpc::Error::OK && invoker == nullptr)
 			lookup_error = starpc::Error::Unimplemented;
-		}
 		if (lookup_error != starpc::Error::OK)
 			body->set_error(starpc::ErrorString(lookup_error));
 		const auto sent = stream->Send(ack);
