@@ -7,7 +7,7 @@ use crate::error::Result;
 use crate::proto::Packet;
 use crate::rpc::PacketWriter;
 
-use super::rpcstream::RpcStream;
+use super::nested::RpcStream;
 use super::RpcStreamPacket;
 
 /// RpcStreamWriter wraps an RpcStream and implements PacketWriter.

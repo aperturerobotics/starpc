@@ -88,10 +88,7 @@ pub const DEFAULT_CHANNEL_BUFFER: usize = 32;
 ///
 /// # Returns
 /// A `JoinHandle` for the spawned task.
-pub fn spawn_packet_reader<R>(
-    reader: R,
-    sender: PacketSender,
-) -> tokio::task::JoinHandle<()>
+pub fn spawn_packet_reader<R>(reader: R, sender: PacketSender) -> tokio::task::JoinHandle<()>
 where
     R: AsyncRead + Send + Unpin + 'static,
 {

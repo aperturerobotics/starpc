@@ -12,8 +12,8 @@ use crate::proto::Packet;
 use crate::rpc::{PacketWriter, ServerRpc};
 use crate::stream::{Context, Stream};
 
-use super::{rpc_stream_packet, RpcAck, RpcStreamInit, RpcStreamPacket};
 use super::RpcStreamWriter;
+use super::{rpc_stream_packet, RpcAck, RpcStreamInit, RpcStreamPacket};
 
 /// RpcStream is a bidirectional stream for RpcStreamPacket messages.
 ///
@@ -98,7 +98,11 @@ impl<S: RpcStream + ?Sized + Send + Sync> RpcStream for Arc<S> {
 /// # Returns
 /// `Some((invoker, release_fn))` if found, `None` if not found.
 pub type RpcStreamGetter = Arc<
-    dyn Fn(&Context, &str, Box<dyn FnOnce() + Send>) -> Option<(Arc<dyn Invoker>, Box<dyn FnOnce() + Send>)>
+    dyn Fn(
+            &Context,
+            &str,
+            Box<dyn FnOnce() + Send>,
+        ) -> Option<(Arc<dyn Invoker>, Box<dyn FnOnce() + Send>)>
         + Send
         + Sync,
 >;
@@ -107,7 +111,9 @@ impl RpcStreamPacket {
     /// Creates a new Init packet.
     pub fn new_init(component_id: String) -> Self {
         Self {
-            body: Some(rpc_stream_packet::Body::Init(RpcStreamInit { component_id })),
+            body: Some(rpc_stream_packet::Body::Init(RpcStreamInit {
+                component_id,
+            })),
         }
     }
 
@@ -238,12 +244,10 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
         };
 
         let packet = match rpc_packet.body {
-            Some(rpc_stream_packet::Body::Data(data)) => {
-                match Packet::decode(&data[..]) {
-                    Ok(p) => p,
-                    Err(e) => return Err(Error::InvalidMessage(e)),
-                }
-            }
+            Some(rpc_stream_packet::Body::Data(data)) => match Packet::decode(&data[..]) {
+                Ok(p) => p,
+                Err(e) => return Err(Error::InvalidMessage(e)),
+            },
             _ => continue, // Ignore non-data packets
         };
 
@@ -362,24 +366,20 @@ where
         // Create a channel for incoming packets
         let (tx, rx) = tokio::sync::mpsc::channel(32);
 
-        // Spawn a read pump to convert RpcStreamPacket::Data into Packets
+        // Spawn a read pump to convert RpcStreamPacket::Data into Packets.
         let stream_clone = rpc_stream.clone();
         tokio::spawn(async move {
-            loop {
-                match stream_clone.recv_packet().await {
-                    Ok(packet) => {
-                        if let Some(rpc_stream_packet::Body::Data(data)) = packet.body {
-                            match Packet::decode(&data[..]) {
-                                Ok(p) => {
-                                    if tx.send(p).await.is_err() {
-                                        break;
-                                    }
-                                }
-                                Err(_) => break,
+            while let Ok(packet) = stream_clone.recv_packet().await {
+                // Forward data packets; ignore the handshake bodies.
+                if let Some(rpc_stream_packet::Body::Data(data)) = packet.body {
+                    match Packet::decode(&data[..]) {
+                        Ok(packet) => {
+                            if tx.send(packet).await.is_err() {
+                                break;
                             }
                         }
+                        Err(_) => break,
                     }
-                    Err(_) => break,
                 }
             }
         });
@@ -411,9 +411,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::VecDeque;
     use std::sync::atomic::{AtomicBool, Ordering};
     use tokio::sync::Mutex;
-    use std::collections::VecDeque;
 
     struct MockRpcStream {
         ctx: Context,

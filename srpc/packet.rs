@@ -54,11 +54,7 @@ pub fn new_call_data(data: Vec<u8>) -> Packet {
 /// * `data_is_zero` - True if empty data should be sent
 /// * `complete` - True if this completes the stream
 /// * `error` - Optional error message
-pub fn new_call_data_full(
-    data: Option<Bytes>,
-    complete: bool,
-    error: Option<String>,
-) -> Packet {
+pub fn new_call_data_full(data: Option<Bytes>, complete: bool, error: Option<String>) -> Packet {
     let (data_bytes, data_is_zero) = encode_optional_data(data);
 
     Packet {
@@ -154,11 +150,7 @@ impl Validate for CallData {
         // - data_is_zero flag set (indicating intentionally empty data)
         // - complete flag set
         // - error message
-        if self.data.is_empty()
-            && !self.data_is_zero
-            && !self.complete
-            && self.error.is_empty()
-        {
+        if self.data.is_empty() && !self.data_is_zero && !self.complete && self.error.is_empty() {
             return Err(Error::EmptyPacket);
         }
         Ok(())

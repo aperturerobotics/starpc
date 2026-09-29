@@ -108,12 +108,7 @@ impl SingleInMemoryOpener {
 #[async_trait]
 impl OpenStream for SingleInMemoryOpener {
     async fn open_stream(&self) -> Result<(Arc<dyn PacketWriter>, PacketReceiver)> {
-        let stream = self
-            .stream
-            .lock()
-            .await
-            .take()
-            .ok_or(Error::StreamClosed)?;
+        let stream = self.stream.lock().await.take().ok_or(Error::StreamClosed)?;
 
         let (read_half, write_half) = tokio::io::split(stream);
         Ok(create_packet_channel(read_half, write_half))
@@ -225,13 +220,10 @@ mod tests {
         stream.close_send().await.unwrap();
 
         // Read response with a timeout to handle potential races.
-        let response = tokio::time::timeout(
-            std::time::Duration::from_secs(5),
-            stream.recv_bytes(),
-        )
-        .await
-        .expect("timeout")
-        .expect("recv_bytes failed");
+        let response = tokio::time::timeout(std::time::Duration::from_secs(5), stream.recv_bytes())
+            .await
+            .expect("timeout")
+            .expect("recv_bytes failed");
         assert_eq!(&response[..], b"hello");
 
         // Wait for server to complete.

@@ -14,16 +14,10 @@ struct EchoServerImpl;
 #[async_trait]
 impl EchoerServer for EchoServerImpl {
     async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
-        Ok(EchoMsg {
-            body: request.body,
-        })
+        Ok(EchoMsg { body: request.body })
     }
 
-    async fn echo_server_stream(
-        &self,
-        request: EchoMsg,
-        stream: Box<dyn Stream>,
-    ) -> Result<()> {
+    async fn echo_server_stream(&self, request: EchoMsg, stream: Box<dyn Stream>) -> Result<()> {
         for _ in 0..5 {
             let response = EchoMsg {
                 body: request.body.clone(),

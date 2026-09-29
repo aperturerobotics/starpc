@@ -90,9 +90,7 @@ impl Mux {
         let method_ids = handler.method_ids();
 
         let mut services = self.services.write().unwrap();
-        let service_methods = services
-            .entry(service_id.to_string())
-            .or_insert_with(HashMap::new);
+        let service_methods = services.entry(service_id.to_string()).or_default();
 
         for method_id in method_ids {
             if !method_id.is_empty() {
@@ -346,7 +344,9 @@ mod tests {
         }
 
         // Should find the method even with empty service ID
-        let (handled, result) = mux.invoke_method("", "TestMethod", Box::new(MockStream)).await;
+        let (handled, result) = mux
+            .invoke_method("", "TestMethod", Box::new(MockStream))
+            .await;
         assert!(handled);
         assert!(result.is_ok());
     }

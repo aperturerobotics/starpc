@@ -21,20 +21,11 @@ struct EchoServerImpl;
 impl EchoerServer for EchoServerImpl {
     async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
         println!("Server: received echo request: {:?}", request.body);
-        Ok(EchoMsg {
-            body: request.body,
-        })
+        Ok(EchoMsg { body: request.body })
     }
 
-    async fn echo_server_stream(
-        &self,
-        request: EchoMsg,
-        stream: Box<dyn Stream>,
-    ) -> Result<()> {
-        println!(
-            "Server: received server stream request: {:?}",
-            request.body
-        );
+    async fn echo_server_stream(&self, request: EchoMsg, stream: Box<dyn Stream>) -> Result<()> {
+        println!("Server: received server stream request: {:?}", request.body);
 
         // Send multiple responses.
         for i in 0..5 {

@@ -193,6 +193,6 @@ where
 fn connection_error(err: ::yamux::ConnectionError) -> Error {
     match err {
         ::yamux::ConnectionError::Io(err) => Error::Io(err),
-        other => Error::Io(io::Error::new(io::ErrorKind::Other, other.to_string())),
+        other => Error::Io(io::Error::other(other.to_string())),
     }
 }

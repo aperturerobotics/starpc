@@ -29,11 +29,11 @@
 //! handle_rpc_stream(stream, getter).await?;
 //! ```
 
-mod rpcstream;
+mod nested;
 mod writer;
 
 // Include the generated protobuf types.
 include!("rpcstream.pb.rs");
 
-pub use rpcstream::*;
+pub use nested::*;
 pub use writer::*;

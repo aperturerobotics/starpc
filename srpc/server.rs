@@ -330,10 +330,9 @@ mod tests {
     #[tokio::test]
     async fn test_server_config() {
         let mux = Mux::new();
-        let server = Server::new(mux)
-            .with_config(ServerConfig {
-                shutdown_timeout: Duration::from_secs(1),
-            });
+        let server = Server::new(mux).with_config(ServerConfig {
+            shutdown_timeout: Duration::from_secs(1),
+        });
 
         assert_eq!(server.config.shutdown_timeout, Duration::from_secs(1));
     }
@@ -346,10 +345,9 @@ mod tests {
         let errors_clone = errors.clone();
 
         let mux = Mux::new();
-        let server = Server::new(mux)
-            .with_error_handler(move |e| {
-                errors_clone.lock().unwrap().push(e.to_string());
-            });
+        let server = Server::new(mux).with_error_handler(move |e| {
+            errors_clone.lock().unwrap().push(e.to_string());
+        });
 
         // Report an error
         server.report_error(Error::StreamClosed);

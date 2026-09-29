@@ -157,7 +157,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_invoker_found() {
-        let invoker = TestInvoker { should_handle: true };
+        let invoker = TestInvoker {
+            should_handle: true,
+        };
         let (found, result) = invoker
             .invoke_method("svc", "method", Box::new(MockStream))
             .await;
@@ -181,7 +183,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_arc_invoker() {
-        let invoker: Arc<dyn Invoker> = Arc::new(TestInvoker { should_handle: true });
+        let invoker: Arc<dyn Invoker> = Arc::new(TestInvoker {
+            should_handle: true,
+        });
         let (found, result) = invoker
             .invoke_method("svc", "method", Box::new(MockStream))
             .await;
