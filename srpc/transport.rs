@@ -69,19 +69,19 @@ impl<W: AsyncWrite + Send + Unpin + 'static> PacketWriter for TransportPacketWri
 }
 
 /// Receiver for incoming packets from a transport.
-pub type PacketReceiver = tokio::sync::mpsc::Receiver<Packet>;
+pub(crate) type PacketReceiver = tokio::sync::mpsc::Receiver<Packet>;
 
 /// Sender for incoming packets to be processed.
-pub type PacketSender = tokio::sync::mpsc::Sender<Packet>;
+pub(crate) type PacketSender = tokio::sync::mpsc::Sender<Packet>;
 
 /// Default channel buffer size for packet channels.
-pub const DEFAULT_CHANNEL_BUFFER: usize = 32;
+pub(crate) const DEFAULT_CHANNEL_BUFFER: usize = 32;
 
 /// Spawns a task that reads packets from `reader` and forwards them to
 /// `sender`, stopping when the transport closes, a decode fails, or the
 /// receiver is dropped. The returned task has no owner beyond the caller,
 /// which must join or abort the handle.
-pub fn spawn_packet_reader<R>(reader: R, sender: PacketSender) -> tokio::task::JoinHandle<()>
+pub(crate) fn spawn_packet_reader<R>(reader: R, sender: PacketSender) -> tokio::task::JoinHandle<()>
 where
     R: AsyncRead + Send + Unpin + 'static,
 {
