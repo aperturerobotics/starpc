@@ -4,7 +4,6 @@
 //! The server supports all streaming patterns: unary, client streaming,
 //! server streaming, and bidirectional streaming.
 
-use bytes::Bytes;
 use futures::StreamExt;
 use std::sync::Arc;
 use std::time::Duration;
@@ -148,9 +147,6 @@ impl<I: Invoker + 'static> Server<I> {
             return Err(Error::EmptyMethodId);
         }
 
-        let service_id = call_start.rpc_service.clone();
-        let method_id = call_start.rpc_method.clone();
-
         // Create the server RPC.
         let ctx = Context::new();
         let rpc = Arc::new(ServerRpc::from_call_start(ctx, call_start, writer));
@@ -171,28 +167,8 @@ impl<I: Invoker + 'static> Server<I> {
             let _ = rpc_clone.handle_stream_close(None).await;
         });
 
-        // Invoke the method.
-        let stream: Box<dyn Stream> = Box::new(ServerStream { rpc: rpc.clone() });
-        let (found, result) = self
-            .invoker
-            .invoke_method(&service_id, &method_id, stream)
-            .await;
-
-        // Handle the result.
-        if !found {
-            // Send unimplemented error.
-            let _ = rpc.send_error("method not implemented".to_string()).await;
-        } else if let Err(e) = result {
-            // Send error response.
-            let _ = rpc.send_error(e.to_string()).await;
-        } else {
-            // Close send side on success.
-            let _ = rpc.close_send().await;
-        }
-
-        // Explicitly close the RPC to release the writer/transport.
-        // This ensures the connection doesn't remain open after the terminal response.
-        let _ = rpc.close().await;
+        // Invoke the method and settle the call.
+        serve_rpc(self.invoker.as_ref(), &rpc).await;
 
         // Wait for the read task to finish or timeout, then abort it.
         // This gives time for the client to receive our response.
@@ -288,32 +264,28 @@ impl<I: Invoker + 'static> Server<I> {
     }
 }
 
-/// Wrapper to provide Stream interface for ServerRpc.
-struct ServerStream {
-    rpc: Arc<ServerRpc>,
-}
+/// Invokes the method a server RPC names and settles the call with the outcome.
+///
+/// An unknown method or a handler error reaches the peer as an error, and a
+/// handler that returns cleanly closes the send side. The RPC is closed last,
+/// which releases its writer.
+pub(crate) async fn serve_rpc<I: Invoker + ?Sized>(invoker: &I, rpc: &Arc<ServerRpc>) {
+    // Invoke the method with the RPC as its stream.
+    let (found, result) = invoker
+        .invoke_method(rpc.service(), rpc.method(), Box::new(rpc.clone()))
+        .await;
 
-#[async_trait::async_trait]
-impl Stream for ServerStream {
-    fn context(&self) -> &Context {
-        self.rpc.context()
-    }
+    // Report the outcome to the peer; a failed write leaves nothing to settle.
+    let _ = if !found {
+        rpc.send_error("method not implemented".to_string()).await
+    } else if let Err(err) = result {
+        rpc.send_error(err.to_string()).await
+    } else {
+        rpc.close_send().await
+    };
 
-    async fn send_bytes(&self, data: Bytes) -> Result<()> {
-        self.rpc.send_bytes(data).await
-    }
-
-    async fn recv_bytes(&self) -> Result<Bytes> {
-        self.rpc.recv_bytes().await
-    }
-
-    async fn close_send(&self) -> Result<()> {
-        self.rpc.close_send().await
-    }
-
-    async fn close(&self) -> Result<()> {
-        self.rpc.close().await
-    }
+    // Close the RPC so the connection does not stay open after the terminal response.
+    let _ = rpc.close().await;
 }
 
 #[cfg(test)]

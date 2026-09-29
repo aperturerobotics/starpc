@@ -8,8 +8,9 @@ use std::sync::Arc;
 use crate::client::{OpenStream, PacketReceiver};
 use crate::error::{Error, Result};
 use crate::invoker::Invoker;
-use crate::proto::Packet;
+use crate::proto::{packet::Body, Packet};
 use crate::rpc::{PacketWriter, ServerRpc};
+use crate::server::serve_rpc;
 use crate::stream::{Context, Stream};
 
 use super::RpcStreamWriter;
@@ -156,8 +157,9 @@ pub async fn open_rpc_stream<S: RpcStream + Send + Sync>(
 /// Handles the server side of an incoming RPC stream.
 ///
 /// Receives `RpcStreamInit`, looks up the invoker for that component ID with
-/// `getter`, sends `RpcAck` (with an error when not found), then dispatches
-/// each nested `CallStart` over the stream to the invoker.
+/// `getter`, sends `RpcAck` (with an error when not found), then serves the one
+/// RPC the stream carries: its `CallStart` picks the method, and later packets
+/// feed the call until it settles or the stream closes.
 pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
     stream: Arc<S>,
     getter: RpcStreamGetter,
@@ -169,14 +171,10 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
     };
     let component_id = init.component_id;
 
+    // Look up the invoker; releasing the component cancels the stream's context.
     let ctx = stream.context().child();
-
-    // Look up the invoker
     let ctx_cancel = ctx.clone();
-    let released = Box::new(move || {
-        ctx_cancel.cancel();
-    });
-
+    let released = Box::new(move || ctx_cancel.cancel());
     let lookup_result = getter(&ctx, &component_id, released);
 
     // Report a missing component with an error ack.
@@ -188,97 +186,68 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
         return Err(Error::Remote(err_msg));
     };
 
+    // Release the component when the stream is done, however it ends.
+    let _release_guard = scopeguard::guard(release_fn, |release| release());
+
     // Send the success ack.
     stream
         .send_packet(&RpcStreamPacket::new_ack(String::new()))
         .await?;
-    let release_fn = Some(release_fn);
 
-    // Ensure release is called when we're done
-    let _release_guard = scopeguard::guard(release_fn, |rel| {
-        if let Some(f) = rel {
-            f();
-        }
-    });
+    // The stream ends before a call starts.
+    let Some(first) = next_packet(stream.as_ref()).await? else {
+        return Ok(());
+    };
+    let Some(Body::CallStart(call_start)) = first.body else {
+        return Err(Error::ExpectedCallStart);
+    };
 
-    // Create a writer for the RPC stream
+    // Create the server RPC over the stream.
     let writer: Arc<dyn PacketWriter> = Arc::new(RpcStreamWriter::new(stream.clone()));
+    let rpc = Arc::new(ServerRpc::from_call_start(ctx.child(), call_start, writer));
 
-    // Read and handle packets
+    // Serve the call while the stream feeds it; a closed stream ends the call.
+    let serve = serve_rpc(invoker.as_ref(), &rpc);
+    tokio::pin!(serve);
+    tokio::select! {
+        () = &mut serve => Ok(()),
+        pumped = pump_packets(stream.as_ref(), &rpc) => {
+            let _ = rpc.handle_stream_close(None).await;
+            serve.await;
+            pumped
+        }
+    }
+}
+
+/// Receives the next packet the stream carries for its RPC.
+///
+/// Returns `None` once the stream closes. Packets other than data are
+/// ignored, and data that is not a packet is an error.
+async fn next_packet<S: RpcStream + ?Sized>(stream: &S) -> Result<Option<Packet>> {
     loop {
         let rpc_packet = match stream.recv_packet().await {
-            Ok(p) => p,
-            Err(Error::StreamClosed) => break,
-            Err(e) => return Err(e),
+            Ok(packet) => packet,
+            Err(Error::StreamClosed) => return Ok(None),
+            Err(err) => return Err(err),
         };
-
-        let packet = match rpc_packet.body {
-            Some(rpc_stream_packet::Body::Data(data)) => match Packet::decode(&data[..]) {
-                Ok(p) => p,
-                Err(e) => return Err(Error::InvalidMessage(e)),
-            },
-            _ => continue, // Ignore non-data packets
-        };
-
-        // Handle the packet based on its type
-        use crate::proto::packet::Body;
-        match packet.body {
-            Some(Body::CallStart(call_start)) => {
-                let rpc_ctx = ctx.child();
-                let rpc = Arc::new(ServerRpc::from_call_start(
-                    rpc_ctx,
-                    call_start,
-                    writer.clone(),
-                ));
-
-                let service_id = rpc.service().to_string();
-                let method_id = rpc.method().to_string();
-
-                // Spawn a task to handle this RPC
-                let invoker_clone = invoker.clone();
-                tokio::spawn(async move {
-                    let (_found, _result) = invoker_clone
-                        .invoke_method(&service_id, &method_id, Box::new(ServerRpcStream { rpc }))
-                        .await;
-                });
-            }
-            Some(Body::CallData(_)) | Some(Body::CallCancel(_)) => {
-                // These should be routed to an existing RPC
-                // In this simplified implementation, they're ignored
-            }
-            None => {}
+        if let Some(rpc_stream_packet::Body::Data(data)) = rpc_packet.body {
+            return Packet::decode(&data[..])
+                .map(Some)
+                .map_err(Error::InvalidMessage);
         }
+    }
+}
+
+/// Delivers the stream's packets to the RPC until the stream closes.
+///
+/// Returns early with the error of a packet that cannot be read or that the
+/// RPC rejects as a protocol violation.
+async fn pump_packets<S: RpcStream + ?Sized>(stream: &S, rpc: &ServerRpc) -> Result<()> {
+    while let Some(packet) = next_packet(stream).await? {
+        rpc.handle_packet(packet).await?;
     }
 
     Ok(())
-}
-
-/// Wrapper to make ServerRpc implement Stream for use with invoke_method.
-struct ServerRpcStream {
-    rpc: Arc<ServerRpc>,
-}
-
-#[async_trait]
-impl Stream for ServerRpcStream {
-    fn context(&self) -> &Context {
-        self.rpc.context()
-    }
-
-    async fn send_bytes(&self, data: Bytes) -> Result<()> {
-        crate::stream::Stream::send_bytes(self.rpc.as_ref(), data).await
-    }
-
-    async fn recv_bytes(&self) -> Result<Bytes> {
-        crate::stream::Stream::recv_bytes(self.rpc.as_ref()).await
-    }
-
-    async fn close_send(&self) -> Result<()> {
-        crate::stream::Stream::close_send(self.rpc.as_ref()).await
-    }
-
-    async fn close(&self) -> Result<()> {
-        crate::stream::Stream::close(self.rpc.as_ref()).await
-    }
 }
 
 /// Creates an OpenStream implementation that opens an RPC stream with
@@ -460,6 +429,82 @@ mod tests {
                 self.packets.notified().await;
             }
         }
+    }
+
+    /// Invoker whose one method echoes the first message it receives.
+    struct EchoInvoker;
+
+    #[async_trait]
+    impl Invoker for EchoInvoker {
+        async fn invoke_method(
+            &self,
+            _service_id: &str,
+            _method_id: &str,
+            stream: Box<dyn Stream>,
+        ) -> (bool, Result<()>) {
+            let echoed = async {
+                let data = stream.recv_bytes().await?;
+                stream.send_bytes(data).await
+            };
+
+            (true, echoed.await)
+        }
+    }
+
+    /// Wraps a packet as the data of an RPC stream packet.
+    fn data_packet(body: crate::proto::packet::Body) -> RpcStreamPacket {
+        RpcStreamPacket::new_data(Packet { body: Some(body) }.encode_to_vec())
+    }
+
+    #[tokio::test]
+    async fn test_handle_rpc_stream_delivers_call_data_and_settles() {
+        let stream = Arc::new(MockRpcStream::new());
+        stream
+            .push_recv(RpcStreamPacket::new_init("echo".into()))
+            .await;
+        stream
+            .push_recv(data_packet(Body::CallStart(crate::proto::CallStart {
+                rpc_service: "test.Service".into(),
+                rpc_method: "Echo".into(),
+                data: Vec::new(),
+                data_is_zero: false,
+            })))
+            .await;
+
+        // The message arrives after the CallStart, in its own packet.
+        stream
+            .push_recv(data_packet(Body::CallData(crate::proto::CallData {
+                data: b"ping".to_vec(),
+                ..Default::default()
+            })))
+            .await;
+
+        let getter: RpcStreamGetter = Arc::new(|_ctx, _id, _released| {
+            let invoker: Arc<dyn Invoker> = Arc::new(EchoInvoker);
+            Some((invoker, Box::new(|| {}) as Box<dyn FnOnce() + Send>))
+        });
+        handle_rpc_stream(stream.clone(), getter).await.unwrap();
+
+        // The stream carries the ack, the echoed message, and the completion.
+        let ack = stream.pop_sent().await.unwrap();
+        assert!(
+            matches!(ack.body, Some(rpc_stream_packet::Body::Ack(ref ack)) if ack.error.is_empty())
+        );
+        let mut sent = Vec::new();
+        while let Some(packet) = stream.pop_sent().await {
+            let Some(rpc_stream_packet::Body::Data(data)) = packet.body else {
+                panic!("expected a data packet");
+            };
+            sent.push(Packet::decode(&data[..]).unwrap());
+        }
+        assert!(matches!(
+            sent.first().and_then(|p| p.body.as_ref()),
+            Some(Body::CallData(call)) if call.data == b"ping"
+        ));
+        assert!(matches!(
+            sent.last().and_then(|p| p.body.as_ref()),
+            Some(Body::CallData(call)) if call.complete
+        ));
     }
 
     #[tokio::test]

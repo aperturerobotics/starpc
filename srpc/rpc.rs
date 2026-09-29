@@ -319,11 +319,12 @@ impl CommonRpc {
         Ok(())
     }
 
-    /// Closes the RPC, releasing resources.
+    /// Ends the call locally and releases its resources.
     ///
-    /// This is called internally and handles cleanup. Local cancellation is
-    /// signaled via ctx.is_cancelled(), which wait() checks first.
-    async fn close_locked(&self) {
+    /// A call with no verdict ends as complete, pending waiters and reads
+    /// wake, and the writer closes before the context cancels. Returns the
+    /// writer's close error; every caller still finds the call ended.
+    async fn close_local(&self) -> Result<()> {
         let mut state = self.state.lock().await;
         if state.end.is_none() {
             state.end = Some(RpcEnd::Complete);
@@ -331,9 +332,11 @@ impl CommonRpc {
         self.local_completed.store(true, Ordering::SeqCst);
         drop(state);
 
-        let _ = self.writer.close().await;
+        let closed = self.writer.close().await;
         self.notify.notify_waiters();
         self.ctx.cancel();
+
+        closed
     }
 }
 
@@ -446,7 +449,7 @@ impl ClientRpc {
         let _ = self.common.write_call_cancel().await;
 
         // Close resources
-        self.common.close_locked().await;
+        let _ = self.common.close_local().await;
     }
 }
 
@@ -572,16 +575,7 @@ impl Stream for ServerRpc {
     }
 
     async fn close(&self) -> Result<()> {
-        // Mark as locally completed
-        self.common.local_completed.store(true, Ordering::SeqCst);
-
-        // Close the writer
-        self.common.writer.close().await?;
-
-        // Cancel the context
-        self.common.ctx.cancel();
-
-        Ok(())
+        self.common.close_local().await
     }
 }
 
@@ -705,6 +699,31 @@ mod tests {
         // First recv should return the initial data
         let data = rpc.recv_bytes().await.unwrap();
         assert_eq!(&data[..], &[1, 2, 3]);
+    }
+
+    #[tokio::test]
+    async fn test_server_rpc_close_ends_the_call() {
+        let call_start = CallStart {
+            rpc_service: "test.Service".into(),
+            rpc_method: "TestMethod".into(),
+            data: Vec::new(),
+            data_is_zero: false,
+        };
+        let writer = Arc::new(MockWriter::new());
+        let rpc = ServerRpc::from_call_start(Context::new(), call_start, writer.clone());
+
+        // Closing releases the writer and cancels the call.
+        rpc.close().await.unwrap();
+        assert!(writer.is_closed());
+        assert!(rpc.context().is_cancelled());
+
+        // The call has an end state, so later data is refused instead of queued.
+        let late = CallData {
+            data: vec![1],
+            ..Default::default()
+        };
+        let result = rpc.common.handle_call_data(late).await;
+        assert!(matches!(result, Err(Error::Completed)));
     }
 
     #[tokio::test]
