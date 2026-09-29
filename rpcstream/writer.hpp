@@ -15,16 +15,17 @@ class RpcStream;
 // The shared_ptr ensures the stream stays alive as long as the writer exists.
 class RpcStreamWriter : public starpc::PacketWriter {
 public:
-  explicit RpcStreamWriter(std::shared_ptr<RpcStream> stream);
+	explicit RpcStreamWriter(std::shared_ptr<RpcStream> stream);
 
-  // WritePacket serializes the packet and sends it as RpcStreamPacket data.
-  starpc::Error WritePacket(const srpc::Packet &pkt) override;
+	// WritePacket serializes the packet and sends it as RpcStreamPacket
+	// data.
+	starpc::Error WritePacket(const srpc::Packet &pkt) override;
 
-  // Close signals to the remote that no more packets will be sent.
-  starpc::Error Close() override;
+	// Close signals to the remote that no more packets will be sent.
+	starpc::Error Close() override;
 
 private:
-  std::shared_ptr<RpcStream> stream_;
+	std::shared_ptr<RpcStream> stream_;
 };
 
 } // namespace rpcstream

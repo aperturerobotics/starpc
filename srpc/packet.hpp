@@ -41,14 +41,14 @@ Error ValidateCallData(const srpc::CallData &pkt);
 
 // NewCallStartPacket constructs a new CallStart packet.
 std::unique_ptr<srpc::Packet> NewCallStartPacket(const std::string &service,
-                                                 const std::string &method,
-                                                 const std::string &data,
-                                                 bool data_is_zero);
+						 const std::string &method,
+						 const std::string &data,
+						 bool data_is_zero);
 
 // NewCallDataPacket constructs a new CallData packet.
 std::unique_ptr<srpc::Packet> NewCallDataPacket(const std::string &data,
-                                                bool data_is_zero,
-                                                bool complete, Error err);
+						bool data_is_zero,
+						bool complete, Error err);
 
 // NewCallCancelPacket constructs a new CallCancel packet with cancel.
 std::unique_ptr<srpc::Packet> NewCallCancelPacket();

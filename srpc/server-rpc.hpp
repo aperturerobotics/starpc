@@ -21,38 +21,52 @@ namespace starpc {
 // by the transport; handlers observe cancellation through Stream::StopToken.
 class ServerRPC : public CommonRPC, public MsgStreamRw {
 public:
-  ServerRPC(Invoker *invoker, PacketWriter *writer);
-  ~ServerRPC() override;
+	ServerRPC(Invoker *invoker, PacketWriter *writer);
+	~ServerRPC() override;
 
-  // HandlePacketData handles an incoming unparsed message packet.
-  Error HandlePacketData(const std::string &data);
+	// HandlePacketData handles an incoming unparsed message packet.
+	Error HandlePacketData(const std::string &data);
 
-  // HandlePacket handles an incoming parsed message packet.
-  Error HandlePacket(const srpc::Packet &msg);
+	// HandlePacket handles an incoming parsed message packet.
+	Error HandlePacket(const srpc::Packet &msg);
 
-  // HandleCallStart handles the call start packet.
-  Error HandleCallStart(const srpc::CallStart &pkt);
+	// HandleCallStart handles the call start packet.
+	Error HandleCallStart(const srpc::CallStart &pkt);
 
-  // MsgStreamRw interface implementation
-  Error ReadOne(std::string *out) override { return CommonRPC::ReadOne(out); }
-  Error WriteCallData(const std::string &data, bool data_is_zero, bool complete,
-                      Error err) override {
-    return CommonRPC::WriteCallData(data, data_is_zero, complete, err);
-  }
-  Error WriteCallCancel() override { return CommonRPC::WriteCallCancel(); }
-  std::string RemoteErrorMessage() const override { return CommonRPC::RemoteErrorMessage(); }
+	// MsgStreamRw interface implementation
+	Error ReadOne(std::string *out) override
+	{
+		return CommonRPC::ReadOne(out);
+	}
+	Error WriteCallData(const std::string &data, bool data_is_zero,
+			    bool complete, Error err) override
+	{
+		return CommonRPC::WriteCallData(data, data_is_zero, complete,
+						err);
+	}
+	Error WriteCallCancel() override
+	{
+		return CommonRPC::WriteCallCancel();
+	}
+	std::string RemoteErrorMessage() const override
+	{
+		return CommonRPC::RemoteErrorMessage();
+	}
 
 private:
-  // InvokeRPC invokes the RPC after CallStart is received.
-  void InvokeRPC(const std::string &service_id, const std::string &method_id);
+	// InvokeRPC invokes the RPC after CallStart is received.
+	void InvokeRPC(const std::string &service_id,
+		       const std::string &method_id);
 
-  Invoker *invoker_;
-  std::jthread invoke_thread_;
+	Invoker *invoker_;
+	std::jthread invoke_thread_;
 };
 
 // NewServerRPC constructs a new ServerRPC session.
-inline std::unique_ptr<ServerRPC> NewServerRPC(Invoker *invoker, PacketWriter *writer) {
-  return std::make_unique<ServerRPC>(invoker, writer);
+inline std::unique_ptr<ServerRPC> NewServerRPC(Invoker *invoker,
+					       PacketWriter *writer)
+{
+	return std::make_unique<ServerRPC>(invoker, writer);
 }
 
 } // namespace starpc

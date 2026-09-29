@@ -11,13 +11,13 @@ namespace starpc {
 // Matches Go Handler interface in handler.go
 class Handler : public Invoker {
 public:
-  ~Handler() override = default;
+	~Handler() override = default;
 
-  // GetServiceID returns the ID of the service.
-  virtual const std::string &GetServiceID() const = 0;
+	// GetServiceID returns the ID of the service.
+	virtual const std::string &GetServiceID() const = 0;
 
-  // GetMethodIDs returns the list of methods for the service.
-  virtual std::vector<std::string> GetMethodIDs() const = 0;
+	// GetMethodIDs returns the list of methods for the service.
+	virtual std::vector<std::string> GetMethodIDs() const = 0;
 };
 
 } // namespace starpc
