@@ -213,12 +213,9 @@ impl CommonRpc {
         }
     }
 
-    /// Writes a CallData packet.
-    ///
-    /// # Arguments
-    /// * `data` - Optional data to send
-    /// * `complete` - Whether this completes the RPC
-    /// * `error` - Optional error message
+    /// Writes a CallData packet, completing the call when either `complete`
+    /// or `error` is set. Returns `Error::Completed` once the call has
+    /// already completed locally.
     pub async fn write_call_data(
         &self,
         data: Option<Bytes>,

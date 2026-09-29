@@ -10,10 +10,8 @@ use bytes::Bytes;
 
 /// Creates a new CallStart packet.
 ///
-/// # Arguments
-/// * `service` - The service ID
-/// * `method` - The method ID
-/// * `data` - Optional initial data (None = no data, Some(empty) = empty data)
+/// `None` data sends no payload; `Some(empty)` sends empty data with the
+/// `data_is_zero` flag set.
 pub fn new_call_start(
     service: impl Into<String>,
     method: impl Into<String>,
@@ -31,10 +29,7 @@ pub fn new_call_start(
     }
 }
 
-/// Creates a new CallData packet with data.
-///
-/// # Arguments
-/// * `data` - The data to send (can be empty)
+/// Creates a new CallData packet carrying `data`, which may be empty.
 pub fn new_call_data(data: Vec<u8>) -> Packet {
     let data_is_zero = data.is_empty();
     Packet {
@@ -49,11 +44,8 @@ pub fn new_call_data(data: Vec<u8>) -> Packet {
 
 /// Creates a new CallData packet with optional data and flags.
 ///
-/// # Arguments
-/// * `data` - Optional data bytes
-/// * `data_is_zero` - True if empty data should be sent
-/// * `complete` - True if this completes the stream
-/// * `error` - Optional error message
+/// Sets `complete` when either `complete` or `error` is set, so an error
+/// always ends the call.
 pub fn new_call_data_full(data: Option<Bytes>, complete: bool, error: Option<String>) -> Packet {
     let (data_bytes, data_is_zero) = encode_optional_data(data);
 
@@ -79,10 +71,7 @@ pub fn new_call_complete() -> Packet {
     }
 }
 
-/// Creates a new CallData packet with an error.
-///
-/// # Arguments
-/// * `error` - The error message
+/// Creates a new CallData packet carrying an error message.
 pub fn new_call_error(error: impl Into<String>) -> Packet {
     Packet {
         body: Some(Body::CallData(CallData {

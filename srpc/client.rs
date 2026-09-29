@@ -40,12 +40,8 @@ pub trait Client: Send + Sync {
         I: Message + Send + Sync,
         O: Message + Default;
 
-    /// Opens a new stream for a streaming RPC.
-    ///
-    /// # Arguments
-    /// * `service` - The service ID
-    /// * `method` - The method ID
-    /// * `first_msg` - Optional initial message data
+    /// Opens a new stream for a streaming RPC, sending `first_msg` as the
+    /// initial data when present.
     async fn new_stream(
         &self,
         service: &str,

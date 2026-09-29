@@ -10,59 +10,17 @@ use std::sync::Arc;
 use crate::error::Result;
 use crate::stream::Stream;
 
-/// Trait for invoking RPC methods.
+/// Dispatches incoming RPC calls to a handler implementation.
 ///
-/// An Invoker is responsible for dispatching incoming RPC calls to the
-/// appropriate handler implementation. The Mux implements this trait to
-/// route calls based on service and method IDs.
-///
-/// # Return Value
-///
-/// The `invoke_method` method returns a tuple of `(found, result)`:
-/// - `found`: Whether the method was found and handled
-/// - `result`: The result of the invocation, or an error
-///
-/// This design allows callers to distinguish between:
-/// - Method not found: `(false, Err(Error::Unimplemented))`
-/// - Method found but failed: `(true, Err(...))`
-/// - Method found and succeeded: `(true, Ok(()))`
-///
-/// # Example
-///
-/// ```rust,ignore
-/// #[async_trait]
-/// impl Invoker for MyHandler {
-///     async fn invoke_method(
-///         &self,
-///         service_id: &str,
-///         method_id: &str,
-///         stream: Box<dyn Stream>,
-///     ) -> (bool, Result<()>) {
-///         match method_id {
-///             "MyMethod" => {
-///                 // Handle the method
-///                 (true, self.my_method(stream).await)
-///             }
-///             _ => (false, Err(Error::Unimplemented)),
-///         }
-///     }
-/// }
-/// ```
+/// The Mux implements this trait to route calls by service and method ID.
+/// `invoke_method` returns `(found, result)`, letting a caller distinguish a
+/// method that was not found (`(false, Err(Error::Unimplemented))`) from one
+/// that was found and failed (`(true, Err(...))`).
 #[async_trait]
 pub trait Invoker: Send + Sync {
-    /// Invokes an RPC method.
-    ///
-    /// # Arguments
-    ///
-    /// * `service_id` - The service identifier (e.g., "echo.Echoer")
-    /// * `method_id` - The method identifier (e.g., "Echo")
-    /// * `stream` - The bidirectional stream for this RPC
-    ///
-    /// # Returns
-    ///
-    /// A tuple of (found, result) where:
-    /// * `found` - Whether the method was found and handled
-    /// * `result` - The result of the invocation
+    /// Invokes the RPC method, consuming `stream` whether or not the method
+    /// is found. Returns whether the method was handled and the invocation's
+    /// result.
     async fn invoke_method(
         &self,
         service_id: &str,

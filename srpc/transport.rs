@@ -77,17 +77,10 @@ pub type PacketSender = tokio::sync::mpsc::Sender<Packet>;
 /// Default channel buffer size for packet channels.
 pub const DEFAULT_CHANNEL_BUFFER: usize = 32;
 
-/// Spawns a task that reads packets from a transport and sends them through a channel.
-///
-/// This is a common pattern used by both client and server to handle incoming packets.
-/// The task will run until the transport is closed or an error occurs.
-///
-/// # Arguments
-/// * `reader` - The async reader to read packets from
-/// * `sender` - The channel sender to forward packets to
-///
-/// # Returns
-/// A `JoinHandle` for the spawned task.
+/// Spawns a task that reads packets from `reader` and forwards them to
+/// `sender`, stopping when the transport closes, a decode fails, or the
+/// receiver is dropped. The returned task has no owner beyond the caller,
+/// which must join or abort the handle.
 pub fn spawn_packet_reader<R>(reader: R, sender: PacketSender) -> tokio::task::JoinHandle<()>
 where
     R: AsyncRead + Send + Unpin + 'static,
@@ -113,17 +106,8 @@ where
 
 /// Creates a packet writer and receiver from a split transport.
 ///
-/// This is a convenience function that:
-/// 1. Creates a `TransportPacketWriter` from the write half
-/// 2. Spawns a packet reader task for the read half
-/// 3. Returns the writer and receiver channel
-///
-/// # Arguments
-/// * `read_half` - The read half of the transport
-/// * `write_half` - The write half of the transport
-///
-/// # Returns
-/// A tuple of (packet writer, packet receiver).
+/// The read half is pumped by a spawned task owned by no one, so the caller
+/// must keep the returned receiver alive to keep the transport read.
 pub fn create_packet_channel<R, W>(
     read_half: R,
     write_half: W,
@@ -144,9 +128,6 @@ where
 /// - `None` -> empty data, `data_is_zero = false`
 /// - `Some(empty)` -> empty data, `data_is_zero = true`
 /// - `Some(data)` -> data bytes, `data_is_zero = false`
-///
-/// # Returns
-/// A tuple of (data bytes, data_is_zero flag).
 pub fn encode_optional_data(data: Option<Bytes>) -> (Vec<u8>, bool) {
     match data {
         Some(d) if d.is_empty() => (vec![], true),
@@ -155,13 +136,9 @@ pub fn encode_optional_data(data: Option<Bytes>) -> (Vec<u8>, bool) {
     }
 }
 
-/// Decodes optional data from protobuf messages.
-///
-/// Inverse of `encode_optional_data`.
-///
-/// # Returns
-/// `Some(Bytes)` if data was present (including empty data with `data_is_zero`),
-/// `None` if no data was included.
+/// Decodes optional data from protobuf messages, inverting
+/// `encode_optional_data`: `Some(Bytes)` when data was present, including
+/// empty data with `data_is_zero` set.
 pub fn decode_optional_data(data: Vec<u8>, data_is_zero: bool) -> Option<Bytes> {
     if !data.is_empty() || data_is_zero {
         Some(Bytes::from(data))

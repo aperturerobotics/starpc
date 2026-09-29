@@ -8,55 +8,17 @@ use std::sync::Arc;
 
 use crate::invoker::Invoker;
 
-/// Trait for RPC service handlers.
+/// Describes the service an Invoker implements, so the Mux can register it.
 ///
-/// A Handler extends Invoker with metadata methods that describe the service
-/// and methods it implements. This is the trait that generated service code
-/// typically implements.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// struct MyServiceHandler {
-///     // Handler state
-/// }
-///
-/// #[async_trait]
-/// impl Invoker for MyServiceHandler {
-///     async fn invoke_method(
-///         &self,
-///         service_id: &str,
-///         method_id: &str,
-///         stream: Box<dyn Stream>,
-///     ) -> (bool, Result<()>) {
-///         match method_id {
-///             "Method1" => (true, self.method1(stream).await),
-///             "Method2" => (true, self.method2(stream).await),
-///             _ => (false, Err(Error::Unimplemented)),
-///         }
-///     }
-/// }
-///
-/// impl Handler for MyServiceHandler {
-///     fn service_id(&self) -> &'static str {
-///         "my.package.MyService"
-///     }
-///
-///     fn method_ids(&self) -> &'static [&'static str] {
-///         &["Method1", "Method2"]
-///     }
-/// }
-/// ```
+/// A Handler extends Invoker with metadata methods. This is the trait that
+/// generated service code implements.
 pub trait Handler: Invoker {
-    /// Returns the service ID that this handler implements.
-    ///
-    /// The service ID is typically the fully-qualified protobuf service name,
-    /// e.g., "echo.Echoer" or "my.package.MyService".
+    /// Returns the fully-qualified protobuf service name this handler
+    /// implements, such as `echo.Echoer`.
     fn service_id(&self) -> &'static str;
 
-    /// Returns the list of method IDs that this handler implements.
-    ///
-    /// These are the method names as defined in the protobuf service definition.
+    /// Returns the method names, as defined in the protobuf service
+    /// definition, that this handler implements.
     fn method_ids(&self) -> &'static [&'static str];
 }
 

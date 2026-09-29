@@ -13,22 +13,8 @@ use crate::error::{Error, Result};
 use crate::rpc::PacketWriter;
 use crate::transport::create_packet_channel;
 
-/// Creates a pair of connected in-memory streams.
-///
-/// Returns (client_stream, server_stream) that can be used for testing
-/// client-server communication.
-///
-/// # Arguments
-/// * `buffer_size` - Size of the internal buffer for each direction
-///
-/// # Example
-///
-/// ```ignore
-/// let (client_stream, server_stream) = create_pipe(64 * 1024);
-///
-/// // Use client_stream with a client
-/// // Use server_stream with a server
-/// ```
+/// Creates a pair of connected in-memory streams for testing client-server
+/// communication, with `buffer_size` bytes of buffer in each direction.
 pub fn create_pipe(buffer_size: usize) -> (DuplexStream, DuplexStream) {
     duplex(buffer_size)
 }
@@ -38,21 +24,8 @@ pub fn create_pipe_default() -> (DuplexStream, DuplexStream) {
     create_pipe(64 * 1024)
 }
 
-/// In-memory stream opener for testing.
-///
-/// This opener can hold multiple streams and returns them one at a time
-/// on each call to `open_stream`.
-///
-/// # Example
-///
-/// ```ignore
-/// let (client_stream, server_stream) = create_pipe_default();
-///
-/// let opener = InMemoryOpener::new(vec![client_stream]);
-/// let client = SrpcClient::new(opener);
-///
-/// // The client will use client_stream for its RPC
-/// ```
+/// In-memory stream opener for testing that holds multiple streams and
+/// returns them one at a time on each call to `open_stream`.
 pub struct InMemoryOpener {
     streams: Arc<Mutex<Vec<DuplexStream>>>,
 }
@@ -115,28 +88,8 @@ impl OpenStream for SingleInMemoryOpener {
     }
 }
 
-/// Creates a connected client-server test setup.
-///
-/// Returns (client_opener, server_stream) where:
-/// - `client_opener` can be used to create a `SrpcClient`
-/// - `server_stream` can be passed to `Server::handle_stream`
-///
-/// # Example
-///
-/// ```ignore
-/// let (opener, server_stream) = create_test_pair();
-///
-/// let client = SrpcClient::new(opener);
-/// let server = Server::new(mux);
-///
-/// // Spawn server
-/// tokio::spawn(async move {
-///     server.handle_stream(server_stream).await
-/// });
-///
-/// // Use client
-/// let response = client.exec_call("svc", "method", &request).await?;
-/// ```
+/// Creates a connected client-server test setup: an opener for a
+/// `SrpcClient` and the server stream for `Server::handle_stream`.
 pub fn create_test_pair() -> (SingleInMemoryOpener, DuplexStream) {
     let (client_stream, server_stream) = create_pipe_default();
     (SingleInMemoryOpener::new(client_stream), server_stream)

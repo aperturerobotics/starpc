@@ -88,15 +88,8 @@ impl<S: RpcStream + ?Sized + Send + Sync> RpcStream for Arc<S> {
     }
 }
 
-/// Getter function to resolve component ID to an invoker.
-///
-/// # Arguments
-/// * `ctx` - Context for the RPC stream
-/// * `component_id` - The component ID to look up
-/// * `released` - Callback to invoke when the stream is released
-///
-/// # Returns
-/// `Some((invoker, release_fn))` if found, `None` if not found.
+/// Resolves a component ID to its invoker. `released` is called when the
+/// stream is released; returns `Some((invoker, release_fn))` when found.
 pub type RpcStreamGetter = Arc<
     dyn Fn(
             &Context,
@@ -134,17 +127,9 @@ impl RpcStreamPacket {
 
 /// Opens an RPC stream with a remote component.
 ///
-/// This function performs the client-side init/ack handshake:
-/// 1. Sends RpcStreamInit with the component ID
-/// 2. Optionally waits for RpcAck from the server
-///
-/// # Arguments
-/// * `stream` - The underlying RPC stream
-/// * `component_id` - The target component ID
-/// * `wait_ack` - Whether to wait for acknowledgment
-///
-/// # Returns
-/// Ok(()) on success
+/// Performs the client-side init/ack handshake: sends `RpcStreamInit` with
+/// the component ID, then optionally waits for the server's `RpcAck` and
+/// reports a remote error ack as `Error::Remote`.
 pub async fn open_rpc_stream<S: RpcStream + Send + Sync>(
     stream: &S,
     component_id: &str,
@@ -154,47 +139,35 @@ pub async fn open_rpc_stream<S: RpcStream + Send + Sync>(
     let init_packet = RpcStreamPacket::new_init(component_id.to_string());
     stream.send_packet(&init_packet).await?;
 
-    // Wait for ack if requested
+    // Wait for the ack when requested and report a remote error ack.
     if wait_ack {
         let ack_packet = stream.recv_packet().await?;
-        match ack_packet.body {
-            Some(rpc_stream_packet::Body::Ack(ack)) => {
-                if !ack.error.is_empty() {
-                    return Err(Error::Remote(format!("remote: {}", ack.error)));
-                }
-            }
-            _ => {
-                return Err(Error::UnrecognizedPacket);
-            }
+        let Some(rpc_stream_packet::Body::Ack(ack)) = ack_packet.body else {
+            return Err(Error::UnrecognizedPacket);
+        };
+        if !ack.error.is_empty() {
+            return Err(Error::Remote(format!("remote: {}", ack.error)));
         }
     }
 
     Ok(())
 }
 
-/// Handles an incoming RPC stream (server side).
+/// Handles the server side of an incoming RPC stream.
 ///
-/// This function handles the server-side of the rpcstream protocol:
-/// 1. Receives RpcStreamInit with component ID
-/// 2. Looks up the invoker for that component
-/// 3. Sends RpcAck (with error if not found)
-/// 4. Handles nested RPC calls over the stream
-///
-/// # Arguments
-/// * `stream` - The incoming RPC stream
-/// * `getter` - Function to look up invokers by component ID
+/// Receives `RpcStreamInit`, looks up the invoker for that component ID with
+/// `getter`, sends `RpcAck` (with an error when not found), then dispatches
+/// each nested `CallStart` over the stream to the invoker.
 pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
     stream: Arc<S>,
     getter: RpcStreamGetter,
 ) -> Result<()> {
-    // Read the init packet
+    // Read the init packet and take the component ID from it.
     let init_packet = stream.recv_packet().await?;
-    let component_id = match init_packet.body {
-        Some(rpc_stream_packet::Body::Init(init)) => init.component_id,
-        _ => {
-            return Err(Error::UnrecognizedPacket);
-        }
+    let Some(rpc_stream_packet::Body::Init(init)) = init_packet.body else {
+        return Err(Error::UnrecognizedPacket);
     };
+    let component_id = init.component_id;
 
     let ctx = stream.context().child();
 
@@ -206,24 +179,20 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
 
     let lookup_result = getter(&ctx, &component_id, released);
 
-    // Send ack
-    let (invoker, release_fn) = match lookup_result {
-        Some((inv, rel)) => {
-            // Send success ack
-            stream
-                .send_packet(&RpcStreamPacket::new_ack(String::new()))
-                .await?;
-            (inv, Some(rel))
-        }
-        None => {
-            // Send error ack
-            let err_msg = format!("no server for component: {}", component_id);
-            stream
-                .send_packet(&RpcStreamPacket::new_ack(err_msg.clone()))
-                .await?;
-            return Err(Error::Remote(err_msg));
-        }
+    // Report a missing component with an error ack.
+    let Some((invoker, release_fn)) = lookup_result else {
+        let err_msg = format!("no server for component: {}", component_id);
+        stream
+            .send_packet(&RpcStreamPacket::new_ack(err_msg.clone()))
+            .await?;
+        return Err(Error::Remote(err_msg));
     };
+
+    // Send the success ack.
+    stream
+        .send_packet(&RpcStreamPacket::new_ack(String::new()))
+        .await?;
+    let release_fn = Some(release_fn);
 
     // Ensure release is called when we're done
     let _release_guard = scopeguard::guard(release_fn, |rel| {
@@ -312,14 +281,9 @@ impl Stream for ServerRpcStream {
     }
 }
 
-/// Creates an OpenStream function using an RPC stream caller.
-///
-/// This allows creating a Client that operates over an RPC stream,
-/// enabling nested RPC calls.
-///
-/// # Type Parameters
-/// * `F` - Async function that creates a new stream
-/// * `S` - Stream type
+/// Creates an OpenStream implementation that opens an RPC stream with
+/// `caller` and performs the init/ack handshake, so a Client can operate
+/// over a nested RPC stream.
 pub fn new_rpc_stream_open_stream<F, Fut, S>(
     caller: F,
     component_id: String,
@@ -388,12 +352,9 @@ where
     }
 }
 
-/// Creates a Client that operates over an RPC stream.
-///
-/// # Arguments
-/// * `caller` - Function that opens a new RPC stream
-/// * `component_id` - Target component ID
-/// * `wait_ack` - Whether to wait for acknowledgment
+/// Creates a Client that operates over an RPC stream to `component_id`,
+/// opening each stream with `caller` and waiting for the ack when
+/// `wait_ack` is set.
 pub fn new_rpc_stream_client<F, Fut, S>(
     caller: F,
     component_id: String,

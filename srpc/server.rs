@@ -128,20 +128,15 @@ impl<I: Invoker + 'static> Server<I> {
         // Create framed reader.
         let mut framed = FramedRead::new(read_half, PacketCodec::new());
 
-        // Wait for the first packet (CallStart).
+        // Wait for the first packet and take its CallStart body.
         let first_packet = framed.next().await;
-        let call_start = match first_packet {
-            Some(Ok(packet)) => {
-                // Validate the packet
-                packet.validate()?;
-
-                match packet.body {
-                    Some(Body::CallStart(cs)) => cs,
-                    _ => return Err(Error::ExpectedCallStart),
-                }
-            }
-            Some(Err(e)) => return Err(e),
-            None => return Err(Error::StreamClosed),
+        let Some(Ok(packet)) = first_packet else {
+            // A decode error ends the stream; a closed transport has no error.
+            return first_packet.map_or(Err(Error::StreamClosed), |res| res.map(|_| ()));
+        };
+        packet.validate()?;
+        let Some(Body::CallStart(call_start)) = packet.body else {
+            return Err(Error::ExpectedCallStart);
         };
 
         // Validate service and method IDs (already done by packet.validate(),
