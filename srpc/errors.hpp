@@ -7,26 +7,25 @@ namespace starpc {
 
 /*
  * Error is the house error value. Every action returns one; OK is success.
- * The codes mirror the Go starpc errors in errors.go.
+ * The codes mirror the Go starpc errors in errors.go; ErrorString holds each
+ * diagnostic text.
  */
 enum class Error {
 	OK = 0,
-	Unimplemented, // ErrUnimplemented - RPC method was not implemented
-	Completed, // ErrCompleted - unexpected packet after rpc was completed
-	UnrecognizedPacket, // ErrUnrecognizedPacket - unrecognized packet type
-	EmptyPacket,	    // ErrEmptyPacket - invalid empty packet
-	InvalidMessage,	    // ErrInvalidMessage - message failed to parse
-	EmptyMethodID,	    // ErrEmptyMethodID - method id empty
-	EmptyServiceID,	    // ErrEmptyServiceID - service id empty
-	NoAvailableClients, // ErrNoAvailableClients - no available rpc clients
-	NilWriter,	    // ErrNilWriter - writer cannot be nil
-	Canceled,	    // context.Canceled equivalent
-	EOF_, // io.EOF equivalent (named EOF_ to avoid macro collision)
-	ClosedBeforeCompletion, // The transport ended without the peer's
-				// verdict.
-	ResourceExhausted,	// The call exceeded its receive queue or thread
-				// capacity.
-	RemoteError, // RemoteErrorMessage retains the peer's diagnostic.
+	Unimplemented, /* the RPC method was not implemented */
+	Completed,     /* unexpected packet after the RPC completed */
+	UnrecognizedPacket,
+	EmptyPacket,
+	InvalidMessage, /* the message failed to parse */
+	EmptyMethodID,
+	EmptyServiceID,
+	NoAvailableClients,
+	NilWriter,
+	Canceled, /* context.Canceled equivalent */
+	EOF_,	  /* io.EOF equivalent; named EOF_ to avoid the macro */
+	ClosedBeforeCompletion, /* the transport ended without a verdict */
+	ResourceExhausted, /* the receive queue or thread capacity was hit */
+	RemoteError, /* RemoteErrorMessage retains the peer's diagnostic */
 };
 
 /* ErrorString returns the stable diagnostic text for err. */

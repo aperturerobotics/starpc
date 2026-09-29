@@ -96,8 +96,8 @@ std::pair<bool, Error> Mux::InvokeMethod(const std::string &service_id,
 	for (auto *invoker : fallback) {
 		if (invoker == nullptr)
 			continue;
-		auto [handled, err] = invoker->InvokeMethod(service_id,
-							    method_id, strm);
+		auto [handled, err] =
+			invoker->InvokeMethod(service_id, method_id, strm);
 		if (err != Error::OK || handled)
 			return {handled, err};
 	}

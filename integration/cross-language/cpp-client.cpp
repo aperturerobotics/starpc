@@ -177,10 +177,10 @@ bool TestUnary(const std::string &host, int port)
 
 	echo::EchoMsg req;
 	req.set_body(test_body);
-	std::string reqData;
-	req.SerializeToString(&reqData);
+	std::string req_data;
+	req.SerializeToString(&req_data);
 
-	starpc::Error err = rpc->Start(writer.get(), true, reqData);
+	starpc::Error err = rpc->Start(writer.get(), true, req_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: start: " << starpc::ErrorString(err)
 			  << std::endl;
@@ -188,8 +188,8 @@ bool TestUnary(const std::string &host, int port)
 		return false;
 	}
 
-	std::string respData;
-	err = rpc->ReadOne(&respData);
+	std::string resp_data;
+	err = rpc->ReadOne(&resp_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: read: " << starpc::ErrorString(err)
 			  << std::endl;
@@ -199,7 +199,7 @@ bool TestUnary(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
+	if (!resp.ParseFromString(resp_data) || resp.body() != test_body) {
 		std::cerr << "FAILED: body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
@@ -232,10 +232,10 @@ bool TestServerStream(const std::string &host, int port)
 
 	echo::EchoMsg req;
 	req.set_body(test_body);
-	std::string reqData;
-	req.SerializeToString(&reqData);
+	std::string req_data;
+	req.SerializeToString(&req_data);
 
-	starpc::Error err = rpc->Start(writer.get(), true, reqData);
+	starpc::Error err = rpc->Start(writer.get(), true, req_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: start" << std::endl;
 		CleanupConn(fd, done, reader);
@@ -244,8 +244,8 @@ bool TestServerStream(const std::string &host, int port)
 
 	int received = 0;
 	for (int i = 0; i < 5; i++) {
-		std::string respData;
-		err = rpc->ReadOne(&respData);
+		std::string resp_data;
+		err = rpc->ReadOne(&resp_data);
 		if (err != starpc::Error::OK) {
 			std::cerr << "FAILED: read " << i << ": "
 				  << starpc::ErrorString(err) << std::endl;
@@ -254,7 +254,7 @@ bool TestServerStream(const std::string &host, int port)
 			return false;
 		}
 		echo::EchoMsg resp;
-		if (!resp.ParseFromString(respData) ||
+		if (!resp.ParseFromString(resp_data) ||
 		    resp.body() != test_body) {
 			std::cerr << "FAILED: body mismatch at " << i
 				  << std::endl;
@@ -304,10 +304,10 @@ bool TestClientStream(const std::string &host, int port)
 
 	echo::EchoMsg req;
 	req.set_body(test_body);
-	std::string reqData;
-	req.SerializeToString(&reqData);
+	std::string req_data;
+	req.SerializeToString(&req_data);
 
-	err = rpc->WriteCallData(reqData, false, false, starpc::Error::OK);
+	err = rpc->WriteCallData(req_data, false, false, starpc::Error::OK);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: write" << std::endl;
 		CleanupConn(fd, done, reader);
@@ -321,8 +321,8 @@ bool TestClientStream(const std::string &host, int port)
 		return false;
 	}
 
-	std::string respData;
-	err = rpc->ReadOne(&respData);
+	std::string resp_data;
+	err = rpc->ReadOne(&resp_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: read: " << starpc::ErrorString(err)
 			  << std::endl;
@@ -332,7 +332,7 @@ bool TestClientStream(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
+	if (!resp.ParseFromString(resp_data) || resp.body() != test_body) {
 		std::cerr << "FAILED: body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
@@ -371,8 +371,8 @@ bool TestBidiStream(const std::string &host, int port)
 	}
 
 	/* Receive initial "hello from server" message. */
-	std::string initData;
-	err = rpc->ReadOne(&initData);
+	std::string init_data;
+	err = rpc->ReadOne(&init_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: read init: " << starpc::ErrorString(err)
 			  << std::endl;
@@ -380,10 +380,10 @@ bool TestBidiStream(const std::string &host, int port)
 		CleanupConn(fd, done, reader);
 		return false;
 	}
-	echo::EchoMsg initMsg;
-	if (!initMsg.ParseFromString(initData) ||
-	    initMsg.body() != "hello from server") {
-		std::cerr << "FAILED: init body mismatch: '" << initMsg.body()
+	echo::EchoMsg init_msg;
+	if (!init_msg.ParseFromString(init_data) ||
+	    init_msg.body() != "hello from server") {
+		std::cerr << "FAILED: init body mismatch: '" << init_msg.body()
 			  << "'" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);
@@ -393,10 +393,10 @@ bool TestBidiStream(const std::string &host, int port)
 	/* Send a message and expect echo. */
 	echo::EchoMsg req;
 	req.set_body(test_body);
-	std::string reqData;
-	req.SerializeToString(&reqData);
+	std::string req_data;
+	req.SerializeToString(&req_data);
 
-	err = rpc->WriteCallData(reqData, false, false, starpc::Error::OK);
+	err = rpc->WriteCallData(req_data, false, false, starpc::Error::OK);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: write" << std::endl;
 		rpc->Close();
@@ -404,8 +404,8 @@ bool TestBidiStream(const std::string &host, int port)
 		return false;
 	}
 
-	std::string respData;
-	err = rpc->ReadOne(&respData);
+	std::string resp_data;
+	err = rpc->ReadOne(&resp_data);
 	if (err != starpc::Error::OK) {
 		std::cerr << "FAILED: read echo: " << starpc::ErrorString(err)
 			  << std::endl;
@@ -415,7 +415,7 @@ bool TestBidiStream(const std::string &host, int port)
 	}
 
 	echo::EchoMsg resp;
-	if (!resp.ParseFromString(respData) || resp.body() != test_body) {
+	if (!resp.ParseFromString(resp_data) || resp.body() != test_body) {
 		std::cerr << "FAILED: echo body mismatch" << std::endl;
 		rpc->Close();
 		CleanupConn(fd, done, reader);

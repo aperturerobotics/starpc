@@ -19,7 +19,7 @@ class Stream {
 public:
 	virtual ~Stream() = default;
 
-	/* StopToken interrupts handler work when its RPC ends or is canceled. */
+	/* StopToken interrupts work when the RPC ends or is canceled. */
 	virtual std::stop_token StopToken() const
 	{
 		return {};
