@@ -10,16 +10,16 @@
 namespace starpc {
 
 ServerRPC::ServerRPC(Invoker *invoker, PacketWriter *writer)
-	: invoker_(invoker)
+	: invoker(invoker)
 {
-	writer_ = writer;
+	this->writer = writer;
 }
 
 ServerRPC::~ServerRPC()
 {
 	Cancel();
-	if (invoke_thread_.joinable())
-		invoke_thread_.join();
+	if (invoke_thread.joinable())
+		invoke_thread.join();
 }
 
 Error ServerRPC::HandlePacketData(const std::string &data)
@@ -35,11 +35,12 @@ Error ServerRPC::HandlePacket(const srpc::Packet &packet)
 	const auto err = ValidatePacket(packet);
 	if (err != Error::OK)
 		return err;
+
 	switch (packet.body_case()) {
 	case srpc::Packet::kCallStart:
 		return HandleCallStart(packet.call_start());
 	case srpc::Packet::kCallData:
-		if (service_.empty())
+		if (service.empty())
 			return Error::UnrecognizedPacket;
 		return HandleCallData(packet.call_data());
 	case srpc::Packet::kCallCancel:
@@ -54,17 +55,19 @@ Error ServerRPC::HandleCallStart(const srpc::CallStart &packet)
 	const auto valid = ValidateCallStart(packet);
 	if (valid != Error::OK)
 		return valid;
+
 	{
-		std::lock_guard lock(state_mutex_);
-		if (writer_ == nullptr)
+		std::lock_guard lock(state_mutex);
+		if (writer == nullptr)
 			return Error::NilWriter;
-		if (invoker_ == nullptr)
+		if (invoker == nullptr)
 			return Error::Unimplemented;
-		if (!service_.empty() || canceled_ || data_closed_)
+		if (!service.empty() || canceled || data_closed)
 			return Error::Completed;
-		service_ = packet.rpc_service();
-		method_ = packet.rpc_method();
+		service = packet.rpc_service();
+		method = packet.rpc_method();
 	}
+
 	if (!packet.data().empty() || packet.data_is_zero()) {
 		srpc::CallData first;
 		first.set_data(packet.data());
@@ -74,12 +77,14 @@ Error ServerRPC::HandleCallStart(const srpc::CallStart &packet)
 			return queued;
 	}
 
-	// Thread creation is the sole throwing runtime boundary in this
-	// component.
+	/*
+	 * Thread creation is the sole throwing runtime boundary in this
+	 * component; a stop callback cancels the call when the thread ends.
+	 */
 	try {
-		invoke_thread_ = std::jthread([this](std::stop_token stop) {
+		invoke_thread = std::jthread([this](std::stop_token stop) {
 			std::stop_callback canceled(stop, [this] { Cancel(); });
-			InvokeRPC(service_, method_);
+			InvokeRPC(service, method);
 		});
 	} catch (const std::system_error &) {
 		Cancel();
@@ -93,7 +98,7 @@ void ServerRPC::InvokeRPC(const std::string &service_id,
 {
 	auto stream = NewMsgStream(this, [this] { Cancel(); }, StopToken());
 	auto [found, err] =
-		invoker_->InvokeMethod(service_id, method_id, stream.get());
+		invoker->InvokeMethod(service_id, method_id, stream.get());
 	if (!found && err == Error::OK)
 		err = Error::Unimplemented;
 	Finish(err);

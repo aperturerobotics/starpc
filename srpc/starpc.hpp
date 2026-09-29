@@ -1,7 +1,9 @@
 #pragma once
 
-// Main header for starpc C++ library
-// Include this to get all starpc functionality
+/*
+ * starpc.hpp is the library's umbrella header: include it for the whole
+ * hand-written C++ API.
+ */
 
 #include "client-rpc.hpp"
 #include "client.hpp"

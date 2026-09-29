@@ -8,9 +8,11 @@
 namespace starpc {
 namespace {
 
-// These bounds contain an unconsumed stream, including zero-length messages.
-constexpr size_t kMaximumQueuedBytes = 4 * 1024 * 1024;
-constexpr size_t kMaximumQueuedMessages = 1024;
+/*
+ * These bounds contain an unconsumed stream, including zero-length messages.
+ */
+constexpr size_t maximum_queued_bytes = 4 * 1024 * 1024;
+constexpr size_t maximum_queued_messages = 1024;
 
 } // namespace
 
@@ -20,77 +22,84 @@ CommonRPC::~CommonRPC() = default;
 void CommonRPC::Cancel()
 {
 	{
-		std::lock_guard lock(state_mutex_);
-		canceled_ = true;
-		local_completed_ = true;
-		data_queue_.clear();
-		queued_bytes_ = 0;
+		std::lock_guard lock(state_mutex);
+		canceled = true;
+		local_completed = true;
+		data_queue.clear();
+		queued_bytes = 0;
 	}
-	state_changed_.notify_all();
-	stop_source_.request_stop();
+	state_changed.notify_all();
+	stop_source.request_stop();
 	CloseWriter();
 }
 
 bool CommonRPC::IsCanceled() const
 {
-	std::lock_guard lock(state_mutex_);
-	return canceled_;
+	std::lock_guard lock(state_mutex);
+	return canceled;
 }
 
 std::string CommonRPC::RemoteErrorMessage() const
 {
-	std::lock_guard lock(state_mutex_);
-	return remote_error_message_;
+	std::lock_guard lock(state_mutex);
+	return remote_error_message;
 }
 
 Error CommonRPC::ReadOne(std::string *out)
 {
-	std::unique_lock lock(state_mutex_);
-	state_changed_.wait(lock, [this] {
-		return canceled_ || data_closed_ || !data_queue_.empty();
-	});
-	if (canceled_)
-		return remote_error_ != Error::OK ? remote_error_
-						  : Error::Canceled;
-	if (!data_queue_.empty()) {
-		*out = std::move(data_queue_.front());
-		queued_bytes_ -= out->size();
-		data_queue_.pop_front();
+	auto readable = [this] {
+		return canceled || data_closed || !data_queue.empty();
+	};
+
+	/* Wait for a message, the call's end, or cancellation. */
+	std::unique_lock lock(state_mutex);
+	state_changed.wait(lock, readable);
+
+	if (canceled)
+		return remote_error != Error::OK ? remote_error
+						 : Error::Canceled;
+	if (!data_queue.empty()) {
+		*out = std::move(data_queue.front());
+		queued_bytes -= out->size();
+		data_queue.pop_front();
 		return Error::OK;
 	}
-	return remote_error_ != Error::OK ? remote_error_ : Error::EOF_;
+	return remote_error != Error::OK ? remote_error : Error::EOF_;
 }
 
 Error CommonRPC::WriteCallData(const std::string &data, bool data_is_zero,
 			       bool complete, Error err)
 {
-	std::unique_lock writing(write_mutex_);
-	PacketWriter *writer;
+	std::unique_lock writing(write_mutex);
+	PacketWriter *w;
 	{
-		std::lock_guard lock(state_mutex_);
-		if (canceled_)
+		std::lock_guard lock(state_mutex);
+		if (canceled)
 			return Error::Canceled;
-		if (local_completed_) {
+		if (local_completed) {
 			return complete && data.empty() && !data_is_zero
 				       ? Error::OK
 				       : Error::Completed;
 		}
-		if (writer_ == nullptr)
+		if (writer == nullptr)
 			return Error::NilWriter;
-		if (writer_closed_)
+		if (writer_closed)
 			return Error::Completed;
 		if (complete || err != Error::OK)
-			local_completed_ = true;
-		writer = writer_;
+			local_completed = true;
+		w = writer;
 	}
 
 	const auto packet = NewCallDataPacket(
 		data, data.empty() && data_is_zero, complete, err);
-	const auto written = writer->WritePacket(*packet);
+	const auto written = w->WritePacket(*packet);
 	writing.unlock();
-	// A failed half-close leaves the verdict to the transport close, which
-	// follows any reply and completion the transport read but has not
-	// delivered.
+
+	/*
+	 * A failed half-close leaves the verdict to the transport close, which
+	 * follows any reply and completion the transport read but has not
+	 * delivered.
+	 */
 	const bool half_close =
 		complete && data.empty() && !data_is_zero && err == Error::OK;
 	if (written != Error::OK && !half_close)
@@ -101,21 +110,20 @@ Error CommonRPC::WriteCallData(const std::string &data, bool data_is_zero,
 void CommonRPC::HandleStreamClose(Error close_err)
 {
 	{
-		std::lock_guard lock(state_mutex_);
-		if (canceled_)
+		std::lock_guard lock(state_mutex);
+		if (canceled)
 			return;
 		if (close_err == Error::EOF_)
 			close_err = Error::OK;
-		if (remote_error_ == Error::OK && close_err != Error::OK)
-			remote_error_ = close_err;
-		if (remote_error_ == Error::OK && !remote_completed_ &&
-		    !local_completing_) {
-			remote_error_ = Error::ClosedBeforeCompletion;
-		}
-		data_closed_ = true;
+		if (remote_error == Error::OK && close_err != Error::OK)
+			remote_error = close_err;
+		if (remote_error == Error::OK && !remote_completed &&
+		    !local_completing)
+			remote_error = Error::ClosedBeforeCompletion;
+		data_closed = true;
 	}
-	state_changed_.notify_all();
-	stop_source_.request_stop();
+	state_changed.notify_all();
+	stop_source.request_stop();
 	CloseWriter();
 }
 
@@ -129,54 +137,57 @@ Error CommonRPC::HandleCallData(const srpc::CallData &pkt)
 {
 	bool overflow = false;
 	{
-		std::lock_guard lock(state_mutex_);
-		if (canceled_)
+		std::lock_guard lock(state_mutex);
+		if (canceled)
 			return Error::Canceled;
-		if (data_closed_)
+		if (data_closed)
 			return pkt.complete() ? Error::OK : Error::Completed;
 		if (!pkt.data().empty() || pkt.data_is_zero()) {
 			overflow =
-				data_queue_.size() >= kMaximumQueuedMessages ||
+				data_queue.size() >= maximum_queued_messages ||
 				pkt.data().size() >
-					kMaximumQueuedBytes - queued_bytes_;
+					maximum_queued_bytes - queued_bytes;
 			if (!overflow) {
-				data_queue_.push_back(pkt.data());
-				queued_bytes_ += pkt.data().size();
+				data_queue.push_back(pkt.data());
+				queued_bytes += pkt.data().size();
 			}
 		}
 		if (!pkt.error().empty()) {
-			remote_error_ = Error::RemoteError;
-			remote_error_message_ = pkt.error();
+			remote_error = Error::RemoteError;
+			remote_error_message = pkt.error();
 		}
-		if (pkt.complete() || remote_error_ != Error::OK) {
-			data_closed_ = true;
-			remote_completed_ = true;
+		if (pkt.complete() || remote_error != Error::OK) {
+			data_closed = true;
+			remote_completed = true;
 		}
 	}
+
+	/* Close the transport before reporting an overflowing queue. */
 	if (overflow) {
 		HandleStreamClose(Error::ResourceExhausted);
 		return Error::ResourceExhausted;
 	}
-	state_changed_.notify_all();
+	state_changed.notify_all();
 	return Error::OK;
 }
 
 Error CommonRPC::WriteCallCancel()
 {
-	std::unique_lock writing(write_mutex_);
-	PacketWriter *writer;
+	std::unique_lock writing(write_mutex);
+	PacketWriter *w;
 	{
-		std::lock_guard lock(state_mutex_);
-		if (canceled_ || writer_closed_)
+		std::lock_guard lock(state_mutex);
+		if (canceled || writer_closed)
 			return Error::Canceled;
-		if (local_completed_)
+		if (local_completed)
 			return Error::Completed;
-		if (writer_ == nullptr)
+		if (writer == nullptr)
 			return Error::NilWriter;
-		local_completed_ = true;
-		writer = writer_;
+		local_completed = true;
+		w = writer;
 	}
-	const auto written = writer->WritePacket(*NewCallCancelPacket());
+
+	const auto written = w->WritePacket(*NewCallCancelPacket());
 	writing.unlock();
 	if (written != Error::OK)
 		HandleStreamClose(written);
@@ -185,26 +196,27 @@ Error CommonRPC::WriteCallCancel()
 
 void CommonRPC::CloseWriter()
 {
-	PacketWriter *writer;
+	PacketWriter *w;
 	{
-		std::lock_guard lock(state_mutex_);
-		if (writer_closed_ || writer_ == nullptr)
+		std::lock_guard lock(state_mutex);
+		if (writer_closed || writer == nullptr)
 			return;
-		writer_closed_ = true;
-		writer = writer_;
+		writer_closed = true;
+		w = writer;
 	}
-	(void)writer->Close();
+	(void)w->Close();
 }
 
 void CommonRPC::Finish(Error err)
 {
 	{
-		std::lock_guard lock(state_mutex_);
-		local_completing_ = true;
+		std::lock_guard lock(state_mutex);
+		local_completing = true;
 	}
+
 	(void)WriteCallData("", false, true, err);
 	CloseWriter();
-	stop_source_.request_stop();
+	stop_source.request_stop();
 }
 
 } // namespace starpc

@@ -1,12 +1,12 @@
 #pragma once
 
-#include <string>
-
 #include "common-rpc.hpp"
 #include "errors.hpp"
 #include "msg-stream.hpp"
 #include "packet.hpp"
 #include "writer.hpp"
+
+#include <string>
 
 namespace srpc {
 class Packet;
@@ -15,35 +15,43 @@ class CallStart;
 
 namespace starpc {
 
-// ClientRPC represents the client side of an on-going RPC call message stream.
+/*
+ * ClientRPC is the caller's side of one call. The transport feeds it packets
+ * through HandlePacketData and it writes through the PacketWriter given to
+ * Start.
+ */
 class ClientRPC : public CommonRPC, public MsgStreamRw {
 public:
+	/* ClientRPC opens a call for service and method. */
 	ClientRPC(const std::string &service, const std::string &method);
 	~ClientRPC() override;
 
-	// Start attaches a borrowed writer and writes CallStart once. The
-	// writer must outlive this call and its callbacks. The caller closes a
-	// rejected writer.
+	/*
+	 * Start attaches a borrowed writer and writes CallStart once. The
+	 * writer must outlive this call and its callbacks. The caller closes
+	 * a rejected writer.
+	 */
 	Error Start(PacketWriter *writer, bool write_first_msg,
 		    const std::string &first_msg);
 
-	// HandlePacketData handles an incoming unparsed message packet.
+	/* HandlePacketData parses one serialized packet and handles it. */
 	Error HandlePacketData(const std::string &data);
 
-	// HandleStreamClose handles the stream closing optionally with an
-	// error.
+	/* HandleStreamClose records the transport ending with its outcome. */
 	void HandleStreamClose(Error close_err);
 
-	// HandlePacket handles an incoming parsed message packet.
+	/* HandlePacket validates and dispatches one parsed packet. */
 	Error HandlePacket(const srpc::Packet &pkt);
 
-	// HandleCallStart handles the call start packet.
+	/*
+	 * HandleCallStart rejects a CallStart: the caller never receives one.
+	 */
 	Error HandleCallStart(const srpc::CallStart &pkt);
 
-	// Close releases any resources held by the ClientRPC.
+	/* Close cancels the call. */
 	void Close();
 
-	// MsgStreamRw interface implementation
+	/* MsgStreamRw over the shared call state. */
 	Error ReadOne(std::string *out) override
 	{
 		return CommonRPC::ReadOne(out);
@@ -64,7 +72,7 @@ public:
 	}
 };
 
-// NewClientRPC constructs a new ClientRPC session.
+/* NewClientRPC constructs a ClientRPC for service and method. */
 inline std::unique_ptr<ClientRPC> NewClientRPC(const std::string &service,
 					       const std::string &method)
 {

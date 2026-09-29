@@ -15,86 +15,125 @@ class CallData;
 
 namespace starpc {
 
-// CommonRPC coordinates message delivery, half-close, and cancellation for one
-// call. Its packet writer must outlive the call and interrupt blocked writes
-// when closed.
+/*
+ * CommonRPC holds the state one call shares between its transport side and
+ * its handler side: message delivery, half-close, and cancellation. The
+ * packet writer must outlive the call and interrupt blocked writes when
+ * closed. Subclasses drive it through Handle* from the transport and
+ * ReadOne/WriteCallData from the handler.
+ */
 class CommonRPC {
 public:
 	CommonRPC();
 	virtual ~CommonRPC();
 
-	// Cancel interrupts reads and transport writes. Repeated cancellation
-	// is safe.
+	/* Cancel interrupts reads and writes. Repeating it is safe. */
 	void Cancel();
+
+	/* IsCanceled reports whether Cancel or a peer cancel has run. */
 	bool IsCanceled() const;
 
-	// StopToken lets handlers cancel work outside MsgRecv when the call
-	// ends.
+	/*
+	 * StopToken lets handlers cancel work outside ReadOne when the call
+	 * ends.
+	 */
 	std::stop_token StopToken() const
 	{
-		return stop_source_.get_token();
+		return stop_source.get_token();
 	}
 
-	// GetService and GetMethod remain stable after call startup.
+	/* GetService and GetMethod stay stable after call startup. */
 	const std::string &GetService() const
 	{
-		return service_;
+		return service;
 	}
 	const std::string &GetMethod() const
 	{
-		return method_;
+		return method;
 	}
 
-	// RemoteErrorMessage retains the peer's diagnostic when ReadOne returns
-	// RemoteError.
+	/*
+	 * RemoteErrorMessage retains the peer's diagnostic when ReadOne
+	 * returns RemoteError.
+	 */
 	std::string RemoteErrorMessage() const;
 
-	// ReadOne drains messages preceding a normal completion. Local
-	// cancellation interrupts immediately; an abrupt peer disconnect is not
-	// a successful EOF.
+	/*
+	 * ReadOne returns the next queued message in out. It returns EOF_
+	 * after a normal completion, the peer's error for a failed call, and
+	 * Canceled after local cancellation; an abrupt peer disconnect is not
+	 * a successful EOF.
+	 */
 	Error ReadOne(std::string *out);
 
-	// WriteCallData ends the call when a write fails, except for a bare
-	// half-close, whose outcome the transport close settles.
+	/*
+	 * WriteCallData writes one data packet. data_is_zero marks an
+	 * intentionally empty message; complete ends the sending side; err
+	 * carries the terminal verdict. A failed write ends the call, except
+	 * for a bare half-close, whose outcome the transport close settles.
+	 */
 	Error WriteCallData(const std::string &data, bool data_is_zero,
 			    bool complete, Error err);
+
+	/*
+	 * HandleStreamClose records the transport ending. EOF_ means the peer
+	 * half-closed cleanly; any other error becomes the call's verdict when
+	 * the peer has not given one.
+	 */
 	void HandleStreamClose(Error close_err);
+
+	/* HandleCallCancel honors the peer's cancel packet. */
 	Error HandleCallCancel();
+
+	/* HandleCallData queues one data packet and applies its verdict. */
 	Error HandleCallData(const srpc::CallData &pkt);
+
+	/* WriteCallCancel writes cancel to the remote and ends the call. */
 	Error WriteCallCancel();
 
 protected:
-	// Finish publishes the handler's terminal verdict before closing the
-	// writer.
+	/* Finish publishes err as the call's verdict and closes the writer. */
 	void Finish(Error err);
 
-	// CloseWriter releases the transport outside the state lock, once per
-	// call.
+	/* CloseWriter closes the transport once per call, outside the locks. */
 	void CloseWriter();
 
-	// state_mutex_ guards call state. write_mutex_ orders outgoing packets
-	// and may precede state_mutex_; transport close never waits for
-	// write_mutex_.
-	mutable std::mutex state_mutex_;
-	std::mutex write_mutex_;
-	std::condition_variable state_changed_;
-	std::string service_;
-	std::string method_;
+	/*
+	 * state_mutex guards the call state below. write_mutex orders outgoing
+	 * packets and may precede state_mutex; transport close never waits for
+	 * write_mutex.
+	 */
+	mutable std::mutex state_mutex;
+	std::mutex write_mutex;
+	std::condition_variable state_changed;
 
-	// writer_ is borrowed until the call and transport callbacks have
-	// stopped.
-	PacketWriter *writer_ = nullptr;
-	bool writer_closed_ = false;
-	bool local_completed_ = false;
-	bool local_completing_ = false;
-	bool canceled_ = false;
-	bool data_closed_ = false;
-	bool remote_completed_ = false;
-	Error remote_error_ = Error::OK;
-	std::string remote_error_message_;
-	std::deque<std::string> data_queue_;
-	size_t queued_bytes_ = 0;
-	std::stop_source stop_source_;
+	std::string service;
+	std::string method;
+
+	/* writer is borrowed until the call and transport callbacks stop. */
+	PacketWriter *writer = nullptr;
+	bool writer_closed = false;
+
+	/* local_completed is set once the handler side has sent its verdict. */
+	bool local_completed = false;
+	bool local_completing = false;
+	bool canceled = false;
+
+	/* data_closed ends the receive side; remote_completed records why. */
+	bool data_closed = false;
+	bool remote_completed = false;
+	Error remote_error = Error::OK;
+	std::string remote_error_message;
+
+	/*
+	 * data_queue holds messages received before their reader ran, bounded
+	 * by queued_bytes and the queue length.
+	 */
+	std::deque<std::string> data_queue;
+	size_t queued_bytes = 0;
+
+	/* stop_source drives StopToken; cancellation and close request it. */
+	std::stop_source stop_source;
 };
 
 } // namespace starpc

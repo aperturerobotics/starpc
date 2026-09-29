@@ -1,111 +1,128 @@
 #pragma once
 
-#include <atomic>
-#include <functional>
-#include <string>
-
 #include "errors.hpp"
 #include "message.hpp"
 #include "stream.hpp"
 
+#include <atomic>
+#include <functional>
+#include <string>
+
 namespace starpc {
 
-// MsgStreamRw is the read-write interface for MsgStream.
+/*
+ * MsgStreamRw is the call-state side of MsgStream: it reads and writes one
+ * call's messages. Matches the Go msgStreamRw interface.
+ */
 class MsgStreamRw {
 public:
 	virtual ~MsgStreamRw() = default;
 
-	// RemoteErrorMessage returns the peer's retained error text, if any.
+	/* RemoteErrorMessage returns the peer's retained diagnostic, if any. */
 	virtual std::string RemoteErrorMessage() const
 	{
 		return {};
 	}
 
-	// ReadOne reads a single message and returns.
-	// Returns EOF_ if the stream ended.
+	/*
+	 * ReadOne returns the next message in out. Returns EOF_ after the
+	 * call completes and Canceled after local cancellation.
+	 */
 	virtual Error ReadOne(std::string *out) = 0;
 
-	// WriteCallData writes a call data packet.
+	/*
+	 * WriteCallData writes one data packet. data_is_zero marks an
+	 * intentionally empty message; complete ends the sending side; err
+	 * carries the terminal verdict.
+	 */
 	virtual Error WriteCallData(const std::string &data, bool data_is_zero,
 				    bool complete, Error err) = 0;
 
-	// WriteCallCancel writes a call cancel (close) packet.
+	/* WriteCallCancel cancels the call on the remote. */
 	virtual Error WriteCallCancel() = 0;
 };
 
-// MsgStream implements the stream interface passed to implementations.
+/*
+ * MsgStream is the Stream handed to handlers: it serializes messages over a
+ * MsgStreamRw and closes the call when the handler is done.
+ */
 class MsgStream : public Stream {
 public:
+	/*
+	 * MsgStream borrows rw; it must outlive the stream. close_cb, when
+	 * set, replaces the cancel write on Close; stop carries the call's
+	 * cancellation to the handler.
+	 */
 	MsgStream(MsgStreamRw *rw, std::function<void()> close_cb,
 		  std::stop_token stop = {})
-		: rw_(rw),
-		  close_cb_(std::move(close_cb)),
-		  stop_(stop)
+		: rw(rw),
+		  close_cb(std::move(close_cb)),
+		  stop(stop)
 	{
 	}
 
 	std::stop_token StopToken() const override
 	{
-		return stop_;
+		return stop;
 	}
 	std::string RemoteErrorMessage() const override
 	{
-		return rw_->RemoteErrorMessage();
+		return rw->RemoteErrorMessage();
 	}
 
-	// MsgSend sends the message to the remote.
 	Error MsgSend(const Message &msg) override
 	{
 		std::string msg_data;
-		if (!msg.SerializeToString(&msg_data)) {
+		if (!msg.SerializeToString(&msg_data))
 			return Error::InvalidMessage;
-		}
-		return rw_->WriteCallData(msg_data, msg_data.empty(), false,
-					  Error::OK);
+		return rw->WriteCallData(msg_data, msg_data.empty(), false,
+					 Error::OK);
 	}
 
-	// MsgRecv receives an incoming message from the remote.
 	Error MsgRecv(Message *msg) override
 	{
 		std::string data;
-		Error err = rw_->ReadOne(&data);
-		if (err != Error::OK) {
+		Error err = rw->ReadOne(&data);
+		if (err != Error::OK)
 			return err;
-		}
-		if (!msg->ParseFromString(data)) {
+		if (!msg->ParseFromString(data))
 			return Error::InvalidMessage;
-		}
 		return Error::OK;
 	}
 
-	// CloseSend signals to the remote that we will no longer send any
-	// messages. See Stream::CloseSend for why its failure leaves the
-	// outcome to MsgRecv.
+	/*
+	 * CloseSend half-closes the sending side. See Stream::CloseSend for
+	 * why its failure leaves the outcome to MsgRecv.
+	 */
 	Error CloseSend() override
 	{
-		return rw_->WriteCallData("", false, true, Error::OK);
+		return rw->WriteCallData("", false, true, Error::OK);
 	}
 
-	// Close closes the stream.
+	/*
+	 * Close ends the call once: through close_cb when the call is shared
+	 * with a transport, otherwise by writing cancel to the remote.
+	 */
 	Error Close() override
 	{
-		if (closed_.exchange(true))
+		if (closed.exchange(true))
 			return Error::OK;
-		if (close_cb_) {
-			close_cb_();
+		if (close_cb) {
+			close_cb();
 			return Error::OK;
 		}
-		return rw_->WriteCallCancel();
+		return rw->WriteCallCancel();
 	}
 
 private:
-	MsgStreamRw *rw_;
-	std::function<void()> close_cb_;
-	std::stop_token stop_;
-	std::atomic<bool> closed_{false};
+	/* rw is borrowed; the caller owns it. */
+	MsgStreamRw *rw;
+	std::function<void()> close_cb;
+	std::stop_token stop;
+	std::atomic<bool> closed{false};
 };
 
-// NewMsgStream constructs a new Stream with a MsgStreamRw.
+/* NewMsgStream constructs a Stream over rw. */
 inline std::unique_ptr<MsgStream> NewMsgStream(MsgStreamRw *rw,
 					       std::function<void()> close_cb,
 					       std::stop_token stop = {})

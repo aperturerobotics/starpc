@@ -5,18 +5,20 @@
 namespace starpc {
 namespace {
 
-// ClientStream retains the RPC until transport callbacks have stopped. The
-// transport and stream share ClientRPC; destroying the writer joins its
-// readers.
+/*
+ * ClientStream is the Stream over one opened call. The transport and the
+ * stream share the ClientRPC; destroying the writer joins the transport's
+ * readers, so the call outlives every callback.
+ */
 class ClientStream final : public Stream {
 public:
 	ClientStream(std::shared_ptr<ClientRPC> rpc,
 		     std::unique_ptr<PacketWriter> writer)
-		: rpc_(std::move(rpc)),
-		  writer_(std::move(writer)),
-		  messages_(
-			  rpc_.get(), [this] { rpc_->Close(); },
-			  rpc_->StopToken())
+		: rpc(std::move(rpc)),
+		  writer(std::move(writer)),
+		  messages(
+			  this->rpc.get(), [this] { this->rpc->Close(); },
+			  this->rpc->StopToken())
 	{
 	}
 	~ClientStream() override
@@ -26,34 +28,35 @@ public:
 
 	Error MsgSend(const Message &message) override
 	{
-		return messages_.MsgSend(message);
+		return messages.MsgSend(message);
 	}
 	Error MsgRecv(Message *message) override
 	{
-		return messages_.MsgRecv(message);
+		return messages.MsgRecv(message);
 	}
 	Error CloseSend() override
 	{
-		return messages_.CloseSend();
+		return messages.CloseSend();
 	}
 	std::stop_token StopToken() const override
 	{
-		return rpc_->StopToken();
+		return rpc->StopToken();
 	}
 	std::string RemoteErrorMessage() const override
 	{
-		return rpc_->RemoteErrorMessage();
+		return rpc->RemoteErrorMessage();
 	}
 	Error Close() override
 	{
-		rpc_->Close();
+		rpc->Close();
 		return Error::OK;
 	}
 
 private:
-	std::shared_ptr<ClientRPC> rpc_;
-	std::unique_ptr<PacketWriter> writer_;
-	MsgStream messages_;
+	/* rpc is shared with the transport callbacks. */
+	std::shared_ptr<ClientRPC> rpc;
+	std::unique_ptr<PacketWriter> writer;
+	MsgStream messages;
 };
 
 } // namespace
@@ -76,16 +79,17 @@ ClientImpl::NewStream(const std::string &service, const std::string &method,
 		return {nullptr, Error::EmptyServiceID};
 	if (method.empty())
 		return {nullptr, Error::EmptyMethodID};
-	std::string first_data;
-	if (first_msg != nullptr &&
-	    !first_msg->SerializeToString(&first_data)) {
-		return {nullptr, Error::InvalidMessage};
-	}
 
-	// Transport callbacks share the call, without referring to this stack
-	// frame.
+	std::string first_data;
+	if (first_msg != nullptr && !first_msg->SerializeToString(&first_data))
+		return {nullptr, Error::InvalidMessage};
+
+	/*
+	 * Transport callbacks share the call, without referring to this stack
+	 * frame.
+	 */
 	auto rpc = std::make_shared<ClientRPC>(service, method);
-	auto [writer, err] = open_stream_(
+	auto [writer, err] = open_stream(
 		[rpc](const std::string &data) {
 			return rpc->HandlePacketData(data);
 		},
@@ -95,6 +99,7 @@ ClientImpl::NewStream(const std::string &service, const std::string &method,
 			(void)writer->Close();
 		return {nullptr, err};
 	}
+
 	err = rpc->Start(writer.get(), first_msg != nullptr, first_data);
 	if (err != Error::OK) {
 		rpc->Close();

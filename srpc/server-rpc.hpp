@@ -1,13 +1,13 @@
 #pragma once
 
-#include <string>
-#include <thread>
-
 #include "common-rpc.hpp"
 #include "errors.hpp"
 #include "invoker.hpp"
 #include "msg-stream.hpp"
 #include "writer.hpp"
+
+#include <string>
+#include <thread>
 
 namespace srpc {
 class Packet;
@@ -16,24 +16,31 @@ class CallStart;
 
 namespace starpc {
 
-// ServerRPC runs one handler and cancels and joins it on destruction. The
-// Invoker and PacketWriter must outlive it. HandlePacket calls are serialized
-// by the transport; handlers observe cancellation through Stream::StopToken.
+/*
+ * ServerRPC is the remote's side of one call: it runs the handler the
+ * Invoker selects and cancels and joins it on destruction. The Invoker and
+ * PacketWriter must outlive it. HandlePacket calls are serialized by the
+ * transport; handlers observe cancellation through Stream::StopToken.
+ */
 class ServerRPC : public CommonRPC, public MsgStreamRw {
 public:
+	/* ServerRPC serves one call through invoker, writing via writer. */
 	ServerRPC(Invoker *invoker, PacketWriter *writer);
 	~ServerRPC() override;
 
-	// HandlePacketData handles an incoming unparsed message packet.
+	/* HandlePacketData parses one serialized packet and handles it. */
 	Error HandlePacketData(const std::string &data);
 
-	// HandlePacket handles an incoming parsed message packet.
+	/* HandlePacket validates and dispatches one parsed packet. */
 	Error HandlePacket(const srpc::Packet &msg);
 
-	// HandleCallStart handles the call start packet.
+	/*
+	 * HandleCallStart accepts the call's first packet and runs the
+	 * handler on its own thread.
+	 */
 	Error HandleCallStart(const srpc::CallStart &pkt);
 
-	// MsgStreamRw interface implementation
+	/* MsgStreamRw over the shared call state. */
 	Error ReadOne(std::string *out) override
 	{
 		return CommonRPC::ReadOne(out);
@@ -54,15 +61,18 @@ public:
 	}
 
 private:
-	// InvokeRPC invokes the RPC after CallStart is received.
+	/* InvokeRPC runs the handler and publishes its verdict. */
 	void InvokeRPC(const std::string &service_id,
 		       const std::string &method_id);
 
-	Invoker *invoker_;
-	std::jthread invoke_thread_;
+	/* invoker is borrowed; the caller owns it. */
+	Invoker *invoker;
+
+	/* invoke_thread is last so it stops before the state it reads. */
+	std::jthread invoke_thread;
 };
 
-// NewServerRPC constructs a new ServerRPC session.
+/* NewServerRPC constructs a ServerRPC for one call. */
 inline std::unique_ptr<ServerRPC> NewServerRPC(Invoker *invoker,
 					       PacketWriter *writer)
 {

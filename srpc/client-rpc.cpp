@@ -8,8 +8,8 @@ namespace starpc {
 
 ClientRPC::ClientRPC(const std::string &service, const std::string &method)
 {
-	service_ = service;
-	method_ = method;
+	this->service = service;
+	this->method = method;
 }
 
 ClientRPC::~ClientRPC() = default;
@@ -19,25 +19,26 @@ Error ClientRPC::Start(PacketWriter *writer, bool write_first_msg,
 {
 	if (writer == nullptr)
 		return Error::NilWriter;
-	if (service_.empty())
+	if (service.empty())
 		return Error::EmptyServiceID;
-	if (method_.empty())
+	if (method.empty())
 		return Error::EmptyMethodID;
 
-	std::unique_lock writing(write_mutex_);
+	std::unique_lock writing(write_mutex);
 	{
-		std::lock_guard lock(state_mutex_);
-		if (writer_ != nullptr)
+		std::lock_guard lock(state_mutex);
+		if (this->writer != nullptr)
 			return Error::Completed;
-		writer_ = writer;
-		if (canceled_ || data_closed_) {
+		this->writer = writer;
+		if (canceled || data_closed) {
 			writing.unlock();
-			// The caller closes a writer rejected before startup.
+			/* The caller closes a rejected writer. */
 			return Error::Canceled;
 		}
 	}
+
 	const auto packet = NewCallStartPacket(
-		service_, method_, write_first_msg ? first_msg : "",
+		service, method, write_first_msg ? first_msg : "",
 		write_first_msg && first_msg.empty());
 	const auto written = writer->WritePacket(*packet);
 	writing.unlock();
@@ -64,6 +65,7 @@ Error ClientRPC::HandlePacket(const srpc::Packet &packet)
 	const auto err = ValidatePacket(packet);
 	if (err != Error::OK)
 		return err;
+
 	switch (packet.body_case()) {
 	case srpc::Packet::kCallStart:
 		return Error::UnrecognizedPacket;
