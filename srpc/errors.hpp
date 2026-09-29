@@ -5,7 +5,10 @@
 
 namespace starpc {
 
-// Error codes matching Go starpc errors (see errors.go)
+/*
+ * Error is the house error value. Every action returns one; OK is success.
+ * The codes mirror the Go starpc errors in errors.go.
+ */
 enum class Error {
 	OK = 0,
 	Unimplemented, // ErrUnimplemented - RPC method was not implemented
@@ -26,7 +29,7 @@ enum class Error {
 	RemoteError, // RemoteErrorMessage retains the peer's diagnostic.
 };
 
-// Convert Error to string (matches Go error messages)
+/* ErrorString returns the stable diagnostic text for err. */
 inline const char *ErrorString(Error err)
 {
 	switch (err) {
@@ -65,7 +68,11 @@ inline const char *ErrorString(Error err)
 	}
 }
 
-// StarpcError exception for error propagation
+/*
+ * StarpcError carries an Error across a throwing boundary. Exceptions are
+ * disabled in the house build; this exists only for embedders that enable
+ * them.
+ */
 class StarpcError : public std::runtime_error {
 public:
 	explicit StarpcError(Error code)
@@ -74,18 +81,21 @@ public:
 	{
 	}
 
+	/* StarpcError reports message as the diagnostic for code. */
 	StarpcError(Error code, const std::string &message)
 		: std::runtime_error(message),
 		  code_(code)
 	{
 	}
 
+	/* code returns the Error this exception carries. */
 	Error code() const noexcept
 	{
 		return code_;
 	}
 
 private:
+	/* code_ keeps the Error; the getter takes the API name code(). */
 	Error code_;
 };
 

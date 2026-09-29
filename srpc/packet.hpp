@@ -1,11 +1,11 @@
 #pragma once
 
+#include "errors.hpp"
+
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-
-#include "errors.hpp"
 
 namespace srpc {
 class Packet;
@@ -15,42 +15,57 @@ class CallData;
 
 namespace starpc {
 
-// CloseHandler handles the stream closing with an optional error.
-// Matches Go CloseHandler in packet.go
+/*
+ * CloseHandler receives the transport close outcome for a stream.
+ * Matches Go CloseHandler in packet.go.
+ */
 using CloseHandler = std::function<void(Error close_err)>;
 
-// PacketHandler handles a packet.
-// Matches Go PacketHandler in packet.go
+/* PacketHandler receives one parsed packet. Matches Go PacketHandler. */
 using PacketHandler = std::function<Error(const srpc::Packet &pkt)>;
 
-// PacketDataHandler handles a packet before it is parsed.
-// Matches Go PacketDataHandler in packet.go
+/*
+ * PacketDataHandler receives one packet before parsing, as its serialized
+ * bytes. Matches Go PacketDataHandler in packet.go.
+ */
 using PacketDataHandler = std::function<Error(const std::string &data)>;
 
-// NewPacketDataHandler wraps a PacketHandler with a decoding step.
+/* NewPacketDataHandler parses each payload and forwards it to handler. */
 PacketDataHandler NewPacketDataHandler(PacketHandler handler);
 
-// Validate performs cursory validation of a Packet.
+/*
+ * ValidatePacket checks a packet's shape: its body is one of the known types
+ * and the body's required fields are present.
+ */
 Error ValidatePacket(const srpc::Packet &pkt);
 
-// Validate performs cursory validation of a CallStart.
+/* ValidateCallStart requires the service and method IDs to be present. */
 Error ValidateCallStart(const srpc::CallStart &pkt);
 
-// Validate performs cursory validation of a CallData.
+/*
+ * ValidateCallData rejects a packet that carries no data, no completion, no
+ * error, and no zero-length marker.
+ */
 Error ValidateCallData(const srpc::CallData &pkt);
 
-// NewCallStartPacket constructs a new CallStart packet.
+/*
+ * NewCallStartPacket builds the CallStart packet that opens a call.
+ * data_is_zero marks an intentionally empty first message.
+ */
 std::unique_ptr<srpc::Packet> NewCallStartPacket(const std::string &service,
 						 const std::string &method,
 						 const std::string &data,
 						 bool data_is_zero);
 
-// NewCallDataPacket constructs a new CallData packet.
+/*
+ * NewCallDataPacket builds one CallData packet. err carries the call's
+ * terminal verdict; complete ends the sending side.
+ */
 std::unique_ptr<srpc::Packet> NewCallDataPacket(const std::string &data,
 						bool data_is_zero,
 						bool complete, Error err);
 
-// NewCallCancelPacket constructs a new CallCancel packet with cancel.
+/* NewCallCancelPacket builds the packet that cancels the call. */
 std::unique_ptr<srpc::Packet> NewCallCancelPacket();
 
 } // namespace starpc

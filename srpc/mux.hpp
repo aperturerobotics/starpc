@@ -1,61 +1,70 @@
 #pragma once
 
+#include "errors.hpp"
+#include "handler.hpp"
+#include "invoker.hpp"
+
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "errors.hpp"
-#include "handler.hpp"
-#include "invoker.hpp"
-
 namespace starpc {
 
-// Mux contains a set of <service, method> handlers.
-// Matches Go Mux interface in mux.go
+/*
+ * Mux dispatches calls to registered handlers and falls back to a list of
+ * invokers when no handler matches. Matches the Go Mux in mux.go.
+ */
 class Mux : public Invoker, public QueryableInvoker {
 public:
-	// Constructor matching NewMux in Go
+	/*
+	 * Mux consults fallback_invokers, in order, when no registered
+	 * handler matches. The invokers are borrowed and must outlive the
+	 * mux.
+	 */
 	explicit Mux(std::vector<Invoker *> fallback_invokers = {});
 	~Mux() override = default;
 
-	// Register registers a new RPC method handler (service).
-	// Matches Go Register in mux.go
+	/*
+	 * Register maps the handler's service and method IDs to it. An empty
+	 * service ID fails; empty method IDs are skipped.
+	 */
 	Error Register(Handler *handler);
 
-	// InvokeMethod invokes the method matching the service & method ID.
-	// Returns {found, error} - found is false if method not found.
-	// If service string is empty, ignore it.
-	// Matches Go InvokeMethod in mux.go
+	/*
+	 * InvokeMethod runs the registered handler for the IDs and reports
+	 * whether it found one. An empty service_id searches every service.
+	 * Unhandled calls go to the fallback invokers.
+	 */
 	std::pair<bool, Error> InvokeMethod(const std::string &service_id,
 					    const std::string &method_id,
 					    Stream *strm) override;
 
-	// HasService checks if the service ID exists in the handlers.
-	// Matches Go HasService in mux.go
+	/* HasService reports whether any handler registered service_id. */
 	bool HasService(const std::string &service_id) const override;
 
-	// HasServiceMethod checks if <service-id, method-id> exists in the
-	// handlers. Matches Go HasServiceMethod in mux.go
+	/*
+	 * HasServiceMethod reports whether a registered handler for
+	 * service_id serves method_id.
+	 */
 	bool HasServiceMethod(const std::string &service_id,
 			      const std::string &method_id) const override;
 
 private:
-	// Mapping from method id to handler
-	using MuxMethods = std::unordered_map<std::string, Handler *>;
+	/* methods maps one method ID to the handler that registered it. */
+	using methods = std::unordered_map<std::string, Handler *>;
 
-	// Fallback invokers
-	std::vector<Invoker *> fallback_;
+	/* fallback invokers are borrowed; the caller owns them. */
+	std::vector<Invoker *> fallback;
 
-	// Read-write mutex guards services_
-	mutable std::shared_mutex mtx_;
+	/* mu guards services. */
+	mutable std::shared_mutex mu;
 
-	// Services contains a mapping from services to handlers
-	std::unordered_map<std::string, MuxMethods> services_;
+	/* services maps each service ID to its method table. */
+	std::unordered_map<std::string, methods> services;
 };
 
-// NewMux constructs a new Mux.
-// Matches Go NewMux function in mux.go
+/* NewMux constructs a Mux with the given fallback invokers. */
 inline std::unique_ptr<Mux>
 NewMux(std::vector<Invoker *> fallback_invokers = {})
 {

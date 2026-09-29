@@ -10,9 +10,8 @@ PacketDataHandler NewPacketDataHandler(PacketHandler handler)
 {
 	return [handler](const std::string &data) -> Error {
 		srpc::Packet pkt;
-		if (!pkt.ParseFromString(data)) {
+		if (!pkt.ParseFromString(data))
 			return Error::InvalidMessage;
-		}
 		return handler(pkt);
 	};
 }
@@ -33,21 +32,18 @@ Error ValidatePacket(const srpc::Packet &pkt)
 
 Error ValidateCallStart(const srpc::CallStart &pkt)
 {
-	if (pkt.rpc_method().empty()) {
+	if (pkt.rpc_method().empty())
 		return Error::EmptyMethodID;
-	}
-	if (pkt.rpc_service().empty()) {
+	if (pkt.rpc_service().empty())
 		return Error::EmptyServiceID;
-	}
 	return Error::OK;
 }
 
 Error ValidateCallData(const srpc::CallData &pkt)
 {
 	if (pkt.data().empty() && !pkt.complete() && pkt.error().empty() &&
-	    !pkt.data_is_zero()) {
+	    !pkt.data_is_zero())
 		return Error::EmptyPacket;
-	}
 	return Error::OK;
 }
 
@@ -74,9 +70,8 @@ std::unique_ptr<srpc::Packet> NewCallDataPacket(const std::string &data,
 	call_data->set_data(data);
 	call_data->set_data_is_zero(data_is_zero);
 	call_data->set_complete(err != Error::OK || complete);
-	if (err != Error::OK) {
+	if (err != Error::OK)
 		call_data->set_error(ErrorString(err));
-	}
 	return pkt;
 }
 

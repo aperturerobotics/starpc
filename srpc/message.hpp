@@ -6,25 +6,25 @@
 
 namespace starpc {
 
-// Message is the interface for protobuf messages.
-// Matches Go Message interface in message.go
-// In C++, we use google::protobuf::MessageLite as the base.
+/*
+ * Message is the wire-message type handed across the RPC boundary. It aliases
+ * protobuf's MessageLite, matching the Go Message interface in message.go.
+ */
 using Message = google::protobuf::MessageLite;
 
-// MarshalVT serializes the message to bytes.
-// (VT suffix matches vtprotobuf convention used in Go)
+/* MarshalVT serializes msg into out and reports parse success. */
 inline bool MarshalVT(const Message &msg, std::string *out)
 {
 	return msg.SerializeToString(out);
 }
 
-// UnmarshalVT deserializes the message from bytes.
+/* UnmarshalVT parses data into msg and reports success. */
 inline bool UnmarshalVT(Message *msg, const std::string &data)
 {
 	return msg->ParseFromString(data);
 }
 
-// SizeVT returns the serialized size of the message.
+/* SizeVT returns the serialized size of msg in bytes. */
 inline size_t SizeVT(const Message &msg)
 {
 	return msg.ByteSizeLong();
