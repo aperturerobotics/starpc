@@ -302,6 +302,7 @@ where
     }
 }
 
+/// Opens nested RPC streams to one component ID over caller-provided streams.
 struct RpcStreamOpener<F, S> {
     caller: Arc<F>,
     component_id: String,
@@ -380,6 +381,7 @@ mod tests {
         ctx: Context,
         send_queue: Mutex<VecDeque<RpcStreamPacket>>,
         recv_queue: Mutex<VecDeque<RpcStreamPacket>>,
+        packets: tokio::sync::Notify,
         closed: AtomicBool,
     }
 
@@ -389,12 +391,14 @@ mod tests {
                 ctx: Context::new(),
                 send_queue: Mutex::new(VecDeque::new()),
                 recv_queue: Mutex::new(VecDeque::new()),
+                packets: tokio::sync::Notify::new(),
                 closed: AtomicBool::new(false),
             }
         }
 
         async fn push_recv(&self, packet: RpcStreamPacket) {
             self.recv_queue.lock().await.push_back(packet);
+            self.packets.notify_one();
         }
 
         async fn pop_sent(&self) -> Option<RpcStreamPacket> {
@@ -422,7 +426,8 @@ mod tests {
                 if self.closed.load(Ordering::SeqCst) {
                     return Err(Error::StreamClosed);
                 }
-                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                // Wake on the next pushed packet or close.
+                self.packets.notified().await;
             }
         }
 
@@ -451,7 +456,8 @@ mod tests {
                 if self.closed.load(Ordering::SeqCst) {
                     return Err(Error::StreamClosed);
                 }
-                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                // Wake on the next pushed packet or close.
+                self.packets.notified().await;
             }
         }
     }
