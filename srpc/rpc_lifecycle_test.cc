@@ -23,6 +23,10 @@ void Check(bool value, const char *message)
 	std::exit(1);
 }
 
+/*
+ * Writer is a test PacketWriter: optional write and close callbacks, plus a
+ * count of closes for assertions.
+ */
 class Writer final : public starpc::PacketWriter {
 public:
 	Error WritePacket(const srpc::Packet &packet) override
@@ -43,6 +47,7 @@ public:
 	std::atomic<int> closes = 0;
 };
 
+/* WaitingHandler blocks in MsgRecv until its test releases it. */
 class WaitingHandler final : public starpc::Invoker {
 public:
 	std::pair<bool, Error> InvokeMethod(const std::string &,
@@ -59,6 +64,7 @@ public:
 	std::atomic<bool> exited = false;
 };
 
+/* DestroyWaitingServer proves destruction joins a blocked handler. */
 void DestroyWaitingServer()
 {
 	Writer writer;
@@ -76,6 +82,7 @@ void DestroyWaitingServer()
 	Check(writer.closes == 1, "writer closes once");
 }
 
+/* ReentrantTransport proves a synchronous reply cannot deadlock the call. */
 void ReentrantTransport()
 {
 	starpc::ClientRPC rpc("test", "call");
@@ -99,6 +106,7 @@ void ReentrantTransport()
 	      "reentrant close must not repeat transport cleanup");
 }
 
+/* CancelBlockedWriter proves cancellation interrupts a blocked write. */
 void CancelBlockedWriter()
 {
 	Writer writer;
@@ -122,6 +130,7 @@ void CancelBlockedWriter()
 	      "cancellation must interrupt a blocked write");
 }
 
+/* DisconnectAndErrors pins how disconnects and remote errors surface. */
 void DisconnectAndErrors()
 {
 	starpc::ClientRPC rpc("test", "call");
@@ -143,17 +152,18 @@ void DisconnectAndErrors()
 	      "stream exposes the remote diagnostic");
 }
 
+/* StreamDestruction proves each stream releases its writer exactly once. */
 void StreamDestruction()
 {
 	int destroyed = 0;
 	struct CountedWriter final : starpc::PacketWriter {
 		explicit CountedWriter(int &count)
-			: count_(count)
+			: count(count)
 		{
 		}
 		~CountedWriter() override
 		{
-			++count_;
+			++count;
 		}
 		Error WritePacket(const srpc::Packet &) override
 		{
@@ -163,7 +173,7 @@ void StreamDestruction()
 		{
 			return Error::OK;
 		}
-		int &count_;
+		int &count;
 	};
 	auto client = starpc::NewClient([&](auto, auto) {
 		return std::make_pair(
@@ -183,6 +193,7 @@ void StreamDestruction()
 	Check(destroyed == 2, "dropping a stream must release its writer");
 }
 
+/* BoundReceiveQueue pins the receive queue's byte and message bounds. */
 void BoundReceiveQueue()
 {
 	starpc::ClientRPC rpc("test", "call");
@@ -201,13 +212,17 @@ void BoundReceiveQueue()
 	      "bound empty message count");
 }
 
+/*
+ * NestedReleaseWaitsForHandler proves the Invoker is released only after the
+ * nested handler returns.
+ */
 void NestedReleaseWaitsForHandler()
 {
 	WaitingHandler handler;
 	class DisconnectStream final : public rpcstream::RpcStream {
 	public:
 		explicit DisconnectStream(WaitingHandler &handler)
-			: handler_(handler)
+			: handler(handler)
 		{
 		}
 		Error Send(const rpcstream::RpcStreamPacket &) override
@@ -225,25 +240,25 @@ void NestedReleaseWaitsForHandler()
 		Error Recv(rpcstream::RpcStreamPacket *packet) override
 		{
 			packet->Clear();
-			if (reads_++ == 0) {
+			if (reads++ == 0) {
 				packet->mutable_init()->set_component_id(
 					"component");
 				return Error::OK;
 			}
-			if (reads_ == 2) {
+			if (reads == 2) {
 				packet->set_data(
 					starpc::NewCallStartPacket(
 						"test", "wait", "", false)
 						->SerializeAsString());
 				return Error::OK;
 			}
-			handler_.entered.wait();
+			handler.entered.wait();
 			return Error::EOF_;
 		}
 
 	private:
-		WaitingHandler &handler_;
-		int reads_ = 0;
+		WaitingHandler &handler;
+		int reads = 0;
 	};
 	bool released = false;
 	auto stream = std::make_shared<DisconnectStream>(handler);
@@ -263,6 +278,7 @@ void NestedReleaseWaitsForHandler()
 	      "nested disconnect must release its service");
 }
 
+/* ReceiveThreadJoinsOnDestruction proves writer destruction joins the pump. */
 void ReceiveThreadJoinsOnDestruction()
 {
 	class WaitingStream final : public rpcstream::RpcStream {
