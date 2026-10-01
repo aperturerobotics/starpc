@@ -1,6 +1,8 @@
 export {
   ERR_RPC_ABORT,
   isAbortError,
+  ERR_CLOSED_BEFORE_COMPLETION,
+  isClosedBeforeCompletionError,
   ERR_STREAM_IDLE,
   isStreamIdleError,
   castToError,

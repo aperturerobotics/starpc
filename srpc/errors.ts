@@ -10,6 +10,22 @@ export function isAbortError(err: unknown): boolean {
   return message === ERR_RPC_ABORT
 }
 
+// ERR_CLOSED_BEFORE_COMPLETION is returned if the stream closed before the
+// remote sent a completion or an error. The call has no verdict: the handler
+// may have finished with its answer lost in the transport, or it may never
+// have run.
+export const ERR_CLOSED_BEFORE_COMPLETION = 'ERR_CLOSED_BEFORE_COMPLETION'
+
+// isClosedBeforeCompletionError checks if the error object is
+// ERR_CLOSED_BEFORE_COMPLETION.
+export function isClosedBeforeCompletionError(err: unknown): boolean {
+  if (typeof err !== 'object') {
+    return false
+  }
+  const message = (err as Error).message
+  return message === ERR_CLOSED_BEFORE_COMPLETION
+}
+
 // ERR_STREAM_IDLE is returned if the stream idle timeout was exceeded.
 export const ERR_STREAM_IDLE = 'ERR_STREAM_IDLE'
 

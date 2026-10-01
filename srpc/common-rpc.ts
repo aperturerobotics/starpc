@@ -22,8 +22,10 @@ export class CommonRPC {
     objectMode: true,
   })
 
-  // _rpcDataSource is used to write to the rpc message source.
-  private readonly _rpcDataSource = pushable<Uint8Array>({
+  // _rpcDataSource queues incoming rpc messages and the terminal error.
+  // The error is queued as an item because ending a pushable with an error
+  // discards the messages it buffered.
+  private readonly _rpcDataSource = pushable<Uint8Array | Error>({
     objectMode: true,
   })
 
@@ -36,6 +38,8 @@ export class CommonRPC {
   private closed?: true | Error
   // remoteError records a remote error or transport failure.
   private remoteError?: Error
+  // remoteCompleted records that the remote sent a completion or an error.
+  private remoteCompleted = false
   // invocationController cancels the server invocation when the RPC closes.
   private readonly invocationController = new AbortController()
 
@@ -45,12 +49,17 @@ export class CommonRPC {
   constructor() {
     this.sink = this._createSink()
     this.source = this._source
-    this.rpcDataSource = this._rpcDataSource
+    this.rpcDataSource = this.readRpcData()
   }
 
   // isClosed returns one of: true (closed w/o error), Error (closed w/ error), or false (not closed).
   public get isClosed(): boolean | Error {
     return this.closed ?? false
+  }
+
+  // isRemoteCompleted reports whether the remote sent a completion or an error.
+  protected get isRemoteCompleted(): boolean {
+    return this.remoteCompleted
   }
 
   // invocationSignal is canceled when the RPC closes.
@@ -214,12 +223,12 @@ export class CommonRPC {
       this.remoteError ??= remoteError
       this.invocationController.abort()
     }
-    if (packet.complete && !remoteError) {
-      this._rpcDataSource.end(remoteError)
-    } else if (remoteError) {
-      this._rpcDataSource.end(remoteError)
+    if (packet.complete || remoteError) {
+      this.remoteCompleted = true
+      this.endRpcData(remoteError)
     }
   }
+
   // handleCallCancel aborts the invocation and closes the call.
   public async handleCallCancel() {
     await this.close(new Error(ERR_RPC_ABORT))
@@ -244,7 +253,32 @@ export class CommonRPC {
     }
     this.writeDrainAbort.abort()
     this._source.end()
-    this._rpcDataSource.end(err)
+    this.endRpcData(err)
+  }
+
+  // endRpcData ends the rpc message source after its buffered messages,
+  // optionally with an error.
+  private endRpcData(err?: Error) {
+    if (err) {
+      this._rpcDataSource.push(err)
+    }
+    this._rpcDataSource.end()
+  }
+
+  // readRpcData yields the buffered rpc messages, then throws the terminal
+  // error, if any.
+  private async *readRpcData(): AsyncGenerator<Uint8Array> {
+    for await (const item of this._rpcDataSource) {
+      if (item instanceof Error) {
+        throw item
+      }
+      yield item
+    }
+  }
+
+  // handleSourceEnd handles the end of the incoming packet source.
+  protected async handleSourceEnd() {
+    // no-op
   }
 
   private _createSink(): Sink<Source<Packet>> {
@@ -259,6 +293,7 @@ export class CommonRPC {
             await this.handlePacket(msg)
           }
         }
+        await this.handleSourceEnd()
       } catch (err) {
         this.close(err as Error)
       }
