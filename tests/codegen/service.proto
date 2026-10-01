@@ -1,0 +1,35 @@
+syntax = "proto3";
+package fixture;
+
+// Message carries a payload through each RPC shape.
+message Message {
+  // Body is the payload to clone.
+  string body = 1;
+}
+
+// Unary exercises a method name also implemented by Arc.
+service Unary {
+  // Clone returns the request payload.
+  rpc Clone(Message) returns (Message);
+}
+
+// ClientStream exercises the client-streaming dispatch branch.
+service ClientStream {
+  // Clone consumes requests and returns a combined payload.
+  rpc Clone(stream Message) returns (Message);
+}
+
+// ServerStream exercises the server-streaming dispatch branch.
+service ServerStream {
+  // Clone returns copies of the request payload.
+  rpc Clone(Message) returns (stream Message);
+}
+
+// Bidi exercises the bidirectional dispatch branch.
+service Bidi {
+  // Clone copies request payloads into the response stream.
+  rpc Clone(stream Message) returns (stream Message);
+}
+
+// Empty keeps a valid service handle without introducing unused declarations.
+service Empty {}

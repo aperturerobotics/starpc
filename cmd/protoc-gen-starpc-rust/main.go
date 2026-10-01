@@ -9,6 +9,7 @@ import (
 	pluginpb "github.com/aperturerobotics/protobuf-go-lite/types/pluginpb"
 )
 
+// main reports a failed plugin request and exits without a partial response.
 func main() {
 	if err := run(); err != nil {
 		os.Stderr.WriteString(err.Error() + "\n")
@@ -16,6 +17,7 @@ func main() {
 	}
 }
 
+// run translates one protoc request into generated service files.
 func run() error {
 	// Read request from stdin.
 	data, err := io.ReadAll(os.Stdin)
@@ -23,6 +25,7 @@ func run() error {
 		return err
 	}
 
+	// Decode the descriptor request before resolving imports.
 	var req pluginpb.CodeGeneratorRequest
 	if err := req.UnmarshalVT(data); err != nil {
 		return err
@@ -45,7 +48,7 @@ func run() error {
 		if file == nil || len(file.Service) == 0 {
 			continue
 		}
-		generateFiles(resp, file, fileMap)
+		generateFiles(resp, file)
 	}
 
 	// Write response to stdout.
@@ -57,10 +60,10 @@ func run() error {
 	return err
 }
 
-func generateFiles(resp *pluginpb.CodeGeneratorResponse, file *descriptorpb.FileDescriptorProto, fileMap map[string]*descriptorpb.FileDescriptorProto) {
-	g := &generator{file: file, fileMap: fileMap}
-
-	// Determine output filename (strip .proto, add _srpc.pb.rs).
+// generateFiles appends bindings for the services declared in one schema.
+func generateFiles(resp *pluginpb.CodeGeneratorResponse, file *descriptorpb.FileDescriptorProto) {
+	// Resolve the output name from the schema's import path.
+	g := &generator{file: file}
 	name := file.GetName()
 	if len(name) > 6 && name[len(name)-6:] == ".proto" {
 		name = name[:len(name)-6]
