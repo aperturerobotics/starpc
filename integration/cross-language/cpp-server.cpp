@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
 namespace {
 
@@ -239,13 +240,18 @@ int main()
 	std::cout << "LISTENING 127.0.0.1:" << ntohs(addr.sin_port)
 		  << std::endl;
 
+	/* Connection threads borrow mux, so join them before it ends. */
+	std::vector<std::thread> connections;
 	while (true) {
 		int client_fd = accept(sockfd, nullptr, nullptr);
 		if (client_fd < 0)
 			break;
-		std::thread(HandleConnection, client_fd, mux.get()).detach();
+		connections.emplace_back(HandleConnection, client_fd,
+					 mux.get());
 	}
 
 	close(sockfd);
+	for (auto &connection : connections)
+		connection.join();
 	return 0;
 }

@@ -2,6 +2,7 @@
 
 #include "mux.hpp"
 
+#include <mutex>
 #include <shared_mutex>
 
 namespace starpc {
