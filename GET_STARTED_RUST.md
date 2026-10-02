@@ -481,6 +481,17 @@ the last opener cancels its driver. The server owns all accepted calls within
 `handle_yamux`; ending or dropping that future cancels those calls. The WebSocket
 byte adapter owns its socket directly and creates no background tasks.
 
+Protocols with their own nested-stream handshake can call
+`rpcstream::handle_rpc_data_stream` after accepting a route. On the client,
+`rpcstream::rpc_data_transport` exposes an accepted stream as the standard
+packet writer and receiver. Both reuse the nested RPC data path without sending
+another init or acknowledgment.
+
+`ClientInvoker::new(client)` forwards incoming methods through an existing
+client. It preserves empty messages, half-close behavior and the remote terminal
+result. Both forwarding directions belong to the incoming invocation, so caller
+cancellation also ends a remote call that is waiting after input half-close.
+
 ### TypeScript WebSocket Interop
 
 TypeScript `WebSocketConn` speaks Starpc packets inside yamux streams inside

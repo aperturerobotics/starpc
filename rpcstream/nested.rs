@@ -195,8 +195,25 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
         .send_packet(&RpcStreamPacket::new_ack(String::new()))
         .await?;
 
-    // The stream ends before a call starts.
-    let Some(first) = next_packet(stream.as_ref()).await? else {
+    handle_rpc_data_stream(stream, ctx.child(), invoker).await
+}
+
+/// Serves one nested RPC after the enclosing protocol has negotiated its route.
+/// Only data packets are exchanged here; the caller owns any init/ack handshake.
+/// This future owns packet reception and cancels `context` when it ends or drops.
+pub async fn handle_rpc_data_stream<S: RpcStream + Send + Sync + 'static>(
+    stream: Arc<S>,
+    context: Context,
+    invoker: Arc<dyn Invoker>,
+) -> Result<()> {
+    let _cancel = context.cancel_token().drop_guard_ref();
+
+    // Route cancellation also ends a peer that has not sent CallStart yet.
+    let first = tokio::select! {
+        () = context.cancelled() => return Err(Error::Cancelled),
+        first = next_packet(stream.as_ref()) => first?,
+    };
+    let Some(first) = first else {
         return Ok(());
     };
     let Some(Body::CallStart(call_start)) = first.body else {
@@ -205,7 +222,11 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
 
     // Create the server RPC over the stream.
     let writer: Arc<dyn PacketWriter> = Arc::new(RpcStreamWriter::new(stream.clone()));
-    let rpc = Arc::new(ServerRpc::from_call_start(ctx.child(), call_start, writer));
+    let rpc = Arc::new(ServerRpc::from_call_start(
+        context.clone(),
+        call_start,
+        writer,
+    ));
 
     // Serve the call while the stream feeds it; a closed stream ends the call.
     let serve = serve_rpc(invoker.as_ref(), &rpc);
@@ -295,19 +316,25 @@ where
         // Perform the init/ack handshake
         open_rpc_stream(rpc_stream.as_ref(), &self.component_id, self.wait_ack).await?;
 
-        // Create a writer
-        let writer: Arc<dyn PacketWriter> = Arc::new(RpcStreamWriter::new(rpc_stream.clone()));
-
-        // The returned receiver owns nested reads without a forwarding task or packet queue.
-        let packets = futures::stream::unfold(rpc_stream, |stream| async move {
-            next_packet(stream.as_ref())
-                .await
-                .ok()
-                .flatten()
-                .map(|packet| (packet, stream))
-        });
-        Ok((writer, Box::pin(packets)))
+        Ok(rpc_data_transport(rpc_stream))
     }
+}
+
+/// Exposes an already-negotiated nested stream through the standard client transport.
+/// The returned receiver owns reads without a forwarding task or packet queue.
+/// The writer sends data packets and closes the nested stream's send side.
+pub fn rpc_data_transport<S: RpcStream + Send + Sync + 'static>(
+    stream: Arc<S>,
+) -> (Arc<dyn PacketWriter>, PacketReceiver) {
+    let writer: Arc<dyn PacketWriter> = Arc::new(RpcStreamWriter::new(stream.clone()));
+    let packets = futures::stream::unfold(stream, |stream| async move {
+        next_packet(stream.as_ref())
+            .await
+            .ok()
+            .flatten()
+            .map(|packet| (packet, stream))
+    });
+    (writer, Box::pin(packets))
 }
 
 /// Creates a Client that operates over an RPC stream to `component_id`,
@@ -443,6 +470,17 @@ mod tests {
     /// Wraps a packet as the data of an RPC stream packet.
     fn data_packet(body: crate::proto::packet::Body) -> RpcStreamPacket {
         RpcStreamPacket::new_data(Packet { body: Some(body) }.encode_to_vec())
+    }
+
+    #[tokio::test]
+    async fn cancelled_negotiated_route_does_not_wait_for_call_start() {
+        let stream = Arc::new(MockRpcStream::new());
+        let context = Context::new();
+        context.cancel();
+
+        let result = handle_rpc_data_stream(stream.clone(), context, Arc::new(EchoInvoker)).await;
+        assert!(matches!(result, Err(Error::Cancelled)));
+        assert!(stream.pop_sent().await.is_none());
     }
 
     #[tokio::test]
