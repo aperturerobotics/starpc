@@ -57,6 +57,7 @@
 //! This format is compatible with the Go and TypeScript implementations.
 
 pub mod client;
+pub mod client_invoker;
 pub mod codec;
 pub mod error;
 pub mod handler;
@@ -82,6 +83,7 @@ pub mod yamux;
 
 // Re-exports for convenience.
 pub use client::{BoxClient, Client, OpenStream, SrpcClient};
+pub use client_invoker::ClientInvoker;
 pub use codec::{PacketCodec, MAX_MESSAGE_SIZE};
 pub use error::{Error, Result};
 pub use handler::{BoxHandler, Handler};
