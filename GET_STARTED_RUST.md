@@ -475,6 +475,12 @@ For multiplexed connections, enable the `yamux` feature and use
 `Server::handle_websocket_yamux`, and clients can use
 `YamuxStreamOpener::client_websocket`.
 
+Yamux opener clones share one connection driver. Keep an opener clone when you
+need to call `close().await` and wait for the shared connection to stop. Dropping
+the last opener cancels its driver. The server owns all accepted calls within
+`handle_yamux`; ending or dropping that future cancels those calls. The WebSocket
+byte adapter owns its socket directly and creates no background tasks.
+
 ### TypeScript WebSocket Interop
 
 TypeScript `WebSocketConn` speaks Starpc packets inside yamux streams inside

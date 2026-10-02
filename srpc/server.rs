@@ -242,16 +242,6 @@ impl<I: Invoker + 'static> Server<I> {
             }
         }
     }
-
-    /// Creates an owned server for a supervised yamux substream.
-    #[cfg(feature = "yamux")]
-    pub(crate) fn clone_for_spawn(&self) -> Server<I> {
-        Server {
-            invoker: self.invoker.clone(),
-            config: self.config.clone(),
-            error_handler: self.error_handler.clone(),
-        }
-    }
 }
 
 /// Invokes the method a server RPC names and settles the call with the outcome.
