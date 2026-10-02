@@ -68,7 +68,8 @@ async fn yamux_opener_executes_multiple_calls_over_one_connection() {
         let _ = server.handle_yamux(server_io).await;
     });
 
-    let client = SrpcClient::new(YamuxStreamOpener::client(client_io));
+    let opener = YamuxStreamOpener::client(client_io);
+    let client = SrpcClient::new(opener.clone());
     for body in ["first yamux call", "second yamux call"] {
         let request = EchoMsg {
             body: body.to_string(),
@@ -80,7 +81,8 @@ async fn yamux_opener_executes_multiple_calls_over_one_connection() {
         assert_eq!(response.body, body);
     }
 
-    server_task.abort();
+    opener.close().await;
+    server_task.await.unwrap();
 }
 
 #[tokio::test]
@@ -98,7 +100,8 @@ async fn websocket_yamux_executes_unary_call() {
     let (socket, _) = tokio_tungstenite::connect_async(format!("ws://{addr}"))
         .await
         .unwrap();
-    let client = SrpcClient::new(YamuxStreamOpener::client_websocket(socket));
+    let opener = YamuxStreamOpener::client_websocket(socket);
+    let client = SrpcClient::new(opener.clone());
 
     let request = EchoMsg {
         body: "websocket yamux call".to_string(),
@@ -109,5 +112,6 @@ async fn websocket_yamux_executes_unary_call() {
         .unwrap();
     assert_eq!(response.body, request.body);
 
-    server_task.abort();
+    opener.close().await;
+    server_task.await.unwrap();
 }
