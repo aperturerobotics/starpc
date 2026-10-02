@@ -288,13 +288,14 @@ func (c *commonRPC) WriteCallCancel() error {
 	return c.writer.WritePacket(NewCallCancelPacket())
 }
 
-// closeLocked releases resources held by the RPC.
+// closeLocked releases resources held by the RPC. A call the remote already
+// settled keeps its result: queued messages and the completion stay readable.
 func (c *commonRPC) closeLocked(locked *broadcast.Locked) PacketWriter {
-	c.dataClosed = true
-	c.localCompleted.Store(true)
-	if c.remoteErr == nil {
+	if !c.dataClosed && c.remoteErr == nil {
 		c.remoteErr = context.Canceled
 	}
+	c.dataClosed = true
+	c.localCompleted.Store(true)
 	writer := c.closeWriterLocked()
 	locked.Broadcast()
 	c.cancelContext()

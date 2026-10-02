@@ -504,3 +504,26 @@ func TestClientRPCCloseReportsALocalCancellation(t *testing.T) {
 		t.Fatalf("a close this side performed was blamed on the remote: %v", err)
 	}
 }
+
+func TestClientRPCCloseAfterRemoteCompletionKeepsTheResult(t *testing.T) {
+	writer := &closeCountingPacketWriter{}
+	rpc := NewClientRPC(context.Background(), "service", "method")
+	if err := rpc.Start(writer, false, nil); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	// The remote answers and completes before this side closes the call, as
+	// when the RPC's own completion cancels a Start still writing CallStart.
+	if err := rpc.HandleCallData(&CallData{Data: []byte("ok"), Complete: true}); err != nil {
+		t.Fatalf("handle completion: %v", err)
+	}
+	rpc.Close()
+
+	data, err := rpc.ReadOne()
+	if err != nil || string(data) != "ok" {
+		t.Fatalf("read after a close of a completed call = %q, %v", data, err)
+	}
+	if _, err := rpc.ReadOne(); !errors.Is(err, io.EOF) {
+		t.Fatalf("read after the response reported %v, want the end of the stream", err)
+	}
+}
