@@ -46,7 +46,7 @@ func TestCppProcessPipe(t *testing.T) {
 			// Start a real C++ process with the same pipe framing used by Go.
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			t.Cleanup(cancel)
-			cmd := exec.CommandContext(ctx, binary)
+			cmd := exec.CommandContext(ctx, binary) //nolint:gosec // the caller names the server binary
 			input, err := cmd.StdinPipe()
 			if err != nil {
 				t.Fatal(err)
