@@ -46,11 +46,22 @@ async fn last_yamux_opener_drop_releases_idle_transport() {
 async fn concurrent_yamux_close_joins_and_rejects_later_calls() {
     let (transport, mut peer) = tokio::io::duplex(1024);
     let opener = YamuxStreamOpener::client(transport);
-    tokio::join!(opener.close(), opener.close());
+    tokio::join!(opener.close(), opener.close(), opener.closed());
 
     let mut input = Vec::new();
     peer.read_to_end(&mut input).await.unwrap();
     assert!(opener.open_stream().await.is_err());
+}
+
+#[tokio::test]
+async fn yamux_peer_closure_notifies_retained_openers() {
+    let (transport, peer) = tokio::io::duplex(1024);
+    let opener = YamuxStreamOpener::client(transport);
+    drop(peer);
+
+    opener.closed().await;
+    assert!(opener.open_stream().await.is_err());
+    opener.close().await;
 }
 
 #[tokio::test]

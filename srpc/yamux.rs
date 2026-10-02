@@ -9,6 +9,7 @@ use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tokio::task::JoinHandle;
 use tokio_util::compat::{FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt};
+use tokio_util::sync::CancellationToken;
 
 use crate::client::{OpenStream, PacketReceiver};
 use crate::error::{Error, Result};
@@ -31,6 +32,7 @@ pub struct YamuxStreamOpener {
 struct ClientDriver {
     requests: mpsc::Sender<OpenRequest>,
     task: Mutex<Option<JoinHandle<()>>>,
+    closed: CancellationToken,
 }
 
 impl Drop for ClientDriver {
@@ -56,11 +58,13 @@ impl YamuxStreamOpener {
         T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     {
         let (requests, request_rx) = mpsc::channel(DEFAULT_CHANNEL_BUFFER);
-        let task = spawn_client_driver(transport.compat(), config, request_rx);
+        let closed = CancellationToken::new();
+        let task = spawn_client_driver(transport.compat(), config, request_rx, closed.clone());
         Self {
             driver: Arc::new(ClientDriver {
                 requests,
                 task: Mutex::new(Some(task)),
+                closed,
             }),
         }
     }
@@ -74,6 +78,12 @@ impl YamuxStreamOpener {
             let _ = task.await;
         }
         task.take();
+    }
+
+    /// Waits for the connection driver to end, including peer closure and protocol failure.
+    /// Observers do not prevent a concurrent explicit close from joining the driver.
+    pub async fn closed(&self) {
+        self.driver.closed.cancelled().await;
     }
 
     /// Creates a client-mode yamux opener over a WebSocket.
@@ -164,11 +174,15 @@ fn spawn_client_driver<T>(
     transport: T,
     config: ::yamux::Config,
     mut requests: mpsc::Receiver<OpenRequest>,
+    closed: CancellationToken,
 ) -> JoinHandle<()>
 where
     T: futures::io::AsyncRead + futures::io::AsyncWrite + Send + Unpin + 'static,
 {
+    // Construct the guard before spawning so cancellation before the first poll also notifies.
+    let ended = closed.drop_guard();
     tokio::spawn(async move {
+        let _ended = ended;
         let mut connection = ::yamux::Connection::new(transport, config, ::yamux::Mode::Client);
         let mut pending = None;
 
