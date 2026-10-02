@@ -4,6 +4,8 @@
 //! echo service that supports unary, server streaming, client streaming,
 //! and bidirectional streaming RPCs.
 
+// This example uses only part of the generated service surface.
+#[allow(dead_code)]
 mod gen;
 
 use std::sync::Arc;
@@ -19,7 +21,7 @@ struct EchoServerImpl;
 
 #[async_trait]
 impl EchoerServer for EchoServerImpl {
-    async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
         println!("Server: received echo request: {:?}", request.body);
         Ok(EchoMsg { body: request.body })
     }
@@ -56,11 +58,9 @@ impl EchoerServer for EchoServerImpl {
         }
 
         // Return combined response (the handler will send it automatically).
-        let response = EchoMsg {
+        Ok(EchoMsg {
             body: messages.join(", "),
-        };
-
-        Ok(response)
+        })
     }
 
     async fn echo_bidi_stream(&self, stream: Box<dyn Stream>) -> Result<()> {
@@ -86,53 +86,42 @@ impl EchoerServer for EchoServerImpl {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(&self, _request: gen::Empty) -> Result<gen::Empty> {
+    async fn do_nothing(
+        &self,
+        _context: &starpc::Context,
+        _request: gen::Empty,
+    ) -> Result<gen::Empty> {
         Ok(gen::Empty {})
     }
 }
 
+/// Binds the server before connecting and retains both operations until their call completes.
 #[tokio::main]
 async fn main() -> Result<()> {
-    let addr = "127.0.0.1:8080";
+    // Listener construction is the readiness capability used by the client.
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let address = listener.local_addr()?.to_string();
 
-    // Spawn the server.
-    let server_handle = tokio::spawn(run_server(addr.to_string()));
-
-    // Wait for the server to start.
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-
-    // Run the client.
-    run_client(addr).await?;
-
-    // Stop the server.
-    server_handle.abort();
-
+    // Both futures remain owned here, so failure or cancellation releases the other side.
+    tokio::try_join!(run_server(listener), run_client(&address))?;
     println!("Example completed successfully!");
     Ok(())
 }
 
-async fn run_server(addr: String) -> Result<()> {
-    let listener = TcpListener::bind(&addr).await?;
-    println!("Server listening on {}", addr);
-
-    // Create the mux and register our handler.
+/// Serves the one connection used by this example through the ordinary server owner.
+async fn run_server(listener: TcpListener) -> Result<()> {
+    // Publish the handler before accepting the paired client's connection.
+    println!("Server listening on {}", listener.local_addr()?);
     let mux = Arc::new(Mux::new());
     mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
 
-    // Accept connections.
-    loop {
-        let (stream, peer_addr) = listener.accept().await?;
-        println!("Server: accepted connection from {}", peer_addr);
-
-        let server = Server::with_arc(mux.clone());
-        tokio::spawn(async move {
-            if let Err(e) = server.handle_stream(stream).await {
-                eprintln!("Server error: {}", e);
-            }
-        });
-    }
+    // Return only after the actual call and its packet reader have finished.
+    let (stream, peer_address) = listener.accept().await?;
+    println!("Server: accepted connection from {}", peer_address);
+    Server::with_arc(mux).handle_stream(stream).await
 }
 
+/// Runs a unary call over one connection and verifies its exact response.
 async fn run_client(addr: &str) -> Result<()> {
     println!("\nClient: connecting to {}", addr);
 

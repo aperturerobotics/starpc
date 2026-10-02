@@ -4,7 +4,7 @@
 //! The server supports all streaming patterns: unary, client streaming,
 //! server streaming, and bidirectional streaming.
 
-use futures::StreamExt;
+use futures::{stream::FuturesUnordered, StreamExt};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -138,47 +138,37 @@ impl<I: Invoker + 'static> Server<I> {
             return Err(Error::ExpectedCallStart);
         };
 
-        // Validate service and method IDs (already done by packet.validate(),
-        // but double-check for clarity).
-        if call_start.rpc_service.is_empty() {
-            return Err(Error::EmptyServiceId);
-        }
-        if call_start.rpc_method.is_empty() {
-            return Err(Error::EmptyMethodId);
-        }
+        // Retain the call's transport context until this borrowing operation ends.
+        let rpc = Arc::new(ServerRpc::from_call_start(
+            Context::new(),
+            call_start,
+            writer,
+        ));
+        let _cancel = rpc.context().cancel_token().drop_guard_ref();
 
-        // Create the server RPC.
-        let ctx = Context::new();
-        let rpc = Arc::new(ServerRpc::from_call_start(ctx, call_start, writer));
-
-        // Spawn a task to read remaining packets.
-        let rpc_clone = rpc.clone();
-        let mut read_task = tokio::spawn(async move {
+        // The packet reader is a sibling future, so dropping this call cannot detach transport work.
+        let read = async {
             while let Some(result) = framed.next().await {
                 match result {
                     Ok(packet) => {
-                        if rpc_clone.handle_packet(packet).await.is_err() {
+                        if rpc.handle_packet(packet).await.is_err() {
                             break;
                         }
                     }
                     Err(_) => break,
                 }
             }
-            let _ = rpc_clone.handle_stream_close(None).await;
-        });
+            let _ = rpc.handle_stream_close(None).await;
+        };
+        let invoke = serve_rpc(self.invoker.as_ref(), &rpc);
+        tokio::pin!(read, invoke);
 
-        // Invoke the method and settle the call.
-        serve_rpc(self.invoker.as_ref(), &rpc).await;
-
-        // Wait for the read task to finish or timeout, then abort it.
-        // This gives time for the client to receive our response.
+        // Remote closure cancels the same context that the active service receives.
+        // After a reply, retain the existing bounded grace period for the peer's transport close.
         tokio::select! {
-            _ = &mut read_task => {
-                // Read task finished naturally
-            }
-            _ = tokio::time::sleep(self.config.shutdown_timeout) => {
-                // Timeout - abort the read task
-                read_task.abort();
+            () = &mut read => invoke.await,
+            () = &mut invoke => {
+                let _ = tokio::time::timeout(self.config.shutdown_timeout, read).await;
             }
         }
 
@@ -223,38 +213,38 @@ impl<I: Invoker + 'static> Server<I> {
             .await
     }
 
-    /// Accepts and handles connections in a loop.
-    ///
-    /// This is a convenience method that accepts connections from a listener
-    /// and spawns a task to handle each one.
-    ///
-    /// Errors from individual connections are reported via the error handler
-    /// (if configured) but don't stop the server.
+    /// Accepts and handles connections concurrently, draining accepted calls when the listener ends.
+    /// Dropping this future drops every active call and cancels its transport context.
+    /// Individual connection failures reach the error handler without stopping other calls.
     pub async fn serve<L, T>(&self, mut listener: L) -> Result<()>
     where
         L: futures::Stream<Item = std::io::Result<T>> + Unpin,
         T: AsyncRead + AsyncWrite + Send + Unpin + 'static,
     {
-        while let Some(result) = listener.next().await {
-            match result {
-                Ok(stream) => {
-                    let server = self.clone_for_spawn();
-                    tokio::spawn(async move {
-                        if let Err(e) = server.handle_stream(stream).await {
-                            server.report_error(e);
-                        }
-                    });
+        // Concurrent call futures remain owned by this invocation, without detached tasks.
+        let mut calls = FuturesUnordered::new();
+        let mut accepting = true;
+        loop {
+            tokio::select! {
+                connection = listener.next(), if accepting => {
+                    match connection {
+                        Some(Ok(stream)) => calls.push(async move {
+                            if let Err(error) = self.handle_stream(stream).await {
+                                self.report_error(error);
+                            }
+                        }),
+                        Some(Err(error)) => self.report_error(Error::Io(error)),
+                        None => accepting = false,
+                    }
                 }
-                Err(e) => {
-                    self.report_error(Error::Io(e));
-                }
+                Some(()) = calls.next(), if !calls.is_empty() => {}
+                else => return Ok(()),
             }
         }
-
-        Ok(())
     }
 
-    /// Creates a clone of the server for spawning tasks.
+    /// Creates an owned server for a supervised yamux substream.
+    #[cfg(feature = "yamux")]
     pub(crate) fn clone_for_spawn(&self) -> Server<I> {
         Server {
             invoker: self.invoker.clone(),

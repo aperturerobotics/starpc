@@ -1,3 +1,5 @@
+//! Echo transport endpoint used by cross-language integration checks.
+
 #[allow(dead_code)]
 mod gen;
 
@@ -9,11 +11,12 @@ use tokio::net::TcpListener;
 
 use gen::{EchoMsg, EchoerHandler, EchoerServer, Empty};
 
+/// Implements each echo call shape through the supplied transport stream.
 struct EchoServerImpl;
 
 #[async_trait]
 impl EchoerServer for EchoServerImpl {
-    async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
         Ok(EchoMsg { body: request.body })
     }
 
@@ -28,10 +31,7 @@ impl EchoerServer for EchoServerImpl {
     }
 
     async fn echo_client_stream(&self, stream: &dyn Stream) -> Result<EchoMsg> {
-        match stream.msg_recv::<EchoMsg>().await {
-            Ok(msg) => Ok(msg),
-            Err(e) => Err(e),
-        }
+        stream.msg_recv().await
     }
 
     async fn echo_bidi_stream(&self, stream: Box<dyn Stream>) -> Result<()> {
@@ -57,11 +57,12 @@ impl EchoerServer for EchoServerImpl {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(&self, _request: Empty) -> Result<Empty> {
+    async fn do_nothing(&self, _context: &starpc::Context, _request: Empty) -> Result<Empty> {
         Ok(Empty {})
     }
 }
 
+/// Publishes a bound address and keeps accepted connections under the server owner.
 #[tokio::main]
 async fn main() -> Result<()> {
     let listener = TcpListener::bind("127.0.0.1:0").await?;
@@ -71,11 +72,9 @@ async fn main() -> Result<()> {
     let mux = Arc::new(Mux::new());
     mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
 
-    loop {
-        let (stream, _) = listener.accept().await?;
-        let server = Server::with_arc(mux.clone());
-        tokio::spawn(async move {
-            let _ = server.handle_stream(stream).await;
-        });
-    }
+    // The server owns concurrent calls and their cancellation for this listener's lifetime.
+    let incoming = futures::stream::unfold(listener, |listener| async move {
+        Some((listener.accept().await.map(|(stream, _)| stream), listener))
+    });
+    Server::with_arc(mux).serve(Box::pin(incoming)).await
 }

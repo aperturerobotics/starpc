@@ -358,7 +358,7 @@ impl<'a> Generator<'a> {
                 ));
             } else {
                 self.line(&format!(
-                    "    async fn {}(&self, request: {}) -> starpc::Result<{}>;",
+                    "    async fn {}(&self, context: &starpc::Context, request: {}) -> starpc::Result<{}>;",
                     method.name, method.input_type, method.output_type
                 ));
             }
@@ -483,7 +483,7 @@ impl<'a> Generator<'a> {
                 self.line("                    Err(e) => return (true, Err(e)),");
                 self.line("                };");
                 self.line(&format!(
-                    "                match <S as {}Server>::{}(self.server.as_ref(), request).await {{",
+                    "                match <S as {}Server>::{}(self.server.as_ref(), stream.context(), request).await {{",
                     service_name, method.name
                 ));
                 self.line("                    Ok(response) => {");

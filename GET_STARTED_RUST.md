@@ -12,17 +12,18 @@ The `starpc` crate's `build` feature wires a bundled `protoc` into `prost-build`
 
 ## Installation
 
-Add the dependencies to your `Cargo.toml`:
+These examples target the repository's current Rust API. Keep the runtime and build dependency on the same revision. Add them to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-starpc = "0.49"
+starpc = { git = "https://github.com/aperturerobotics/starpc" }
 prost = "0.14"
 async-trait = "0.1"
-tokio = { version = "1", features = ["rt", "macros", "net", "io-util", "time"] }
+futures = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
 
 [build-dependencies]
-starpc = { version = "0.49", features = ["build"] }
+starpc = { git = "https://github.com/aperturerobotics/starpc", features = ["build"] }
 prost-build = "0.14"
 ```
 
@@ -108,11 +109,13 @@ Generated types include:
 
 ## Implementing a Server
 
+Unary methods receive the incoming `&starpc::Context`; pass `context.cancel_token()` to cancellation-aware work. Streaming methods obtain the same context through `stream.context()`. Dropping a call cancels its context and releases its transport.
+
 Create a struct that implements the generated server trait:
 
 ```rust
 use async_trait::async_trait;
-use starpc::{Error, Result, Stream};
+use starpc::{Error, Result, Stream, StreamExt};
 
 mod gen;
 use gen::{EchoMsg, EchoerServer};
@@ -123,7 +126,7 @@ struct EchoServerImpl;
 #[async_trait]
 impl EchoerServer for EchoServerImpl {
     /// Unary RPC: receive request, return response
-    async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
         println!("Server: received echo request: {:?}", request.body);
         Ok(EchoMsg { body: request.body })
     }
@@ -205,18 +208,14 @@ async fn run_server(addr: &str) -> Result<()> {
     let mux = Arc::new(Mux::new());
     mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
 
-    // Accept connections
-    loop {
-        let (stream, peer_addr) = listener.accept().await?;
-        println!("Server: accepted connection from {}", peer_addr);
-
-        let server = Server::with_arc(mux.clone());
-        tokio::spawn(async move {
-            if let Err(e) = server.handle_stream(stream).await {
-                eprintln!("Server error: {}", e);
-            }
-        });
-    }
+    // The server owns concurrent calls and drains them when the listener ends.
+    let incoming = futures::stream::unfold(listener, |listener| async move {
+        Some((listener.accept().await.map(|(stream, _)| stream), listener))
+    });
+    Server::with_arc(mux)
+        .with_error_handler(|error| eprintln!("Server error: {error}"))
+        .serve(Box::pin(incoming))
+        .await
 }
 ```
 
@@ -260,7 +259,7 @@ mod gen;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use starpc::{Error, Mux, Result, Server, SrpcClient, Stream};
+use starpc::{Error, Mux, Result, Server, SrpcClient, Stream, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
 
 use gen::{EchoMsg, EchoerClient, EchoerClientImpl, EchoerHandler, EchoerServer};
@@ -269,7 +268,7 @@ struct EchoServerImpl;
 
 #[async_trait]
 impl EchoerServer for EchoServerImpl {
-    async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
         Ok(EchoMsg { body: request.body })
     }
 
@@ -308,35 +307,26 @@ impl EchoerServer for EchoServerImpl {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let addr = "127.0.0.1:8080";
+    // The bound listener establishes readiness before the client connects.
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let address = listener.local_addr()?;
+    let mux = Arc::new(Mux::new());
+    mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
 
-    // Spawn server
-    let server_handle = tokio::spawn(async move {
-        let listener = TcpListener::bind(addr).await.unwrap();
-        let mux = Arc::new(Mux::new());
-        mux.register(Arc::new(EchoerHandler::new(EchoServerImpl))).unwrap();
-
-        let (stream, _) = listener.accept().await.unwrap();
-        let server = Server::with_arc(mux);
-        server.handle_stream(stream).await.unwrap();
-    });
-
-    // Wait for server to start
-    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-
-    // Run client
-    let stream = TcpStream::connect(addr).await?;
-    let opener = starpc::client::transport::SingleStreamOpener::new(stream);
-    let client = SrpcClient::new(opener);
-    let echo_client = EchoerClientImpl::new(client);
-
-    let response = echo_client.echo(&EchoMsg {
-        body: "Hello!".to_string(),
-    }).await?;
-    println!("Response: {}", response.body);
-
-    server_handle.abort();
-    println!("Example completed!");
+    // Both sides stay owned by this invocation until the call completes.
+    let server = async {
+        let (stream, _) = listener.accept().await?;
+        Server::with_arc(mux).handle_stream(stream).await
+    };
+    let client = async {
+        let stream = TcpStream::connect(address).await?;
+        let opener = starpc::client::transport::SingleStreamOpener::new(stream);
+        let echo = EchoerClientImpl::new(SrpcClient::new(opener));
+        let response = echo.echo(&EchoMsg { body: "Hello!".into() }).await?;
+        println!("Response: {}", response.body);
+        Ok::<_, starpc::Error>(())
+    };
+    tokio::try_join!(server, client)?;
     Ok(())
 }
 ```
@@ -353,7 +343,7 @@ let response = echo_client.echo(&EchoMsg {
 println!("Response: {}", response.body);
 
 // Server
-async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
     Ok(EchoMsg {
         body: format!("Echo: {}", request.body),
     })
@@ -446,8 +436,8 @@ async fn test_echo() {
 
     // Spawn server
     let server = Server::with_arc(mux);
-    tokio::spawn(async move {
-        let _ = server.handle_stream(server_stream).await;
+    let server = tokio::spawn(async move {
+        server.handle_stream(server_stream).await
     });
 
     // Create client
@@ -461,10 +451,13 @@ async fn test_echo() {
     }).await.unwrap();
 
     assert_eq!(response.body, "test");
+    server.await.unwrap().unwrap();
 }
 ```
 
 ## Transport Options
+
+Custom `OpenStream` implementations return a writer and `PacketReceiver`, an owned asynchronous packet stream. `create_packet_channel` supplies framing over split byte transports without starting a packet pump. A streaming client owns its dispatcher and joins it on explicit close; a unary call drives reception in its own future.
 
 starpc Rust supports:
 
@@ -495,9 +488,9 @@ upgrade:
 
 ```toml
 [dependencies]
-starpc = { version = "0.49", features = ["websocket-yamux"] }
-tokio = { version = "1", features = ["rt", "macros", "net", "io-util", "time"] }
-tokio-tungstenite = "0.29"
+starpc = { git = "https://github.com/aperturerobotics/starpc", features = ["websocket-yamux"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "time"] }
+tokio-tungstenite = "0.30"
 ```
 
 Accept WebSocket connections on the Rust side and route each yamux substream to
@@ -520,17 +513,25 @@ async fn run_websocket_server(
     let mux = Arc::new(Mux::new());
     mux.register(Arc::new(EchoerHandler::new(EchoServerImpl)))?;
 
-    loop {
-        let (tcp, _) = listener.accept().await?;
-        let socket = accept_async(tcp).await?;
-        let server = Server::with_arc(mux.clone());
-
-        tokio::spawn(async move {
-            if let Err(err) = server.handle_websocket_yamux(socket).await {
-                eprintln!("Starpc WebSocket error: {err}");
+    // Keep accepted WebSocket operations within this server future's lifetime.
+    let server = Server::with_arc(mux);
+    let incoming = futures::stream::unfold(listener, |listener| async move {
+        Some((listener.accept().await.map(|(stream, _)| stream), listener))
+    });
+    futures::StreamExt::for_each_concurrent(incoming, None, |tcp| {
+        let server = &server;
+        async move {
+            let result = async {
+                let socket = accept_async(tcp?).await?;
+                server.handle_websocket_yamux(socket).await?;
+                Ok::<_, Box<dyn std::error::Error + Send + Sync>>(())
+            }.await;
+            if let Err(error) = result {
+                eprintln!("Starpc WebSocket error: {error}");
             }
-        });
-    }
+        }
+    }).await;
+    Ok(())
 }
 ```
 

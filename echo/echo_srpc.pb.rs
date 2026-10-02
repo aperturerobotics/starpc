@@ -215,7 +215,7 @@ impl EchoerRpcStreamStream for EchoerRpcStreamStreamImpl {
 #[starpc::async_trait]
 pub trait EchoerServer: Send + Sync {
     /// Echo.
-    async fn echo(&self, request: EchoMsg) -> starpc::Result<EchoMsg>;
+    async fn echo(&self, context: &starpc::Context, request: EchoMsg) -> starpc::Result<EchoMsg>;
     /// EchoServerStream.
     async fn echo_server_stream(
         &self,
@@ -229,7 +229,7 @@ pub trait EchoerServer: Send + Sync {
     /// RpcStream.
     async fn rpc_stream(&self, stream: Box<dyn starpc::Stream>) -> starpc::Result<()>;
     /// DoNothing.
-    async fn do_nothing(&self, request: Empty) -> starpc::Result<Empty>;
+    async fn do_nothing(&self, context: &starpc::Context, request: Empty) -> starpc::Result<Empty>;
 }
 
 const ECHOER_METHOD_IDS: &[&str] = &[
@@ -274,7 +274,7 @@ impl<S: EchoerServer + 'static> starpc::Invoker for EchoerHandler<S> {
                     Ok(r) => r,
                     Err(e) => return (true, Err(e)),
                 };
-                match <S as EchoerServer>::echo(self.server.as_ref(), request).await {
+                match <S as EchoerServer>::echo(self.server.as_ref(), stream.context(), request).await {
                     Ok(response) => {
                         if let Err(e) = stream.msg_send(&response).await {
                             return (true, Err(e));
@@ -321,7 +321,7 @@ impl<S: EchoerServer + 'static> starpc::Invoker for EchoerHandler<S> {
                     Ok(r) => r,
                     Err(e) => return (true, Err(e)),
                 };
-                match <S as EchoerServer>::do_nothing(self.server.as_ref(), request).await {
+                match <S as EchoerServer>::do_nothing(self.server.as_ref(), stream.context(), request).await {
                     Ok(response) => {
                         if let Err(e) = stream.msg_send(&response).await {
                             return (true, Err(e));
