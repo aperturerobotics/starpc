@@ -12,6 +12,7 @@ use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tokio::sync::Mutex;
 use tokio_util::codec::{Encoder, FramedRead};
 
+use crate::client::PacketReceiver;
 use crate::codec::PacketCodec;
 use crate::error::{Error, Result};
 use crate::proto::Packet;
@@ -68,46 +69,13 @@ impl<W: AsyncWrite + Send + Unpin + 'static> PacketWriter for TransportPacketWri
     }
 }
 
-/// Receiver for incoming packets from a transport.
-pub(crate) type PacketReceiver = tokio::sync::mpsc::Receiver<Packet>;
-
-/// Sender for incoming packets to be processed.
-pub(crate) type PacketSender = tokio::sync::mpsc::Sender<Packet>;
-
-/// Default channel buffer size for packet channels.
+/// Default bounded request capacity for multiplexed transport admission.
+#[cfg(feature = "yamux")]
 pub(crate) const DEFAULT_CHANNEL_BUFFER: usize = 32;
 
-/// Spawns a task that reads packets from `reader` and forwards them to
-/// `sender`, stopping when the transport closes, a decode fails, or the
-/// receiver is dropped. The returned task has no owner beyond the caller,
-/// which must join or abort the handle.
-pub(crate) fn spawn_packet_reader<R>(reader: R, sender: PacketSender) -> tokio::task::JoinHandle<()>
-where
-    R: AsyncRead + Send + Unpin + 'static,
-{
-    tokio::spawn(async move {
-        let mut framed = FramedRead::new(reader, PacketCodec::new());
-        while let Some(result) = framed.next().await {
-            match result {
-                Ok(packet) => {
-                    if sender.send(packet).await.is_err() {
-                        // Receiver dropped, stop reading
-                        break;
-                    }
-                }
-                Err(_) => {
-                    // Read error, stop reading
-                    break;
-                }
-            }
-        }
-    })
-}
-
-/// Creates a packet writer and receiver from a split transport.
-///
-/// The read half is pumped by a spawned task owned by no one, so the caller
-/// must keep the returned receiver alive to keep the transport read.
+/// Creates a packet writer and an owned incoming packet stream from a split transport.
+/// The receiver reads on demand; dropping it immediately releases the read half.
+/// No background task or additional packet queue is created.
 pub fn create_packet_channel<R, W>(
     read_half: R,
     write_half: W,
@@ -116,10 +84,18 @@ where
     R: AsyncRead + Send + Unpin + 'static,
     W: AsyncWrite + Send + Unpin + 'static,
 {
+    // Framing belongs to the returned receive capability for its complete lifetime.
+    let reader = FramedRead::new(read_half, PacketCodec::new());
+    let packets = futures::stream::unfold(reader, |mut reader| async move {
+        match reader.next().await {
+            Some(Ok(packet)) => Some((packet, reader)),
+            _ => None,
+        }
+    });
+
+    // The peer-facing writer retains its own half of this same transport.
     let writer: Arc<dyn PacketWriter> = Arc::new(TransportPacketWriter::new(write_half));
-    let (tx, rx) = tokio::sync::mpsc::channel(DEFAULT_CHANNEL_BUFFER);
-    spawn_packet_reader(read_half, tx);
-    (writer, rx)
+    (writer, Box::pin(packets))
 }
 
 /// Encodes optional data for protobuf messages.

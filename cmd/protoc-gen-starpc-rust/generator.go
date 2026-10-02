@@ -412,7 +412,7 @@ func (g *generator) generateServerTrait(service *descriptorpb.ServiceDescriptorP
 			g.P("    async fn ", methodName, "(&self, stream: &dyn starpc::Stream) -> starpc::Result<", outputType, ">;")
 		} else {
 			// Unary.
-			g.P("    async fn ", methodName, "(&self, request: ", inputType, ") -> starpc::Result<", outputType, ">;")
+			g.P("    async fn ", methodName, "(&self, context: &starpc::Context, request: ", inputType, ") -> starpc::Result<", outputType, ">;")
 		}
 	}
 	g.P("}")
@@ -514,7 +514,7 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 			g.P("                    Ok(r) => r,")
 			g.P("                    Err(e) => return (true, Err(e)),")
 			g.P("                };")
-			g.P("                match <S as ", g.ServerIface(service), ">::", methodName, "(self.server.as_ref(), request).await {")
+			g.P("                match <S as ", g.ServerIface(service), ">::", methodName, "(self.server.as_ref(), stream.context(), request).await {")
 			g.P("                    Ok(response) => {")
 			g.P("                        if let Err(e) = stream.msg_send(&response).await {")
 			g.P("                            return (true, Err(e));")

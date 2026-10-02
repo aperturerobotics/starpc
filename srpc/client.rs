@@ -6,6 +6,7 @@
 
 use async_trait::async_trait;
 use bytes::Bytes;
+use futures::StreamExt as _;
 use prost::Message;
 use std::sync::Arc;
 
@@ -14,8 +15,8 @@ use crate::rpc::{ClientRpc, PacketWriter};
 use crate::stream::{Context, Stream, StreamExt};
 use crate::transport::create_packet_channel;
 
-/// Receiver for incoming packets.
-pub type PacketReceiver = tokio::sync::mpsc::Receiver<crate::proto::Packet>;
+/// Owned incoming packets; dropping this stream releases its transport or nested call.
+pub type PacketReceiver = futures::stream::BoxStream<'static, crate::proto::Packet>;
 
 /// Trait for opening streams to a remote server.
 ///
@@ -91,41 +92,36 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
             writer,
         ));
 
-        // Start the RPC with the input data.
+        // Cancellation and every early return release the directly owned incoming transport.
+        let _cancel = ctx.cancel_token().drop_guard_ref();
         rpc.start(Some(Bytes::from(input_data))).await?;
 
-        // Spawn a task to handle incoming packets.
-        let rpc_clone = rpc.clone();
-        let packet_handler = tokio::spawn(async move {
-            while let Some(packet) = receiver.recv().await {
-                if rpc_clone.handle_packet(packet).await.is_err() {
+        // Read packets alongside the unary response without a second task or lifetime.
+        let read = async {
+            while let Some(packet) = receiver.next().await {
+                if rpc.handle_packet(packet).await.is_err() {
                     break;
                 }
             }
-            let _ = rpc_clone.handle_stream_close(None).await;
-        });
+            let _ = rpc.handle_stream_close(None).await;
+        };
+        let response = async {
+            // A failed half-close means the call ended; msg_recv reports its outcome.
+            let _ = rpc.close_send().await;
+            let output: O = rpc.msg_recv().await?;
 
-        // Every return path and cancellation drops the receive task and its RPC.
-        let _cleanup = scopeguard::guard(packet_handler, |handler| {
-            ctx.cancel();
-            handler.abort();
-        });
+            // Process trailing completion before releasing the writer and receive capability.
+            let _ = rpc.wait().await;
+            let _ = rpc.close().await;
+            Ok(output)
+        };
+        tokio::pin!(read, response);
 
-        // A failed half-close means the call ended; msg_recv reports its outcome.
-        let _ = rpc.close_send().await;
-
-        // Receive the response.
-        let output: O = rpc.msg_recv().await?;
-
-        // Wait for the RPC to complete properly (receive any trailing packets).
-        // This ensures we process any completion/error packets from the server
-        // before cleaning up.
-        let _ = rpc.wait().await;
-
-        // Close the RPC to signal completion.
-        let _ = rpc.close().await;
-
-        Ok(output)
+        // Transport closure settles the same RPC that the response future is observing.
+        tokio::select! {
+            output = &mut response => output,
+            () = &mut read => response.await,
+        }
     }
 
     async fn new_stream(
@@ -153,7 +149,7 @@ impl<T: OpenStream + 'static> Client for SrpcClient<T> {
         // Spawn a task to handle incoming packets.
         let rpc_clone = rpc.clone();
         let packet_handler = tokio::spawn(async move {
-            while let Some(packet) = receiver.recv().await {
+            while let Some(packet) = receiver.next().await {
                 if rpc_clone.handle_packet(packet).await.is_err() {
                     break;
                 }
@@ -207,10 +203,12 @@ impl Stream for ClientStream {
     async fn close(&self) -> Result<()> {
         let _ = self.rpc.close().await;
         // Abort the background packet handler to ensure cleanup.
-        if let Some(handle) = self.packet_handler.lock().await.take() {
+        let mut handler = self.packet_handler.lock().await;
+        if let Some(handle) = handler.as_mut() {
             handle.abort();
             let _ = handle.await;
         }
+        handler.take();
         Ok(())
     }
 }
@@ -318,7 +316,12 @@ mod tests {
             (
                 Self {
                     writer: Arc::new(MockWriter::new()),
-                    receiver: Mutex::new(Some(rx)),
+                    receiver: Mutex::new(Some(Box::pin(futures::stream::unfold(
+                        rx,
+                        |mut receiver| async move {
+                            receiver.recv().await.map(|packet| (packet, receiver))
+                        },
+                    )))),
                 },
                 tx,
             )

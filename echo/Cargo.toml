@@ -23,11 +23,11 @@ starpc = { workspace = true }
 prost = { workspace = true }
 tokio = { version = "1", features = ["full"] }
 async-trait = { workspace = true }
+futures = { workspace = true }
 
 [[test]]
 name = "half_close"
 path = "half_close_test.rs"
 
 [dev-dependencies]
-futures = { workspace = true }
 tokio-util = { workspace = true }

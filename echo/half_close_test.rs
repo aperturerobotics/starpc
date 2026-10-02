@@ -12,12 +12,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use futures::StreamExt as _;
 use prost::Message;
-use starpc::client::{OpenStream, PacketReceiver};
+use starpc::client::OpenStream;
 use starpc::testing::{create_pipe_default, create_test_pair, SingleInMemoryOpener};
-use starpc::transport::create_packet_channel;
-use starpc::{
-    Client, Error, Mux, PacketCodec, PacketWriter, Result, Server, SrpcClient, Stream, StreamExt,
-};
+use starpc::{Client, Error, Mux, PacketCodec, Result, Server, SrpcClient, Stream, StreamExt};
+use tokio::task::JoinHandle;
 use tokio_util::codec::FramedRead;
 
 use gen::{EchoMsg, EchoerClient, EchoerClientImpl, EchoerHandler, EchoerServer};
@@ -29,7 +27,7 @@ struct OnceEchoServer;
 
 #[async_trait]
 impl EchoerServer for OnceEchoServer {
-    async fn echo(&self, request: EchoMsg) -> Result<EchoMsg> {
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> Result<EchoMsg> {
         Ok(request)
     }
 
@@ -50,7 +48,11 @@ impl EchoerServer for OnceEchoServer {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(&self, request: gen::Empty) -> Result<gen::Empty> {
+    async fn do_nothing(
+        &self,
+        _context: &starpc::Context,
+        request: gen::Empty,
+    ) -> Result<gen::Empty> {
         Ok(request)
     }
 }
@@ -85,38 +87,34 @@ impl<T: OpenStream + 'static> Client for EndedClient<T> {
     }
 }
 
-/// Serves OnceEchoServer on one in-memory stream and returns its opener.
-fn serve_once_echo() -> SingleInMemoryOpener {
+/// Returns one transport opener and the server task that its caller must join.
+fn serve_once_echo() -> (SingleInMemoryOpener, JoinHandle<Result<()>>) {
     let mux = Arc::new(Mux::new());
     mux.register(Arc::new(EchoerHandler::new(OnceEchoServer)))
         .unwrap();
     let (opener, server_stream) = create_test_pair();
     let server = Server::with_arc(mux);
-    tokio::spawn(async move { server.handle_stream(server_stream).await });
-    opener
+    let task = tokio::spawn(async move { server.handle_stream(server_stream).await });
+    (opener, task)
 }
 
-/// Accepts CallStart, then drops the transport without a response.
-struct DroppingOpener;
-
-#[async_trait]
-impl OpenStream for DroppingOpener {
-    async fn open_stream(&self) -> Result<(Arc<dyn PacketWriter>, PacketReceiver)> {
-        let (client_stream, server_stream) = create_pipe_default();
-        tokio::spawn(async move {
-            let mut framed = FramedRead::new(server_stream, PacketCodec::new());
-            let _ = framed.next().await;
-        });
-        let (read_half, write_half) = tokio::io::split(client_stream);
-        Ok(create_packet_channel(read_half, write_half))
-    }
+/// Returns a transport that closes after CallStart and the peer task to join after observation.
+fn drop_after_request() -> (SingleInMemoryOpener, JoinHandle<()>) {
+    // Use the actual framing boundary to order peer closure after request admission.
+    let (client_stream, server_stream) = create_pipe_default();
+    let task = tokio::spawn(async move {
+        let mut framed = FramedRead::new(server_stream, PacketCodec::new());
+        let _ = framed.next().await;
+    });
+    (SingleInMemoryOpener::new(client_stream), task)
 }
 
 #[tokio::test]
 async fn server_stream_completed_before_close_send() {
     // Complete the server stream before the generated caller half-closes.
+    let (opener, server) = serve_once_echo();
     let client = EchoerClientImpl::new(EndedClient {
-        client: SrpcClient::new(serve_once_echo()),
+        client: SrpcClient::new(opener),
     });
     let request = EchoMsg {
         body: BODY_TXT.into(),
@@ -134,11 +132,13 @@ async fn server_stream_completed_before_close_send() {
         matches!(end, Err(Error::StreamClosed)),
         "expected StreamClosed after completion, got {end:?}"
     );
+    server.await.unwrap().unwrap();
 }
 
 #[tokio::test]
 async fn client_stream_completed_before_close_send() {
-    let client = EchoerClientImpl::new(SrpcClient::new(serve_once_echo()));
+    let (opener, server) = serve_once_echo();
+    let client = EchoerClientImpl::new(SrpcClient::new(opener));
     let stream = client.echo_client_stream().await.unwrap();
 
     // Send the one request and wait for the call to end.
@@ -151,12 +151,14 @@ async fn client_stream_completed_before_close_send() {
     // The half-close fails, but the reply is still readable.
     let msg = stream.close_and_recv().await.expect("buffered reply lost");
     assert_eq!(msg.body, BODY_TXT);
+    server.await.unwrap().unwrap();
 }
 
 #[tokio::test]
 async fn server_stream_transport_failure_before_close_send() {
+    let (opener, server) = drop_after_request();
     let client = EchoerClientImpl::new(EndedClient {
-        client: SrpcClient::new(DroppingOpener),
+        client: SrpcClient::new(opener),
     });
     let request = EchoMsg {
         body: BODY_TXT.into(),
@@ -172,4 +174,5 @@ async fn server_stream_transport_failure_before_close_send() {
         matches!(end, Err(Error::ClosedBeforeCompletion)),
         "expected ClosedBeforeCompletion, got {end:?}"
     );
+    server.await.unwrap();
 }

@@ -145,16 +145,18 @@ For TypeScript <-> TypeScript, see the [e2e] test.
 
 ### Rust
 
+These examples use the repository's current Rust API. Unary handlers receive the transport's cancellation context; streaming handlers obtain it from their stream.
+
 Add the dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-starpc = "0.49"
+starpc = { git = "https://github.com/aperturerobotics/starpc" }
 prost = "0.14"
-tokio = { version = "1", features = ["rt", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-util"] }
 
 [build-dependencies]
-starpc = { version = "0.49", features = ["build"] }
+starpc = { git = "https://github.com/aperturerobotics/starpc", features = ["build"] }
 prost-build = "0.14"
 ```
 
@@ -171,7 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 Implement and use your service:
 
 ```rust
-use starpc::{Client, Mux, Server, SrpcClient};
+use starpc::{Error, Mux, Server, SrpcClient, Stream, StreamExt};
 use std::sync::Arc;
 
 // Include generated code
@@ -186,8 +188,34 @@ struct EchoServer;
 
 #[starpc::async_trait]
 impl EchoerServer for EchoServer {
-    async fn echo(&self, request: EchoMsg) -> starpc::Result<EchoMsg> {
-        Ok(request) // Echo back the message
+    async fn echo(&self, _context: &starpc::Context, request: EchoMsg) -> starpc::Result<EchoMsg> {
+        Ok(request)
+    }
+
+    async fn echo_server_stream(&self, request: EchoMsg, stream: Box<dyn Stream>) -> starpc::Result<()> {
+        stream.msg_send(&request).await
+    }
+
+    async fn echo_client_stream(&self, stream: &dyn Stream) -> starpc::Result<EchoMsg> {
+        let mut messages = Vec::new();
+        loop {
+            match stream.msg_recv::<EchoMsg>().await {
+                Ok(message) => messages.push(message.body),
+                Err(Error::StreamClosed) => break,
+                Err(error) => return Err(error),
+            }
+        }
+        Ok(EchoMsg { body: messages.join(", ") })
+    }
+
+    async fn echo_bidi_stream(&self, stream: Box<dyn Stream>) -> starpc::Result<()> {
+        loop {
+            match stream.msg_recv::<EchoMsg>().await {
+                Ok(message) => stream.msg_send(&message).await?,
+                Err(Error::StreamClosed) => return Ok(()),
+                Err(error) => return Err(error),
+            }
+        }
     }
 }
 
@@ -202,8 +230,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (client_stream, server_stream) = tokio::io::duplex(64 * 1024);
 
     // Spawn server handler
-    tokio::spawn(async move {
-        let _ = server.handle_stream(server_stream).await;
+    let server = tokio::spawn(async move {
+        server.handle_stream(server_stream).await
     });
 
     // Create client
@@ -214,6 +242,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Make RPC call
     let response = echoer.echo(&EchoMsg { body: "Hello!".into() }).await?;
     println!("Response: {}", response.body);
+    server.await??;
 
     Ok(())
 }

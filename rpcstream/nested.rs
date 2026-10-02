@@ -173,6 +173,7 @@ pub async fn handle_rpc_stream<S: RpcStream + Send + Sync + 'static>(
 
     // Look up the invoker; releasing the component cancels the stream's context.
     let ctx = stream.context().child();
+    let _cancel = ctx.cancel_token().drop_guard_ref();
     let ctx_cancel = ctx.clone();
     let released = Box::new(move || ctx_cancel.cancel());
     let lookup_result = getter(&ctx, &component_id, released);
@@ -297,28 +298,15 @@ where
         // Create a writer
         let writer: Arc<dyn PacketWriter> = Arc::new(RpcStreamWriter::new(rpc_stream.clone()));
 
-        // Create a channel for incoming packets
-        let (tx, rx) = tokio::sync::mpsc::channel(32);
-
-        // Spawn a read pump to convert RpcStreamPacket::Data into Packets.
-        let stream_clone = rpc_stream.clone();
-        tokio::spawn(async move {
-            while let Ok(packet) = stream_clone.recv_packet().await {
-                // Forward data packets; ignore the handshake bodies.
-                if let Some(rpc_stream_packet::Body::Data(data)) = packet.body {
-                    match Packet::decode(&data[..]) {
-                        Ok(packet) => {
-                            if tx.send(packet).await.is_err() {
-                                break;
-                            }
-                        }
-                        Err(_) => break,
-                    }
-                }
-            }
+        // The returned receiver owns nested reads without a forwarding task or packet queue.
+        let packets = futures::stream::unfold(rpc_stream, |stream| async move {
+            next_packet(stream.as_ref())
+                .await
+                .ok()
+                .flatten()
+                .map(|packet| (packet, stream))
         });
-
-        Ok((writer, rx))
+        Ok((writer, Box::pin(packets)))
     }
 }
 
@@ -406,6 +394,7 @@ mod tests {
 
         async fn close(&self) -> Result<()> {
             self.closed.store(true, Ordering::SeqCst);
+            self.packets.notify_one();
             Ok(())
         }
     }
