@@ -80,20 +80,20 @@ async function expectPeerWriteAfterLocalSourceCompletes(
     const request = new Uint8Array([1, 2, 3])
     clientWrites.push(request)
 
-    await expect(readNext(serverReads)).resolves.toEqual({
+    await expect(serverReads.next()).resolves.toEqual({
       done: false,
       value: request,
     })
 
     clientWrites.end()
-    await expect(readNext(serverReads)).resolves.toEqual({
+    await expect(serverReads.next()).resolves.toEqual({
       done: true,
       value: undefined,
     })
 
     const response = new Uint8Array([4, 5, 6])
     serverWrites.push(response)
-    await expect(readNext(clientReads)).resolves.toEqual({
+    await expect(clientReads.next()).resolves.toEqual({
       done: false,
       value: response,
     })
@@ -101,7 +101,7 @@ async function expectPeerWriteAfterLocalSourceCompletes(
     serverWrites.end()
     await expect(clientSink).resolves.toBeUndefined()
     await expect(serverSink).resolves.toBeUndefined()
-    await expect(readNext(clientReads)).resolves.toEqual({
+    await expect(clientReads.next()).resolves.toEqual({
       done: true,
       value: undefined,
     })
@@ -111,18 +111,4 @@ async function expectPeerWriteAfterLocalSourceCompletes(
     client.close()
     server.close()
   }
-}
-
-function readNext<T>(
-  source: AsyncIterator<T>,
-): Promise<IteratorResult<T, undefined>> {
-  return Promise.race([
-    source.next(),
-    new Promise<IteratorResult<T, undefined>>((_, reject) => {
-      setTimeout(
-        () => reject(new Error('timed out waiting for stream data')),
-        100,
-      )
-    }),
-  ])
 }
