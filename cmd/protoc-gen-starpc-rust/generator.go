@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"runtime/debug"
 	"strings"
-	"unicode"
 
 	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 )
@@ -19,6 +17,8 @@ const halfCloseComment = "// A failed half-close means the call ended; msg_recv 
 type generator struct {
 	// file supplies service identities and streaming contracts.
 	file *descriptorpb.FileDescriptorProto
+	// types names the Rust type of each request and response message.
+	types *typeResolver
 	// buf holds the generated declarations in source order.
 	buf strings.Builder
 }
@@ -40,90 +40,58 @@ func (g *generator) GetServiceID(service *descriptorpb.ServiceDescriptorProto) s
 	return pkg + "." + service.GetName()
 }
 
-// RustType returns the Rust type name for a protobuf message type.
+// RustType returns the Rust path of a protobuf message type, relative to the
+// module of this file's protobuf package, as prost-build names it.
 func (g *generator) RustType(typeName string) string {
-	// typeName is like ".package.MessageType" or ".MessageType"
-	typeName = strings.TrimPrefix(typeName, ".")
-	parts := strings.Split(typeName, ".")
-	// Return just the message name - caller should add proper module prefix if needed.
-	return parts[len(parts)-1]
+	return g.types.resolve(g.file.GetPackage(), typeName)
 }
 
-// ServiceGoName returns a name for the service.
-func (g *generator) ServiceGoName(service *descriptorpb.ServiceDescriptorProto) string {
-	return service.GetName()
+// ServiceName returns the Rust name of the service, which is how prost-build
+// names it.
+func (g *generator) ServiceName(service *descriptorpb.ServiceDescriptorProto) string {
+	return toUpperCamel(service.GetName())
 }
 
-// MethodGoName returns a name for the method.
-func (g *generator) MethodGoName(method *descriptorpb.MethodDescriptorProto) string {
+// MethodProtoName returns the method name used on the wire.
+func (g *generator) MethodProtoName(method *descriptorpb.MethodDescriptorProto) string {
 	return method.GetName()
 }
 
-// toSnakeCase converts PascalCase to snake_case.
-func toSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if unicode.IsUpper(r) {
-			if i > 0 {
-				result.WriteByte('_')
-			}
-			result.WriteRune(unicode.ToLower(r))
-		} else {
-			result.WriteRune(r)
-		}
-	}
-	return result.String()
-}
-
-// toScreamingSnakeCase converts a name to SCREAMING_SNAKE_CASE.
-func toScreamingSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if unicode.IsUpper(r) {
-			if i > 0 {
-				result.WriteByte('_')
-			}
-			result.WriteRune(r)
-		} else {
-			result.WriteRune(unicode.ToUpper(r))
-		}
-	}
-	return result.String()
+// MethodName returns the Rust method name, which is how prost-build names it.
+func (g *generator) MethodName(method *descriptorpb.MethodDescriptorProto) string {
+	return toSnake(method.GetName())
 }
 
 // ClientIface returns the client trait name.
 func (g *generator) ClientIface(service *descriptorpb.ServiceDescriptorProto) string {
-	return g.ServiceGoName(service) + "Client"
+	return g.ServiceName(service) + "Client"
 }
 
 // ClientImpl returns the client implementation name.
 func (g *generator) ClientImpl(service *descriptorpb.ServiceDescriptorProto) string {
-	return g.ServiceGoName(service) + "ClientImpl"
+	return g.ServiceName(service) + "ClientImpl"
 }
 
 // ServerIface returns the server trait name.
 func (g *generator) ServerIface(service *descriptorpb.ServiceDescriptorProto) string {
-	return g.ServiceGoName(service) + "Server"
+	return g.ServiceName(service) + "Server"
 }
 
 // ServerServiceID returns the service ID constant name.
 func (g *generator) ServerServiceID(service *descriptorpb.ServiceDescriptorProto) string {
-	return toScreamingSnakeCase(g.ServiceGoName(service)) + "_SERVICE_ID"
+	return screamingSnakeCase(g.ServiceName(service)) + "_SERVICE_ID"
 }
 
 // ServerHandler returns the handler struct name.
 func (g *generator) ServerHandler(service *descriptorpb.ServiceDescriptorProto) string {
-	return g.ServiceGoName(service) + "Handler"
+	return g.ServiceName(service) + "Handler"
 }
 
-// ClientStreamIface returns the client stream trait name.
+// ClientStreamIface returns the client stream trait name. It joins the service
+// to the upper camel case of the method's snake case name, as the Rust service
+// generator does, so two services never share a stream name.
 func (g *generator) ClientStreamIface(service *descriptorpb.ServiceDescriptorProto, method *descriptorpb.MethodDescriptorProto) string {
-	return g.ServiceGoName(service) + g.MethodGoName(method) + "Stream"
-}
-
-// ServerStreamIface returns the server stream trait name.
-func (g *generator) ServerStreamIface(service *descriptorpb.ServiceDescriptorProto, method *descriptorpb.MethodDescriptorProto) string {
-	return g.ServiceGoName(service) + g.MethodGoName(method) + "ServerStream"
+	return g.ServiceName(service) + upperCamelCase(snakeCase(method.GetName())) + "Stream"
 }
 
 // InputType returns the Rust input type for a method.
@@ -161,7 +129,7 @@ func (g *generator) generate() string {
 func (g *generator) generateService(service *descriptorpb.ServiceDescriptorProto) {
 	// Publish the fully qualified protobuf identity before the typed surfaces.
 	serviceID := g.GetServiceID(service)
-	g.P("/// Service ID for ", g.ServiceGoName(service), ".")
+	g.P("/// Service ID for ", g.ServiceName(service), ".")
 	g.P("pub const ", g.ServerServiceID(service), ": &str = \"", serviceID, "\";")
 	g.P()
 
@@ -195,7 +163,7 @@ func (g *generator) generateStreamTraits(service *descriptorpb.ServiceDescriptor
 		// Resolve the message types required by this method's typed surface.
 		inputType := g.InputType(method)
 		outputType := g.OutputType(method)
-		g.P("/// Stream trait for ", g.ServiceGoName(service), ".", g.MethodGoName(method), ".")
+		g.P("/// Stream trait for ", g.ServiceName(service), ".", g.MethodProtoName(method), ".")
 		g.P("#[starpc::async_trait]")
 		g.P("pub trait ", g.ClientStreamIface(service, method), ": Send + Sync {")
 		g.P("    /// Returns the context for this stream.")
@@ -214,11 +182,12 @@ func (g *generator) generateStreamTraits(service *descriptorpb.ServiceDescriptor
 		}
 
 		// Preserve the final response after closing the request side.
-		if method.GetClientStreaming() && !method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && !method.GetServerStreaming():
 			// Client streaming - need close_and_recv for the final response.
 			g.P("    /// Closes the send side and receives the response.")
 			g.P("    async fn close_and_recv(&self) -> starpc::Result<", outputType, ">;")
-		} else {
+		default:
 			g.P("    /// Closes the stream.")
 			g.P("    async fn close(&self) -> starpc::Result<()>;")
 		}
@@ -230,7 +199,7 @@ func (g *generator) generateStreamTraits(service *descriptorpb.ServiceDescriptor
 // generateClientTrait generates the client trait.
 func (g *generator) generateClientTrait(service *descriptorpb.ServiceDescriptorProto) {
 	// Declare the caller contract before its method signatures.
-	g.P("/// Client trait for ", g.ServiceGoName(service), ".")
+	g.P("/// Client trait for ", g.ServiceName(service), ".")
 	g.P("#[starpc::async_trait]")
 	g.P("pub trait ", g.ClientIface(service), ": Send + Sync {")
 
@@ -239,20 +208,21 @@ func (g *generator) generateClientTrait(service *descriptorpb.ServiceDescriptorP
 		// Resolve the message types required by this method's typed surface.
 		inputType := g.InputType(method)
 		outputType := g.OutputType(method)
-		methodName := toSnakeCase(g.MethodGoName(method))
-		g.P("    /// ", g.MethodGoName(method), ".")
+		methodName := g.MethodName(method)
+		g.P("    /// ", g.MethodProtoName(method), ".")
 
 		// Select argument and result ownership from the stream direction.
-		if method.GetClientStreaming() && method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && method.GetServerStreaming():
 			// Bidirectional streaming.
 			g.P("    async fn ", methodName, "(&self) -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">>;")
-		} else if method.GetServerStreaming() {
+		case method.GetServerStreaming():
 			// Server streaming.
 			g.P("    async fn ", methodName, "(&self, request: &", inputType, ") -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">>;")
-		} else if method.GetClientStreaming() {
+		case method.GetClientStreaming():
 			// Client streaming.
 			g.P("    async fn ", methodName, "(&self) -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">>;")
-		} else {
+		default:
 			// Unary.
 			g.P("    async fn ", methodName, "(&self, request: &", inputType, ") -> starpc::Result<", outputType, ">;")
 		}
@@ -271,7 +241,7 @@ func (g *generator) generateClientImpl(service *descriptorpb.ServiceDescriptorPr
 	}
 
 	// Emit the transport handle and its constructor.
-	g.P("/// Client implementation for ", g.ServiceGoName(service), ".")
+	g.P("/// Client implementation for ", g.ServiceName(service), ".")
 	g.P("pub struct ", g.ClientImpl(service), "<C> {")
 	g.P("    ", clientField, ": C,")
 	g.P("}")
@@ -281,11 +251,7 @@ func (g *generator) generateClientImpl(service *descriptorpb.ServiceDescriptorPr
 	g.P("impl<C: starpc::Client> ", g.ClientImpl(service), "<C> {")
 	g.P("    /// Creates a new client.")
 	g.P("    pub fn new(client: C) -> Self {")
-	if len(service.Method) == 0 {
-		g.P("        Self { _client: client }")
-	} else {
-		g.P("        Self { client }")
-	}
+	g.P("        Self { ", fieldInit(clientField, "client"), " }")
 	g.P("    }")
 	g.P("}")
 	g.P()
@@ -297,34 +263,35 @@ func (g *generator) generateClientImpl(service *descriptorpb.ServiceDescriptorPr
 		// Resolve the message types required by this method's typed surface.
 		inputType := g.InputType(method)
 		outputType := g.OutputType(method)
-		methodName := toSnakeCase(g.MethodGoName(method))
+		methodName := g.MethodName(method)
 
-		if method.GetClientStreaming() && method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && method.GetServerStreaming():
 			// Bidirectional streaming.
 			g.P("    async fn ", methodName, "(&self) -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">> {")
-			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodGoName(method), "\", None).await?;")
+			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodProtoName(method), "\", None).await?;")
 			g.P("        Ok(Box::new(", g.ClientStreamIface(service, method), "Impl { stream }))")
 			g.P("    }")
-		} else if method.GetServerStreaming() {
+		case method.GetServerStreaming():
 			// Server streaming.
 			g.P("    async fn ", methodName, "(&self, request: &", inputType, ") -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">> {")
 			g.P("        use starpc::ProstMessage;")
 			g.P("        let data = request.encode_to_vec();")
-			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodGoName(method), "\", Some(&data)).await?;")
+			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodProtoName(method), "\", Some(&data)).await?;")
 			g.P("        ", halfCloseComment)
 			g.P("        let _ = stream.close_send().await;")
 			g.P("        Ok(Box::new(", g.ClientStreamIface(service, method), "Impl { stream }))")
 			g.P("    }")
-		} else if method.GetClientStreaming() {
+		case method.GetClientStreaming():
 			// Client streaming.
 			g.P("    async fn ", methodName, "(&self) -> starpc::Result<Box<dyn ", g.ClientStreamIface(service, method), ">> {")
-			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodGoName(method), "\", None).await?;")
+			g.P("        let stream = self.client.new_stream(\"", serviceID, "\", \"", g.MethodProtoName(method), "\", None).await?;")
 			g.P("        Ok(Box::new(", g.ClientStreamIface(service, method), "Impl { stream }))")
 			g.P("    }")
-		} else {
+		default:
 			// Unary.
 			g.P("    async fn ", methodName, "(&self, request: &", inputType, ") -> starpc::Result<", outputType, "> {")
-			g.P("        self.client.exec_call(\"", serviceID, "\", \"", g.MethodGoName(method), "\", request).await")
+			g.P("        self.client.exec_call(\"", serviceID, "\", \"", g.MethodProtoName(method), "\", request).await")
 			g.P("    }")
 		}
 	}
@@ -369,13 +336,14 @@ func (g *generator) generateStreamImpls(service *descriptorpb.ServiceDescriptorP
 		}
 
 		// Preserve the final response after closing the request side.
-		if method.GetClientStreaming() && !method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && !method.GetServerStreaming():
 			g.P("    async fn close_and_recv(&self) -> starpc::Result<", outputType, "> {")
 			g.P("        ", halfCloseComment)
 			g.P("        let _ = self.stream.close_send().await;")
 			g.P("        self.stream.msg_recv().await")
 			g.P("    }")
-		} else {
+		default:
 			g.P("    async fn close(&self) -> starpc::Result<()> {")
 			g.P("        self.stream.close().await")
 			g.P("    }")
@@ -388,7 +356,7 @@ func (g *generator) generateStreamImpls(service *descriptorpb.ServiceDescriptorP
 // generateServerTrait generates the server trait.
 func (g *generator) generateServerTrait(service *descriptorpb.ServiceDescriptorProto) {
 	// Declare the implementation contract before its method signatures.
-	g.P("/// Server trait for ", g.ServiceGoName(service), ".")
+	g.P("/// Server trait for ", g.ServiceName(service), ".")
 	g.P("#[starpc::async_trait]")
 	g.P("pub trait ", g.ServerIface(service), ": Send + Sync {")
 
@@ -397,20 +365,21 @@ func (g *generator) generateServerTrait(service *descriptorpb.ServiceDescriptorP
 		// Resolve the message types required by this method's typed surface.
 		inputType := g.InputType(method)
 		outputType := g.OutputType(method)
-		methodName := toSnakeCase(g.MethodGoName(method))
-		g.P("    /// ", g.MethodGoName(method), ".")
+		methodName := g.MethodName(method)
+		g.P("    /// ", g.MethodProtoName(method), ".")
 
 		// Select argument and result ownership from the stream direction.
-		if method.GetClientStreaming() && method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && method.GetServerStreaming():
 			// Bidirectional streaming.
 			g.P("    async fn ", methodName, "(&self, stream: Box<dyn starpc::Stream>) -> starpc::Result<()>;")
-		} else if method.GetServerStreaming() {
+		case method.GetServerStreaming():
 			// Server streaming.
 			g.P("    async fn ", methodName, "(&self, request: ", inputType, ", stream: Box<dyn starpc::Stream>) -> starpc::Result<()>;")
-		} else if method.GetClientStreaming() {
+		case method.GetClientStreaming():
 			// Client streaming.
 			g.P("    async fn ", methodName, "(&self, stream: &dyn starpc::Stream) -> starpc::Result<", outputType, ">;")
-		} else {
+		default:
 			// Unary.
 			g.P("    async fn ", methodName, "(&self, context: &starpc::Context, request: ", inputType, ") -> starpc::Result<", outputType, ">;")
 		}
@@ -429,15 +398,15 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 	}
 
 	// Generate method IDs constant.
-	g.P("const ", toScreamingSnakeCase(g.ServiceGoName(service)), "_METHOD_IDS: &[&str] = &[")
+	g.P("const ", screamingSnakeCase(g.ServiceName(service)), "_METHOD_IDS: &[&str] = &[")
 	for _, method := range service.Method {
-		g.P("    \"", g.MethodGoName(method), "\",")
+		g.P("    \"", g.MethodProtoName(method), "\",")
 	}
 	g.P("];")
 	g.P()
 
 	// Generate handler struct.
-	g.P("/// Handler for ", g.ServiceGoName(service), ".")
+	g.P("/// Handler for ", g.ServiceName(service), ".")
 	g.P("pub struct ", g.ServerHandler(service), "<S: ", g.ServerIface(service), "> {")
 	g.P("    ", serverField, ": std::sync::Arc<S>,")
 	g.P("}")
@@ -454,11 +423,7 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 	// Accept a server already shared with another handler.
 	g.P("    /// Creates a new handler with a shared server.")
 	g.P("    pub fn with_arc(server: std::sync::Arc<S>) -> Self {")
-	if len(service.Method) == 0 {
-		g.P("        Self { _server: server }")
-	} else {
-		g.P("        Self { server }")
-	}
+	g.P("        Self { ", fieldInit(serverField, "server"), " }")
 	g.P("    }")
 	g.P("}")
 	g.P()
@@ -474,9 +439,10 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 	g.P("        ", methodParameter, ": &str,")
 	g.P("        ", streamParameter, ": Box<dyn starpc::Stream>,")
 	g.P("    ) -> (bool, starpc::Result<()>) {")
-	if len(service.Method) == 0 {
+	switch len(service.Method) {
+	case 0:
 		g.P("        (false, Err(starpc::Error::Unimplemented))")
-	} else {
+	default:
 		g.P("        match method_id {")
 	}
 
@@ -484,20 +450,21 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 	for _, method := range service.Method {
 		// Resolve the message types required by this method's typed surface.
 		inputType := g.InputType(method)
-		methodName := toSnakeCase(g.MethodGoName(method))
-		g.P("            \"", g.MethodGoName(method), "\" => {")
+		methodName := g.MethodName(method)
+		g.P("            \"", g.MethodProtoName(method), "\" => {")
 
-		if method.GetClientStreaming() && method.GetServerStreaming() {
+		switch {
+		case method.GetClientStreaming() && method.GetServerStreaming():
 			// Bidirectional streaming.
 			g.P("                (true, <S as ", g.ServerIface(service), ">::", methodName, "(self.server.as_ref(), stream).await)")
-		} else if method.GetServerStreaming() {
+		case method.GetServerStreaming():
 			// Server streaming - receive request first.
 			g.P("                let request: ", inputType, " = match stream.msg_recv().await {")
 			g.P("                    Ok(r) => r,")
 			g.P("                    Err(e) => return (true, Err(e)),")
 			g.P("                };")
 			g.P("                (true, <S as ", g.ServerIface(service), ">::", methodName, "(self.server.as_ref(), request, stream).await)")
-		} else if method.GetClientStreaming() {
+		case method.GetClientStreaming():
 			// Client streaming - receive messages, then send response.
 			g.P("                match <S as ", g.ServerIface(service), ">::", methodName, "(self.server.as_ref(), stream.as_ref()).await {")
 			g.P("                    Ok(response) => {")
@@ -508,7 +475,7 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 			g.P("                    }")
 			g.P("                    Err(e) => (true, Err(e)),")
 			g.P("                }")
-		} else {
+		default:
 			// Unary.
 			g.P("                let request: ", inputType, " = match stream.msg_recv().await {")
 			g.P("                    Ok(r) => r,")
@@ -540,14 +507,23 @@ func (g *generator) generateHandler(service *descriptorpb.ServiceDescriptorProto
 	// Advertise the service identity used by the dispatcher.
 	g.P("impl<S: ", g.ServerIface(service), " + 'static> starpc::Handler for ", g.ServerHandler(service), "<S> {")
 	g.P("    fn service_id(&self) -> &'static str {")
-	g.P(fmt.Sprintf("        \"%s\"", serviceID))
+	g.P("        \"", serviceID, "\"")
 	g.P("    }")
 	g.P()
 
 	// Advertise only the wire methods declared by this service.
 	g.P("    fn method_ids(&self) -> &'static [&'static str] {")
-	g.P("        ", toScreamingSnakeCase(g.ServiceGoName(service)), "_METHOD_IDS")
+	g.P("        ", screamingSnakeCase(g.ServiceName(service)), "_METHOD_IDS")
 	g.P("    }")
 	g.P("}")
 	g.P()
+}
+
+// fieldInit returns the initializer that stores a parameter in a field. It uses
+// the shorthand form when the names match, which Clippy requires.
+func fieldInit(field, param string) string {
+	if field == param {
+		return field
+	}
+	return field + ": " + param
 }
