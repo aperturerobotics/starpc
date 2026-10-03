@@ -4,6 +4,7 @@ package main
 import (
 	"io"
 	"os"
+	"strings"
 
 	"github.com/aperturerobotics/protobuf-go-lite/types/descriptorpb"
 	pluginpb "github.com/aperturerobotics/protobuf-go-lite/types/pluginpb"
@@ -12,7 +13,8 @@ import (
 // main reports a failed plugin request and exits without a partial response.
 func main() {
 	if err := run(); err != nil {
-		os.Stderr.WriteString(err.Error() + "\n")
+		// A failed diagnostic write cannot change the unsuccessful process outcome.
+		_, _ = os.Stderr.WriteString(err.Error() + "\n")
 		os.Exit(1)
 	}
 }
@@ -31,8 +33,18 @@ func run() error {
 		return err
 	}
 
+	// Name message types as the prost plugin does in the same request.
+	opts, err := parseParams(req.GetParameter())
+	if err != nil {
+		return err
+	}
+	types, err := newTypeResolver(opts)
+	if err != nil {
+		return err
+	}
+
 	// Build file descriptor map.
-	fileMap := make(map[string]*descriptorpb.FileDescriptorProto)
+	fileMap := make(map[string]*descriptorpb.FileDescriptorProto, len(req.ProtoFile))
 	for _, f := range req.ProtoFile {
 		fileMap[f.GetName()] = f
 	}
@@ -48,7 +60,7 @@ func run() error {
 		if file == nil || len(file.Service) == 0 {
 			continue
 		}
-		generateFiles(resp, file)
+		generateFiles(resp, file, types)
 	}
 
 	// Write response to stdout.
@@ -61,13 +73,10 @@ func run() error {
 }
 
 // generateFiles appends bindings for the services declared in one schema.
-func generateFiles(resp *pluginpb.CodeGeneratorResponse, file *descriptorpb.FileDescriptorProto) {
+func generateFiles(resp *pluginpb.CodeGeneratorResponse, file *descriptorpb.FileDescriptorProto, types *typeResolver) {
 	// Resolve the output name from the schema's import path.
-	g := &generator{file: file}
-	name := file.GetName()
-	if len(name) > 6 && name[len(name)-6:] == ".proto" {
-		name = name[:len(name)-6]
-	}
+	g := &generator{file: file, types: types}
+	name := strings.TrimSuffix(file.GetName(), ".proto")
 
 	// Generate Rust file.
 	rsName := name + "_srpc.pb.rs"
