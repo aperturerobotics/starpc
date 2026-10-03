@@ -3,8 +3,18 @@ import type { Sink, Source } from 'it-stream-types'
 import { pushable, type Pushable } from 'it-pushable'
 import { CompleteMessage } from '@aptre/protobuf-es-lite'
 
-import { Packet, type CallData, type CallStart } from './rpcproto.pb.js'
-import { ERR_RPC_ABORT, RemoteRPCError } from './errors.js'
+import {
+  ErrorCode,
+  Packet,
+  type CallData,
+  type CallStart,
+} from './rpcproto.pb.js'
+import {
+  ERR_RPC_ABORT,
+  RemoteRPCError,
+  TransportError,
+  isClosedBeforeCompletionError,
+} from './errors.js'
 
 const maxBufferedOutgoingPackets = 1
 
@@ -82,12 +92,15 @@ export class CommonRPC {
     complete?: boolean,
     error?: string,
     writeOptions?: WritePacketOptions,
+    errorCode = ErrorCode.UNKNOWN,
   ) {
+    // Encode the diagnostic and transport classification in the same packet.
     const callData: CompleteMessage<CallData> = {
       data: data || new Uint8Array(0),
       dataIsZero: !!data && data.length === 0,
       complete: complete || false,
       error: error || '',
+      errorCode,
     }
     await this.writePacket(
       {
@@ -216,9 +229,14 @@ export class CommonRPC {
     }
 
     this.pushRpcData(packet.data, packet.dataIsZero)
-    const remoteError = packet.error
-      ? new RemoteRPCError(this.service, this.method, packet.error)
-      : undefined
+    // Decode transport identity independently of the remote diagnostic.
+    const code = packet.errorCode ?? ErrorCode.UNKNOWN
+    const remoteError =
+      code === ErrorCode.RESET || code === ErrorCode.CLOSED_BEFORE_COMPLETION
+        ? new TransportError(code, packet.error ?? '')
+        : packet.error
+          ? new RemoteRPCError(this.service, this.method, packet.error)
+          : undefined
     if (remoteError) {
       this.remoteError ??= remoteError
       this.invocationController.abort()
@@ -246,10 +264,22 @@ export class CommonRPC {
     this.invocationController.abort()
     // note: this does nothing if _source is already ended.
     if (err && err.message) {
-      await this.writeCallDataPacket(undefined, true, err.message, {
-        allowClosed: true,
-        waitForDrain: false,
-      })
+      const code =
+        err instanceof TransportError
+          ? err.code
+          : isClosedBeforeCompletionError(err)
+            ? ErrorCode.CLOSED_BEFORE_COMPLETION
+            : ErrorCode.UNKNOWN
+      await this.writeCallDataPacket(
+        undefined,
+        true,
+        err.message,
+        {
+          allowClosed: true,
+          waitForDrain: false,
+        },
+        code,
+      )
     }
     this.writeDrainAbort.abort()
     this._source.end()

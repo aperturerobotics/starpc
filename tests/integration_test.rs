@@ -123,7 +123,10 @@ impl EchoServer {
 }
 
 /// Test infrastructure: creates connected client and server
-async fn setup_e2e() -> (starpc::SrpcClient<SingleInMemoryOpener>, tokio::task::JoinHandle<()>) {
+async fn setup_e2e() -> (
+    starpc::SrpcClient<SingleInMemoryOpener>,
+    tokio::task::JoinHandle<()>,
+) {
     let (opener, server_stream) = create_test_pair();
 
     // Set up the server
@@ -364,6 +367,7 @@ async fn test_codec_wire_format() {
             data_is_zero: false,
             complete: true,
             error: String::new(),
+            error_code: 0,
         })),
     };
 
@@ -384,6 +388,7 @@ async fn test_codec_wire_format() {
             data_is_zero: true,
             complete: false,
             error: String::new(),
+            error_code: 0,
         })),
     };
 
@@ -431,6 +436,7 @@ async fn test_packet_validation() {
             data_is_zero: false,
             complete: false,
             error: String::new(),
+            error_code: 0,
         })),
     };
     assert!(valid_data.validate().is_ok());
@@ -442,6 +448,7 @@ async fn test_packet_validation() {
             data_is_zero: false,
             complete: false,
             error: String::new(),
+            error_code: 0,
         })),
     };
     assert!(invalid_data.validate().is_err());

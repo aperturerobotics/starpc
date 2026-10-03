@@ -23,6 +23,7 @@ enum class Error {
 	NilWriter,
 	Canceled, /* context.Canceled equivalent */
 	EOF_,	  /* io.EOF equivalent; named EOF_ to avoid the macro */
+	Reset,	  /* the forwarded transport was reset */
 	ClosedBeforeCompletion, /* the transport ended without a verdict */
 	ResourceExhausted, /* the receive queue or thread capacity was hit */
 	RemoteError, /* RemoteErrorMessage retains the peer's diagnostic */
@@ -56,6 +57,8 @@ inline const char *ErrorString(Error err)
 		return "canceled";
 	case Error::EOF_:
 		return "EOF";
+	case Error::Reset:
+		return "stream reset";
 	case Error::ClosedBeforeCompletion:
 		return "stream closed before the remote reported completion";
 	case Error::ResourceExhausted:

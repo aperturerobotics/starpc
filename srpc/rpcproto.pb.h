@@ -30,6 +30,7 @@
 #include "google/protobuf/message_lite.h"
 #include "google/protobuf/repeated_field.h"  // IWYU pragma: export
 #include "google/protobuf/extension_set.h"  // IWYU pragma: export
+#include "google/protobuf/generated_enum_reflection.h"
 #include "google/protobuf/unknown_field_set.h"
 // @@protoc_insertion_point(includes)
 
@@ -55,6 +56,8 @@ extern "C" {
 extern const ::google::protobuf::internal::DescriptorTable descriptor_table_github_2ecom_2faperturerobotics_2fstarpc_2fsrpc_2frpcproto_2eproto;
 }  // extern "C"
 namespace srpc {
+enum ErrorCode : int;
+extern const uint32_t ErrorCode_internal_data_[];
 class CallData;
 struct CallDataDefaultTypeInternal;
 extern CallDataDefaultTypeInternal _CallData_default_instance_;
@@ -70,10 +73,50 @@ extern const ::google::protobuf::internal::ClassDataFull Packet_class_data_;
 }  // namespace srpc
 namespace google {
 namespace protobuf {
+template <>
+internal::EnumTraitsT<::srpc::ErrorCode_internal_data_>
+    internal::EnumTraitsImpl::value<::srpc::ErrorCode>;
 }  // namespace protobuf
 }  // namespace google
 
 namespace srpc {
+enum ErrorCode : int {
+  ERROR_CODE_UNKNOWN = 0,
+  ERROR_CODE_RESET = 1,
+  ERROR_CODE_CLOSED_BEFORE_COMPLETION = 2,
+  ErrorCode_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::min(),
+  ErrorCode_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::max(),
+};
+
+extern const uint32_t ErrorCode_internal_data_[];
+inline constexpr ErrorCode ErrorCode_MIN =
+    static_cast<ErrorCode>(0);
+inline constexpr ErrorCode ErrorCode_MAX =
+    static_cast<ErrorCode>(2);
+inline bool ErrorCode_IsValid(int value) {
+  return 0 <= value && value <= 2;
+}
+inline constexpr int ErrorCode_ARRAYSIZE = 2 + 1;
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL ErrorCode_descriptor();
+template <typename T>
+const ::std::string& ErrorCode_Name(T value) {
+  static_assert(::std::is_same<T, ErrorCode>::value ||
+                    ::std::is_integral<T>::value,
+                "Incorrect type passed to ErrorCode_Name().");
+  return ErrorCode_Name(static_cast<ErrorCode>(value));
+}
+template <>
+inline const ::std::string& ErrorCode_Name(ErrorCode value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<ErrorCode_descriptor, 0, 2>(
+      static_cast<int>(value));
+}
+inline bool ErrorCode_Parse(
+    ::absl::string_view name, ErrorCode* PROTOBUF_NONNULL value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ErrorCode>(ErrorCode_descriptor(), name,
+                                           value);
+}
 
 // ===================================================================
 
@@ -467,6 +510,7 @@ class CallData final : public ::google::protobuf::Message
     kErrorFieldNumber = 4,
     kDataIsZeroFieldNumber = 2,
     kCompleteFieldNumber = 3,
+    kErrorCodeFieldNumber = 5,
   };
   // bytes data = 1;
   void clear_data() ;
@@ -518,11 +562,21 @@ class CallData final : public ::google::protobuf::Message
   void _internal_set_complete(bool value);
 
   public:
+  // .srpc.ErrorCode error_code = 5;
+  void clear_error_code() ;
+  ::srpc::ErrorCode error_code() const;
+  void set_error_code(::srpc::ErrorCode value);
+
+  private:
+  ::srpc::ErrorCode _internal_error_code() const;
+  void _internal_set_error_code(::srpc::ErrorCode value);
+
+  public:
   // @@protoc_insertion_point(class_scope:srpc.CallData)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<2, 4,
+  static const ::google::protobuf::internal::TcParseTable<3, 5,
                                    0, 27,
                                    2>
       _table_;
@@ -548,6 +602,7 @@ class CallData final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr error_;
     bool data_is_zero_;
     bool complete_;
+    int error_code_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -1436,6 +1491,31 @@ inline void CallData::set_allocated_error(::std::string* PROTOBUF_NULLABLE value
   // @@protoc_insertion_point(field_set_allocated:srpc.CallData.error)
 }
 
+// .srpc.ErrorCode error_code = 5;
+inline void CallData::clear_error_code() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_code_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline ::srpc::ErrorCode CallData::error_code() const {
+  // @@protoc_insertion_point(field_get:srpc.CallData.error_code)
+  return _internal_error_code();
+}
+inline void CallData::set_error_code(::srpc::ErrorCode value) {
+  _internal_set_error_code(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  // @@protoc_insertion_point(field_set:srpc.CallData.error_code)
+}
+inline ::srpc::ErrorCode CallData::_internal_error_code() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::srpc::ErrorCode>(_impl_.error_code_);
+}
+inline void CallData::_internal_set_error_code(::srpc::ErrorCode value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.error_code_ = value;
+}
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif  // __GNUC__
@@ -1443,6 +1523,19 @@ inline void CallData::set_allocated_error(::std::string* PROTOBUF_NULLABLE value
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace srpc
 
+
+namespace google {
+namespace protobuf {
+
+template <>
+struct is_proto_enum<::srpc::ErrorCode> : std::true_type {};
+template <>
+inline const EnumDescriptor* PROTOBUF_NONNULL GetEnumDescriptor<::srpc::ErrorCode>() {
+  return ::srpc::ErrorCode_descriptor();
+}
+
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 

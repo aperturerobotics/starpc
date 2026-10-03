@@ -11,7 +11,7 @@ mod gen;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use starpc::{Error, Mux, Result, Server, Stream, StreamExt};
+use starpc::{rpcstream, Error, Mux, Result, Server, Stream, StreamExt};
 use tokio::net::{TcpListener, TcpStream};
 
 use gen::{EchoMsg, EchoerClient, EchoerClientImpl, EchoerHandler, EchoerServer};
@@ -86,12 +86,8 @@ impl EchoerServer for EchoServerImpl {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(
-        &self,
-        _context: &starpc::Context,
-        _request: gen::Empty,
-    ) -> Result<gen::Empty> {
-        Ok(gen::Empty {})
+    async fn do_nothing(&self, _context: &starpc::Context, _request: ()) -> Result<()> {
+        Ok(())
     }
 }
 

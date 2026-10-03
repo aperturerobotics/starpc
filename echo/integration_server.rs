@@ -6,10 +6,10 @@ mod gen;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use starpc::{Error, Mux, Result, Server, Stream, StreamExt};
+use starpc::{rpcstream, Error, Mux, Result, Server, Stream, StreamExt};
 use tokio::net::TcpListener;
 
-use gen::{EchoMsg, EchoerHandler, EchoerServer, Empty};
+use gen::{EchoMsg, EchoerHandler, EchoerServer};
 
 /// Implements each echo call shape through the supplied transport stream.
 struct EchoServerImpl;
@@ -57,8 +57,8 @@ impl EchoerServer for EchoServerImpl {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(&self, _context: &starpc::Context, _request: Empty) -> Result<Empty> {
-        Ok(Empty {})
+    async fn do_nothing(&self, _context: &starpc::Context, _request: ()) -> Result<()> {
+        Ok(())
     }
 }
 

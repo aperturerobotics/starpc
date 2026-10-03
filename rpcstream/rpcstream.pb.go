@@ -17,7 +17,6 @@ import (
 type RpcStreamPacket struct {
 	unknownFields []byte
 	// Types that are assignable to Body:
-	//
 	//	*RpcStreamPacket_Init
 	//	*RpcStreamPacket_Ack
 	//	*RpcStreamPacket_Data

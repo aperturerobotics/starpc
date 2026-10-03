@@ -14,7 +14,9 @@ use futures::StreamExt as _;
 use prost::Message;
 use starpc::client::OpenStream;
 use starpc::testing::{create_pipe_default, create_test_pair, SingleInMemoryOpener};
-use starpc::{Client, Error, Mux, PacketCodec, Result, Server, SrpcClient, Stream, StreamExt};
+use starpc::{
+    rpcstream, Client, Error, Mux, PacketCodec, Result, Server, SrpcClient, Stream, StreamExt,
+};
 use tokio::task::JoinHandle;
 use tokio_util::codec::FramedRead;
 
@@ -48,11 +50,7 @@ impl EchoerServer for OnceEchoServer {
         Err(Error::Unimplemented)
     }
 
-    async fn do_nothing(
-        &self,
-        _context: &starpc::Context,
-        request: gen::Empty,
-    ) -> Result<gen::Empty> {
+    async fn do_nothing(&self, _context: &starpc::Context, request: ()) -> Result<()> {
         Ok(request)
     }
 }

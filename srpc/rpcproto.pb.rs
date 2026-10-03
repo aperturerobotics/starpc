@@ -58,5 +58,42 @@ pub struct CallData {
     /// If set, implies complete=true.
     #[prost(string, tag="4")]
     pub error: ::prost::alloc::string::String,
+    /// ErrorCode preserves transport failures through RPC forwarding.
+    /// A nonzero code implies complete=true; Error retains the diagnostic text.
+    #[prost(enumeration="ErrorCode", tag="5")]
+    pub error_code: i32,
+}
+/// ErrorCode classifies failures that callers must distinguish from handler errors.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ErrorCode {
+    /// ERROR_CODE_UNKNOWN leaves Error as an ordinary handler diagnostic.
+    Unknown = 0,
+    /// ERROR_CODE_RESET reports that the forwarded transport was reset.
+    Reset = 1,
+    /// ERROR_CODE_CLOSED_BEFORE_COMPLETION reports a transport closed without a verdict.
+    ClosedBeforeCompletion = 2,
+}
+impl ErrorCode {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unknown => "ERROR_CODE_UNKNOWN",
+            Self::Reset => "ERROR_CODE_RESET",
+            Self::ClosedBeforeCompletion => "ERROR_CODE_CLOSED_BEFORE_COMPLETION",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "ERROR_CODE_UNKNOWN" => Some(Self::Unknown),
+            "ERROR_CODE_RESET" => Some(Self::Reset),
+            "ERROR_CODE_CLOSED_BEFORE_COMPLETION" => Some(Self::ClosedBeforeCompletion),
+            _ => None,
+        }
+    }
 }
 // @@protoc_insertion_point(module)

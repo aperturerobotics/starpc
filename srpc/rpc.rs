@@ -14,7 +14,7 @@ use tokio::sync::{mpsc, Notify};
 
 use crate::error::{Error, Result};
 use crate::packet::{new_call_cancel, new_call_data_full, new_call_start, Validate};
-use crate::proto::{packet::Body, CallData, CallStart, Packet};
+use crate::proto::{packet::Body, CallData, CallStart, ErrorCode, Packet};
 use crate::stream::{Context, Stream};
 use crate::transport::decode_optional_data;
 
@@ -80,6 +80,9 @@ enum RpcEnd {
 
     /// The transport closed without a remote completion or error.
     ClosedBeforeCompletion,
+
+    /// The forwarded transport was reset.
+    Reset,
 }
 
 impl RpcEnd {
@@ -89,6 +92,7 @@ impl RpcEnd {
             RpcEnd::Complete => Error::StreamClosed,
             RpcEnd::Remote(err) => Error::Remote(err.clone()),
             RpcEnd::ClosedBeforeCompletion => Error::ClosedBeforeCompletion,
+            RpcEnd::Reset => Error::Reset,
         }
     }
 }
@@ -310,8 +314,14 @@ impl CommonRpc {
         }
 
         // Publish the terminal verdict after its final payload and wake blocked readers.
-        if !call_data.error.is_empty() {
-            state.end = Some(RpcEnd::Remote(call_data.error));
+        if call_data.error_code != ErrorCode::Unknown as i32 || !call_data.error.is_empty() {
+            state.end = Some(
+                match ErrorCode::try_from(call_data.error_code).unwrap_or(ErrorCode::Unknown) {
+                    ErrorCode::Reset => RpcEnd::Reset,
+                    ErrorCode::ClosedBeforeCompletion => RpcEnd::ClosedBeforeCompletion,
+                    ErrorCode::Unknown => RpcEnd::Remote(call_data.error),
+                },
+            );
         } else if call_data.complete {
             state.end = Some(RpcEnd::Complete);
         }
@@ -582,6 +592,24 @@ impl ServerRpc {
         self.common.handle_stream_close(err).await
     }
 
+    /// Sends a typed transport failure without converting it to a handler verdict.
+    pub async fn send_transport_error(&self, err: &Error) -> Result<()> {
+        // Preserve the transport classification in the generated packet.
+        let code = match err {
+            Error::Reset => ErrorCode::Reset,
+            Error::ClosedBeforeCompletion => ErrorCode::ClosedBeforeCompletion,
+            _ => ErrorCode::Unknown,
+        };
+        let mut packet = new_call_data_full(None, true, Some(err.to_string()));
+        if let Some(Body::CallData(data)) = packet.body.as_mut() {
+            data.error_code = code as i32;
+        }
+
+        // Publish the failure before closing this RPC's writer.
+        self.common.local_completed.store(true, Ordering::SeqCst);
+        self.common.writer.write_packet(packet).await
+    }
+
     /// Sends an error response and closes.
     pub async fn send_error(&self, error: String) -> Result<()> {
         self.common.write_call_data(None, true, Some(error)).await
@@ -797,6 +825,7 @@ mod tests {
             data_is_zero: false,
             complete: false,
             error: String::new(),
+            error_code: 0,
         };
         rpc.handle_call_data(call_data).await.unwrap();
 
@@ -818,6 +847,7 @@ mod tests {
             data_is_zero: false,
             complete: true,
             error: String::new(),
+            error_code: 0,
         };
         rpc.handle_call_data(call_data).await.unwrap();
 
@@ -839,6 +869,7 @@ mod tests {
             data_is_zero: false,
             complete: true,
             error: "test error".into(),
+            error_code: 0,
         };
         rpc.handle_call_data(call_data).await.unwrap();
 
@@ -846,6 +877,35 @@ mod tests {
         match result {
             Err(Error::Remote(msg)) => assert_eq!(msg, "test error"),
             _ => panic!("expected Remote error"),
+        }
+    }
+
+    /// A forwarded transport verdict retains its classification.
+    #[tokio::test]
+    async fn forwarded_transport_error_is_typed() {
+        for code in [ErrorCode::Reset, ErrorCode::ClosedBeforeCompletion] {
+            let rpc = CommonRpc::new(
+                Context::new(),
+                "svc".into(),
+                "method".into(),
+                Arc::new(MockWriter::new()),
+            );
+            rpc.handle_call_data(CallData {
+                complete: true,
+                error: "original diagnostic".into(),
+                error_code: code as i32,
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+            let err = rpc.read_one().await.unwrap_err();
+            match code {
+                ErrorCode::Reset => assert!(matches!(err, Error::Reset)),
+                ErrorCode::ClosedBeforeCompletion => {
+                    assert!(matches!(err, Error::ClosedBeforeCompletion))
+                }
+                ErrorCode::Unknown => unreachable!(),
+            }
         }
     }
 

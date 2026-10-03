@@ -48,6 +48,10 @@ pub enum Error {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// The forwarded transport was reset.
+    #[error("stream reset")]
+    Reset,
+
     /// The stream was closed.
     #[error("stream closed")]
     StreamClosed,

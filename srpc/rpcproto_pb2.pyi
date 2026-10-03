@@ -1,9 +1,19 @@
+from google.protobuf.internal import enum_type_wrapper as _enum_type_wrapper
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
 from collections.abc import Mapping as _Mapping
 from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
+
+class ErrorCode(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
+    __slots__ = ()
+    ERROR_CODE_UNKNOWN: _ClassVar[ErrorCode]
+    ERROR_CODE_RESET: _ClassVar[ErrorCode]
+    ERROR_CODE_CLOSED_BEFORE_COMPLETION: _ClassVar[ErrorCode]
+ERROR_CODE_UNKNOWN: ErrorCode
+ERROR_CODE_RESET: ErrorCode
+ERROR_CODE_CLOSED_BEFORE_COMPLETION: ErrorCode
 
 class Packet(_message.Message):
     __slots__ = ("call_start", "call_data", "call_cancel")
@@ -28,13 +38,15 @@ class CallStart(_message.Message):
     def __init__(self, rpc_service: _Optional[str] = ..., rpc_method: _Optional[str] = ..., data: _Optional[bytes] = ..., data_is_zero: _Optional[bool] = ...) -> None: ...
 
 class CallData(_message.Message):
-    __slots__ = ("data", "data_is_zero", "complete", "error")
+    __slots__ = ("data", "data_is_zero", "complete", "error", "error_code")
     DATA_FIELD_NUMBER: _ClassVar[int]
     DATA_IS_ZERO_FIELD_NUMBER: _ClassVar[int]
     COMPLETE_FIELD_NUMBER: _ClassVar[int]
     ERROR_FIELD_NUMBER: _ClassVar[int]
+    ERROR_CODE_FIELD_NUMBER: _ClassVar[int]
     data: bytes
     data_is_zero: bool
     complete: bool
     error: str
-    def __init__(self, data: _Optional[bytes] = ..., data_is_zero: _Optional[bool] = ..., complete: _Optional[bool] = ..., error: _Optional[str] = ...) -> None: ...
+    error_code: ErrorCode
+    def __init__(self, data: _Optional[bytes] = ..., data_is_zero: _Optional[bool] = ..., complete: _Optional[bool] = ..., error: _Optional[str] = ..., error_code: _Optional[_Union[ErrorCode, str]] = ...) -> None: ...

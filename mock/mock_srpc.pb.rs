@@ -30,9 +30,7 @@ impl<C: starpc::Client> MockClientImpl<C> {
 #[starpc::async_trait]
 impl<C: starpc::Client + 'static> MockClient for MockClientImpl<C> {
     async fn mock_request(&self, request: &MockMsg) -> starpc::Result<MockMsg> {
-        self.client
-            .exec_call("e2e.mock.Mock", "MockRequest", request)
-            .await
+        self.client.exec_call("e2e.mock.Mock", "MockRequest", request).await
     }
 }
 
@@ -40,10 +38,12 @@ impl<C: starpc::Client + 'static> MockClient for MockClientImpl<C> {
 #[starpc::async_trait]
 pub trait MockServer: Send + Sync {
     /// MockRequest.
-    async fn mock_request(&self, request: MockMsg) -> starpc::Result<MockMsg>;
+    async fn mock_request(&self, context: &starpc::Context, request: MockMsg) -> starpc::Result<MockMsg>;
 }
 
-const MOCK_METHOD_IDS: &[&str] = &["MockRequest"];
+const MOCK_METHOD_IDS: &[&str] = &[
+    "MockRequest",
+];
 
 /// Handler for Mock.
 pub struct MockHandler<S: MockServer> {
@@ -53,9 +53,7 @@ pub struct MockHandler<S: MockServer> {
 impl<S: MockServer + 'static> MockHandler<S> {
     /// Creates a new handler wrapping the server implementation.
     pub fn new(server: S) -> Self {
-        Self {
-            server: std::sync::Arc::new(server),
-        }
+        Self { server: std::sync::Arc::new(server) }
     }
 
     /// Creates a new handler with a shared server.
@@ -78,7 +76,7 @@ impl<S: MockServer + 'static> starpc::Invoker for MockHandler<S> {
                     Ok(r) => r,
                     Err(e) => return (true, Err(e)),
                 };
-                match <S as MockServer>::mock_request(self.server.as_ref(), request).await {
+                match <S as MockServer>::mock_request(self.server.as_ref(), stream.context(), request).await {
                     Ok(response) => {
                         if let Err(e) = stream.msg_send(&response).await {
                             return (true, Err(e));

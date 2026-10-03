@@ -259,7 +259,7 @@ pub(crate) async fn serve_rpc<I: Invoker + ?Sized>(invoker: &I, rpc: &Arc<Server
     let _ = if !found {
         rpc.send_error("method not implemented".to_string()).await
     } else if let Err(err) = result {
-        rpc.send_error(err.to_string()).await
+        rpc.send_transport_error(&err).await
     } else {
         rpc.close_send().await
     };

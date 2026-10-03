@@ -34,6 +34,10 @@ class ClosedBeforeCompletionError(CallError):
     """The transport closed before a remote terminal packet arrived."""
 
 
+class StreamResetError(CallError):
+    """A forwarded transport was reset before its call completed."""
+
+
 class CallProtocolError(CallError):
     """The peer sent malformed or out-of-sequence call data."""
 
@@ -221,6 +225,7 @@ class Call:
             and not data.data_is_zero
             and not data.complete
             and not data.error
+            and not data.error_code
         ):
             raise CallProtocolError("empty nonterminal call data")
         async with self._condition:
@@ -230,6 +235,7 @@ class Call:
                     and not data.data
                     and not data.data_is_zero
                     and not data.error
+                    and not data.error_code
                 ):
                     return
                 raise CallProtocolError("packet after completion")
@@ -239,8 +245,16 @@ class Call:
                 if self._closed:
                     return
                 self._messages.append(bytes(data.data))
-            if data.error:
-                self._remote_error = RemoteCallError(data.error)
+            if data.error or data.error_code:
+                # Restore transport identity from the schema, retaining its diagnostic.
+                if data.error_code == rpcproto_pb2.ERROR_CODE_RESET:
+                    self._remote_error = StreamResetError(data.error)
+                elif (
+                    data.error_code == rpcproto_pb2.ERROR_CODE_CLOSED_BEFORE_COMPLETION
+                ):
+                    self._remote_error = ClosedBeforeCompletionError(data.error)
+                else:
+                    self._remote_error = RemoteCallError(data.error)
                 self._remote_terminal = True
                 self._condition.notify_all()
             elif data.complete:
@@ -258,7 +272,9 @@ class Call:
                 )
             )
 
-    async def finish(self, data: bytes | None = None, error: str | None = None) -> None:
+    async def finish(
+        self, data: bytes | None = None, error: str | Exception | None = None
+    ) -> None:
         """Completes the local side of the call.
 
         Without data or an error, finish is the half-close. Once the request is
@@ -272,12 +288,19 @@ class Call:
                     return
                 raise CallCompletedError
             self._local_terminal = True
+            # Keep forwarded transport failures distinct from handler diagnostics.
+            code = rpcproto_pb2.ERROR_CODE_UNKNOWN
+            if isinstance(error, StreamResetError):
+                code = rpcproto_pb2.ERROR_CODE_RESET
+            elif isinstance(error, ClosedBeforeCompletionError):
+                code = rpcproto_pb2.ERROR_CODE_CLOSED_BEFORE_COMPLETION
             packet = rpcproto_pb2.Packet(
                 call_data=rpcproto_pb2.CallData(
                     data=data or b"",
                     data_is_zero=data is not None and len(data) == 0,
                     complete=True,
-                    error=error or "",
+                    error=str(error) if error is not None else "",
+                    error_code=code,
                 )
             )
             try:
@@ -386,4 +409,5 @@ __all__ = [
     "CallProtocolError",
     "ClosedBeforeCompletionError",
     "RemoteCallError",
+    "StreamResetError",
 ]

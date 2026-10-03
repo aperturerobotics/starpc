@@ -6,6 +6,7 @@ export {
   ERR_STREAM_IDLE,
   isStreamIdleError,
   castToError,
+  TransportError,
 } from './errors.js'
 export { Client } from './client.js'
 export { Server } from './server.js'
@@ -33,7 +34,7 @@ export { StaticHandler, createHandler } from './handler.js'
 export type { Handler, InvokeFn, MethodMap } from './handler.js'
 export { createInvokeFn } from './invoker.js'
 export type { MethodProto } from './invoker.js'
-export { Packet, CallStart, CallData } from './rpcproto.pb.js'
+export { Packet, CallStart, CallData, ErrorCode } from './rpcproto.pb.js'
 export { StaticMux, MultiMux, createMux, createMultiMux } from './mux.js'
 export type { Mux, LookupMethod } from './mux.js'
 export { ChannelStream, newBroadcastChannelStream } from './channel.js'

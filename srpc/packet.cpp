@@ -42,7 +42,7 @@ Error ValidateCallStart(const srpc::CallStart &pkt)
 Error ValidateCallData(const srpc::CallData &pkt)
 {
 	if (pkt.data().empty() && !pkt.complete() && pkt.error().empty() &&
-	    !pkt.data_is_zero())
+	    !pkt.data_is_zero() && pkt.error_code() == srpc::ERROR_CODE_UNKNOWN)
 		return Error::EmptyPacket;
 	return Error::OK;
 }
@@ -72,6 +72,19 @@ std::unique_ptr<srpc::Packet> NewCallDataPacket(const std::string &data,
 	call_data->set_complete(err != Error::OK || complete);
 	if (err != Error::OK)
 		call_data->set_error(ErrorString(err));
+
+	/* Preserve typed transport failures through forwarding servers. */
+	switch (err) {
+	case Error::Reset:
+		call_data->set_error_code(srpc::ERROR_CODE_RESET);
+		break;
+	case Error::ClosedBeforeCompletion:
+		call_data->set_error_code(
+			srpc::ERROR_CODE_CLOSED_BEFORE_COMPLETION);
+		break;
+	default:
+		break;
+	}
 	return pkt;
 }
 

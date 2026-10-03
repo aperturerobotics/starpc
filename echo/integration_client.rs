@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use starpc::client::{OpenStream, PacketReceiver, SrpcClient};
 use starpc::rpc::PacketWriter;
 use starpc::transport::create_packet_channel;
-use starpc::{Error, Result};
+use starpc::{rpcstream, Error, Result};
 // Use Error::Remote for test assertion errors since there's no Error::Remote.
 use tokio::net::TcpStream;
 

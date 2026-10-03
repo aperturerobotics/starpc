@@ -1,5 +1,7 @@
 package srpc
 
+import "github.com/pkg/errors"
+
 // CloseHandler handles the stream closing with an optional error.
 type CloseHandler = func(closeErr error)
 
@@ -51,6 +53,7 @@ func NewCallStartPacket(service, method string, data []byte, dataIsZero bool) *P
 
 // Validate performs cursory validation of the packet.
 func (p *CallStart) Validate() error {
+	// Require both identifiers before a server dispatches the call.
 	method := p.GetRpcMethod()
 	if len(method) == 0 {
 		return ErrEmptyMethodID
@@ -64,16 +67,27 @@ func (p *CallStart) Validate() error {
 
 // NewCallDataPacket constructs a new CallData packet.
 func NewCallDataPacket(data []byte, dataIsZero bool, complete bool, err error) *Packet {
+	// Encode transport identity independently of its diagnostic text.
 	var errStr string
+	var code ErrorCode
 	if err != nil {
 		errStr = err.Error()
+		switch {
+		case errors.Is(err, ErrClosedBeforeCompletion):
+			code = ErrorCode_ERROR_CODE_CLOSED_BEFORE_COMPLETION
+		case errors.Is(err, ErrReset):
+			code = ErrorCode_ERROR_CODE_RESET
+		}
 	}
+
+	// Build the schema-defined terminal packet.
 	return &Packet{Body: &Packet_CallData{
 		CallData: &CallData{
 			Data:       data,
 			DataIsZero: dataIsZero,
 			Complete:   err != nil || complete,
 			Error:      errStr,
+			ErrorCode:  code,
 		},
 	}}
 }
@@ -85,7 +99,7 @@ func NewCallCancelPacket() *Packet {
 
 // Validate performs cursory validation of the packet.
 func (p *CallData) Validate() error {
-	if len(p.GetData()) == 0 && !p.GetComplete() && len(p.GetError()) == 0 && !p.GetDataIsZero() {
+	if len(p.GetData()) == 0 && !p.GetComplete() && len(p.GetError()) == 0 && !p.GetDataIsZero() && p.GetErrorCode() == ErrorCode_ERROR_CODE_UNKNOWN {
 		return ErrEmptyPacket
 	}
 	return nil

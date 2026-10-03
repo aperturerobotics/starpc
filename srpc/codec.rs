@@ -154,6 +154,7 @@ mod tests {
                 data_is_zero: false,
                 complete: true,
                 error: String::new(),
+                error_code: 0,
             })),
         };
 
@@ -189,6 +190,7 @@ mod tests {
                 data_is_zero: false,
                 complete: false,
                 error: String::new(),
+                error_code: 0,
             })),
         };
 
@@ -222,6 +224,7 @@ mod tests {
                 data_is_zero: false,
                 complete: false,
                 error: String::new(),
+                error_code: 0,
             })),
         };
 

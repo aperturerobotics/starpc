@@ -101,7 +101,7 @@ func (r *ServerRPC) invokeRPC(serviceID, methodID string) {
 
 	// Cancellation has its own packet; a text error would lose its identity.
 	outPkt := NewCallDataPacket(nil, false, true, err)
-	if errors.Is(err, context.Canceled) {
+	if errors.Is(err, context.Canceled) && !errors.Is(err, ErrClosedBeforeCompletion) {
 		outPkt = NewCallCancelPacket()
 	}
 	r.beginLocalCompletion()

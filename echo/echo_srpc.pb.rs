@@ -49,9 +49,9 @@ pub trait EchoerRpcStreamStream: Send + Sync {
     /// Returns the context for this stream.
     fn context(&self) -> &starpc::Context;
     /// Sends a message on the stream.
-    async fn send(&self, msg: &RpcStreamPacket) -> starpc::Result<()>;
+    async fn send(&self, msg: &super::rpcstream::RpcStreamPacket) -> starpc::Result<()>;
     /// Receives a message from the stream.
-    async fn recv(&self) -> starpc::Result<RpcStreamPacket>;
+    async fn recv(&self) -> starpc::Result<super::rpcstream::RpcStreamPacket>;
     /// Closes the stream.
     async fn close(&self) -> starpc::Result<()>;
 }
@@ -62,10 +62,7 @@ pub trait EchoerClient: Send + Sync {
     /// Echo.
     async fn echo(&self, request: &EchoMsg) -> starpc::Result<EchoMsg>;
     /// EchoServerStream.
-    async fn echo_server_stream(
-        &self,
-        request: &EchoMsg,
-    ) -> starpc::Result<Box<dyn EchoerEchoServerStreamStream>>;
+    async fn echo_server_stream(&self, request: &EchoMsg) -> starpc::Result<Box<dyn EchoerEchoServerStreamStream>>;
     /// EchoClientStream.
     async fn echo_client_stream(&self) -> starpc::Result<Box<dyn EchoerEchoClientStreamStream>>;
     /// EchoBidiStream.
@@ -73,7 +70,7 @@ pub trait EchoerClient: Send + Sync {
     /// RpcStream.
     async fn rpc_stream(&self) -> starpc::Result<Box<dyn EchoerRpcStreamStream>>;
     /// DoNothing.
-    async fn do_nothing(&self, request: &Empty) -> starpc::Result<Empty>;
+    async fn do_nothing(&self, request: &()) -> starpc::Result<()>;
 }
 
 /// Client implementation for Echoer.
@@ -93,45 +90,28 @@ impl<C: starpc::Client + 'static> EchoerClient for EchoerClientImpl<C> {
     async fn echo(&self, request: &EchoMsg) -> starpc::Result<EchoMsg> {
         self.client.exec_call("echo.Echoer", "Echo", request).await
     }
-    async fn echo_server_stream(
-        &self,
-        request: &EchoMsg,
-    ) -> starpc::Result<Box<dyn EchoerEchoServerStreamStream>> {
+    async fn echo_server_stream(&self, request: &EchoMsg) -> starpc::Result<Box<dyn EchoerEchoServerStreamStream>> {
         use starpc::ProstMessage;
         let data = request.encode_to_vec();
-        let stream = self
-            .client
-            .new_stream("echo.Echoer", "EchoServerStream", Some(&data))
-            .await?;
+        let stream = self.client.new_stream("echo.Echoer", "EchoServerStream", Some(&data)).await?;
         // A failed half-close means the call ended; msg_recv reports its outcome.
         let _ = stream.close_send().await;
         Ok(Box::new(EchoerEchoServerStreamStreamImpl { stream }))
     }
     async fn echo_client_stream(&self) -> starpc::Result<Box<dyn EchoerEchoClientStreamStream>> {
-        let stream = self
-            .client
-            .new_stream("echo.Echoer", "EchoClientStream", None)
-            .await?;
+        let stream = self.client.new_stream("echo.Echoer", "EchoClientStream", None).await?;
         Ok(Box::new(EchoerEchoClientStreamStreamImpl { stream }))
     }
     async fn echo_bidi_stream(&self) -> starpc::Result<Box<dyn EchoerEchoBidiStreamStream>> {
-        let stream = self
-            .client
-            .new_stream("echo.Echoer", "EchoBidiStream", None)
-            .await?;
+        let stream = self.client.new_stream("echo.Echoer", "EchoBidiStream", None).await?;
         Ok(Box::new(EchoerEchoBidiStreamStreamImpl { stream }))
     }
     async fn rpc_stream(&self) -> starpc::Result<Box<dyn EchoerRpcStreamStream>> {
-        let stream = self
-            .client
-            .new_stream("echo.Echoer", "RpcStream", None)
-            .await?;
+        let stream = self.client.new_stream("echo.Echoer", "RpcStream", None).await?;
         Ok(Box::new(EchoerRpcStreamStreamImpl { stream }))
     }
-    async fn do_nothing(&self, request: &Empty) -> starpc::Result<Empty> {
-        self.client
-            .exec_call("echo.Echoer", "DoNothing", request)
-            .await
+    async fn do_nothing(&self, request: &()) -> starpc::Result<()> {
+        self.client.exec_call("echo.Echoer", "DoNothing", request).await
     }
 }
 
@@ -200,10 +180,10 @@ impl EchoerRpcStreamStream for EchoerRpcStreamStreamImpl {
     fn context(&self) -> &starpc::Context {
         self.stream.context()
     }
-    async fn send(&self, msg: &RpcStreamPacket) -> starpc::Result<()> {
+    async fn send(&self, msg: &super::rpcstream::RpcStreamPacket) -> starpc::Result<()> {
         self.stream.msg_send(msg).await
     }
-    async fn recv(&self) -> starpc::Result<RpcStreamPacket> {
+    async fn recv(&self) -> starpc::Result<super::rpcstream::RpcStreamPacket> {
         self.stream.msg_recv().await
     }
     async fn close(&self) -> starpc::Result<()> {
@@ -217,11 +197,7 @@ pub trait EchoerServer: Send + Sync {
     /// Echo.
     async fn echo(&self, context: &starpc::Context, request: EchoMsg) -> starpc::Result<EchoMsg>;
     /// EchoServerStream.
-    async fn echo_server_stream(
-        &self,
-        request: EchoMsg,
-        stream: Box<dyn starpc::Stream>,
-    ) -> starpc::Result<()>;
+    async fn echo_server_stream(&self, request: EchoMsg, stream: Box<dyn starpc::Stream>) -> starpc::Result<()>;
     /// EchoClientStream.
     async fn echo_client_stream(&self, stream: &dyn starpc::Stream) -> starpc::Result<EchoMsg>;
     /// EchoBidiStream.
@@ -229,7 +205,7 @@ pub trait EchoerServer: Send + Sync {
     /// RpcStream.
     async fn rpc_stream(&self, stream: Box<dyn starpc::Stream>) -> starpc::Result<()>;
     /// DoNothing.
-    async fn do_nothing(&self, context: &starpc::Context, request: Empty) -> starpc::Result<Empty>;
+    async fn do_nothing(&self, context: &starpc::Context, request: ()) -> starpc::Result<()>;
 }
 
 const ECHOER_METHOD_IDS: &[&str] = &[
@@ -249,9 +225,7 @@ pub struct EchoerHandler<S: EchoerServer> {
 impl<S: EchoerServer + 'static> EchoerHandler<S> {
     /// Creates a new handler wrapping the server implementation.
     pub fn new(server: S) -> Self {
-        Self {
-            server: std::sync::Arc::new(server),
-        }
+        Self { server: std::sync::Arc::new(server) }
     }
 
     /// Creates a new handler with a shared server.
@@ -289,16 +263,10 @@ impl<S: EchoerServer + 'static> starpc::Invoker for EchoerHandler<S> {
                     Ok(r) => r,
                     Err(e) => return (true, Err(e)),
                 };
-                (
-                    true,
-                    <S as EchoerServer>::echo_server_stream(self.server.as_ref(), request, stream)
-                        .await,
-                )
+                (true, <S as EchoerServer>::echo_server_stream(self.server.as_ref(), request, stream).await)
             }
             "EchoClientStream" => {
-                match <S as EchoerServer>::echo_client_stream(self.server.as_ref(), stream.as_ref())
-                    .await
-                {
+                match <S as EchoerServer>::echo_client_stream(self.server.as_ref(), stream.as_ref()).await {
                     Ok(response) => {
                         if let Err(e) = stream.msg_send(&response).await {
                             return (true, Err(e));
@@ -308,16 +276,14 @@ impl<S: EchoerServer + 'static> starpc::Invoker for EchoerHandler<S> {
                     Err(e) => (true, Err(e)),
                 }
             }
-            "EchoBidiStream" => (
-                true,
-                <S as EchoerServer>::echo_bidi_stream(self.server.as_ref(), stream).await,
-            ),
-            "RpcStream" => (
-                true,
-                <S as EchoerServer>::rpc_stream(self.server.as_ref(), stream).await,
-            ),
+            "EchoBidiStream" => {
+                (true, <S as EchoerServer>::echo_bidi_stream(self.server.as_ref(), stream).await)
+            }
+            "RpcStream" => {
+                (true, <S as EchoerServer>::rpc_stream(self.server.as_ref(), stream).await)
+            }
             "DoNothing" => {
-                let request: Empty = match stream.msg_recv().await {
+                let request: () = match stream.msg_recv().await {
                     Ok(r) => r,
                     Err(e) => return (true, Err(e)),
                 };

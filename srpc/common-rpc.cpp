@@ -152,8 +152,19 @@ Error CommonRPC::HandleCallData(const srpc::CallData &pkt)
 				queued_bytes += pkt.data().size();
 			}
 		}
-		if (!pkt.error().empty()) {
-			remote_error = Error::RemoteError;
+		if (!pkt.error().empty() ||
+		    pkt.error_code() != srpc::ERROR_CODE_UNKNOWN) {
+			switch (pkt.error_code()) {
+			case srpc::ERROR_CODE_RESET:
+				remote_error = Error::Reset;
+				break;
+			case srpc::ERROR_CODE_CLOSED_BEFORE_COMPLETION:
+				remote_error = Error::ClosedBeforeCompletion;
+				break;
+			default:
+				remote_error = Error::RemoteError;
+				break;
+			}
 			remote_error_message = pkt.error();
 		}
 		if (pkt.complete() || remote_error != Error::OK) {

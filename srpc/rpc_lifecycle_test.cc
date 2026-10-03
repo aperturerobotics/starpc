@@ -317,10 +317,34 @@ void ReceiveThreadJoinsOnDestruction()
 	Check(returned, "writer destruction must join its receive callback");
 }
 
+/* ForwardedTransportErrors preserves the wire classification and diagnostic. */
+void ForwardedTransportErrors()
+{
+	for (const auto code : {srpc::ERROR_CODE_RESET,
+				srpc::ERROR_CODE_CLOSED_BEFORE_COMPLETION}) {
+		starpc::CommonRPC call;
+		srpc::CallData packet;
+		packet.set_complete(true);
+		packet.set_error("original diagnostic");
+		packet.set_error_code(code);
+		Check(call.HandleCallData(packet) == Error::OK,
+		      "accept forwarded transport verdict");
+		std::string data;
+		const auto expected = code == srpc::ERROR_CODE_RESET
+					      ? Error::Reset
+					      : Error::ClosedBeforeCompletion;
+		Check(call.ReadOne(&data) == expected,
+		      "forwarded transport classification");
+		Check(call.RemoteErrorMessage() == "original diagnostic",
+		      "forwarded transport diagnostic");
+	}
+}
+
 } // namespace
 
 int main()
 {
+	ForwardedTransportErrors();
 	DestroyWaitingServer();
 	ReentrantTransport();
 	CancelBlockedWriter();

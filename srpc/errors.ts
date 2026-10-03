@@ -1,3 +1,5 @@
+import { ErrorCode } from './rpcproto.pb.js'
+
 // ERR_RPC_ABORT is returned if the RPC was aborted.
 export const ERR_RPC_ABORT = 'ERR_RPC_ABORT'
 
@@ -22,8 +24,23 @@ export function isClosedBeforeCompletionError(err: unknown): boolean {
   if (typeof err !== 'object') {
     return false
   }
+  if (err instanceof TransportError) {
+    return err.code === ErrorCode.CLOSED_BEFORE_COMPLETION
+  }
   const message = (err as Error).message
   return message === ERR_CLOSED_BEFORE_COMPLETION
+}
+
+/** TransportError preserves a transport failure received through RPC forwarding. */
+export class TransportError extends Error {
+  /** code is the schema-defined transport classification. */
+  public readonly code: ErrorCode
+
+  constructor(code: ErrorCode, message: string) {
+    super(message)
+    this.name = 'TransportError'
+    this.code = code
+  }
 }
 
 // ERR_STREAM_IDLE is returned if the stream idle timeout was exceeded.

@@ -2,12 +2,47 @@
 // @generated from file github.com/aperturerobotics/starpc/srpc/rpcproto.proto (package srpc, syntax proto3)
 /* eslint-disable */
 
+import { createEnumType } from '@aptre/protobuf-es-lite/enum'
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
 import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
 import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
 
 export const protobufPackage = 'srpc'
+
+/**
+ * ErrorCode classifies failures that callers must distinguish from handler errors.
+ *
+ * @generated from enum srpc.ErrorCode
+ */
+export enum ErrorCode {
+  /**
+   * ERROR_CODE_UNKNOWN leaves Error as an ordinary handler diagnostic.
+   *
+   * @generated from enum value: ERROR_CODE_UNKNOWN = 0;
+   */
+  UNKNOWN = 0,
+
+  /**
+   * ERROR_CODE_RESET reports that the forwarded transport was reset.
+   *
+   * @generated from enum value: ERROR_CODE_RESET = 1;
+   */
+  RESET = 1,
+
+  /**
+   * ERROR_CODE_CLOSED_BEFORE_COMPLETION reports a transport closed without a verdict.
+   *
+   * @generated from enum value: ERROR_CODE_CLOSED_BEFORE_COMPLETION = 2;
+   */
+  CLOSED_BEFORE_COMPLETION = 2,
+}
+
+export const ErrorCode_Enum = /* @__PURE__ */ createEnumType('srpc.ErrorCode', [
+  [0, 'ERROR_CODE_UNKNOWN'],
+  [1, 'ERROR_CODE_RESET'],
+  [2, 'ERROR_CODE_CLOSED_BEFORE_COMPLETION'],
+])
 
 /**
  * CallStart requests starting a new RPC call.
@@ -87,6 +122,13 @@ export interface CallData {
    * @generated from field: string error = 4;
    */
   error?: string
+  /**
+   * ErrorCode preserves transport failures through RPC forwarding.
+   * A nonzero code implies complete=true; Error retains the diagnostic text.
+   *
+   * @generated from field: srpc.ErrorCode error_code = 5;
+   */
+  errorCode?: ErrorCode
 }
 
 export const CallData: MessageType<CallData> =
@@ -97,6 +139,7 @@ export const CallData: MessageType<CallData> =
       { no: 2, name: 'data_is_zero', kind: 'scalar', T: ScalarType.BOOL },
       { no: 3, name: 'complete', kind: 'scalar', T: ScalarType.BOOL },
       { no: 4, name: 'error', kind: 'scalar', T: ScalarType.STRING },
+      { no: 5, name: 'error_code', kind: 'enum', T: ErrorCode_Enum },
     ] satisfies readonly PartialFieldInfo[],
     packedByDefault: true,
   })

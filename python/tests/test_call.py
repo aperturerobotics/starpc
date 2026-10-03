@@ -15,6 +15,7 @@ from starpc.call import (
     CallProtocolError,
     ClosedBeforeCompletionError,
     RemoteCallError,
+    StreamResetError,
 )
 from starpc.codec import encode_packet
 from starpc.stream import ByteStream, memory_stream_pair
@@ -234,6 +235,22 @@ class CallTest(unittest.IsolatedAsyncioTestCase):
             await receive
         await self.call.aclose()
         await self.call.aclose()
+
+    async def test_forwarded_transport_reset_retains_identity_and_diagnostic(
+        self,
+    ) -> None:
+        await self.assert_call_start()
+        await self.peer_send(
+            rpcproto_pb2.Packet(
+                call_data=rpcproto_pb2.CallData(
+                    complete=True,
+                    error="original diagnostic",
+                    error_code=rpcproto_pb2.ERROR_CODE_RESET,
+                )
+            )
+        )
+        with self.assertRaisesRegex(StreamResetError, "original diagnostic"):
+            await self.call.receive()
 
     async def test_malformed_and_late_packets_are_protocol_errors(self) -> None:
         await self.assert_call_start()

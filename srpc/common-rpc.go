@@ -194,6 +194,7 @@ func (c *commonRPC) HandleStreamClose(closeErr error) {
 
 // HandleCallCancel handles the call cancel packet.
 func (c *commonRPC) HandleCallCancel() error {
+	// Settle peer cancellation before releasing the transport outside the lock.
 	locked := c.bcast.Lock()
 	writer := c.handleStreamCloseLocked(&locked, context.Canceled)
 	locked.Unlock()
@@ -205,6 +206,7 @@ func (c *commonRPC) HandleCallCancel() error {
 
 // HandleCallData handles the call data packet.
 func (c *commonRPC) HandleCallData(pkt *CallData) error {
+	// Reject payloads after completion while permitting repeated completion.
 	var err error
 	locked := c.bcast.Lock()
 	if c.dataClosed {
@@ -217,29 +219,39 @@ func (c *commonRPC) HandleCallData(pkt *CallData) error {
 		return err
 	}
 
+	// Queue the final payload before publishing its terminal verdict.
 	if data := pkt.GetData(); len(data) != 0 || pkt.GetDataIsZero() {
 		c.dataQueue = append(c.dataQueue, data)
 	}
 
+	// Restore transport causes independently of their original diagnostic.
 	pktErr := pkt.GetError()
 	complete := pkt.GetComplete()
-	if len(pktErr) != 0 {
+	if len(pktErr) != 0 || pkt.GetErrorCode() != ErrorCode_ERROR_CODE_UNKNOWN {
 		complete = true
 		if c.remoteErr == nil {
-			c.remoteErr = errors.New(pktErr)
+			switch pkt.GetErrorCode() {
+			case ErrorCode_ERROR_CODE_RESET:
+				c.remoteErr = NewTransportError(pkt.GetErrorCode(), pktErr)
+			case ErrorCode_ERROR_CODE_CLOSED_BEFORE_COMPLETION:
+				c.remoteErr = NewTransportError(pkt.GetErrorCode(), pktErr)
+			default:
+				c.remoteErr = errors.New(pktErr)
+			}
 		}
 	}
 
+	// Close readers only after decoding the remote outcome.
 	if complete {
 		c.dataClosed = true
-		if len(pktErr) == 0 {
+		if len(pktErr) == 0 && pkt.GetErrorCode() == ErrorCode_ERROR_CODE_UNKNOWN {
 			c.remoteCompleted = true
 		}
 	}
 
+	// Wake blocked readers with the packet and its outcome committed.
 	locked.Broadcast()
 	locked.Unlock()
-
 	return err
 }
 
@@ -247,9 +259,11 @@ func (c *commonRPC) handleStreamCloseLocked(
 	locked *broadcast.Locked,
 	closeErr error,
 ) PacketWriter {
+	// Ignore a transport close after both sides already released their state.
 	if c.dataClosed && c.writerClosed {
 		return nil
 	}
+
 	// A peer that closes its side reports the end of the stream. Transports
 	// disagree on whether they surface that as io.EOF or as no error at all,
 	// and it means the same thing either way, so settle it here rather than in
@@ -257,16 +271,21 @@ func (c *commonRPC) handleStreamCloseLocked(
 	if errors.Is(closeErr, io.EOF) {
 		closeErr = nil
 	}
+
+	// Retain the transport failure unless a remote verdict already arrived.
 	normalRemoteCloseAfterLocalComplete := closeErr == nil && (c.localCompleting || c.localDone)
 	if closeErr != nil && c.remoteErr == nil {
 		c.remoteErr = closeErr
 	}
+
 	// A clean close that arrives with no completion behind it leaves the call
 	// without a verdict. Reading io.EOF there says the stream ended in good
 	// order, which is the one thing we do not know.
 	if closeErr == nil && !normalRemoteCloseAfterLocalComplete && !c.remoteCompleted && c.remoteErr == nil {
 		c.remoteErr = ErrClosedBeforeCompletion
 	}
+
+	// End readers and cancel unfinished local work before closing its writer.
 	c.dataClosed = true
 	if !normalRemoteCloseAfterLocalComplete {
 		c.cancelContext()
@@ -291,11 +310,14 @@ func (c *commonRPC) WriteCallCancel() error {
 // closeLocked releases resources held by the RPC. A call the remote already
 // settled keeps its result: queued messages and the completion stay readable.
 func (c *commonRPC) closeLocked(locked *broadcast.Locked) PacketWriter {
+	// Preserve the remote verdict when cancellation releases the call.
 	if !c.dataClosed && c.remoteErr == nil {
 		c.remoteErr = context.Canceled
 	}
 	c.dataClosed = true
 	c.localCompleted.Store(true)
+
+	// Wake waiters and release writer ownership with the terminal state settled.
 	writer := c.closeWriterLocked()
 	locked.Broadcast()
 	c.cancelContext()
@@ -318,6 +340,7 @@ func (c *commonRPC) beginLocalCompletion() {
 }
 
 func (c *commonRPC) finishLocalCompletion() {
+	// Close the completed writer outside the state lock.
 	locked := c.bcast.Lock()
 	c.localCompleted.Store(true)
 	writer := c.closeWriterLocked()
@@ -325,6 +348,8 @@ func (c *commonRPC) finishLocalCompletion() {
 	if writer != nil {
 		_ = writer.Close()
 	}
+
+	// Publish handler completion only after the transport cleanup returns.
 	locked = c.bcast.Lock()
 	c.localCompleting = false
 	c.localActive = false

@@ -8,10 +8,51 @@ import (
 	fmt "fmt"
 	io "io"
 	slices "slices"
+	strconv "strconv"
 
 	protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
 )
+
+// ErrorCode classifies failures that callers must distinguish from handler errors.
+type ErrorCode int32
+
+const (
+	// ERROR_CODE_UNKNOWN leaves Error as an ordinary handler diagnostic.
+	ErrorCode_ERROR_CODE_UNKNOWN ErrorCode = 0
+	// ERROR_CODE_RESET reports that the forwarded transport was reset.
+	ErrorCode_ERROR_CODE_RESET ErrorCode = 1
+	// ERROR_CODE_CLOSED_BEFORE_COMPLETION reports a transport closed without a verdict.
+	ErrorCode_ERROR_CODE_CLOSED_BEFORE_COMPLETION ErrorCode = 2
+)
+
+// Enum value maps for ErrorCode.
+var (
+	ErrorCode_name = map[int32]string{
+		0: "ERROR_CODE_UNKNOWN",
+		1: "ERROR_CODE_RESET",
+		2: "ERROR_CODE_CLOSED_BEFORE_COMPLETION",
+	}
+	ErrorCode_value = map[string]int32{
+		"ERROR_CODE_UNKNOWN":                  0,
+		"ERROR_CODE_RESET":                    1,
+		"ERROR_CODE_CLOSED_BEFORE_COMPLETION": 2,
+	}
+)
+
+func (x ErrorCode) Enum() *ErrorCode {
+	p := new(ErrorCode)
+	*p = x
+	return p
+}
+
+func (x ErrorCode) String() string {
+	name, valid := ErrorCode_name[int32(x)]
+	if valid {
+		return name
+	}
+	return strconv.Itoa(int(x))
+}
 
 // Packet is a message sent over a srpc packet connection.
 type Packet struct {
@@ -19,7 +60,6 @@ type Packet struct {
 	// Body is the packet body.
 	//
 	// Types that are assignable to Body:
-	//
 	//	*Packet_CallStart
 	//	*Packet_CallData
 	//	*Packet_CallCancel
@@ -147,6 +187,9 @@ type CallData struct {
 	// Error contains any error that caused the RPC to fail.
 	// If set, implies complete=true.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	// ErrorCode preserves transport failures through RPC forwarding.
+	// A nonzero code implies complete=true; Error retains the diagnostic text.
+	ErrorCode ErrorCode `protobuf:"varint,5,opt,name=error_code,json=errorCode,proto3" json:"errorCode,omitempty"`
 }
 
 func (x *CallData) Reset() {
@@ -181,6 +224,13 @@ func (x *CallData) GetError() string {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *CallData) GetErrorCode() ErrorCode {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ErrorCode_ERROR_CODE_UNKNOWN
 }
 
 func (m *Packet) CloneVT() *Packet {
@@ -267,6 +317,7 @@ func (m *CallData) CloneVT() *CallData {
 	r.DataIsZero = m.DataIsZero
 	r.Complete = m.Complete
 	r.Error = m.Error
+	r.ErrorCode = m.ErrorCode
 	r.Data = protobuf_go_lite.CloneBytes(m.Data)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
@@ -403,6 +454,9 @@ func (this *CallData) EqualVT(that *CallData) bool {
 	if this.Error != that.Error {
 		return false
 	}
+	if this.ErrorCode != that.ErrorCode {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -412,6 +466,46 @@ func (this *CallData) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+// MarshalProtoJSON marshals the ErrorCode to JSON.
+func (x ErrorCode) MarshalProtoJSON(s *json.MarshalState) {
+	s.WriteEnum(int32(x), ErrorCode_name)
+}
+
+// MarshalText marshals the ErrorCode to text.
+func (x ErrorCode) MarshalText() ([]byte, error) {
+	return []byte(json.GetEnumString(int32(x), ErrorCode_name)), nil
+}
+
+// MarshalJSON marshals the ErrorCode to JSON.
+func (x ErrorCode) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ErrorCode from JSON.
+func (x *ErrorCode) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	v := s.ReadEnum(ErrorCode_value)
+	if err := s.Err(); err != nil {
+		s.SetErrorf("could not read ErrorCode enum: %v", err)
+		return
+	}
+	*x = ErrorCode(v)
+}
+
+// UnmarshalText unmarshals the ErrorCode from text.
+func (x *ErrorCode) UnmarshalText(b []byte) error {
+	i, err := json.ParseEnumString(string(b), ErrorCode_value)
+	if err != nil {
+		return err
+	}
+	*x = ErrorCode(i)
+	return nil
+}
+
+// UnmarshalJSON unmarshals the ErrorCode from JSON.
+func (x *ErrorCode) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
 // MarshalProtoJSON marshals the Packet message to JSON.
@@ -581,6 +675,11 @@ func (x *CallData) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("error")
 		s.WriteString(x.Error)
 	}
+	if x.ErrorCode != 0 || s.HasField("errorCode") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("errorCode")
+		x.ErrorCode.MarshalProtoJSON(s)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -610,6 +709,9 @@ func (x *CallData) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "error":
 			s.AddField("error")
 			x.Error = s.ReadString()
+		case "error_code", "errorCode":
+			s.AddField("error_code")
+			x.ErrorCode.UnmarshalProtoJSON(s)
 		}
 	})
 }
@@ -802,6 +904,11 @@ func (m *CallData) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.ErrorCode != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.ErrorCode))
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.Error) > 0 {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Error)
 		i--
@@ -902,8 +1009,13 @@ func (m *CallData) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeBoolNonZero(1, m.DataIsZero)
 	n += protobuf_go_lite.SizeBoolNonZero(1, m.Complete)
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Error)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.ErrorCode)
 	n += len(m.unknownFields)
 	return n
+}
+
+func (x ErrorCode) MarshalProtoText() string {
+	return x.String()
 }
 
 func (x *Packet) MarshalProtoText() string {
@@ -979,6 +1091,10 @@ func (x *CallData) MarshalProtoText() string {
 	if x.Error != "" {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "error")
 		protobuf_go_lite.TextWriteString(&sb, x.Error)
+	}
+	if x.ErrorCode != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "error_code")
+		protobuf_go_lite.TextWriteStringer(&sb, ErrorCode(x.ErrorCode))
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -1220,6 +1336,17 @@ func (m *CallData) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Error = v
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorCode", wireType)
+			}
+			m.ErrorCode = 0
+			var _v uint64
+			_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			m.ErrorCode = ErrorCode(_v)
+			if err != nil {
+				return err
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

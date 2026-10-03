@@ -4,7 +4,7 @@
 //! starpc protocol packets.
 
 use crate::error::{Error, Result};
-use crate::proto::{packet::Body, CallData, CallStart, Packet};
+use crate::proto::{packet::Body, CallData, CallStart, ErrorCode, Packet};
 use crate::transport::encode_optional_data;
 use bytes::Bytes;
 
@@ -38,6 +38,7 @@ pub fn new_call_data(data: Vec<u8>) -> Packet {
             data_is_zero,
             complete: false,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         })),
     }
 }
@@ -55,6 +56,7 @@ pub fn new_call_data_full(data: Option<Bytes>, complete: bool, error: Option<Str
             data_is_zero,
             complete: complete || error.is_some(),
             error: error.unwrap_or_default(),
+            error_code: ErrorCode::Unknown as i32,
         })),
     }
 }
@@ -67,6 +69,7 @@ pub fn new_call_complete() -> Packet {
             data_is_zero: false,
             complete: true,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         })),
     }
 }
@@ -79,6 +82,7 @@ pub fn new_call_error(error: impl Into<String>) -> Packet {
             data_is_zero: false,
             complete: true,
             error: error.into(),
+            error_code: ErrorCode::Unknown as i32,
         })),
     }
 }
@@ -139,7 +143,12 @@ impl Validate for CallData {
         // - data_is_zero flag set (indicating intentionally empty data)
         // - complete flag set
         // - error message
-        if self.data.is_empty() && !self.data_is_zero && !self.complete && self.error.is_empty() {
+        if self.data.is_empty()
+            && !self.data_is_zero
+            && !self.complete
+            && self.error.is_empty()
+            && self.error_code == ErrorCode::Unknown as i32
+        {
             return Err(Error::EmptyPacket);
         }
         Ok(())
@@ -182,7 +191,9 @@ impl Packet {
     /// Returns true if this packet indicates completion (CallData with complete=true or error).
     pub fn is_complete(&self) -> bool {
         match &self.body {
-            Some(Body::CallData(cd)) => cd.complete || !cd.error.is_empty(),
+            Some(Body::CallData(cd)) => {
+                cd.complete || !cd.error.is_empty() || cd.error_code != ErrorCode::Unknown as i32
+            }
             Some(Body::CallCancel(true)) => true,
             _ => false,
         }
@@ -259,6 +270,7 @@ mod tests {
             data_is_zero: false,
             complete: false,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         };
         assert!(cd.validate().is_ok());
     }
@@ -270,6 +282,7 @@ mod tests {
             data_is_zero: false,
             complete: true,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         };
         assert!(cd.validate().is_ok());
     }
@@ -281,6 +294,7 @@ mod tests {
             data_is_zero: false,
             complete: false,
             error: "some error".into(),
+            error_code: ErrorCode::Unknown as i32,
         };
         assert!(cd.validate().is_ok());
     }
@@ -292,6 +306,7 @@ mod tests {
             data_is_zero: true,
             complete: false,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         };
         assert!(cd.validate().is_ok());
     }
@@ -303,6 +318,7 @@ mod tests {
             data_is_zero: false,
             complete: false,
             error: String::new(),
+            error_code: ErrorCode::Unknown as i32,
         };
         assert!(matches!(cd.validate(), Err(Error::EmptyPacket)));
     }

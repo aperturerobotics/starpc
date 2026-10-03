@@ -11,6 +11,7 @@ from starpc.call import (
     CallError,
     ClosedBeforeCompletionError,
     RemoteCallError,
+    StreamResetError,
 )
 from starpc.stream import ByteStream
 
@@ -75,12 +76,16 @@ class Server:
                     await handler_task
                 except asyncio.CancelledError:
                     raise
-                except (
-                    CallCancelledError,
-                    ClosedBeforeCompletionError,
-                    RemoteCallError,
-                ):
+                except CallCancelledError:
                     return
+                except (
+                    ClosedBeforeCompletionError,
+                    StreamResetError,
+                    RemoteCallError,
+                ) as exc:
+                    # Forward the remote failure before releasing this call's transport.
+                    with contextlib.suppress(CallCompletedError):
+                        await call.finish(error=exc)
                 except Exception as exc:  # noqa: BLE001
                     with contextlib.suppress(CallCompletedError):
                         await call.finish(error=str(exc))

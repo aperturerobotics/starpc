@@ -53,7 +53,7 @@
       "protoFiles": ["rpcstream/rpcstream.proto"]
     },
     "github.com/aperturerobotics/starpc/srpc": {
-      "hash": "f39d4b1a33193c6a50c0f18aae03e9f694b1f26087b643ecfff061f579bc991e",
+      "hash": "1e1e3717c052ad0bb93853002f4ba7f7d3399c51abf7bea804d7d19328d22593",
       "generatedFiles": [
         "srpc/rpcproto.pb.cc",
         "srpc/rpcproto.pb.go",
@@ -64,6 +64,24 @@
         "srpc/rpcproto_pb2.pyi"
       ],
       "protoFiles": ["srpc/rpcproto.proto"]
+    },
+    "github.com/aperturerobotics/starpc/tests/codegen": {
+      "hash": "33e9970e825930fad739b17ef705f18929f72e952da8f0c51a432edd82e4be82",
+      "generatedFiles": [
+        "tests/codegen/service.pb.cc",
+        "tests/codegen/service.pb.go",
+        "tests/codegen/service.pb.h",
+        "tests/codegen/service.pb.rs",
+        "tests/codegen/service.pb.ts",
+        "tests/codegen/service_pb2.py",
+        "tests/codegen/service_pb2.pyi",
+        "tests/codegen/service_srpc.pb.go",
+        "tests/codegen/service_srpc.pb.rs",
+        "tests/codegen/service_srpc.pb.ts",
+        "tests/codegen/service_srpc.py",
+        "tests/codegen/service_srpc.pyi"
+      ],
+      "protoFiles": ["tests/codegen/service.proto"]
     }
   }
 }

@@ -40,4 +40,17 @@ message CallData {
   // Error contains any error that caused the RPC to fail.
   // If set, implies complete=true.
   string error = 4;
+  // ErrorCode preserves transport failures through RPC forwarding.
+  // A nonzero code implies complete=true; Error retains the diagnostic text.
+  ErrorCode error_code = 5;
+}
+
+// ErrorCode classifies failures that callers must distinguish from handler errors.
+enum ErrorCode {
+  // ERROR_CODE_UNKNOWN leaves Error as an ordinary handler diagnostic.
+  ERROR_CODE_UNKNOWN = 0;
+  // ERROR_CODE_RESET reports that the forwarded transport was reset.
+  ERROR_CODE_RESET = 1;
+  // ERROR_CODE_CLOSED_BEFORE_COMPLETION reports a transport closed without a verdict.
+  ERROR_CODE_CLOSED_BEFORE_COMPLETION = 2;
 }

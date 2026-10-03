@@ -24,17 +24,19 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6github.com/aperturerobotics/starpc/srpc/rpcproto.proto\x12\x04srpc\"s\n\x06Packet\x12%\n\ncall_start\x18\x01 \x01(\x0b\x32\x0f.srpc.CallStartH\x00\x12#\n\tcall_data\x18\x02 \x01(\x0b\x32\x0e.srpc.CallDataH\x00\x12\x15\n\x0b\x63\x61ll_cancel\x18\x03 \x01(\x08H\x00\x42\x06\n\x04\x62ody\"X\n\tCallStart\x12\x13\n\x0brpc_service\x18\x01 \x01(\t\x12\x12\n\nrpc_method\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\x12\x14\n\x0c\x64\x61ta_is_zero\x18\x04 \x01(\x08\"O\n\x08\x43\x61llData\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x14\n\x0c\x64\x61ta_is_zero\x18\x02 \x01(\x08\x12\x10\n\x08\x63omplete\x18\x03 \x01(\x08\x12\r\n\x05\x65rror\x18\x04 \x01(\tb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n6github.com/aperturerobotics/starpc/srpc/rpcproto.proto\x12\x04srpc\"s\n\x06Packet\x12%\n\ncall_start\x18\x01 \x01(\x0b\x32\x0f.srpc.CallStartH\x00\x12#\n\tcall_data\x18\x02 \x01(\x0b\x32\x0e.srpc.CallDataH\x00\x12\x15\n\x0b\x63\x61ll_cancel\x18\x03 \x01(\x08H\x00\x42\x06\n\x04\x62ody\"X\n\tCallStart\x12\x13\n\x0brpc_service\x18\x01 \x01(\t\x12\x12\n\nrpc_method\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\x12\x14\n\x0c\x64\x61ta_is_zero\x18\x04 \x01(\x08\"t\n\x08\x43\x61llData\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\x12\x14\n\x0c\x64\x61ta_is_zero\x18\x02 \x01(\x08\x12\x10\n\x08\x63omplete\x18\x03 \x01(\x08\x12\r\n\x05\x65rror\x18\x04 \x01(\t\x12#\n\nerror_code\x18\x05 \x01(\x0e\x32\x0f.srpc.ErrorCode*b\n\tErrorCode\x12\x16\n\x12\x45RROR_CODE_UNKNOWN\x10\x00\x12\x14\n\x10\x45RROR_CODE_RESET\x10\x01\x12\'\n#ERROR_CODE_CLOSED_BEFORE_COMPLETION\x10\x02\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'github.com.aperturerobotics.starpc.srpc.rpcproto_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
+  _globals['_ERRORCODE']._serialized_start=389
+  _globals['_ERRORCODE']._serialized_end=487
   _globals['_PACKET']._serialized_start=64
   _globals['_PACKET']._serialized_end=179
   _globals['_CALLSTART']._serialized_start=181
   _globals['_CALLSTART']._serialized_end=269
   _globals['_CALLDATA']._serialized_start=271
-  _globals['_CALLDATA']._serialized_end=350
+  _globals['_CALLDATA']._serialized_end=387
 # @@protoc_insertion_point(module_scope)
