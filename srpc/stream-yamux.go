@@ -18,19 +18,13 @@ func (s *yamuxStream) yamux() *yamux.Stream {
 // Read reads from the stream, translating stream reset errors.
 func (s *yamuxStream) Read(b []byte) (int, error) {
 	n, err := s.yamux().Read(b)
-	if errors.Is(err, yamux.ErrStreamReset) {
-		err = ErrReset
-	}
-	return n, err
+	return n, translateReset(err)
 }
 
 // Write writes to the stream, translating stream reset errors.
 func (s *yamuxStream) Write(b []byte) (int, error) {
 	n, err := s.yamux().Write(b)
-	if errors.Is(err, yamux.ErrStreamReset) {
-		err = ErrReset
-	}
-	return n, err
+	return n, translateReset(err)
 }
 
 // Close closes the stream.
@@ -66,6 +60,36 @@ func (s *yamuxStream) SetReadDeadline(t time.Time) error {
 // SetWriteDeadline sets the write deadline.
 func (s *yamuxStream) SetWriteDeadline(t time.Time) error {
 	return s.yamux().SetWriteDeadline(t)
+}
+
+// translateReset reports a yamux stream reset as ErrReset. A reset caused by
+// the connection closing keeps that cause, such as the peer's close reason, in
+// its message.
+func translateReset(err error) error {
+	if !errors.Is(err, yamux.ErrStreamReset) {
+		return err
+	}
+	switch err.(type) {
+	case *yamux.Error, *yamux.StreamError:
+		return ErrReset
+	}
+	return &connResetError{err: err}
+}
+
+// connResetError is a stream reset caused by the connection closing.
+type connResetError struct {
+	// err is the yamux reset with its connection error.
+	err error
+}
+
+// Error returns the reset with its connection error.
+func (e *connResetError) Error() string {
+	return e.err.Error()
+}
+
+// Unwrap returns ErrReset and the yamux reset.
+func (e *connResetError) Unwrap() []error {
+	return []error{ErrReset, e.err}
 }
 
 // _ is a type assertion
