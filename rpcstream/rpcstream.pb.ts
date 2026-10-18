@@ -4,55 +4,6 @@
 
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
-import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
-import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
-
-export const protobufPackage = 'rpcstream'
-
-/**
- * RpcStreamInit is the first message in a RPC stream.
- *
- * @generated from message rpcstream.RpcStreamInit
- */
-export interface RpcStreamInit {
-  /**
-   * ComponentId is the identifier of the component making the request.
-   *
-   * @generated from field: string component_id = 1;
-   */
-  componentId?: string
-}
-
-export const RpcStreamInit: MessageType<RpcStreamInit> =
-  /* @__PURE__ */ createMessageType({
-    typeName: 'rpcstream.RpcStreamInit',
-    fields: [
-      { no: 1, name: 'component_id', kind: 'scalar', T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-  })
-
-/**
- * RpcAck is the ack message in a RPC stream.
- *
- * @generated from message rpcstream.RpcAck
- */
-export interface RpcAck {
-  /**
-   * Error indicates there was some error setting up the stream.
-   *
-   * @generated from field: string error = 1;
-   */
-  error?: string
-}
-
-export const RpcAck: MessageType<RpcAck> = /* @__PURE__ */ createMessageType({
-  typeName: 'rpcstream.RpcAck',
-  fields: [
-    { no: 1, name: 'error', kind: 'scalar', T: ScalarType.STRING },
-  ] satisfies readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
 
 /**
  * RpcStreamPacket is a packet encapsulating data for a RPC stream.
@@ -64,60 +15,53 @@ export interface RpcStreamPacket {
    * @generated from oneof rpcstream.RpcStreamPacket.body
    */
   body?:
-    | {
-        value?: undefined
-        case: undefined
-      }
-    | {
-        /**
-         * Init is the first packet in the stream.
-         * Sent by the initiator.
-         *
-         * @generated from field: rpcstream.RpcStreamInit init = 1;
-         */
-        value: RpcStreamInit
-        case: 'init'
-      }
-    | {
-        /**
-         * Ack is sent in response to Init.
-         * Sent by the server.
-         *
-         * @generated from field: rpcstream.RpcAck ack = 2;
-         */
-        value: RpcAck
-        case: 'ack'
-      }
-    | {
-        /**
-         * Data is the encapsulated data packet.
-         *
-         * @generated from field: bytes data = 3;
-         */
-        value: Uint8Array
-        case: 'data'
-      }
+    | { value?: undefined; case: undefined }
+    | { value: RpcStreamInit; case: 'init' }
+    | { value: RpcAck; case: 'ack' }
+    | { value: Uint8Array; case: 'data' }
 }
 
 export const RpcStreamPacket: MessageType<RpcStreamPacket> =
-  /* @__PURE__ */ createMessageType({
-    typeName: 'rpcstream.RpcStreamPacket',
-    fields: [
-      {
-        no: 1,
-        name: 'init',
-        kind: 'message',
-        T: () => RpcStreamInit,
-        oneof: 'body',
-      },
-      { no: 2, name: 'ack', kind: 'message', T: () => RpcAck, oneof: 'body' },
-      {
-        no: 3,
-        name: 'data',
-        kind: 'scalar',
-        T: ScalarType.BYTES,
-        oneof: 'body',
-      },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-  })
+  /* @__PURE__ */ createMessageType<RpcStreamPacket>(
+    'rpcstream.RpcStreamPacket',
+    () => [
+      [1, 'init', 11, 0, RpcStreamInit.codec, 'body'],
+      [2, 'ack', 11, 0, RpcAck.codec, 'body'],
+      [3, 'data', 12, 0, 0, 'body'],
+    ],
+  )
+
+/**
+ * RpcStreamInit is the first message in a RPC stream.
+ *
+ * @generated from message rpcstream.RpcStreamInit
+ */
+export interface RpcStreamInit {
+  /**
+   * ComponentId is the identifier of the component making the request.
+   */
+  componentId?: string
+}
+
+export const RpcStreamInit: MessageType<RpcStreamInit> =
+  /* @__PURE__ */ createMessageType<RpcStreamInit>(
+    'rpcstream.RpcStreamInit',
+    () => [[1, 'component_id', 9]],
+  )
+
+/**
+ * RpcAck is the ack message in a RPC stream.
+ *
+ * @generated from message rpcstream.RpcAck
+ */
+export interface RpcAck {
+  /**
+   * Error indicates there was some error setting up the stream.
+   */
+  error?: string
+}
+
+export const RpcAck: MessageType<RpcAck> =
+  /* @__PURE__ */ createMessageType<RpcAck>('rpcstream.RpcAck', () => [
+    [1, 'error', 9],
+  ])

@@ -5,10 +5,6 @@
 import { createEnumType } from '@aptre/protobuf-es-lite/enum'
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
-import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
-import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
-
-export const protobufPackage = 'srpc'
 
 /**
  * ErrorCode classifies failures that callers must distinguish from handler errors.
@@ -18,22 +14,16 @@ export const protobufPackage = 'srpc'
 export enum ErrorCode {
   /**
    * ERROR_CODE_UNKNOWN leaves Error as an ordinary handler diagnostic.
-   *
-   * @generated from enum value: ERROR_CODE_UNKNOWN = 0;
    */
   UNKNOWN = 0,
 
   /**
    * ERROR_CODE_RESET reports that the forwarded transport was reset.
-   *
-   * @generated from enum value: ERROR_CODE_RESET = 1;
    */
   RESET = 1,
 
   /**
    * ERROR_CODE_CLOSED_BEFORE_COMPLETION reports a transport closed without a verdict.
-   *
-   * @generated from enum value: ERROR_CODE_CLOSED_BEFORE_COMPLETION = 2;
    */
   CLOSED_BEFORE_COMPLETION = 2,
 }
@@ -43,106 +33,6 @@ export const ErrorCode_Enum = /* @__PURE__ */ createEnumType('srpc.ErrorCode', [
   [1, 'ERROR_CODE_RESET'],
   [2, 'ERROR_CODE_CLOSED_BEFORE_COMPLETION'],
 ])
-
-/**
- * CallStart requests starting a new RPC call.
- *
- * @generated from message srpc.CallStart
- */
-export interface CallStart {
-  /**
-   * RpcService is the service to contact.
-   * Must be set.
-   *
-   * @generated from field: string rpc_service = 1;
-   */
-  rpcService?: string
-  /**
-   * RpcMethod is the RPC method to call.
-   * Must be set.
-   *
-   * @generated from field: string rpc_method = 2;
-   */
-  rpcMethod?: string
-  /**
-   * Data contains the request or the first message in the stream.
-   * Optional if streaming.
-   *
-   * @generated from field: bytes data = 3;
-   */
-  data?: Uint8Array
-  /**
-   * DataIsZero indicates Data is set with an empty message.
-   *
-   * @generated from field: bool data_is_zero = 4;
-   */
-  dataIsZero?: boolean
-}
-
-export const CallStart: MessageType<CallStart> =
-  /* @__PURE__ */ createMessageType({
-    typeName: 'srpc.CallStart',
-    fields: [
-      { no: 1, name: 'rpc_service', kind: 'scalar', T: ScalarType.STRING },
-      { no: 2, name: 'rpc_method', kind: 'scalar', T: ScalarType.STRING },
-      { no: 3, name: 'data', kind: 'scalar', T: ScalarType.BYTES },
-      { no: 4, name: 'data_is_zero', kind: 'scalar', T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-  })
-
-/**
- * CallData contains a message in a streaming RPC sequence.
- *
- * @generated from message srpc.CallData
- */
-export interface CallData {
-  /**
-   * Data contains the packet in the sequence.
-   *
-   * @generated from field: bytes data = 1;
-   */
-  data?: Uint8Array
-  /**
-   * DataIsZero indicates Data is set with an empty message.
-   *
-   * @generated from field: bool data_is_zero = 2;
-   */
-  dataIsZero?: boolean
-  /**
-   * Complete indicates the RPC call is completed.
-   *
-   * @generated from field: bool complete = 3;
-   */
-  complete?: boolean
-  /**
-   * Error contains any error that caused the RPC to fail.
-   * If set, implies complete=true.
-   *
-   * @generated from field: string error = 4;
-   */
-  error?: string
-  /**
-   * ErrorCode preserves transport failures through RPC forwarding.
-   * A nonzero code implies complete=true; Error retains the diagnostic text.
-   *
-   * @generated from field: srpc.ErrorCode error_code = 5;
-   */
-  errorCode?: ErrorCode
-}
-
-export const CallData: MessageType<CallData> =
-  /* @__PURE__ */ createMessageType({
-    typeName: 'srpc.CallData',
-    fields: [
-      { no: 1, name: 'data', kind: 'scalar', T: ScalarType.BYTES },
-      { no: 2, name: 'data_is_zero', kind: 'scalar', T: ScalarType.BOOL },
-      { no: 3, name: 'complete', kind: 'scalar', T: ScalarType.BOOL },
-      { no: 4, name: 'error', kind: 'scalar', T: ScalarType.STRING },
-      { no: 5, name: 'error_code', kind: 'enum', T: ErrorCode_Enum },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-  })
 
 /**
  * Packet is a message sent over a srpc packet connection.
@@ -156,63 +46,89 @@ export interface Packet {
    * @generated from oneof srpc.Packet.body
    */
   body?:
-    | {
-        value?: undefined
-        case: undefined
-      }
-    | {
-        /**
-         * CallStart initiates a new call.
-         *
-         * @generated from field: srpc.CallStart call_start = 1;
-         */
-        value: CallStart
-        case: 'callStart'
-      }
-    | {
-        /**
-         * CallData is a message in a streaming RPC sequence.
-         *
-         * @generated from field: srpc.CallData call_data = 2;
-         */
-        value: CallData
-        case: 'callData'
-      }
-    | {
-        /**
-         * CallCancel cancels the call.
-         *
-         * @generated from field: bool call_cancel = 3;
-         */
-        value: boolean
-        case: 'callCancel'
-      }
+    | { value?: undefined; case: undefined }
+    | { value: CallStart; case: 'callStart' }
+    | { value: CallData; case: 'callData' }
+    | { value: boolean; case: 'callCancel' }
 }
 
-export const Packet: MessageType<Packet> = /* @__PURE__ */ createMessageType({
-  typeName: 'srpc.Packet',
-  fields: [
-    {
-      no: 1,
-      name: 'call_start',
-      kind: 'message',
-      T: () => CallStart,
-      oneof: 'body',
-    },
-    {
-      no: 2,
-      name: 'call_data',
-      kind: 'message',
-      T: () => CallData,
-      oneof: 'body',
-    },
-    {
-      no: 3,
-      name: 'call_cancel',
-      kind: 'scalar',
-      T: ScalarType.BOOL,
-      oneof: 'body',
-    },
-  ] satisfies readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+export const Packet: MessageType<Packet> =
+  /* @__PURE__ */ createMessageType<Packet>('srpc.Packet', () => [
+    [1, 'call_start', 11, 0, CallStart.codec, 'body'],
+    [2, 'call_data', 11, 0, CallData.codec, 'body'],
+    [3, 'call_cancel', 8, 0, 0, 'body'],
+  ])
+
+/**
+ * CallStart requests starting a new RPC call.
+ *
+ * @generated from message srpc.CallStart
+ */
+export interface CallStart {
+  /**
+   * RpcService is the service to contact.
+   * Must be set.
+   */
+  rpcService?: string
+  /**
+   * RpcMethod is the RPC method to call.
+   * Must be set.
+   */
+  rpcMethod?: string
+  /**
+   * Data contains the request or the first message in the stream.
+   * Optional if streaming.
+   */
+  data?: Uint8Array
+  /**
+   * DataIsZero indicates Data is set with an empty message.
+   */
+  dataIsZero?: boolean
+}
+
+export const CallStart: MessageType<CallStart> =
+  /* @__PURE__ */ createMessageType<CallStart>('srpc.CallStart', () => [
+    [1, 'rpc_service', 9],
+    [2, 'rpc_method', 9],
+    [3, 'data', 12],
+    [4, 'data_is_zero', 8],
+  ])
+
+/**
+ * CallData contains a message in a streaming RPC sequence.
+ *
+ * @generated from message srpc.CallData
+ */
+export interface CallData {
+  /**
+   * Data contains the packet in the sequence.
+   */
+  data?: Uint8Array
+  /**
+   * DataIsZero indicates Data is set with an empty message.
+   */
+  dataIsZero?: boolean
+  /**
+   * Complete indicates the RPC call is completed.
+   */
+  complete?: boolean
+  /**
+   * Error contains any error that caused the RPC to fail.
+   * If set, implies complete=true.
+   */
+  error?: string
+  /**
+   * ErrorCode preserves transport failures through RPC forwarding.
+   * A nonzero code implies complete=true; Error retains the diagnostic text.
+   */
+  errorCode?: ErrorCode
+}
+
+export const CallData: MessageType<CallData> =
+  /* @__PURE__ */ createMessageType<CallData>('srpc.CallData', () => [
+    [1, 'data', 12],
+    [2, 'data_is_zero', 8],
+    [3, 'complete', 8],
+    [4, 'error', 9],
+    [5, 'error_code', 14, 0, ErrorCode_Enum],
+  ])

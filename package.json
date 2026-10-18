@@ -123,7 +123,7 @@
   },
   "dependencies": {
     "@aptre/it-ws": "^1.1.2",
-    "@aptre/protobuf-es-lite": "1.1.1",
+    "@aptre/protobuf-es-lite": "1.2.1",
     "@aptre/yamux": "^1.0.3",
     "event-iterator": "^2.0.0",
     "isomorphic-ws": "^5.0.0",
@@ -135,10 +135,10 @@
     "ws": "^8.20.0"
   },
   "resolutions": {
-    "@aptre/protobuf-es-lite": "1.1.1"
+    "@aptre/protobuf-es-lite": "1.2.1"
   },
   "overrides": {
-    "@aptre/protobuf-es-lite": "1.1.1"
+    "@aptre/protobuf-es-lite": "1.2.1"
   },
   "aptre": {
     "languages": [

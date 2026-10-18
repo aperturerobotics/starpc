@@ -4,10 +4,6 @@
 
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
-import { ScalarType } from '@aptre/protobuf-es-lite/scalar'
-import type { PartialFieldInfo } from '@aptre/protobuf-es-lite/field'
-
-export const protobufPackage = 'e2e.mock'
 
 /**
  * MockMsg is the mock message body.
@@ -15,16 +11,10 @@ export const protobufPackage = 'e2e.mock'
  * @generated from message e2e.mock.MockMsg
  */
 export interface MockMsg {
-  /**
-   * @generated from field: string body = 1;
-   */
   body?: string
 }
 
-export const MockMsg: MessageType<MockMsg> = /* @__PURE__ */ createMessageType({
-  typeName: 'e2e.mock.MockMsg',
-  fields: [
-    { no: 1, name: 'body', kind: 'scalar', T: ScalarType.STRING },
-  ] satisfies readonly PartialFieldInfo[],
-  packedByDefault: true,
-})
+export const MockMsg: MessageType<MockMsg> =
+  /* @__PURE__ */ createMessageType<MockMsg>('e2e.mock.MockMsg', () => [
+    [1, 'body', 9],
+  ])
