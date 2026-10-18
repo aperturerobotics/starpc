@@ -61,27 +61,32 @@ func (r *PacketReadWriter) Write(p []byte) (n int, err error) {
 
 // WritePacket writes a packet to the writer.
 func (r *PacketReadWriter) WritePacket(p *Packet) error {
+	// Serialize writers so frames never interleave.
 	r.writeMtx.Lock()
 	defer r.writeMtx.Unlock()
 
+	// Reject an empty or oversized packet before writing any byte.
 	msgSize := p.SizeVT()
 	if msgSize <= 0 {
 		return errors.New("unexpected zero message size")
 	}
 	if msgSize > maxMessageSize {
-		return errors.Errorf("message size %v greater than maximum %v", msgSize, maxMessageSize)
+		return errors.Wrapf(ErrMessageTooLarge, "size %v greater than maximum %v", msgSize, maxMessageSize)
 	}
 
+	// Frame the packet behind its little-endian length prefix.
 	writeBuf := getWriteBuffer(4 + msgSize)
 	defer putWriteBuffer(writeBuf)
 	data := writeBuf.data
 	binary.LittleEndian.PutUint32(data, uint32(msgSize)) //nolint:gosec
 
+	// Marshal the packet into the frame.
 	_, err := p.MarshalToSizedBufferVT(data[4:])
 	if err != nil {
 		return err
 	}
 
+	// Write the whole frame, tolerating short writes.
 	var written, n int
 	for written < len(data) {
 		n, err = r.rw.Write(data[written:])
@@ -111,12 +116,14 @@ func (r *PacketReadWriter) ReadPump(cb PacketDataHandler, closed CloseHandler) {
 // ReadToHandler reads data to the given handler.
 // Does not handle closing the stream, use ReadPump instead.
 func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
+	// Borrow a read buffer for the life of the loop.
 	var currLen uint32
 	bufPtr := readBufferPool.Get().(*[readBufferSize]byte)
 	defer readBufferPool.Put(bufPtr)
 	buf := bufPtr[:]
 	isOpen := true
 
+	// Read until EOF, emitting each complete frame to the handler.
 	for isOpen {
 		// read some data into the buffer
 		n, err := r.rw.Read(buf)
@@ -149,7 +156,7 @@ func (r *PacketReadWriter) ReadToHandler(cb PacketDataHandler) error {
 				return errors.New("unexpected zero len prefix")
 			}
 			if currLen > uint32(maxMessageSize) {
-				return errors.Errorf("message size %v greater than maximum %v", currLen, maxMessageSize)
+				return errors.Wrapf(ErrMessageTooLarge, "size %v greater than maximum %v", currLen, maxMessageSize)
 			}
 		}
 

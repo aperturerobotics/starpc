@@ -3,6 +3,7 @@ package srpc
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"testing"
 )
@@ -42,6 +43,22 @@ func TestPacketReadWriterWritePacketHandlesShortWrites(t *testing.T) {
 	}
 	if got := rwc.Bytes(); !bytes.Equal(got, want) {
 		t.Fatalf("written packet mismatch:\ngot  %x\nwant %x", got, want)
+	}
+}
+
+// TestPacketReadWriterRejectsLargePacket checks that an oversized packet
+// returns ErrMessageTooLarge without writing any byte to the stream.
+func TestPacketReadWriterRejectsLargePacket(t *testing.T) {
+	// Write a packet one payload past the limit.
+	pkt := NewCallDataPacket(make([]byte, maxMessageSize), false, true, nil)
+	rwc := &chunkedReadWriteCloser{maxWrite: maxMessageSize * 2}
+	if err := NewPacketReadWriter(rwc).WritePacket(pkt); !errors.Is(err, ErrMessageTooLarge) {
+		t.Fatalf("WritePacket = %v, want ErrMessageTooLarge", err)
+	}
+
+	// Nothing reached the stream, so it stays usable.
+	if n := rwc.Len(); n != 0 {
+		t.Fatalf("wrote %d bytes of a rejected packet", n)
 	}
 }
 
