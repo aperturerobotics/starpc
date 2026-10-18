@@ -26,6 +26,10 @@ var (
 	ErrNoAvailableClients = errors.New("no available rpc clients")
 	// ErrNilWriter is returned if the rpc writer is nil.
 	ErrNilWriter = errors.New("writer cannot be nil")
+	// ErrMessageTooLarge is returned for a packet over the maximum message
+	// size. A writer returns it before writing any byte, so the stream stays
+	// usable, for example to report the failure as the call's error.
+	ErrMessageTooLarge = errors.New("message too large")
 )
 
 // ErrClosedBeforeCompletion is the error a call reports when its stream closed
