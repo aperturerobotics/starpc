@@ -38,6 +38,17 @@
       "matchManagers": ["gomod"],
       "matchDepTypes": ["golang"],
       "enabled": false
+    },
+    {
+      "description": "Keep the Python packages on Python 3.11, which Spacewave's Python Resource requires.",
+      "matchDepNames": ["python"],
+      "allowedVersions": "<3.12"
+    },
+    {
+      "description": "The Python protobuf runtime matches the protoc 6 that generates the _pb2 modules.",
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["protobuf"],
+      "allowedVersions": "<7"
     }
   ]
 }
