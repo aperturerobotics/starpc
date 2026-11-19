@@ -182,6 +182,37 @@ func (c *commonRPC) WriteCallData(data []byte, dataIsZero, complete bool, err er
 	return c.writer.WritePacket(outPkt)
 }
 
+// WriteCallMessage writes msg as a call data packet.
+//
+// When the writer can encode a packet in place, msg is marshaled once, directly
+// into the buffer that is written: the call data and packet around it add only
+// their headers. Other writers receive msg marshaled into a call data packet.
+func (c *commonRPC) WriteCallMessage(msg Message) error {
+	// Send an empty message as a zero-flagged call data packet.
+	size := msg.SizeVT()
+	if size == 0 {
+		return c.WriteCallData(nil, true, false, nil)
+	}
+
+	// Refuse data after local completion, as WriteCallData does.
+	if c.localCompleted.Load() {
+		return ErrCompleted
+	}
+
+	// Wrap msg in a call data packet without copying it.
+	if writer, ok := c.writer.(PacketMessageWriter); ok {
+		callData := NewNestedMessage(callDataDataField, msg)
+		return writer.WritePacketMessage(NewNestedMessage(packetCallDataField, callData))
+	}
+
+	// Marshal msg for a writer that takes only decoded packets.
+	data, err := msg.MarshalVT()
+	if err != nil {
+		return err
+	}
+	return c.writer.WritePacket(NewCallDataPacket(data, false, false, nil))
+}
+
 // HandleStreamClose handles the incoming stream closing w/ optional error.
 func (c *commonRPC) HandleStreamClose(closeErr error) {
 	locked := c.bcast.Lock()

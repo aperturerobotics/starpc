@@ -14,6 +14,10 @@ type MsgStreamRw interface {
 	// WriteCallData writes a call data packet.
 	WriteCallData(data []byte, dataIsZero bool, complete bool, err error) error
 
+	// WriteCallMessage writes msg as a call data packet, encoding it once
+	// into the transport's buffer where the transport allows.
+	WriteCallMessage(msg Message) error
+
 	// WriteCallCancel writes a call cancel (close) packet.
 	WriteCallCancel() error
 }
@@ -53,12 +57,7 @@ func (r *MsgStream) MsgSend(msg Message) error {
 		return context.Canceled
 	}
 
-	msgData, err := msg.MarshalVT()
-	if err != nil {
-		return err
-	}
-
-	return r.rw.WriteCallData(msgData, len(msgData) == 0, false, nil)
+	return r.rw.WriteCallMessage(msg)
 }
 
 // MsgRecv receives an incoming message from the remote.

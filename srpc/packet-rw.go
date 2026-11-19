@@ -61,6 +61,12 @@ func (r *PacketReadWriter) Write(p []byte) (n int, err error) {
 
 // WritePacket writes a packet to the writer.
 func (r *PacketReadWriter) WritePacket(p *Packet) error {
+	return r.WritePacketMessage(p)
+}
+
+// WritePacketMessage writes an encoded Packet to the writer, marshaling it
+// directly into the frame.
+func (r *PacketReadWriter) WritePacketMessage(p SizedMessage) error {
 	// Serialize writers so frames never interleave.
 	r.writeMtx.Lock()
 	defer r.writeMtx.Unlock()
@@ -194,10 +200,15 @@ func (r *PacketReadWriter) readLengthPrefix(b []byte) uint32 {
 	return binary.LittleEndian.Uint32(b)
 }
 
+// getWriteBuffer returns a buffer of the given size: pooled when the size is
+// small, and freshly allocated otherwise.
 func getWriteBuffer(size int) *writeBuffer {
+	// Allocate a frame too large for the pool directly.
 	if size > pooledWriteBufferMaxSize {
 		return &writeBuffer{data: make([]byte, size)}
 	}
+
+	// Reuse a pooled buffer, growing it when it is too small.
 	buf := writeBufferPool.Get().(*writeBuffer)
 	if cap(buf.data) < size {
 		buf.data = make([]byte, size)
@@ -215,4 +226,4 @@ func putWriteBuffer(buf *writeBuffer) {
 }
 
 // _ is a type assertion
-var _ PacketWriter = (*PacketReadWriter)(nil)
+var _ PacketMessageWriter = (*PacketReadWriter)(nil)

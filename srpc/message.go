@@ -9,6 +9,17 @@ import (
 // Message is the vtprotobuf message interface.
 type Message = protobuf_go_lite.Message
 
+// SizedMessage is the encoding half of a Message: it reports its encoded size
+// and marshals into a buffer of that size, so a writer can encode it directly
+// into the buffer it sends.
+type SizedMessage interface {
+	// SizeVT returns the size of the message when marshaled.
+	SizeVT() int
+	// MarshalToSizedBufferVT marshals to the end of a buffer that is at least
+	// SizeVT bytes long, and returns the number of bytes written.
+	MarshalToSizedBufferVT(dAtA []byte) (int, error)
+}
+
 // RawMessage is a raw protobuf message container.
 //
 // The empty value is valid with copy=false.
@@ -56,6 +67,7 @@ func (m *RawMessage) Reset() {
 	m.data = nil
 }
 
+// MarshalVT returns the data, or a copy of it when the message copies.
 func (m *RawMessage) MarshalVT() ([]byte, error) {
 	if !m.copy {
 		return m.data, nil
@@ -66,6 +78,7 @@ func (m *RawMessage) MarshalVT() ([]byte, error) {
 	return data, nil
 }
 
+// UnmarshalVT sets the data to the given bytes.
 func (m *RawMessage) UnmarshalVT(data []byte) error {
 	m.SetData(data)
 	return nil
