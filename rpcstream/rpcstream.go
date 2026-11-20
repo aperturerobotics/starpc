@@ -1,3 +1,18 @@
+// Package rpcstream runs a whole srpc session inside one bidirectional
+// streaming call of a host service, so a component can expose its own services
+// through another's.
+//
+// The host method streams RpcStreamPacket both ways. The initiator first sends
+// Init with a component ID, and HandleRpcStream asks its RpcStreamGetter for
+// that component's Invoker. The server answers with Ack, whose empty error means
+// success; a lookup failure is sent as the Ack's error and ends the stream. A
+// caller that sets waitAck waits for the Ack before it sends a call. After the
+// Ack, each Data body carries exactly one encoded srpc Packet; the host stream
+// already frames its messages, so the Packet has no length prefix.
+//
+// HandleRpcStream waits for the inner call to finish even after the component
+// is released, so the component's resources outlive every method running on
+// them. HandleRawRpcStream instead proxies the Data bytes to a ReadWriteCloser.
 package rpcstream
 
 import (
@@ -12,7 +27,9 @@ import (
 // sub-components which have a different set of services & calls available.
 type RpcStream interface {
 	srpc.Stream
+	// Send writes one packet to the host stream.
 	Send(*RpcStreamPacket) error
+	// Recv reads the next packet from the host stream.
 	Recv() (*RpcStreamPacket, error)
 }
 
@@ -108,6 +125,7 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 		return ErrUnexpectedPacket
 	}
 
+	// Releasing the component cancels this context.
 	ctx, ctxCancel := contextutil.WithCancel(stream.Context())
 	defer ctxCancel()
 
@@ -144,6 +162,7 @@ func HandleRpcStream(stream RpcStream, getter RpcStreamGetter) error {
 	// handle the rpc
 	serverRPC := srpc.NewServerRPC(ctx, mux, NewRpcStreamWriter(stream))
 	go ReadPump(stream, serverRPC.HandlePacketData, serverRPC.HandleStreamClose)
+
 	// ctx is also the cancellation signal handed to component owners through the
 	// released callback. If we use it as the wait-abort context, releasing a
 	// component can make HandleRpcStream return before the invoked method exits,

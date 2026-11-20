@@ -1,3 +1,28 @@
+// Package srpc implements Protobuf services over any transport that opens
+// bidirectional packet streams: unary, server-streaming, client-streaming and
+// bidirectional calls are all one stream each.
+//
+// A call is one stream of Packets. The client opens the stream with an
+// OpenStreamFunc and sends CallStart, which names the service and method and may
+// carry the first message; DataIsZero marks an empty message as present. Both
+// sides then send CallData. Complete ends the sender's half of the call and the
+// other half stays open, so a client can finish sending and still read the
+// response. A non-empty Error or a nonzero ErrorCode fails the call and implies
+// Complete; ErrorCode keeps a forwarded transport's reset or close before
+// completion distinguishable from a handler's error. CallCancel cancels the
+// call, and the server also sends it when its handler returns
+// context.Canceled, so cancellation keeps its identity across the wire. Data
+// after a side completed is ErrCompleted; a repeated completion is ignored.
+//
+// Over a byte stream, PacketReadWriter frames each Packet with a little-endian
+// uint32 length prefix and refuses to write or read one larger than 10 MB. A
+// muxed connection gives each call its own Yamux stream. A Server's Mux finds
+// the Handler for the service ID and answers ErrUnimplemented for an unknown
+// method.
+//
+// The Go, TypeScript, Rust, C++ and Python implementations share this wire
+// format; integration/cross-language/run.bash runs 21 server and client pairs
+// across them.
 package srpc
 
 import "github.com/pkg/errors"
